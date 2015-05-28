@@ -32,6 +32,8 @@ struct initialconditions
 
 /* function declaration */
 
+int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
+
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
 
 void free_parameters(struct parameters mu );

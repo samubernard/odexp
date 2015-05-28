@@ -17,6 +17,22 @@
 
 #include "odexp.h"
 
+/* main loop */
+int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) )
+{
+    int status;
+    FILE *gnuplot_pipe = popen("gnuplot","w");
+
+    status = odesolver(ode_rhs);
+
+    fprintf(gnuplot_pipe,"splot \"a-0.300000.dat\" using 2:3:4");
+    fflush(gnuplot_pipe);
+    pclose(gnuplot_pipe);
+
+    return status;
+
+}
+
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params) )    
 {
  
@@ -139,7 +155,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
             fprintf (file,"%.5e ",y[i]); 
         }
         fprintf(file,"\n");
-        next_t = t + dt > t1 ? t1 : t + dt;
+        next_t = fmin(t + dt,t1);
     }
     if (status == GSL_SUCCESS)
     {
