@@ -50,5 +50,7 @@ int8_t load_double(const char *filename, double *vect, size_t len, \
 
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
+int8_t fprintf_params(struct initialconditions init, struct parameters mu, double tspan[2], clock_t time_stamp);
+
 
 

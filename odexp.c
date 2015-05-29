@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv.h>
@@ -22,7 +23,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 {
 
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
-    const char temp_buffer[] = "temp.dat";
+    const char temp_buffer[] = "temp.tab";
     int32_t i;
     const char params_filename[] = "params.in";
     int8_t success;
@@ -44,6 +45,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     struct initialconditions init;
     const char ic_string[] = "ic";
     const size_t ic_len = 2;
+
+    int status, file_status;
+    int c, p=0, op = 0;
+    int32_t gx = 1,gy = 2;
+    int replot = 0;
+    size_t linecap;
+    char *line = NULL;
+    clock_t time_stamp;
+    char buffer[MAXFILENAMELENGTH];
 
 
     /* begin */
@@ -90,13 +100,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
         exit ( EXIT_FAILURE );
     }
 
-    int status;
-    int c, p, op = 0;
-    int32_t gx = 1,gy = 2;
-    int replot = 0;
-    size_t linecap;
-    char *line = NULL;
-
 
     status = odesolver(ode_rhs, init, mu, tspan);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines\n",temp_buffer,gx,gy);
@@ -108,7 +111,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
         c = getchar();
         if ( c != '\n')
         {
-            if ( c == 'q') /* quit */
+            if ( c == 'q' || c == EOF) /* quit */
             {
                 break;
             }
@@ -141,7 +144,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     while ( (gy < 1 || gy > ode_system_size) && i<3);
                     if (i>=10)
                     {
-                        printf("  cancelled, new var set to 1\n");
+                        printf("  cancelled, plot var set to 1\n");
                         gy = 2;
                     }
                     else
@@ -179,7 +182,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                         i++;
                     }
                     while ( p < 0 || p > mu.nbr_pars-1);
-                    printf("  new par: %s\n", mu.name[p]);
+                    printf("  current par: %s\n", mu.name[p]);
                     break;
                 case 'c' : /* change parameter/init values */
                     op = getchar();
@@ -193,23 +196,33 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                         scanf("%d",&i);
                         scanf("%lf",&init.ic[i-1]);
                     }
+                    else if ( op == 't')
+                    {
+                        scanf("%d",&i);
+                        scanf("%lf",tspan+i);
+                    }
                     status = odesolver(ode_rhs, init, mu, tspan);
                     replot = 1;
                     break;
                 case 'h' : /* help */
                     break;
-                case 's' : /* save file */
-                    break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     load_params(params_filename,mu.name,mu.par);
                     load_double(params_filename, init.ic, ode_system_size, ic_string, ic_len);
+                    status = odesolver(ode_rhs, init, mu, tspan);
                     replot = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
                     line = fgetln(stdin, &linecap);
-                    fprintf(gnuplot_pipe,"%s", line);
+                    fprintf(gnuplot_pipe,"%s\n", line);
                     fflush(gnuplot_pipe);
                     replot = 1;
+                    break;
+                case 's' : /* save file */
+                    time_stamp = clock();
+                    snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
+                    file_status = rename(temp_buffer,buffer);
+                    file_status = fprintf_params(init,mu,tspan,time_stamp);
                     break;
                 default :
                     printf("  type q to quit\n");
@@ -247,7 +260,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     double h = 1e-1;
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
-    const char temp_buffer[] = "temp.dat";
+    const char temp_buffer[] = "temp.tab";
     int32_t i;
     
     /* tspan parameters */
@@ -294,7 +307,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf(file,"%.5e ",t);
         for (i = 0; i < ode_system_size; i++)
         {
-            fprintf (file,"%.5e ",y[i]); 
+            fprintf (file,"\t%.5e",y[i]); 
         }
         fprintf(file,"\n");
     }
@@ -398,7 +411,7 @@ void load_params(const char *filename, char **params_names, double *params_value
             sscanf(line+pos0,"%lf",&par_val);
             params_values[i_par] = par_val;
 
-            printf("par %s = ",params_names[i_par]);
+            printf("  [%d] %-20s =",i_par,params_names[i_par]);
             printf(" %f\n",par_val);
             i_par++;
         }
@@ -419,7 +432,7 @@ int8_t load_double(const char *filename, double *mypars, size_t len, const char 
     size_t k = 0;
     int8_t success = 0;
     fr = fopen (filename, "rt");
-    printf("%s: ",sym);
+    printf("  %s: ",sym);
     /* search for keyword sym */
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
@@ -458,7 +471,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     size_t k = 0;
     int8_t success = 0;
     fr = fopen (filename, "rt");
-    printf("%s: ",sym);
+    printf("  %s: ",sym);
     /* search for keyword sym */
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
@@ -483,4 +496,31 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     fclose(fr);
     return success;
 } 
+
+int8_t fprintf_params(struct initialconditions init, struct parameters mu, double tspan[2], clock_t time_stamp)
+{
+    int8_t success = 0;
+    size_t i;
+    FILE *fr;
+    char buffer[MAXFILENAMELENGTH];
+    snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
+    fr = fopen(buffer,"w");
+    fprintf(fr,"ic ");
+    for(i=0;i<init.ode_system_size;i++)
+    {
+        fprintf(fr,"%.5e ",init.ic[i]);
+    }
+    fprintf(fr,"\n\n");
+    for(i=0;i<mu.nbr_pars;i++)
+    {
+        fprintf(fr,"P%zu %s %.5e\n",i,mu.name[i],mu.par[i]);
+    }
+    fprintf(fr,"\nsize %d\n\n",init.ode_system_size);
+    fprintf(fr,"tspan %f %f\n",tspan[0],tspan[1]);
+
+
+    fclose(fr);
+
+    return success;
+}
 
