@@ -91,9 +91,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     }
 
     int status;
-    int c, p = 0;
+    int c, p, op = 0;
     int32_t gx = 1,gy = 2;
     int replot = 0;
+    size_t linecap;
+    char *line = NULL;
 
 
     status = odesolver(ode_rhs, init, mu, tspan);
@@ -129,7 +131,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     i = 0;
                     do
                     {
-                        printf("  choose var [1-%d]: ", ode_system_size);
+                        if (i>0)
+                        {
+                            printf("  choose var [1-%d]: ", ode_system_size);
+                        }
                         scanf("%d",&gy);
                         i++;
                     }
@@ -146,23 +151,65 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     replot = 1;
                     break;
                 case 'l' : /* list parameters */
-                    for (i=0; i<mu.nbr_pars; i++)
+                    op = getchar();
+                    if ( op  == 'i')
                     {
-                        printf("  [%d] %s = %f\n",i,mu.name[i],mu.par[i]);
+                        for (i=0; i<ode_system_size; i++)
+                        {
+                            printf("  [%d] %e\n",i,init.ic[i]);
+                        }
+                    }
+                    else
+                    {
+                        for (i=0; i<mu.nbr_pars; i++)
+                        {
+                            printf("  [%d] %-20s = %e\n",i,mu.name[i],mu.par[i]);
+                        }
                     }
                     break;
-                case 'p' : /* change parameter */
-                    printf("  choose parameter [0-%d]:", mu.nbr_pars-1);
+                case 'p' : /* change current parameter */
+                    i = 0;
                     do
+                    {
+                        if (i > 0)
+                        {
+                            printf("  choose parameter [0-%d]:", mu.nbr_pars-1);
+                        }
                         scanf("%d",&p);
+                        i++;
+                    }
                     while ( p < 0 || p > mu.nbr_pars-1);
                     printf("  new par: %s\n", mu.name[p]);
                     break;
-                case 'i' : /* change init conditions */
+                case 'c' : /* change parameter/init values */
+                    op = getchar();
+                    if( op == 'p')
+                    {
+                        scanf("%d",&p);
+                        scanf("%lf",&mu.par[p]);
+                    }
+                    else if ( op == 'i')
+                    {
+                        scanf("%d",&i);
+                        scanf("%lf",&init.ic[i-1]);
+                    }
+                    status = odesolver(ode_rhs, init, mu, tspan);
+                    replot = 1;
                     break;
                 case 'h' : /* help */
                     break;
                 case 's' : /* save file */
+                    break;
+                case 'd' : /* reset parameters and initial cond to defaults */
+                    load_params(params_filename,mu.name,mu.par);
+                    load_double(params_filename, init.ic, ode_system_size, ic_string, ic_len);
+                    replot = 1;
+                    break;
+                case 'g' : /* issue a gnuplot command */
+                    line = fgetln(stdin, &linecap);
+                    fprintf(gnuplot_pipe,"%s", line);
+                    fflush(gnuplot_pipe);
+                    replot = 1;
                     break;
                 default :
                     printf("  type q to quit\n");
