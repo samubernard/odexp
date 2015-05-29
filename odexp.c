@@ -50,8 +50,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     int c, p=0, op = 0;
     int32_t gx = 1,gy = 2;
     int replot = 0;
-    size_t linecap;
-    char *line = NULL;
+    char line[255];
     clock_t time_stamp;
     char buffer[MAXFILENAMELENGTH];
 
@@ -213,7 +212,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     replot = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
-                    line = fgetln(stdin, &linecap);
+                    fgets(line, 255, stdin);
                     fprintf(gnuplot_pipe,"%s\n", line);
                     fflush(gnuplot_pipe);
                     replot = 1;
@@ -503,8 +502,14 @@ int8_t fprintf_params(struct initialconditions init, struct parameters mu, doubl
     size_t i;
     FILE *fr;
     char buffer[MAXFILENAMELENGTH];
+    char line[255];
+
     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
     fr = fopen(buffer,"w");
+
+    fgets(line, 255, stdin);
+
+    fprintf(fr,"# %s\n",line);
     fprintf(fr,"ic ");
     for(i=0;i<init.ode_system_size;i++)
     {
