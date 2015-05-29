@@ -130,7 +130,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     replot = 1;
                     break;
                 case 'r' : /* replot */
-                    fprintf(gnuplot_pipe,"replot\n", line);
+                    fprintf(gnuplot_pipe,"replot\n");
                     fflush(gnuplot_pipe);
                     break;
                 case 'x' :
@@ -208,6 +208,25 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     replot = 1;
                     break;
                 case 'h' : /* help */
+                    printf("  list of commands\n");
+                    printf("  N = ODE system size, P = number of paramters\n");
+                    printf("    + or =                    increment current par by factor 1.1\n");
+                    printf("    -                         decrement current par by factor 1.1\n");
+                    printf("    r       (r)eplot          repeat the last gnuplot command\n");
+                    printf("    x       plot(x)           plot variable x\n");
+                    printf("    l       (l)ist            list all parameters and their values\n");
+                    printf("      lp    (l)ist (p)ar      list all parameters and their values\n");
+                    printf("      li    (l)ist (i)nit     list all initial conditions\n");
+                    printf("    c       (c)hange          change value of parameter, init cond, or tpsan\n");
+                    printf("      cp[i] [v]               set value of parameter i to v (i=0 to P-1)\n");
+                    printf("      ci[i] [v]               set value of init cond i to v (i=1 to N)\n");
+                    printf("      ct[i] [v]               set value of ti to v (i = 0 or 1)\n");
+                    printf("    h       (h)elp            this help\n");
+                    printf("    d       (d)efaults        reload the parameter file\n");
+                    printf("    g [cmd] (g)nuplot         send the command cmd to gnuplot\n");
+                    printf("    p[i]    (p)ar             set the current parameter to i\n");
+                    printf("    s [msg] (s)ave            save current simulation and parameter values\n");
+                    printf("    q       (q)uit            save current simulation and parameter values\n");
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     load_params(params_filename,mu.name,mu.par);
@@ -243,7 +262,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
     }
     
-    printf("quitting...\n");
+    printf("bye...\n");
 
     pclose(gnuplot_pipe);
 
