@@ -20,35 +20,16 @@
 /* main loop */
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) )
 {
-    int status;
-    FILE *gnuplot_pipe = popen("gnuplot","w");
 
-    status = odesolver(ode_rhs);
-
-    fprintf(gnuplot_pipe,"splot \"a-0.300000.dat\" using 2:3:4");
-    fflush(gnuplot_pipe);
-    pclose(gnuplot_pipe);
-
-    return status;
-
-}
-
-int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params) )    
-{
- 
-    double *y;
-    const double hmin = 1e-3;
-    double h = 1e-1;
-    FILE *file;
-    char buffer[MAXFILENAMELENGTH];
+    FILE *gnuplot_pipe = popen("gnuplot -persist","w");
+    const char temp_buffer[] = "temp.dat";
     int32_t i;
     const char params_filename[] = "params.in";
     int8_t success;
     
     /* tspan parameters */
-    double t, dt, t1, next_t;
-    double tspan[3];
     const char ts_string[] = "tspan"; 
+    double tspan[2];
     const size_t ts_len = 5;
 
     /* system size */
@@ -64,20 +45,13 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     const char ic_string[] = "ic";
     const size_t ic_len = 2;
 
-    /* gsl ode */
-    const gsl_odeiv_step_type * odeT;
-    gsl_odeiv_step * s;
-    gsl_odeiv_control * c;
-    gsl_odeiv_evolve * e;
-    gsl_odeiv_system sys; 
-    int status;
 
     /* begin */
     printf("params filename: %s\n",params_filename);
 
     /* get tspan */
     printf("/* get tspan */\n");
-    success = load_double(params_filename, tspan, 3, ts_string, ts_len); 
+    success = load_double(params_filename, tspan, 2, ts_string, ts_len); 
     if (!success)
     {
         printf("tspan not defined\n");
@@ -94,11 +68,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
 
     init.ode_system_size = ode_system_size;
-
-    odeT = gsl_odeiv_step_rk4;
-    s = gsl_odeiv_step_alloc(odeT,ode_system_size);
-    c = gsl_odeiv_control_y_new(1e-6,0.0);
-    e = gsl_odeiv_evolve_alloc(ode_system_size);
     
     /* set parameters */
     printf("/* set parameters */\n");
@@ -121,6 +90,138 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         exit ( EXIT_FAILURE );
     }
 
+    int status;
+    int c, p = 0;
+    int32_t gx = 1,gy = 2;
+    int replot = 0;
+
+
+    status = odesolver(ode_rhs, init, mu, tspan);
+    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines\n",temp_buffer,gx,gy);
+    fflush(gnuplot_pipe);
+
+    while(1)
+    {
+        printf("odexp>> ");
+        c = getchar();
+        if ( c != '\n')
+        {
+            if ( c == 'q') /* quit */
+            {
+                break;
+            }
+            switch(c)
+            {
+                case '+' : /* increment the parameter and run */
+                case '=' : /* increment the parameter and run */
+                    mu.par[p] *= 1.1;
+                    printf("%s = %f\n",mu.name[p],mu.par[p]);
+                    status = odesolver(ode_rhs, init, mu, tspan);
+                    replot = 1;
+                    break;
+                case  '-' : /* decrement the parameter and run */
+                    mu.par[p] /= 1.1;
+                    printf("%s = %f\n",mu.name[p],mu.par[p]);
+                    status = odesolver(ode_rhs, init, mu, tspan);
+                    replot = 1;
+                    break;
+                case 'x' :
+                    i = 0;
+                    do
+                    {
+                        printf("  choose var [1-%d]: ", ode_system_size);
+                        scanf("%d",&gy);
+                        i++;
+                    }
+                    while ( (gy < 1 || gy > ode_system_size) && i<3);
+                    if (i>=10)
+                    {
+                        printf("  cancelled, new var set to 1\n");
+                        gy = 2;
+                    }
+                    else
+                    {
+                        gy++;
+                    }
+                    replot = 1;
+                    break;
+                case 'l' : /* list parameters */
+                    for (i=0; i<mu.nbr_pars; i++)
+                    {
+                        printf("  [%d] %s = %f\n",i,mu.name[i],mu.par[i]);
+                    }
+                    break;
+                case 'p' : /* change parameter */
+                    printf("  choose parameter [0-%d]:", mu.nbr_pars-1);
+                    do
+                        scanf("%d",&p);
+                    while ( p < 0 || p > mu.nbr_pars-1);
+                    printf("  new par: %s\n", mu.name[p]);
+                    break;
+                case 'i' : /* change init conditions */
+                    break;
+                case 'h' : /* help */
+                    break;
+                case 's' : /* save file */
+                    break;
+                default :
+                    printf("  type q to quit\n");
+            }   
+            if (replot)    
+            {
+                fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines\n",temp_buffer,gx,gy);
+                fflush(gnuplot_pipe);
+            }
+            fpurge(stdin);
+            replot = 0;
+        }
+        
+
+
+    }
+    
+    printf("quitting...\n");
+
+    pclose(gnuplot_pipe);
+
+    free_parameters( mu );
+    free_initial_conditions( init );
+
+    return status;
+
+}
+
+int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+ struct initialconditions init, struct parameters mu, double tspan[2])    
+{
+ 
+    double *y;
+    const double hmin = 1e-3;
+    double h = 1e-1;
+    FILE *file;
+    /* char buffer[MAXFILENAMELENGTH]; */
+    const char temp_buffer[] = "temp.dat";
+    int32_t i;
+    
+    /* tspan parameters */
+    double t, t1;
+
+    /* system size */
+    int32_t ode_system_size = init.ode_system_size;
+
+    /* gsl ode */
+    const gsl_odeiv_step_type * odeT;
+    gsl_odeiv_step * s;
+    gsl_odeiv_control * c;
+    gsl_odeiv_evolve * e;
+    gsl_odeiv_system sys; 
+    int status;
+
+    odeT = gsl_odeiv_step_rk4;
+    s = gsl_odeiv_step_alloc(odeT,ode_system_size);
+    c = gsl_odeiv_control_y_new(1e-6,0.0);
+    e = gsl_odeiv_evolve_alloc(ode_system_size);
+
     y = malloc(ode_system_size*sizeof(double));
     for (i = 0; i < ode_system_size; i++)
     {
@@ -129,37 +230,30 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 
     /* open output file */
-    snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%s-%f.dat",mu.name[0],mu.par[0]);
-    file = fopen(buffer,"w");
+    /* snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%s-%f.dat",mu.name[0],mu.par[0]); */
+    file = fopen(temp_buffer,"w");
     t = tspan[0];
-    dt = tspan[1];
-    t1 = tspan[2];
-    next_t = t + dt;
+    t1 = tspan[1];
 
-    printf("running...\n");
+    printf("running... ");
     while (t < t1)
     {
-        
-        while( t < next_t)
-        {
-            sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
-            status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,next_t,&h,y);
-            if (status != GSL_SUCCESS)
+        sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
+        status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,t1,&h,y);
+        if (status != GSL_SUCCESS)
                 break;
-        }
 
-        if (h < hmin) h = hmin;
+        h = fmax(h,hmin);
         fprintf(file,"%.5e ",t);
         for (i = 0; i < ode_system_size; i++)
         {
             fprintf (file,"%.5e ",y[i]); 
         }
         fprintf(file,"\n");
-        next_t = fmin(t + dt,t1);
     }
     if (status == GSL_SUCCESS)
     {
-        printf("done (GSL STATUS = %d).\n", status);
+        printf("done.\n");
     }
     else
     {
@@ -173,8 +267,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     gsl_odeiv_step_free(s);
     
     free(y);
-  	free_parameters( mu );
-    free_initial_conditions( init );
       
     return status;
 

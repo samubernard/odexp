@@ -34,7 +34,8 @@ struct initialconditions
 
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
 
-int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
+int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+ struct initialconditions init, struct parameters mu, double tspan[2]);
 
 void free_parameters(struct parameters mu );
 
