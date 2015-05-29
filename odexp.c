@@ -129,6 +129,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     status = odesolver(ode_rhs, init, mu, tspan);
                     replot = 1;
                     break;
+                case 'r' : /* replot */
+                    fprintf(gnuplot_pipe,"replot\n", line);
+                    fflush(gnuplot_pipe);
+                    break;
                 case 'x' :
                     i = 0;
                     do
