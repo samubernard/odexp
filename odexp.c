@@ -120,8 +120,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
 
     status = odesolver(ode_rhs, init, mu, tspan);
-    fprintf(gnuplot_pipe,"set key title \"var %d\"\n",gy);
-    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines\n",temp_buffer,gx,gy);
+    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
     fflush(gnuplot_pipe);
 
     while(1)
@@ -159,20 +158,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     {
                         if (i>0)
                         {
-                            printf("  choose var [1-%d]: ", ode_system_size);
+                            printf("  choose var [0-%d]: ", ode_system_size-1);
                         }
                         scanf("%d",&gy);
                         i++;
                     }
-                    while ( (gy < 1 || gy > ode_system_size) && i<3);
-                    if (i>=10)
+                    while ( (gy < 0 || gy > ode_system_size-1) && i<3);
+                    if (i>=3)
                     {
-                        printf("  cancelled, plot var set to 1\n");
+                        printf("  cancelled, plot var set to 0\n");
                         gy = 2;
                     }
                     else
                     {
-                        gy++;
+                        gy += 2;
                     }
                     replot = 1;
                     break;
@@ -246,7 +245,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     printf("      li    (l)ist (i)nit     list all initial conditions\n");
                     printf("    c       (c)hange          change value of parameter, init cond, or tpsan\n");
                     printf("      cp[i] [v]               set value of parameter i to v (i=0 to P-1)\n");
-                    printf("      ci[i] [v]               set value of init cond i to v (i=1 to N)\n");
+                    printf("      ci[i] [v]               set value of init cond i to v (i=0 to N-1)\n");
                     printf("      ct[i] [v]               set value of ti to v (i = 0 or 1)\n");
                     printf("    h       (h)elp            this help\n");
                     printf("    d       (d)efaults        reload the parameter file\n");
@@ -278,7 +277,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
             }   
             if (replot)    
             {
-                fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines\n",temp_buffer,gx,gy);
+                fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
                 fflush(gnuplot_pipe);
             }
             fpurge(stdin);
