@@ -35,19 +35,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
     /* system size */
     int32_t ode_system_size;
-    const char ode_size_string[] = "size";
-    const size_t ode_size_len = 4;
 
     /* parameters */
     struct parameters mu;
 
     /* variables */
     struct nameval var;
-
-    /* initial conditions */
-    struct initialconditions init;
-    const char ic_string[] = "ic";
-    const size_t ic_len = 2;
 
     int status, file_status;
     int c, p=0, op = 0;
@@ -69,17 +62,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
         printf("tspan not defined\n");
         exit ( EXIT_FAILURE );
     }
-
-    /* init ODE system */
-    printf("/* init ODE system */\n");
-    success = load_int(params_filename, &ode_system_size, 1, ode_size_string, ode_size_len);
-    if (!success)
-    {
-        printf("size not defined\n");
-        exit ( EXIT_FAILURE );
-    }
-
-    init.ode_system_size = ode_system_size;
     
     /* get parameters */
     printf("/* get parameters */\n");
@@ -108,16 +90,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
         exit ( EXIT_FAILURE );
     } 
 
-    /* get initial conditions */
-    printf("/* get initial conditions */\n");
-    init.ic = malloc(ode_system_size*sizeof(double));
-    success = load_double(params_filename, init.ic, ode_system_size, ic_string, ic_len);
-    if (!success)
-    {
-        printf("ic not defined\n");
-        exit ( EXIT_FAILURE );
-    }
-
+    ode_system_size = var.nbr_el;
 
     status = odesolver(ode_rhs, var, mu, tspan);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
@@ -293,7 +266,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     pclose(gnuplot_pipe);
 
     free_parameters( mu );
-    free_initial_conditions( init );
     free_name_value( var );
 
     return status;
