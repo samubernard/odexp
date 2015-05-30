@@ -101,7 +101,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     {
         var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    success = load_name_value(params_filename,var.name,var.value,"X",1);   
+    success = load_nameval(params_filename,var,"X",1);   
     if (!success)
     {
         printf("vars not defined\n");
@@ -119,7 +119,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     }
 
 
-    status = odesolver(ode_rhs, init, mu, tspan);
+    status = odesolver(ode_rhs, var, mu, tspan);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
     fflush(gnuplot_pipe);
 
@@ -139,13 +139,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                 case '=' : /* increment the parameter and run */
                     mu.par[p] *= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.par[p]);
-                    status = odesolver(ode_rhs, init, mu, tspan);
+                    status = odesolver(ode_rhs, var, mu, tspan);
                     replot = 1;
                     break;
                 case  '-' : /* decrement the parameter and run */
                     mu.par[p] /= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.par[p]);
-                    status = odesolver(ode_rhs, init, mu, tspan);
+                    status = odesolver(ode_rhs, var, mu, tspan);
                     replot = 1;
                     break;
                 case 'r' : /* replot */
@@ -181,7 +181,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
-                            printf("  [%d] %e\n",i,init.ic[i]);
+                            printf("  [%d] %e\n",i,var.value[i]);
                         }
                     }
                     else if (op == 'p')
@@ -223,14 +223,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     else if ( op == 'i')
                     {
                         scanf("%d",&i);
-                        scanf("%lf",&init.ic[i-1]);
+                        scanf("%lf",&var.value[i]);
                     }
                     else if ( op == 't')
                     {
                         scanf("%d",&i);
                         scanf("%lf",tspan+i);
                     }
-                    status = odesolver(ode_rhs, init, mu, tspan);
+                    status = odesolver(ode_rhs, var, mu, tspan);
                     replot = 1;
                     break;
                 case 'h' : /* help */
@@ -256,8 +256,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     load_params(params_filename,mu.name,mu.par);
-                    load_double(params_filename, init.ic, ode_system_size, ic_string, ic_len);
-                    status = odesolver(ode_rhs, init, mu, tspan);
+                    load_nameval(params_filename, var, "X", 1);
+                    status = odesolver(ode_rhs, var, mu, tspan);
                     replot = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
@@ -270,7 +270,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     time_stamp = clock();
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
                     file_status = rename(temp_buffer,buffer);
-                    file_status = fprintf_params(init,mu,tspan,time_stamp);
+                    file_status = fprintf_params(var,mu,tspan,time_stamp);
                     break;
                 default :
                     printf("  type q to quit\n");
@@ -294,13 +294,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
     free_parameters( mu );
     free_initial_conditions( init );
+    free_name_value( var );
 
     return status;
 
 }
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- struct initialconditions init, struct parameters mu, double tspan[2])    
+ struct nameval init, struct parameters mu, double tspan[2])    
 {
  
     double *y;
@@ -315,7 +316,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     double t, t1;
 
     /* system size */
-    int32_t ode_system_size = init.ode_system_size;
+    int32_t ode_system_size = init.nbr_el;
 
     /* gsl ode */
     const gsl_odeiv_step_type * odeT;
@@ -333,7 +334,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     y = malloc(ode_system_size*sizeof(double));
     for (i = 0; i < ode_system_size; i++)
     {
-        y[i] = init.ic[i];
+        y[i] = init.value[i];
     }
 
 
@@ -389,6 +390,17 @@ void free_parameters(struct parameters mu )
         free(mu.name[i]);
     }
     free(mu.name);
+}
+
+void free_name_value(struct nameval var )
+{
+    int32_t i;
+    free(var.value);
+    for (i = 0; i < var.nbr_el; i++)
+    {
+        free(var.name[i]);
+    }
+    free(var.name);
 }
 
 void free_initial_conditions(struct initialconditions init )
@@ -495,7 +507,7 @@ int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
 }
 
 
-int8_t load_name_value(const char *filename, char **names, double *values, const char *sym, const size_t sym_len)
+int8_t load_nameval(const char *filename, struct nameval var, const char *sym, const size_t sym_len)
 {
     size_t i = 0;
     size_t pos0, pos1, k = 0;
@@ -533,17 +545,17 @@ int8_t load_name_value(const char *filename, char **names, double *values, const
                 length_name = MAXPARNAMELENGTH;
             }
 
-            names[i] = malloc(length_name*sizeof(char));
-            strncpy(names[i],line+pos0,length_name); 
+            var.name[i] = malloc(length_name*sizeof(char));
+            strncpy(var.name[i],line+pos0,length_name); 
 
             pos0 = pos1+1;
             while(line[pos0] == ' ')
                 pos0++;
             
             sscanf(line+pos0,"%lf",&val);
-            values[i] = val;
+            var.value[i] = val;
 
-            printf("  [%zu] %-20s =",i,names[i]);
+            printf("  [%zu] %-20s =",i,var.name[i]);
             printf(" %f\n",val);
             i++;
         }
@@ -631,7 +643,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_params(struct initialconditions init, struct parameters mu, double tspan[2], clock_t time_stamp)
+int8_t fprintf_params(struct nameval init, struct parameters mu, double tspan[2], clock_t time_stamp)
 {
     int8_t success = 0;
     size_t i;
@@ -646,16 +658,16 @@ int8_t fprintf_params(struct initialconditions init, struct parameters mu, doubl
 
     fprintf(fr,"# %s\n",line);
     fprintf(fr,"ic ");
-    for(i=0;i<init.ode_system_size;i++)
+    for(i=0;i<init.nbr_el;i++)
     {
-        fprintf(fr,"%.5e ",init.ic[i]);
+        fprintf(fr,"%.5e ",init.value[i]);
     }
     fprintf(fr,"\n\n");
     for(i=0;i<mu.nbr_pars;i++)
     {
         fprintf(fr,"P%zu %s %.5e\n",i,mu.name[i],mu.par[i]);
     }
-    fprintf(fr,"\nsize %d\n\n",init.ode_system_size);
+    fprintf(fr,"\nsize %d\n\n",init.nbr_el);
     fprintf(fr,"tspan %f %f\n",tspan[0],tspan[1]);
 
 

@@ -42,11 +42,14 @@ struct initialconditions
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- struct initialconditions init, struct parameters mu, double tspan[2]);
+ struct nameval init, struct parameters mu, double tspan[2]);
 
 void free_parameters(struct parameters mu );
 
 void free_initial_conditions(struct initialconditions init );
+
+void free_name_value(struct nameval mu );
+
 
 int32_t get_nbr_params(const char *filename);
 
@@ -54,14 +57,14 @@ void load_params(const char *filename, char **params_names, double *params_value
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len);
 
-int8_t load_name_value(const char *filename, char **names, double *values, const char *sym, const size_t sym_len);
+int8_t load_nameval(const char *filename, struct nameval var, const char *sym, const size_t sym_len);
 
 int8_t load_double(const char *filename, double *vect, size_t len, \
         const char *sym, size_t sym_len);
 
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
-int8_t fprintf_params(struct initialconditions init, struct parameters mu, double tspan[2], clock_t time_stamp);
+int8_t fprintf_params(struct nameval init, struct parameters mu, double tspan[2], clock_t time_stamp);
 
 
 
