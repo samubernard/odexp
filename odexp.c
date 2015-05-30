@@ -176,7 +176,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     }
                     replot = 1;
                     break;
-                case 'l' : /* list parameters */
+                case 'l' : /* list name value pairs */
                     op = getchar();
                     if ( op  == 'i')
                     {
@@ -185,11 +185,18 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                             printf("  [%d] %e\n",i,init.ic[i]);
                         }
                     }
-                    else
+                    else if (op == 'p')
                     {
                         for (i=0; i<mu.nbr_pars; i++)
                         {
                             printf("  [%d] %-20s = %e\n",i,mu.name[i],mu.par[i]);
+                        }
+                    }
+                    else if (op == 'x')
+                    {
+                        for (i=0; i<ode_system_size; i++)
+                        {
+                            printf("  [%d] %-20s = %e\n",i,var.name[i],var.value[i]);
                         }
                     }
                     break;
@@ -229,7 +236,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     break;
                 case 'h' : /* help */
                     printf("  list of commands\n");
-                    printf("  N = ODE system size, P = number of paramters\n");
+                    printf("  N = ODE system size, P = number of parameters\n");
                     printf("    + or =                    increment current par by factor 1.1\n");
                     printf("    -                         decrement current par by factor 1.1\n");
                     printf("    r       (r)eplot          repeat the last gnuplot command\n");
