@@ -78,8 +78,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
     init.ode_system_size = ode_system_size;
     
-    /* set parameters */
-    printf("/* set parameters */\n");
+    /* get parameters */
+    printf("/* get parameters */\n");
     mu.nbr_pars = get_nbr_params(params_filename);
     mu.par = malloc(mu.nbr_pars*sizeof(double));
     mu.name = malloc(mu.nbr_pars*sizeof(char*));
@@ -88,6 +88,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
         mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
     load_params(params_filename,mu.name,mu.par);
+
+    /* get variable names */
+    printf("/* get variable names */\n");
+    mu.nbr_pars = get_nbr_params(params_filename);
+    mu.par = malloc(mu.nbr_pars*sizeof(double));
+    mu.name = malloc(mu.nbr_pars*sizeof(char*));
+    for (i = 0; i < mu.nbr_pars; i++)
+    {
+        mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+    }
+    load_params(params_filename,mu.name,mu.par);    
 
     /* set initial conditions */
     printf("/* set initial conditions */\n");
@@ -101,6 +112,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
 
     status = odesolver(ode_rhs, init, mu, tspan);
+    fprintf(gnuplot_pipe,"set key title \"var %d\"\n",gy);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines\n",temp_buffer,gx,gy);
     fflush(gnuplot_pipe);
 
@@ -440,6 +452,65 @@ void load_params(const char *filename, char **params_names, double *params_value
 
     }
     fclose(fr);
+}
+
+int8_t load_name_value(const char *filename, char **names, double *values, const char *sym, size_t sym_len)
+{
+    size_t i = 0;
+    size_t pos0, pos1, k = 0;
+    size_t length_name;
+    ssize_t linelength;
+    size_t linecap = 0;
+    char *line = NULL;
+    FILE *fr;
+    double val;
+    int8_t success = 0;
+    fr = fopen (filename, "rt");
+    while( (linelength = getline(&line, &linecap, fr)) > 0)
+    {
+        while(line[k] == sym[k] && !isspace(line[k]) && \
+                k < sym_len && k < linelength)
+        {
+            k++;
+        }
+        if(line[k] == ' ' && k == sym_len) /* keyword was found */
+        {
+            success = 1;
+            pos0 = k;
+            while(line[pos0] != ' ')
+                pos0++;
+            while(line[pos0] == ' ')
+                pos0++;
+            
+            pos1 = pos0;
+            while(line[pos1] != ' ')
+                pos1++;
+
+            length_name = pos1-pos0;
+            if (length_name > MAXPARNAMELENGTH)
+            {
+                length_name = MAXPARNAMELENGTH;
+            }
+
+            names[i] = malloc(length_name*sizeof(char));
+            strncpy(names[i],line+pos0,length_name); 
+
+            pos0 = pos1+1;
+            while(line[pos0] == ' ')
+                pos0++;
+            
+            sscanf(line+pos0,"%lf",&val);
+            values[i] = val;
+
+            printf("  [%zu] %-20s =",i,names[i]);
+            printf(" %f\n",val);
+            i++;
+        }
+        k = 0; /* reset k */
+    }
+    fclose(fr);
+
+    return success;
 }
 
 int8_t load_double(const char *filename, double *mypars, size_t len, const char *sym, size_t sym_len)
