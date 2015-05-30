@@ -41,6 +41,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     /* parameters */
     struct parameters mu;
 
+    /* variables */
+    struct nameval var;
+
     /* initial conditions */
     struct initialconditions init;
     const char ic_string[] = "ic";
@@ -91,17 +94,22 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
     /* get variable names */
     printf("/* get variable names */\n");
-    mu.nbr_pars = get_nbr_params(params_filename);
-    mu.par = malloc(mu.nbr_pars*sizeof(double));
-    mu.name = malloc(mu.nbr_pars*sizeof(char*));
-    for (i = 0; i < mu.nbr_pars; i++)
+    var.nbr_el = get_nbr_el(params_filename,"X",1);
+    var.value = malloc(var.nbr_el*sizeof(double));
+    var.name = malloc(var.nbr_el*sizeof(char*));
+    for (i = 0; i < var.nbr_el; i++)
     {
-        mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    load_params(params_filename,mu.name,mu.par);    
+    success = load_name_value(params_filename,var.name,var.value,"X",1);   
+    if (!success)
+    {
+        printf("vars not defined\n");
+        exit ( EXIT_FAILURE );
+    } 
 
-    /* set initial conditions */
-    printf("/* set initial conditions */\n");
+    /* get initial conditions */
+    printf("/* get initial conditions */\n");
     init.ic = malloc(ode_system_size*sizeof(double));
     success = load_double(params_filename, init.ic, ode_system_size, ic_string, ic_len);
     if (!success)
@@ -454,7 +462,34 @@ void load_params(const char *filename, char **params_names, double *params_value
     fclose(fr);
 }
 
-int8_t load_name_value(const char *filename, char **names, double *values, const char *sym, size_t sym_len)
+int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
+{
+    int32_t nbr_el = 0;
+    size_t k = 0;
+    ssize_t linelength;
+    size_t linecap = 0;
+    char *line = NULL;
+    FILE *fr;
+    fr = fopen (filename, "rt");
+    while( (linelength = getline(&line,&linecap,fr)) > 0)
+    {
+        while(line[k] == sym[k] && !isspace(line[k]) && \
+                k < sym_len && k < linelength)
+        {
+            k++;
+        }
+        if(k == sym_len) /* keyword was found */
+        {
+            nbr_el++;
+        }
+        k = 0; /* reset k */
+    }
+    fclose(fr);
+    return nbr_el;
+}
+
+
+int8_t load_name_value(const char *filename, char **names, double *values, const char *sym, const size_t sym_len)
 {
     size_t i = 0;
     size_t pos0, pos1, k = 0;
@@ -473,7 +508,7 @@ int8_t load_name_value(const char *filename, char **names, double *values, const
         {
             k++;
         }
-        if(line[k] == ' ' && k == sym_len) /* keyword was found */
+        if(k == sym_len) /* keyword was found */
         {
             success = 1;
             pos0 = k;
