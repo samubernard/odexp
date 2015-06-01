@@ -13,6 +13,9 @@
 #include <gsl/gsl_odeiv.h>
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_eigen.h>                              
+
 
 
 /* =================================================================
@@ -444,14 +447,18 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f), nv var, nv mu)
 {
+    
+
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
     int status;
-    size_t i, iter = 0;
+    size_t i,j, iter = 0;
 
     const size_t n = var.nbr_el;
     gsl_multiroot_function f = {multiroot_rhs, n, &mu};
+
+    gsl_matrix *J = gsl_matrix_alloc(n,n);
 
     gsl_vector *x = gsl_vector_alloc(n);
     for ( i=0; i<n; i++)
@@ -495,8 +502,43 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
         var.value[i] = gsl_vector_get(s->x,i);
     }
 
+    gsl_multiroot_fdjacobian(&f, s->x, s->f, 1e-6, J);
+    for (i=0;i<n;i++)
+    {
+        for(j=0;j<n;j++)
+        {
+            printf("%.2e ",gsl_matrix_get(J,i,j));
+        }
+        printf("\n");
+    }
+
+    eig(J);
+
+
     gsl_multiroot_fsolver_free(s);
     gsl_vector_free(x);
+
+    return status;
+
+}
+
+int eig(gsl_matrix *J)
+{
+    int status;
+    gsl_vector_view re;
+    gsl_vector_view im;
+    const size_t n = J->size1;
+    gsl_vector_complex *eval = gsl_vector_complex_alloc(n);
+    
+    gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(n);
+
+    status = gsl_eigen_nonsymm(J, eval, w);
+
+    re = gsl_vector_complex_real(eval);
+    im = gsl_vector_complex_imag(eval);
+
+    printf("Eigenvalues\n");
+    gsl_vector_complex_fprintf(stdout,eval,"  %.5e");
 
     return status;
 

@@ -43,6 +43,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f), nv var, nv mu);
 
+int eig(gsl_matrix *J);
+
 void free_name_value(struct nameval mu );
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len);
