@@ -16,13 +16,18 @@
 #define MAXFILENAMELENGTH 63
 
 
-struct nameval
+typedef struct nameval
 {
     double *value;
     char **name;
     int32_t nbr_el;
     int *max_name_length;
-};
+} nv;
+
+typedef struct options
+{
+    int32_t ntsteps;
+} options;
 
 
 
@@ -31,7 +36,7 @@ struct nameval
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- struct nameval init, struct nameval mu, double tspan[2]);
+ nv init, nv mu, double tspan[2], options opts);
 
 void free_name_value(struct nameval mu );
 

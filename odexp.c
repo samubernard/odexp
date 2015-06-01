@@ -37,10 +37,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     int32_t ode_system_size;
 
     /* parameters */
-    struct nameval mu;
+    nv mu;
 
     /* variables */
-    struct nameval var;
+    nv var;
+
+    /* options */
+    options opts;
 
     int status, file_status;
     int c, p=0, op = 0;
@@ -92,9 +95,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
         exit ( EXIT_FAILURE );
     } 
 
+    /* get options */
+    printf("  getting variable names and initial conditions\n");
+    opts.ntsteps = 201;
+ 
+
+
     ode_system_size = var.nbr_el;
 
-    status = odesolver(ode_rhs, var, mu, tspan);
+    status = odesolver(ode_rhs, var, mu, tspan, opts);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
     fflush(gnuplot_pipe);
 
@@ -114,18 +123,30 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                 case '=' : /* increment the parameter and run */
                     mu.value[p] *= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
-                    status = odesolver(ode_rhs, var, mu, tspan);
+                    status = odesolver(ode_rhs, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case  '-' : /* decrement the parameter and run */
                     mu.value[p] /= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
-                    status = odesolver(ode_rhs, var, mu, tspan);
+                    status = odesolver(ode_rhs, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case 'r' : /* replot */
                     fprintf(gnuplot_pipe,"replot\n");
                     fflush(gnuplot_pipe);
+                    break;
+                case '>' : /* increase resolution */
+                    opts.ntsteps <<= 1;
+                    opts.ntsteps--;
+                    status = odesolver(ode_rhs, var, mu, tspan, opts);
+                    replot = 1;
+                    break;
+                case '<' : /* decrease resolution */
+                    opts.ntsteps >>= 1;
+                    opts.ntsteps++;
+                    status = odesolver(ode_rhs, var, mu, tspan, opts);
+                    replot = 1;
                     break;
                 case 'x' :
                     i = 0;
@@ -205,7 +226,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                         scanf("%d",&i);
                         scanf("%lf",tspan+i);
                     }
-                    status = odesolver(ode_rhs, var, mu, tspan);
+                    status = odesolver(ode_rhs, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case 'h' : /* help */
@@ -232,7 +253,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                 case 'd' : /* reset parameters and initial cond to defaults */
                     load_nameval(params_filename, mu, "P", 1);
                     load_nameval(params_filename, var, "X", 1);
-                    status = odesolver(ode_rhs, var, mu, tspan);
+                    status = odesolver(ode_rhs, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
@@ -275,7 +296,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 }
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- struct nameval init, struct nameval mu, double tspan[2])    
+ nv init, nv mu, double tspan[2], options opts)    
 {
  
     double *y;
@@ -312,6 +333,9 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         y[i] = init.value[i];
     }
 
+    /* options */
+    /* possible option: ntsteps */
+    nbr_out = opts.ntsteps;
 
     /* open output file */
     file = fopen(temp_buffer,"w");
@@ -360,7 +384,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 }
 
 
-void free_name_value(struct nameval var )
+void free_name_value(nv var )
 {
     int32_t i;
     free(var.value);
@@ -399,7 +423,7 @@ int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
 }
 
 
-int8_t load_nameval(const char *filename, struct nameval var, const char *sym, const size_t sym_len)
+int8_t load_nameval(const char *filename, nv var, const char *sym, const size_t sym_len)
 {
     size_t i = 0;
     size_t pos0, pos1, k = 0;
@@ -408,7 +432,6 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
     size_t linecap = 0;
     char *line = NULL;
     FILE *fr;
-    double val = 0.0;
     int8_t success = 0;
     fr = fopen (filename, "rt");
 
@@ -434,7 +457,6 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
                 pos1++;
 
             length_name = pos1-pos0;
-            /* printf("test: %zu\n",length_name); */
             if (length_name > MAXPARNAMELENGTH)
             {
                 length_name = MAXPARNAMELENGTH;
@@ -444,11 +466,10 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
             if(length_name > *var.max_name_length)
             {
                 *var.max_name_length = length_name;
-                printf("test: %d",*var.max_name_length);
             }
 
             printf("  [%zu] %-*s=",i,*var.max_name_length+2,var.name[i]);
-            printf(" %f length name %zu\n",val,length_name);
+            printf(" %f\n",var.value[i]);
             i++;
         }
         k = 0; /* reset k */
@@ -535,7 +556,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_nameval(struct nameval init, struct nameval mu, double tspan[2], clock_t time_stamp)
+int8_t fprintf_nameval(nv init, nv mu, double tspan[2], clock_t time_stamp)
 {
     int8_t success = 0;
     size_t i;
