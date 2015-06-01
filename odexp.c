@@ -11,6 +11,9 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv.h>
+#include <gsl/gsl_multiroots.h>
+#include <gsl/gsl_vector.h>
+
 
 /* =================================================================
                               Header files
@@ -19,7 +22,8 @@
 #include "odexp.h"
 
 /* main loop */
-int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) )
+int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+    int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f) )
 {
 
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
@@ -98,7 +102,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     } 
 
     /* get options */
-    printf("  getting variable names and initial conditions\n");
+    printf("  getting options\n");
     opts.ntsteps = 201;
  
 
@@ -295,6 +299,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     fflush(gnuplot_pipe);
                     replot = 1;
                     break;
+                case 'm' :
+                    op = getchar();
+                    if ( op  == 's') /* compute steady state */
+                    {
+                        status = ststsolver(multiroot_rhs,var,mu);
+                    }
+                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
+                    break;
                 case EOF :  /* quit without saving */
                     quit = 1;
                     break;
@@ -430,6 +442,65 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 }
 
+int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f), nv var, nv mu)
+{
+    const gsl_multiroot_fsolver_type *T;
+    gsl_multiroot_fsolver *s;
+
+    int status;
+    size_t i, iter = 0;
+
+    const size_t n = var.nbr_el;
+    gsl_multiroot_function f = {multiroot_rhs, n, &mu};
+
+    gsl_vector *x = gsl_vector_alloc(n);
+    for ( i=0; i<n; i++)
+    {
+        gsl_vector_set(x,i,var.value[i]);
+    }
+
+    T = gsl_multiroot_fsolver_hybrids;
+    s = gsl_multiroot_fsolver_alloc(T,n);
+    gsl_multiroot_fsolver_set (s, &f, x);
+
+    printf("  %zu ",iter);
+    for ( i=0; i<n; i++)
+    {
+        printf("%.5e ", gsl_vector_get(s->x,i));
+    }
+    printf("\n");
+
+    do 
+    {
+        iter++;
+        status = gsl_multiroot_fsolver_iterate(s);
+
+        printf("  %zu ",iter);
+        for ( i=0; i<n; i++)
+        {
+            printf("%.5e ", gsl_vector_get(s->x,i));
+        }
+        printf("\n");
+
+        if (status)
+            break;
+
+        status = gsl_multiroot_test_residual(s->f, 1e-7);
+    } while(status == GSL_CONTINUE && iter < 1000);
+
+    printf("  status = %s\n", gsl_strerror(status));
+
+    for ( i=0; i<n; i++)
+    {
+        var.value[i] = gsl_vector_get(s->x,i);
+    }
+
+    gsl_multiroot_fsolver_free(s);
+    gsl_vector_free(x);
+
+    return status;
+
+}
 
 void free_name_value(nv var )
 {

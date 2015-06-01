@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <gsl/gsl_vector.h>
 
 /* =================================================================
                               DEFINE
@@ -33,10 +35,13 @@ typedef struct options
 
 /* function declaration */
 
-int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
+int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+    int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f) );
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  double *lasty, nv init, nv mu, double tspan[2], options opts);
+
+int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f), nv var, nv mu);
 
 void free_name_value(struct nameval mu );
 
