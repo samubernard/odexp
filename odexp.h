@@ -21,8 +21,9 @@ struct nameval
     double *value;
     char **name;
     int32_t nbr_el;
-    int max_name_length;
+    int *max_name_length;
 };
+
 
 
 /* function declaration */

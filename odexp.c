@@ -68,6 +68,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     mu.nbr_el = get_nbr_el(params_filename,"P",1);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
+    mu.max_name_length = malloc(sizeof(int));
     for (i = 0; i < mu.nbr_el; i++)
     {
         mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
@@ -79,6 +80,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     var.nbr_el = get_nbr_el(params_filename,"X",1);
     var.value = malloc(var.nbr_el*sizeof(double));
     var.name = malloc(var.nbr_el*sizeof(char*));
+    var.max_name_length = malloc(sizeof(int));
     for (i = 0; i < var.nbr_el; i++)
     {
         var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
@@ -367,6 +369,7 @@ void free_name_value(struct nameval var )
         free(var.name[i]);
     }
     free(var.name);
+    free(var.max_name_length);
 }
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
@@ -409,7 +412,7 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
     int8_t success = 0;
     fr = fopen (filename, "rt");
 
-    var.max_name_length = 0;
+    *var.max_name_length = 0;
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
         while(line[k] == sym[k] && !isspace(line[k]) && \
@@ -431,18 +434,20 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
                 pos1++;
 
             length_name = pos1-pos0;
+            /* printf("test: %zu\n",length_name); */
             if (length_name > MAXPARNAMELENGTH)
             {
                 length_name = MAXPARNAMELENGTH;
             }
 
             sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]);
-                        if(length_name > var.max_name_length)
+            if(length_name > *var.max_name_length)
             {
-                var.max_name_length = length_name;
+                *var.max_name_length = length_name;
+                printf("test: %d",*var.max_name_length);
             }
 
-            printf("  [%zu] %-*s=",i,var.max_name_length+2,var.name[i]);
+            printf("  [%zu] %-*s=",i,*var.max_name_length+2,var.name[i]);
             printf(" %f length name %zu\n",val,length_name);
             i++;
         }
@@ -537,6 +542,16 @@ int8_t fprintf_nameval(struct nameval init, struct nameval mu, double tspan[2], 
     FILE *fr;
     char buffer[MAXFILENAMELENGTH];
     char line[256];
+    int len;
+
+    if (*init.max_name_length > *mu.max_name_length)
+    {
+        len = *init.max_name_length;
+    }
+    else
+    {
+        len = *mu.max_name_length;   
+    }
 
     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
     fr = fopen(buffer,"w");
@@ -548,12 +563,12 @@ int8_t fprintf_nameval(struct nameval init, struct nameval mu, double tspan[2], 
     fprintf(fr,"\n# dynamical variables/initial conditions\n");
     for(i=0;i<init.nbr_el;i++)
     {
-        fprintf(fr,"X%zu %-20s %.5e\n",i,init.name[i],init.value[i]);
+        fprintf(fr,"X%zu %-*s %.5e\n",i,len,init.name[i],init.value[i]);
     }    
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
     {
-        fprintf(fr,"P%zu %-20s %.5e\n",i,mu.name[i],mu.value[i]);
+        fprintf(fr,"P%zu %-*s %.5e\n",i,len,mu.name[i],mu.value[i]);
     }
     fprintf(fr,"\nsize %d\n",init.nbr_el);
     fprintf(fr,"\ntspan %f %f\n",tspan[0],tspan[1]);
