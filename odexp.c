@@ -37,7 +37,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     int32_t ode_system_size;
 
     /* parameters */
-    struct parameters mu;
+    struct nameval mu;
 
     /* variables */
     struct nameval var;
@@ -65,14 +65,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     
     /* get parameters */
     printf("  getting parameters\n");
-    mu.nbr_pars = get_nbr_params(params_filename);
-    mu.par = malloc(mu.nbr_pars*sizeof(double));
-    mu.name = malloc(mu.nbr_pars*sizeof(char*));
-    for (i = 0; i < mu.nbr_pars; i++)
+    mu.nbr_el = get_nbr_el(params_filename,"P",1);
+    mu.value = malloc(mu.nbr_el*sizeof(double));
+    mu.name = malloc(mu.nbr_el*sizeof(char*));
+    for (i = 0; i < mu.nbr_el; i++)
     {
         mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    load_params(params_filename,mu.name,mu.par);
+    load_nameval(params_filename,mu,"P",1);
 
     /* get variable names and initial conditions */
     printf("  getting variable names and initial conditions\n");
@@ -112,14 +112,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
             {
                 case '+' : /* increment the parameter and run */
                 case '=' : /* increment the parameter and run */
-                    mu.par[p] *= 1.1;
-                    printf("%s = %f\n",mu.name[p],mu.par[p]);
+                    mu.value[p] *= 1.1;
+                    printf("%s = %f\n",mu.name[p],mu.value[p]);
                     status = odesolver(ode_rhs, var, mu, tspan);
                     replot = 1;
                     break;
                 case  '-' : /* decrement the parameter and run */
-                    mu.par[p] /= 1.1;
-                    printf("%s = %f\n",mu.name[p],mu.par[p]);
+                    mu.value[p] /= 1.1;
+                    printf("%s = %f\n",mu.name[p],mu.value[p]);
                     status = odesolver(ode_rhs, var, mu, tspan);
                     replot = 1;
                     break;
@@ -161,9 +161,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     }
                     else if (op == 'p')
                     {
-                        for (i=0; i<mu.nbr_pars; i++)
+                        for (i=0; i<mu.nbr_el; i++)
                         {
-                            printf("  [%d] %-20s = %e\n",i,mu.name[i],mu.par[i]);
+                            printf("  [%d] %-20s = %e\n",i,mu.name[i],mu.value[i]);
                         }
                     }
                     else if (op == 'x')
@@ -180,12 +180,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     {
                         if (i > 0)
                         {
-                            printf("  choose parameter [0-%d]:", mu.nbr_pars-1);
+                            printf("  choose parameter [0-%d]:", mu.nbr_el-1);
                         }
                         scanf("%d",&p);
                         i++;
                     }
-                    while ( p < 0 || p > mu.nbr_pars-1);
+                    while ( p < 0 || p > mu.nbr_el-1);
                     printf("  current par: %s\n", mu.name[p]);
                     break;
                 case 'c' : /* change parameter/init values */
@@ -193,7 +193,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     if( op == 'p')
                     {
                         scanf("%d",&p);
-                        scanf("%lf",&mu.par[p]);
+                        scanf("%lf",&mu.value[p]);
                     }
                     else if ( op == 'i')
                     {
@@ -230,7 +230,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     printf("    q CTR-D (q)uit            quit\n");
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
-                    load_params(params_filename,mu.name,mu.par);
+                    load_params(params_filename,mu.name,mu.value);
                     load_nameval(params_filename, var, "X", 1);
                     status = odesolver(ode_rhs, var, mu, tspan);
                     replot = 1;
@@ -267,7 +267,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
     pclose(gnuplot_pipe);
 
-    free_parameters( mu );
+    free_name_value( mu );
     free_name_value( var );
 
     return status;
@@ -275,7 +275,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 }
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- struct nameval init, struct parameters mu, double tspan[2])    
+ struct nameval init, struct nameval mu, double tspan[2])    
 {
  
     double *y;
@@ -313,7 +313,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 
     /* open output file */
-    /* snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%s-%f.dat",mu.name[0],mu.par[0]); */
+    /* snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%s-%f.dat",mu.name[0],mu.value[0]); */
     file = fopen(temp_buffer,"w");
     t = tspan[0];
     t1 = tspan[1];
@@ -615,7 +615,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_params(struct nameval init, struct parameters mu, double tspan[2], clock_t time_stamp)
+int8_t fprintf_params(struct nameval init, struct nameval mu, double tspan[2], clock_t time_stamp)
 {
     int8_t success = 0;
     size_t i;
@@ -636,9 +636,9 @@ int8_t fprintf_params(struct nameval init, struct parameters mu, double tspan[2]
         fprintf(fr,"X%zu %-20s %.5e\n",i,init.name[i],init.value[i]);
     }    
     fprintf(fr,"\n# parameters/values\n");
-    for(i=0;i<mu.nbr_pars;i++)
+    for(i=0;i<mu.nbr_el;i++)
     {
-        fprintf(fr,"P%zu %-20s %.5e\n",i,mu.name[i],mu.par[i]);
+        fprintf(fr,"P%zu %-20s %.5e\n",i,mu.name[i],mu.value[i]);
     }
     fprintf(fr,"\nsize %d\n",init.nbr_el);
     fprintf(fr,"\ntspan %f %f\n",tspan[0],tspan[1]);

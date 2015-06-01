@@ -43,7 +43,7 @@ struct initialconditions
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- struct nameval init, struct parameters mu, double tspan[2]);
+ struct nameval init, struct nameval mu, double tspan[2]);
 
 void free_parameters(struct parameters mu );
 
@@ -65,7 +65,7 @@ int8_t load_double(const char *filename, double *vect, size_t len, \
 
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
-int8_t fprintf_params(struct nameval init, struct parameters mu, double tspan[2], clock_t time_stamp);
+int8_t fprintf_params(struct nameval init, struct nameval mu, double tspan[2], clock_t time_stamp);
 
 
 
