@@ -27,6 +27,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     int32_t i;
     const char params_filename[] = "params.in";
     int8_t success;
+
+    double *lasty;
     
     /* tspan parameters */
     const char ts_string[] = "tspan"; 
@@ -102,8 +104,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
 
     ode_system_size = var.nbr_el;
+    lasty = malloc(ode_system_size*sizeof(double));
 
-    status = odesolver(ode_rhs, var, mu, tspan, opts);
+    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
     fflush(gnuplot_pipe);
 
@@ -119,13 +122,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                 case '=' : /* increment the parameter and run */
                     mu.value[p] *= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
-                    status = odesolver(ode_rhs, var, mu, tspan, opts);
+                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
                     replot = 1;
                     break;
-                case  '-' : /* decrement the parameter and run */
+                case '-' : /* decrement the parameter and run */
                     mu.value[p] /= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
-                    status = odesolver(ode_rhs, var, mu, tspan, opts);
+                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case 'r' : /* replot */
@@ -135,13 +138,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                 case '>' : /* increase resolution */
                     opts.ntsteps <<= 1;
                     opts.ntsteps--;
-                    status = odesolver(ode_rhs, var, mu, tspan, opts);
+                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case '<' : /* decrease resolution */
                     opts.ntsteps >>= 1;
                     opts.ntsteps++;
-                    status = odesolver(ode_rhs, var, mu, tspan, opts);
+                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case 'a' : /* set axis scale  */
@@ -229,22 +232,29 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     break;
                 case 'c' : /* change parameter/init values */
                     op = getchar();
-                    if( op == 'p')
+                    if( op == 'p' )
                     {
                         scanf("%d",&p);
                         scanf("%lf",&mu.value[p]);
                     }
-                    else if ( op == 'i')
+                    else if ( op == 'i' ) 
                     {
                         scanf("%d",&i);
                         scanf("%lf",&var.value[i]);
                     }
-                    else if ( op == 't')
+                    else if ( op == 'l' )
+                    {
+                        for ( i=0; i<ode_system_size; i++ )
+                        {
+                            var.value[i] = lasty[i];
+                        }
+                    }
+                    else if ( op == 't' )
                     {
                         scanf("%d",&i);
                         scanf("%lf",tspan+i);
                     }
-                    status = odesolver(ode_rhs, var, mu, tspan, opts);
+                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case 'h' : /* help */
@@ -276,7 +286,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                 case 'd' : /* reset parameters and initial cond to defaults */
                     load_nameval(params_filename, mu, "P", 1);
                     load_nameval(params_filename, var, "X", 1);
-                    status = odesolver(ode_rhs, var, mu, tspan, opts);
+                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
                     replot = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
@@ -328,7 +338,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 }
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- nv init, nv mu, double tspan[2], options opts)    
+ double *lasty, nv init, nv mu, double tspan[2], options opts)    
 {
  
     double *y;
@@ -387,10 +397,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
                 break;
         }
         h = fmax(h,hmin);
-        fprintf(file,"%.5e ",t);
+        fprintf(file,"%.15e ",t);
         for (i = 0; i < ode_system_size; i++)
         {
-            fprintf (file,"\t%.5e",y[i]); 
+            fprintf (file,"\t%.15e",y[i]); 
         }
         fprintf(file,"\n");
     }
@@ -402,6 +412,11 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     {
         printf("an error occured, GSL STATUS = %d.\n", status);
     }
+
+    for (i = 0; i < ode_system_size; i++)
+    {
+        lasty[i] = y[i]; 
+    } 
 
     fclose(file);
 

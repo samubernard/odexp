@@ -36,7 +36,7 @@ typedef struct options
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) );
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- nv init, nv mu, double tspan[2], options opts);
+ double *lasty, nv init, nv mu, double tspan[2], options opts);
 
 void free_name_value(struct nameval mu );
 
