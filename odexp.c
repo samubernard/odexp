@@ -46,7 +46,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     options opts;
 
     int status, file_status;
-    int c, p=0, op = 0;
+    int c, p=0, op = 0, op2 = 0;
     int32_t gx = 1,gy = 2;
     int replot = 0;
     char line[255];
@@ -148,6 +148,28 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     status = odesolver(ode_rhs, var, mu, tspan, opts);
                     replot = 1;
                     break;
+                case 'a' : /* set axis scale  */
+                    op = getchar();
+                    op2 = getchar();
+                    if ( (op  == 'y' && op2 == 'l') || (op2  == 'y' && op == 'l') )
+                    {
+                        fprintf(gnuplot_pipe,"set logscale y\n");  
+                    }
+                    if ( (op  == 'y' && op2 == 'n') || (op2  == 'y' && op == 'n') )
+                    {
+                        fprintf(gnuplot_pipe,"set nologscale y\n");  
+                    }
+                    if ( (op  == 'x' && op2 == 'l') || (op2  == 'x' && op == 'l') )
+                    {
+                        fprintf(gnuplot_pipe,"set logscale x\n");  
+                    }
+                    if ( (op  == 'x' && op2 == 'n') || (op2  == 'x' && op == 'n') )
+                    {
+                        fprintf(gnuplot_pipe,"set nologscale x\n");  
+                    }
+                    fflush(gnuplot_pipe);
+                    replot = 1;
+                    break;
                 case 'x' :
                     i = 0;
                     do
@@ -235,7 +257,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     printf("    + or =  plus              increment current par by factor 1.1\n");
                     printf("    -       minus             decrement current par by factor 1.1\n");
                     printf("    r       (r)eplot          repeat the last gnuplot command\n");
-                    printf("    x       plot(x)           plot variable x\n");
+                    printf("    >, <    inc, dec          increase, decrease number of time steps\n");
+                    printf("    x[i]    plot(x)           plot variable number i\n");
                     printf("    l       (l)ist            list all parameters and their values\n");
                     printf("      lp    (l)ist (p)ar      list all parameters and their values\n");
                     printf("      li    (l)ist (i)nit     list all initial conditions\n");
