@@ -96,8 +96,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
     fflush(gnuplot_pipe);
 
-    printf("test: %s#%s#%s",var.name[0],var.name[1],var.name[2]);
-
     while(1)
     {
         printf("odexp>> ");
@@ -281,13 +279,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     double *y;
     const double hmin = 1e-3;
     double h = 1e-1;
+    uint32_t nbr_out = 201;
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char temp_buffer[] = "temp.tab";
     int32_t i;
     
     /* tspan parameters */
-    double t, t1;
+    double t, t1, dt, tnext;
 
     /* system size */
     int32_t ode_system_size = init.nbr_el;
@@ -313,19 +312,22 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 
     /* open output file */
-    /* snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%s-%f.dat",mu.name[0],mu.value[0]); */
     file = fopen(temp_buffer,"w");
     t = tspan[0];
     t1 = tspan[1];
+    dt = (t1-t)/(double)(nbr_out-1);
 
     printf("  running... ");
     while (t < t1)
     {
-        sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
-        status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,t1,&h,y);
-        if (status != GSL_SUCCESS)
+        tnext = fmin(t+dt,t1);
+        while ( t < tnext)
+        {
+            sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
+            status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+            if (status != GSL_SUCCESS)
                 break;
-
+        }
         h = fmax(h,hmin);
         fprintf(file,"%.5e ",t);
         for (i = 0; i < ode_system_size; i++)
