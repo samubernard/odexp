@@ -13,7 +13,7 @@
                               DEFINE
 ================================================================= */
 #define MAXPARNAMELENGTH 15
-#define MAXFILENAMELENGTH 64
+#define MAXFILENAMELENGTH 63
 
 struct parameters
 {
@@ -27,6 +27,7 @@ struct nameval
     double *value;
     char **name;
     int32_t nbr_el;
+    int max_name_length;
 };
 
 struct initialconditions

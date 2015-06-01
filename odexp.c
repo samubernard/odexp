@@ -52,10 +52,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 
 
     /* begin */
-    printf("params filename: %s\n",params_filename);
+    printf("  params filename: %s\n",params_filename);
 
     /* get tspan */
-    printf("/* get tspan */\n");
+    printf("  getting time span\n");
     success = load_double(params_filename, tspan, 2, ts_string, ts_len); 
     if (!success)
     {
@@ -64,7 +64,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     }
     
     /* get parameters */
-    printf("/* get parameters */\n");
+    printf("  getting parameters\n");
     mu.nbr_pars = get_nbr_params(params_filename);
     mu.par = malloc(mu.nbr_pars*sizeof(double));
     mu.name = malloc(mu.nbr_pars*sizeof(char*));
@@ -74,8 +74,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     }
     load_params(params_filename,mu.name,mu.par);
 
-    /* get variable names */
-    printf("/* get variable names */\n");
+    /* get variable names and initial conditions */
+    printf("  getting variable names and initial conditions\n");
     var.nbr_el = get_nbr_el(params_filename,"X",1);
     var.value = malloc(var.nbr_el*sizeof(double));
     var.name = malloc(var.nbr_el*sizeof(char*));
@@ -95,6 +95,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
     status = odesolver(ode_rhs, var, mu, tspan);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
     fflush(gnuplot_pipe);
+
+    printf("test: %s#%s#%s",var.name[0],var.name[1],var.name[2]);
 
     while(1)
     {
@@ -209,8 +211,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                 case 'h' : /* help */
                     printf("  list of commands\n");
                     printf("  N = ODE system size, P = number of parameters\n");
-                    printf("    + or =                    increment current par by factor 1.1\n");
-                    printf("    -                         decrement current par by factor 1.1\n");
+                    printf("    + or =  plus              increment current par by factor 1.1\n");
+                    printf("    -       minus             decrement current par by factor 1.1\n");
                     printf("    r       (r)eplot          repeat the last gnuplot command\n");
                     printf("    x       plot(x)           plot variable x\n");
                     printf("    l       (l)ist            list all parameters and their values\n");
@@ -224,8 +226,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     printf("    d       (d)efaults        reload the parameter file\n");
                     printf("    g [cmd] (g)nuplot         send the command cmd to gnuplot\n");
                     printf("    p[i]    (p)ar             set the current parameter to i\n");
-                    printf("    s [msg] (s)ave            save current simulation and parameter values\n");
-                    printf("    q       (q)uit            save current simulation and parameter values\n");
+                    printf("    s [msg] (s)nap            snap current simulation and parameter values with msg\n");
+                    printf("    q CTR-D (q)uit            quit\n");
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     load_params(params_filename,mu.name,mu.par);
@@ -316,7 +318,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     t = tspan[0];
     t1 = tspan[1];
 
-    printf("running... ");
+    printf("  running... ");
     while (t < t1)
     {
         sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
@@ -488,9 +490,11 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
     size_t linecap = 0;
     char *line = NULL;
     FILE *fr;
-    double val;
+    double val = 0.0;
     int8_t success = 0;
     fr = fopen (filename, "rt");
+
+    var.max_name_length = 0;
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
         while(line[k] == sym[k] && !isspace(line[k]) && \
@@ -502,13 +506,13 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
         {
             success = 1;
             pos0 = k;
-            while(line[pos0] != ' ')
+            while(line[pos0] != ' ' && line[pos0] != '\t')
                 pos0++;
-            while(line[pos0] == ' ')
+            while(line[pos0] == ' ' || line[pos0] == '\t')
                 pos0++;
             
             pos1 = pos0;
-            while(line[pos1] != ' ')
+            while(line[pos1] != ' ' && line[pos1] != '\t')
                 pos1++;
 
             length_name = pos1-pos0;
@@ -517,18 +521,14 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
                 length_name = MAXPARNAMELENGTH;
             }
 
-            var.name[i] = malloc(length_name*sizeof(char));
-            strncpy(var.name[i],line+pos0,length_name); 
+            sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]);
+                        if(length_name > var.max_name_length)
+            {
+                var.max_name_length = length_name;
+            }
 
-            pos0 = pos1+1;
-            while(line[pos0] == ' ')
-                pos0++;
-            
-            sscanf(line+pos0,"%lf",&val);
-            var.value[i] = val;
-
-            printf("  [%zu] %-20s =",i,var.name[i]);
-            printf(" %f\n",val);
+            printf("  [%zu] %-*s=",i,var.max_name_length+2,var.name[i]);
+            printf(" %f length name %zu\n",val,length_name);
             i++;
         }
         k = 0; /* reset k */
@@ -621,26 +621,27 @@ int8_t fprintf_params(struct nameval init, struct parameters mu, double tspan[2]
     size_t i;
     FILE *fr;
     char buffer[MAXFILENAMELENGTH];
-    char line[255];
+    char line[256];
 
     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
     fr = fopen(buffer,"w");
 
-    fgets(line, 255, stdin);
+    fgets(line, 256, stdin);
 
     fprintf(fr,"# %s\n",line);
-    fprintf(fr,"ic ");
+
+    fprintf(fr,"\n# dynamical variables/initial conditions\n");
     for(i=0;i<init.nbr_el;i++)
     {
-        fprintf(fr,"%.5e ",init.value[i]);
-    }
-    fprintf(fr,"\n\n");
+        fprintf(fr,"X%zu %-20s %.5e\n",i,init.name[i],init.value[i]);
+    }    
+    fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_pars;i++)
     {
-        fprintf(fr,"P%zu %s %.5e\n",i,mu.name[i],mu.par[i]);
+        fprintf(fr,"P%zu %-20s %.5e\n",i,mu.name[i],mu.par[i]);
     }
-    fprintf(fr,"\nsize %d\n\n",init.nbr_el);
-    fprintf(fr,"tspan %f %f\n",tspan[0],tspan[1]);
+    fprintf(fr,"\nsize %d\n",init.nbr_el);
+    fprintf(fr,"\ntspan %f %f\n",tspan[0],tspan[1]);
 
 
     fclose(fr);
