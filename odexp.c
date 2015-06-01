@@ -228,7 +228,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     printf("    q CTR-D (q)uit            quit\n");
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
-                    load_params(params_filename,mu.name,mu.value);
+                    load_nameval(params_filename, mu, "P", 1);
                     load_nameval(params_filename, var, "X", 1);
                     status = odesolver(ode_rhs, var, mu, tspan);
                     replot = 1;
@@ -243,7 +243,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
                     time_stamp = clock();
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
                     file_status = rename(temp_buffer,buffer);
-                    file_status = fprintf_params(var,mu,tspan,time_stamp);
+                    file_status = fprintf_nameval(var,mu,tspan,time_stamp);
                     break;
                 default :
                     printf("  type q to quit\n");
@@ -357,16 +357,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 }
 
-void free_parameters(struct parameters mu )
-{
-    int32_t i;
-    free(mu.par);
-    for (i = 0; i < mu.nbr_pars; i++)
-    {
-        free(mu.name[i]);
-    }
-    free(mu.name);
-}
 
 void free_name_value(struct nameval var )
 {
@@ -377,83 +367,6 @@ void free_name_value(struct nameval var )
         free(var.name[i]);
     }
     free(var.name);
-}
-
-void free_initial_conditions(struct initialconditions init )
-{
-    free(init.ic);
-}
-
-int32_t get_nbr_params(const char *filename)
-{
-    int32_t nbr_params = 0;
-    ssize_t linelength;
-    size_t linecap = 0;
-    char *line = NULL;
-    char firstchar;
-    FILE *fr;
-    fr = fopen (filename, "rt");
-    while( (linelength = getline(&line,&linecap,fr)) > 0)
-    {
-        firstchar = line[0];
-        if (firstchar == 'p' || firstchar == 'P')
-        {
-            nbr_params++;
-        }
-    }
-    fclose(fr);
-    printf("Number of parameters: %d\n",nbr_params);
-    return nbr_params;
-}
-
-void load_params(const char *filename, char **params_names, double *params_values)
-{
-    int32_t i_par = 0;
-    size_t pos0, pos1;
-    size_t length_par_name;
-    ssize_t linelength;
-    size_t linecap = 0;
-    char *line = NULL;
-    FILE *fr;
-    double par_val;
-    fr = fopen (filename, "rt");
-    while( (linelength = getline(&line, &linecap, fr)) > 0)
-    {
-        if(line[0] == 'p' || line[0] == 'P')
-        {
-            pos0 = 1;
-            while(line[pos0] != ' ')
-                pos0++;
-            while(line[pos0] == ' ')
-                pos0++;
-            
-            pos1 = pos0;
-            while(line[pos1] != ' ')
-                pos1++;
-
-            length_par_name = pos1-pos0;
-            if (length_par_name > MAXPARNAMELENGTH)
-            {
-                length_par_name = MAXPARNAMELENGTH;
-            }
-
-            params_names[i_par] = malloc(length_par_name*sizeof(char));
-            strncpy(params_names[i_par],line+pos0,length_par_name); 
-
-            pos0 = pos1+1;
-            while(line[pos0] == ' ')
-                pos0++;
-            
-            sscanf(line+pos0,"%lf",&par_val);
-            params_values[i_par] = par_val;
-
-            printf("  [%d] %-20s =",i_par,params_names[i_par]);
-            printf(" %f\n",par_val);
-            i_par++;
-        }
-
-    }
-    fclose(fr);
 }
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
@@ -617,7 +530,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_params(struct nameval init, struct nameval mu, double tspan[2], clock_t time_stamp)
+int8_t fprintf_nameval(struct nameval init, struct nameval mu, double tspan[2], clock_t time_stamp)
 {
     int8_t success = 0;
     size_t i;

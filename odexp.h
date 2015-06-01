@@ -15,12 +15,6 @@
 #define MAXPARNAMELENGTH 15
 #define MAXFILENAMELENGTH 63
 
-struct parameters
-{
-    double * par;
-    char **name;
-    int32_t nbr_pars;
-};
 
 struct nameval
 {
@@ -30,13 +24,6 @@ struct nameval
     int max_name_length;
 };
 
-struct initialconditions
-{
-    double * ic;
-    int32_t ode_system_size;
-};
-
-
 
 /* function declaration */
 
@@ -45,16 +32,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params) 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  struct nameval init, struct nameval mu, double tspan[2]);
 
-void free_parameters(struct parameters mu );
-
-void free_initial_conditions(struct initialconditions init );
-
 void free_name_value(struct nameval mu );
-
-
-int32_t get_nbr_params(const char *filename);
-
-void load_params(const char *filename, char **params_names, double *params_values);
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len);
 
@@ -65,7 +43,7 @@ int8_t load_double(const char *filename, double *vect, size_t len, \
 
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
-int8_t fprintf_params(struct nameval init, struct nameval mu, double tspan[2], clock_t time_stamp);
+int8_t fprintf_nameval(struct nameval init, struct nameval mu, double tspan[2], clock_t time_stamp);
 
 
 
