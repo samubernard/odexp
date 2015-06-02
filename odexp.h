@@ -20,16 +20,23 @@ typedef struct nameval
 {
     double *value;
     char **name;
-    int32_t nbr_el;
+    uint32_t nbr_el;
     int *max_name_length;
 } nv;
 
 typedef struct options
 {
-    int32_t ntsteps;
+    uint32_t ntsteps;
 } options;
 
-
+typedef struct steady_state
+{
+    double *s;
+    double *re;
+    double *im; 
+    uint32_t size;
+    char stability[15];
+} steady_state;
 
 /* function declaration */
 
@@ -39,11 +46,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  double *lasty, nv init, nv mu, double tspan[2], options opts);
 
-int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f), nv var, nv mu);
+int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+    nv var, nv mu, steady_state *stst);
 
-int eig(gsl_matrix *J);
+int eig(gsl_matrix *J, steady_state *stst);
 
 void free_name_value(struct nameval mu );
+
+void free_steady_state(steady_state *stst);
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len);
 

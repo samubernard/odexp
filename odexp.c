@@ -11,8 +11,6 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_eigen.h>                              
 
-
-
 /* =================================================================
                               Header files
 ================================================================= */
@@ -48,6 +46,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* options */
     options opts;
+
+    /* steady states */
+    steady_state *stst = malloc(sizeof(steady_state));
 
     int status, file_status;
     int c, p=0, op = 0, op2 = 0;
@@ -103,10 +104,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("  getting options\n");
     opts.ntsteps = 201;
  
-
-
     ode_system_size = var.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
+
+    /* init steady state */
+    stst->s =  malloc(ode_system_size*sizeof(double));
+    stst->re = malloc(ode_system_size*sizeof(double));
+    stst->im = malloc(ode_system_size*sizeof(double));
+    stst->size = ode_system_size;
+    
 
     status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",\
@@ -212,27 +218,49 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     replot = 1;
                     break;
-                case 'l' : /* list name value pairs */
+                case 'i' : /* run with initial conditions */
                     op = getchar();
-                    if ( op  == 'i')
+                    if ( op == 'l' ) /* last simulation value */
                     {
-                        for (i=0; i<ode_system_size; i++)
+                        for ( i=0; i<ode_system_size; i++ )
                         {
-                            printf("  [%d] %e\n",i,var.value[i]);
+                            var.value[i] = lasty[i];
+                        }
+                    } 
+                    else if ( op == 's') /* run from steady state */
+                    {
+                        for ( i=0; i<ode_system_size; i++ )
+                        {
+                            var.value[i] = stst->s[i];
                         }
                     }
-                    else if (op == 'p')
+                    rerun = 1;
+                    break;
+                case 'l' : /* list name value pairs */
+                    op = getchar();
+                    if (op == 'p')
                     {
                         for (i=0; i<mu.nbr_el; i++)
                         {
-                            printf("  [%d] %-20s = %e\n",i,mu.name[i],mu.value[i]);
+                            printf("  P[%d] %-20s = %e\n",i,mu.name[i],mu.value[i]);
                         }
                     }
                     else if (op == 'x')
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
-                            printf("  [%d] %-20s = %e\n",i,var.name[i],var.value[i]);
+                            printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
+                        }
+                    }
+                    else if (op == 't')
+                    {
+                        printf("  tpsan = [%.5e %.5e]\n",tspan[0],tspan[1]);
+                    }
+                    else if (op == 's')
+                    {
+                        for (i=0; i<ode_system_size; i++)
+                        {
+                            printf("  S[%d] %-20s = %e\n",i,var.name[i],stst->s[i]);
                         }
                     }
                     break;
@@ -286,9 +314,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("      or a[s][u]\n");
                     printf("    >, <      inc, dec          increase, decrease number of time steps\n");
                     printf("    x[i]      plot(x)           plot variable number i\n");
-                    printf("    l         (l)ist            list all parameters and their values\n");
+                    printf("    i         (i)init cond      set new initial condition\n");
+                    printf("      l       (l)ast            set initial condition to last\n");
+                    printf("      s       (s)teady state    set initial condition to steady state\n");
+                    printf("    l         (l)ist            list\n");
                     printf("      lp      (l)ist (p)ar      list all parameters and their values\n");
-                    printf("      li      (l)ist (i)nit     list all initial conditions\n");
+                    printf("      lx      (l)ist (x)        list all variables with init conditions\n");
+                    printf("      ls      (l)ist (s)tst     list steady state\n");
                     printf("    c         (c)hange          change value of parameter, init cond, or tpsan\n");
                     printf("      cp[i] [v]                 set value of parameter i to v (i=0 to P-1)\n");
                     printf("      ci[i] [v]                 set value of init cond i to v (i=0 to N-1)\n");
@@ -317,7 +349,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     op = getchar();
                     if ( op  == 's') /* compute steady state */
                     {
-                        status = ststsolver(multiroot_rhs,var,mu);
+                        status = ststsolver(multiroot_rhs,var,mu, stst);
                     }
                     rerun = 1;
                     break;
@@ -333,7 +365,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     file_status = fprintf_nameval(var,mu,tspan,time_stamp);
                     break;
                 default :
-                    printf("  type q to quit\n");
+                    printf("  type q or CTR-D to quit, h for help\n");
             }  
             if (quit)
             {
@@ -363,6 +395,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     free_name_value( mu );
     free_name_value( var );
+    free_steady_state( stst );
 
     return status;
 
@@ -461,7 +494,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 }
 
-int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f), nv var, nv mu)
+int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+    nv var, nv mu, steady_state *stst)
 {
     
 
@@ -517,15 +551,17 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
 
     for ( i=0; i<n; i++)
     {
-        var.value[i] = gsl_vector_get(s->x,i);
+        stst->s[i] = gsl_vector_get(s->x,i);
     }
 
     printf("\n  Steady State\n");
     gsl_vector_fprintf(stdout,s->x,"    %+.5e");
 
+
+
     gsl_multiroot_fdjacobian(&f, s->x, s->f, 1e-6, J);
 
-    eig(J);
+    eig(J, stst);
 
     gsl_multiroot_fsolver_free(s);
     gsl_vector_free(x);
@@ -535,11 +571,13 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
 
 }
 
-int eig(gsl_matrix *J)
+int eig(gsl_matrix *J, steady_state *stst)
 {
     int status;
+    size_t i;
     gsl_vector_view re;
     gsl_vector_view im;
+    gsl_complex ev_complex;
     const size_t n = J->size1;
     gsl_vector_complex *eval = gsl_vector_complex_alloc(n);
     
@@ -552,6 +590,13 @@ int eig(gsl_matrix *J)
 
     printf("\n  Eigenvalues\n");
     gsl_vector_complex_fprintf(stdout,eval,"    %+.5e");
+
+    for ( i=0; i<n; i++)
+    {
+        ev_complex = gsl_vector_complex_get(eval,i);
+        stst->re[i] = GSL_REAL(ev_complex);
+        stst->im[i] = GSL_IMAG(ev_complex);
+    }
 
     gsl_vector_complex_free(eval);
 
@@ -569,6 +614,14 @@ void free_name_value(nv var )
     }
     free(var.name);
     free(var.max_name_length);
+}
+
+void free_steady_state( steady_state *stst )
+{
+    free(stst->s);
+    free(stst->re);
+    free(stst->im);
+    free(stst);
 }
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
