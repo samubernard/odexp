@@ -55,6 +55,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int32_t gx = 1,gy = 2;
     int replot = 0, rerun = 0, quit = 0;
     char line[255];
+    /*char cmd[255];*/
     clock_t time_stamp;
     char buffer[MAXFILENAMELENGTH];
 
@@ -122,7 +123,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     while(1)
     {
-        printf("odexp>> ");
+        printf("odexp> ");
+        /*fgets(line, 255, stdin);*/
         c = getchar();
         if ( c != '\n')
         {
@@ -137,6 +139,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '-' : /* decrement the parameter and run */
                     mu.value[p] /= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
+                    rerun = 1;
+                    break;                
+                case '0' : /* just run */
                     rerun = 1;
                     break;
                 case 'r' : /* replot */
