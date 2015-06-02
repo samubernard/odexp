@@ -27,6 +27,7 @@ typedef struct nameval
 typedef struct options
 {
     uint32_t ntsteps;
+    uint8_t freeze;
 } options;
 
 typedef struct steady_state

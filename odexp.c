@@ -102,7 +102,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("  getting options\n");
-    opts.ntsteps = 201;
+    printf("    ntsteps = %u\n",opts.ntsteps = 201);
+    printf("    freeze  = %u\n",opts.freeze = 0);
  
     ode_system_size = var.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
@@ -142,14 +143,21 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     fprintf(gnuplot_pipe,"replot\n");
                     fflush(gnuplot_pipe);
                     break;
+                case 'f' : /* toggle freeze */
+                    opts.freeze = 1 - opts.freeze;
+                    if (opts.freeze == 0)
+                        printf("  freeze is off (not working as expected)\n");
+                    else
+                        printf("  freeze is on (not working as expected)\n");
+                    break;
                 case '>' : /* increase resolution */
-                    opts.ntsteps <<= 1;
-                    opts.ntsteps--;
+                    opts.ntsteps <<= 1; /* left bitshift, *= 2 */ 
+                    opts.ntsteps--; /* remove one */
                     rerun = 1;
                     break;
                 case '<' : /* decrease resolution */
-                    opts.ntsteps >>= 1;
-                    opts.ntsteps++;
+                    opts.ntsteps >>= 1; /* right bitshift, integer part of division by 2 */
+                    opts.ntsteps++; /* add one */
                     rerun = 1;
                     break;
                 case 'e' : /* extend the simulation */
@@ -330,6 +338,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("    g [cmd]   (g)nuplot         send the command cmd to gnuplot\n");
                     printf("    p[i]      (p)ar             set the current parameter to i\n");
                     printf("    s [msg]   (s)nap            snap current simulation and parameter values with msg\n");
+                    printf("    m         (m)ethods         run numerical method\n");
+                    printf("      s       (s)teady state    find a steady state with starting guess init cond\n");
                     printf("    q [msg]   (q)uit            quit and snap\n");
                     printf("    CTR-D     quit              quit no snap\n");
                     
@@ -377,7 +387,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             }
             if (replot || rerun)    
             {
-                fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
+                if (opts.freeze == 0)
+                {
+                    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                } 
+                else
+                {
+                    fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                }
+
                 fflush(gnuplot_pipe);
             }
             fpurge(stdin);
