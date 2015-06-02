@@ -1,11 +1,7 @@
 /* =================================================================
                               Libraries
 ================================================================= */
-#include <stdint.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
 #include <ctype.h>
 #include <time.h>
 #include <gsl/gsl_errno.h>
@@ -13,7 +9,6 @@
 #include <gsl/gsl_odeiv.h>
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_vector.h>
-#include <gsl/gsl_matrix.h>
 #include <gsl/gsl_eigen.h>                              
 
 
@@ -57,7 +52,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int status, file_status;
     int c, p=0, op = 0, op2 = 0;
     int32_t gx = 1,gy = 2;
-    int replot = 0, quit = 0;
+    int replot = 0, rerun = 0, quit = 0;
     char line[255];
     clock_t time_stamp;
     char buffer[MAXFILENAMELENGTH];
@@ -114,7 +109,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     lasty = malloc(ode_system_size*sizeof(double));
 
     status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
-    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
+    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",\
+        temp_buffer,gx,gy,var.name[gy-2]);
     fflush(gnuplot_pipe);
 
     while(1)
@@ -129,14 +125,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '=' : /* increment the parameter and run */
                     mu.value[p] *= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
-                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
-                    replot = 1;
+                    rerun = 1;
                     break;
                 case '-' : /* decrement the parameter and run */
                     mu.value[p] /= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
-                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
-                    replot = 1;
+                    rerun = 1;
                     break;
                 case 'r' : /* replot */
                     fprintf(gnuplot_pipe,"replot\n");
@@ -145,14 +139,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '>' : /* increase resolution */
                     opts.ntsteps <<= 1;
                     opts.ntsteps--;
-                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
-                    replot = 1;
+                    rerun = 1;
                     break;
                 case '<' : /* decrease resolution */
                     opts.ntsteps >>= 1;
                     opts.ntsteps++;
-                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
-                    replot = 1;
+                    rerun = 1;
+                    break;
+                case 'e' : /* extend the simulation */
+                    tspan[1] += tspan[1]-tspan[0];
+                    rerun = 1;
+                    break;
+                case 'E' : /* shorten the simulation */
+                    tspan[1] -= (tspan[1]-tspan[0])/2;
+                    rerun = 1;
                     break;
                 case 'a' : /* set axis scale  */
                     op = getchar();
@@ -174,6 +174,19 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         fprintf(gnuplot_pipe,"set nologscale x\n");  
                     }
                     fflush(gnuplot_pipe);
+                    replot = 1;
+                    break;
+                case 'v' : /* set view */
+                    scanf("%d",&gx);
+                    scanf("%d",&gy);
+                    if ( gx >= -1 && gx <= ode_system_size-1)
+                        gx += 2;
+                    else
+                        gx = 1;
+                    if ( gy >= -1 && gy <= ode_system_size-1)
+                        gy += 2;
+                    else
+                        gy = 2;
                     replot = 1;
                     break;
                 case 'x' :
@@ -261,8 +274,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         scanf("%d",&i);
                         scanf("%lf",tspan+i);
                     }
-                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
-                    replot = 1;
+                    rerun = 1;
                     break;
                 case 'h' : /* help */
                     printf("  list of commands\n");
@@ -293,8 +305,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'd' : /* reset parameters and initial cond to defaults */
                     load_nameval(params_filename, mu, "P", 1);
                     load_nameval(params_filename, var, "X", 1);
-                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
-                    replot = 1;
+                    rerun = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
                     fgets(line, 255, stdin);
@@ -308,7 +319,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         status = ststsolver(multiroot_rhs,var,mu);
                     }
-                    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
+                    rerun = 1;
                     break;
                 case EOF :  /* quit without saving */
                     quit = 1;
@@ -328,13 +339,18 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 break;
             } 
-            if (replot)    
+            if (rerun)
+            {
+                status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
+            }
+            if (replot || rerun)    
             {
                 fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);
                 fflush(gnuplot_pipe);
             }
             fpurge(stdin);
             replot = 0;
+            rerun = 0;
         }
         
 
@@ -453,7 +469,7 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     gsl_multiroot_fsolver *s;
 
     int status;
-    size_t i,j, iter = 0;
+    size_t i, iter = 0;
 
     const size_t n = var.nbr_el;
     gsl_multiroot_function f = {multiroot_rhs, n, &mu};
@@ -470,7 +486,9 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     s = gsl_multiroot_fsolver_alloc(T,n);
     gsl_multiroot_fsolver_set (s, &f, x);
 
-    printf("  %zu ",iter);
+    printf("\n  Finding a steady state\n");
+
+    printf("    %zu ",iter);
     for ( i=0; i<n; i++)
     {
         printf("%.5e ", gsl_vector_get(s->x,i));
@@ -482,7 +500,7 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
         iter++;
         status = gsl_multiroot_fsolver_iterate(s);
 
-        printf("  %zu ",iter);
+        printf("    %zu ",iter);
         for ( i=0; i<n; i++)
         {
             printf("%.5e ", gsl_vector_get(s->x,i));
@@ -502,21 +520,16 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
         var.value[i] = gsl_vector_get(s->x,i);
     }
 
+    printf("\n  Steady State\n");
+    gsl_vector_fprintf(stdout,s->x,"    %+.5e");
+
     gsl_multiroot_fdjacobian(&f, s->x, s->f, 1e-6, J);
-    for (i=0;i<n;i++)
-    {
-        for(j=0;j<n;j++)
-        {
-            printf("%.2e ",gsl_matrix_get(J,i,j));
-        }
-        printf("\n");
-    }
 
     eig(J);
 
-
     gsl_multiroot_fsolver_free(s);
     gsl_vector_free(x);
+    gsl_matrix_free(J);
 
     return status;
 
@@ -537,8 +550,10 @@ int eig(gsl_matrix *J)
     re = gsl_vector_complex_real(eval);
     im = gsl_vector_complex_imag(eval);
 
-    printf("Eigenvalues\n");
-    gsl_vector_complex_fprintf(stdout,eval,"  %.5e");
+    printf("\n  Eigenvalues\n");
+    gsl_vector_complex_fprintf(stdout,eval,"    %+.5e");
+
+    gsl_vector_complex_free(eval);
 
     return status;
 
