@@ -6,9 +6,6 @@
                               Libraries
 ================================================================= */
 
-#include <time.h>
-#include <gsl/gsl_vector.h>
-
 /* =================================================================
                               DEFINE
 ================================================================= */
@@ -20,3 +17,4 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     nv var, nv mu, steady_state *stst);
 
 int eig(gsl_matrix *J, steady_state *stst);
+

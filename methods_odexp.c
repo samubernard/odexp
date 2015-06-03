@@ -2,8 +2,6 @@
                               Libraries
 ================================================================= */
 
-#include <ctype.h>
-#include <time.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv.h>
@@ -16,6 +14,7 @@
 ================================================================= */
 
 #include "odexp.h"
+#include "methods_odexp.h"
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  double *lasty, nv init, nv mu, double tspan[2], options opts)    
