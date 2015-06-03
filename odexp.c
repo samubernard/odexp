@@ -396,8 +396,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("    m         (m)ethods         run numerical method\n");
                     printf("      s       (s)teady state    find a steady state with starting guess init cond\n");
                     printf("    q [msg]   (q)uit            quit and snap\n");
-                    printf("    CTR-D     quit              quit no snap\n");
-                    
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     printf("\n");
@@ -420,7 +418,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     if ( op  == 's') /* compute steady state */
                     {
                         status = ststsolver(multiroot_rhs,var,mu, stst);
-                    }
+                    } 
+                    else if ( op == 'm')
+                    {
+                        status = phasespaceanalysis(multiroot_rhs,var,mu);
+                    } 
                     rerun = 1;
                     printf("\n");
                     break;
@@ -446,7 +448,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     file_status = fprintf_nameval(var,mu,tspan,time_stamp);
                     break;
                 default :
-                    printf("  type q or CTR-D to quit, h for help\n");
+                    printf("  type q to quit, h for help\n");
             }  
             if (quit)
             {
@@ -506,6 +508,15 @@ void free_name_value(nv var )
     }
     free(var.name);
     free(var.max_name_length);
+}
+
+void init_steady_state(steady_state *stst, uint32_t size)
+{
+    /* init steady state */
+    stst->s =  malloc(size*sizeof(double));
+    stst->re = malloc(size*sizeof(double));
+    stst->im = malloc(size*sizeof(double));
+    stst->size = size;
 }
 
 void free_steady_state( steady_state *stst )

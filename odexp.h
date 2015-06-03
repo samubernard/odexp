@@ -35,7 +35,6 @@ typedef struct steady_state
     double *re;
     double *im; 
     uint32_t size;
-    char stability[15];
 } steady_state;
 
 /* function declaration */
@@ -44,6 +43,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f) );
 
 void free_name_value(struct nameval mu );
+
+void init_steady_state(steady_state *stst, uint32_t size);
 
 void free_steady_state(steady_state *stst);
 

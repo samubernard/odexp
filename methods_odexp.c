@@ -7,7 +7,9 @@
 #include <gsl/gsl_odeiv.h>
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_vector.h>
-#include <gsl/gsl_eigen.h>                              
+#include <gsl/gsl_eigen.h> 
+#include <gsl/gsl_qrng.h>   
+#include <math.h>                          
 
 /* =================================================================
                               Header files
@@ -107,6 +109,83 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
       
     return status;
 
+}
+
+int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+    nv var, nv mu)
+{
+    int status;
+    uint32_t ode_system_size = var.nbr_el;
+    gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
+    double *var_max; /* bounds on parameter values */
+    size_t ntry = 0;
+    size_t max_fail = 10; /* max number of iteration without finding a new steady state */
+    steady_state *stst; /* new steady state */
+    size_t nbr_stst = 0; /* number of steady state found so far */
+    size_t i,j;
+    double stst_tol = 1e-3;
+
+    /* initialize stst */
+    stst = malloc(2*sizeof(steady_state));
+    for ( i=0; i<2; i++)
+    {
+        init_steady_state(stst+i, ode_system_size);
+    }
+    status = ststsolver(multiroot_rhs,var,mu, stst);
+    nbr_stst++;
+    printf("  new steady state found, n = %zu",nbr_stst);
+
+    /* var_max */
+    var_max = malloc(ode_system_size*sizeof(double));
+    for ( i=0; i<ode_system_size; i++)
+    {
+        var_max[i] = 2*var.value[i];
+    }
+
+    /* search for steady states */
+    while (ntry < max_fail)
+    {
+        gsl_qrng_get (q, var.value); /* new starting guess */
+        for ( i=0; i<ode_system_size; i++)
+        {
+            var.value[i] *= var_max[i];
+        }
+        status = ststsolver(multiroot_rhs,var,mu, stst+nbr_stst);
+        /* compare with previous steady states */
+        for ( i=0; i<nbr_stst; i++)
+        {
+            j=0;
+            while ( fabs(stst[nbr_stst].s[j] - stst[i].s[j]) < stst_tol )
+            {
+                j++;
+            }
+            if ( j == ode_system_size) /* new steady state matches a previous one */
+            {
+                /* do nothing */
+            }
+            else /* new steady state is accepted, increase stst size by one */
+            {
+                nbr_stst++;
+                stst = realloc(stst, nbr_stst+1);
+                init_steady_state(stst+nbr_stst,ode_system_size);
+                printf("  new steady state found, n = %zu",nbr_stst);
+            }
+        }
+        ntry++;
+    }
+
+    /* generate phase portrait */
+
+    /* free memory */
+
+    for ( i=0; i<nbr_stst; i++)
+    {
+        free_steady_state(stst+i);
+    }
+    free(var_max);
+    gsl_qrng_free (q);
+
+    return status;
 }
 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
