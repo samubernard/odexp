@@ -44,6 +44,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* variables */
     nv var;
 
+    /* last initial conditions */
+    double *lastinit;
+
     /* options */
     options opts;
 
@@ -112,6 +115,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
  
     ode_system_size = var.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
+    lastinit = malloc(ode_system_size*sizeof(double));
 
     /* init steady state */
     stst->s =  malloc(ode_system_size*sizeof(double));
@@ -209,6 +213,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     printf("\n");
                     break;
+                case 'A' : /* reset axis scales to normal */
+                    fprintf(gnuplot_pipe,"set nologscale y\n"); 
+                    fprintf(gnuplot_pipe,"set nologscale x\n");
+                    fflush(gnuplot_pipe);
+                    printf("\n");
+                    replot = 1;
+                    break;
                 case 'v' : /* set view */
                     scanf("%d",&gx);
                     scanf("%d",&gy);
@@ -253,6 +264,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for ( i=0; i<ode_system_size; i++ )
                         {
+                            lastinit[i] = var.value[i];
                             var.value[i] = lasty[i];
                         }
                     } 
@@ -260,11 +272,21 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for ( i=0; i<ode_system_size; i++ )
                         {
+                            lastinit[i] = var.value[i];
                             var.value[i] = stst->s[i];
                         }
                     }
                     rerun = 1;
                     printf("\n");
+                    break;
+                case 'I' : /* set initial condition to previous ones */
+                    printf("\n");
+                    for ( i=0; i<ode_system_size; i++ )
+                        {
+                            var.value[i] = lastinit[i];
+                            printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
+                        }
+                    rerun = 1;
                     break;
                 case 'l' : /* list name value pairs */
                     op = getchar();
@@ -319,12 +341,21 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 'i' ) 
                     {
                         scanf("%d",&i);
-                        scanf("%lf",&var.value[i]);
+                        if ( i>=0 && i<ode_system_size)
+                        {
+                            lastinit[i] = var.value[i];
+                            scanf("%lf",&var.value[i]);
+                        }
+                        else
+                        {
+                            printf("\n  choose init cond [0-%d]", ode_system_size-1);
+                        }
                     }
                     else if ( op == 'l' )
                     {
                         for ( i=0; i<ode_system_size; i++ )
                         {
+                            lastinit[i] = var.value[i];
                             var.value[i] = lasty[i];
                         }
                     }
@@ -369,6 +400,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     printf("\n");
+                    for ( i=0; i<ode_system_size; i++ )
+                        {
+                            lastinit[i] = var.value[i];
+                        }
                     load_nameval(params_filename, mu, "P", 1);
                     load_nameval(params_filename, var, "X", 1);
                     rerun = 1;
@@ -449,6 +484,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_name_value( mu );
     free_name_value( var );
     free_steady_state( stst );
+    free(lasty);
+    free(lastinit);
 
     /* use system call to set terminal behaviour to more normal behaviour */
     system ("/bin/stty icanon");
