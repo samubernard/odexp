@@ -524,7 +524,6 @@ void free_steady_state( steady_state *stst )
     free(stst->s);
     free(stst->re);
     free(stst->im);
-    free(stst);
 }
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)

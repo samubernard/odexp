@@ -114,16 +114,32 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     nv var, nv mu)
 {
-    int status;
-    uint32_t ode_system_size = var.nbr_el;
+    int status, status_res, status_delta, newstst;
+    const size_t ode_system_size = var.nbr_el;
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
     double *var_max; /* bounds on parameter values */
     size_t ntry = 0;
-    size_t max_fail = 10; /* max number of iteration without finding a new steady state */
+    size_t max_fail = 1000; /* max number of iteration without finding a new steady state */
     steady_state *stst; /* new steady state */
     size_t nbr_stst = 0; /* number of steady state found so far */
     size_t i,j;
-    double stst_tol = 1e-3;
+    double rel_tol = 1e-2, abs_tol = 1e-2, err, ststn1;
+
+    /* stst solver */
+    gsl_matrix *J = gsl_matrix_alloc(ode_system_size,ode_system_size);
+
+    const gsl_multiroot_fsolver_type *T;
+    gsl_multiroot_fsolver *s;
+
+    size_t iter = 0;
+
+    gsl_multiroot_function f = {multiroot_rhs, ode_system_size, &mu};
+
+    gsl_vector *x = gsl_vector_alloc(ode_system_size);
+
+    T = gsl_multiroot_fsolver_hybrids;
+    s = gsl_multiroot_fsolver_alloc(T,ode_system_size);
+    
 
     /* initialize stst */
     stst = malloc(2*sizeof(steady_state));
@@ -133,7 +149,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     }
     status = ststsolver(multiroot_rhs,var,mu, stst);
     nbr_stst++;
-    printf("  new steady state found, n = %zu",nbr_stst);
+    printf("First steady state found, looking for more...\n");
 
     /* var_max */
     var_max = malloc(ode_system_size*sizeof(double));
@@ -146,33 +162,78 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     while (ntry < max_fail)
     {
         gsl_qrng_get (q, var.value); /* new starting guess */
+        /*printf("  Finding a steady with initial guess\n");*/
         for ( i=0; i<ode_system_size; i++)
         {
             var.value[i] *= var_max[i];
+            /*printf("  I[%zu] %+.5e\n",i,var.value[i]);*/
         }
-        status = ststsolver(multiroot_rhs,var,mu, stst+nbr_stst);
+        for ( i=0; i<ode_system_size; i++)
+        {
+            gsl_vector_set(x,i,var.value[i]);
+        }
+
+        gsl_multiroot_fsolver_set (s, &f, x);
+
+        iter = 0;
+        do 
+        {
+            iter++;
+            status = gsl_multiroot_fsolver_iterate(s);
+
+            if (status)
+                break;
+
+            status_res = gsl_multiroot_test_residual(s->f, 1e-7);
+            status_delta = gsl_multiroot_test_delta(s->dx, s->x, 1e-12,1e-7);
+        } while( (status_res == GSL_CONTINUE || status_delta == GSL_CONTINUE ) && iter < 1000);
+
+        for ( i=0; i<ode_system_size; i++)
+        {
+            (stst+nbr_stst)->s[i] = gsl_vector_get(s->x,i);
+        }
+
+        /*printf("  Steady State\n");
+         *gsl_vector_fprintf(stdout,s->x,"    %+.5e");
+         */
         /* compare with previous steady states */
+        newstst = 1;
         for ( i=0; i<nbr_stst; i++)
         {
-            j=0;
-            while ( fabs(stst[nbr_stst].s[j] - stst[i].s[j]) < stst_tol )
+            err = 0.0;
+            ststn1 = 0.0;
+            for ( j=0; j<ode_system_size; j++)
             {
-                j++;
+                err += fabs( (stst[nbr_stst].s[j] - stst[i].s[j]) );
+                ststn1 += fabs(stst[i].s[j]);
             }
-            if ( j == ode_system_size) /* new steady state matches a previous one */
+            
+            if (err < abs_tol + ststn1*rel_tol) /* new steady state matches a previous one */
             {
-                /* do nothing */
-            }
-            else /* new steady state is accepted, increase stst size by one */
-            {
-                nbr_stst++;
-                stst = realloc(stst, nbr_stst+1);
-                init_steady_state(stst+nbr_stst,ode_system_size);
-                printf("  new steady state found, n = %zu",nbr_stst);
+                newstst = 0;
+                break;
             }
         }
-        ntry++;
+        if ( newstst && (status_res == GSL_SUCCESS) && (status_delta == GSL_SUCCESS) ) /* new steady state is accepted, increase stst size by one */
+        {
+            printf("\nNew steady state found, n = %zu\n",nbr_stst+1);
+            printf("  Steady State\n");
+            gsl_vector_fprintf(stdout,s->x,"    %+.5e");
+            gsl_multiroot_fdjacobian(&f, s->x, s->f, 1e-9, J);
+            eig(J, stst+nbr_stst);
+
+            nbr_stst++;
+            stst = realloc(stst, (nbr_stst+1)*sizeof(steady_state));
+            init_steady_state(stst+nbr_stst,ode_system_size);
+            
+        }
+        else
+        {
+            ntry++;
+        }
     }
+
+    printf("  done.\n");
 
     /* generate phase portrait */
 
@@ -182,10 +243,15 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     {
         free_steady_state(stst+i);
     }
+    free(stst);
     free(var_max);
     gsl_qrng_free (q);
 
-    return status;
+    gsl_multiroot_fsolver_free(s);
+    gsl_vector_free(x);
+    gsl_matrix_free(J);
+
+    return 0;
 }
 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
