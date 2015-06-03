@@ -59,6 +59,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     clock_t time_stamp;
     char buffer[MAXFILENAMELENGTH];
 
+    /* turn off buffering */
+    /*setvbuf(stdin, NULL, _IONBF, 0); */
+    /* use system call to make terminal send all keystrokes directly to stdin */
+    system ("/bin/stty -icanon");
 
     /* begin */
     printf("  params filename: %s\n",params_filename);
@@ -135,18 +139,22 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     mu.value[p] *= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
+                    printf("\n");
                     break;
                 case '-' : /* decrement the parameter and run */
                     mu.value[p] /= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
+                    printf("\n");
                     break;                
                 case '0' : /* just run */
                     rerun = 1;
+                    printf("\n");
                     break;
                 case 'r' : /* replot */
                     fprintf(gnuplot_pipe,"replot\n");
                     fflush(gnuplot_pipe);
+                    printf("\n");
                     break;
                 case 'f' : /* toggle freeze */
                     opts.freeze = 1 - opts.freeze;
@@ -154,24 +162,29 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         printf("  freeze is off (not working as expected)\n");
                     else
                         printf("  freeze is on (not working as expected)\n");
+                    printf("\n");
                     break;
                 case '>' : /* increase resolution */
                     opts.ntsteps <<= 1; /* left bitshift, *= 2 */ 
                     opts.ntsteps--; /* remove one */
                     rerun = 1;
+                    printf("\n");
                     break;
                 case '<' : /* decrease resolution */
                     opts.ntsteps >>= 1; /* right bitshift, integer part of division by 2 */
                     opts.ntsteps++; /* add one */
                     rerun = 1;
+                    printf("\n");
                     break;
                 case 'e' : /* extend the simulation */
                     tspan[1] += tspan[1]-tspan[0];
                     rerun = 1;
+                    printf("\n");
                     break;
                 case 'E' : /* shorten the simulation */
                     tspan[1] -= (tspan[1]-tspan[0])/2;
                     rerun = 1;
+                    printf("\n");
                     break;
                 case 'a' : /* set axis scale  */
                     op = getchar();
@@ -194,6 +207,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     fflush(gnuplot_pipe);
                     replot = 1;
+                    printf("\n");
                     break;
                 case 'v' : /* set view */
                     scanf("%d",&gx);
@@ -207,6 +221,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else
                         gy = 2;
                     replot = 1;
+                    printf("\n");
                     break;
                 case 'x' :
                     i = 0;
@@ -230,6 +245,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         gy += 2;
                     }
                     replot = 1;
+                    printf("\n");
                     break;
                 case 'i' : /* run with initial conditions */
                     op = getchar();
@@ -248,9 +264,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                     }
                     rerun = 1;
+                    printf("\n");
                     break;
                 case 'l' : /* list name value pairs */
                     op = getchar();
+                    printf("\n");
                     if (op == 'p')
                     {
                         for (i=0; i<mu.nbr_el; i++)
@@ -289,7 +307,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         i++;
                     }
                     while ( p < 0 || p > mu.nbr_el-1);
-                    printf("  current par: %s\n", mu.name[p]);
+                    printf("\n  current par: %s\n", mu.name[p]);
                     break;
                 case 'c' : /* change parameter/init values */
                     op = getchar();
@@ -318,7 +336,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     rerun = 1;
                     break;
                 case 'h' : /* help */
-                    printf("  list of commands\n");
+                    printf("\n  list of commands\n");
                     printf("  N = ODE system size, P = number of parameters\n");
                     printf("    + or =    plus              increment current par by factor 1.1\n");
                     printf("    -         minus             decrement current par by factor 1.1\n");
@@ -350,6 +368,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
+                    printf("\n");
                     load_nameval(params_filename, mu, "P", 1);
                     load_nameval(params_filename, var, "X", 1);
                     rerun = 1;
@@ -367,6 +386,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         status = ststsolver(multiroot_rhs,var,mu, stst);
                     }
                     rerun = 1;
+                    printf("\n");
                     break;
                 case EOF :  /* quit without saving */
                     quit = 1;
@@ -419,6 +439,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_name_value( mu );
     free_name_value( var );
     free_steady_state( stst );
+
+    /* use system call to set terminal behaviour to more normal behaviour */
+    system ("/bin/stty icanon");
 
     return status;
 
