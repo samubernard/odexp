@@ -3,11 +3,14 @@ LDFLAGS=-g `pkg-config --libs gsl` -lm
 
 all: libodexp.dylib
 
-libodexp.dylib: odexp.o
-		gcc $(LDFLAGS) -dynamiclib -install_name ~/Documents/codes/odexp/libodexp.dylib -lm -o libodexp.dylib odexp.o 
+libodexp.dylib: odexp.o methods_odexp.o
+		gcc $(LDFLAGS) -dynamiclib -install_name ~/Documents/codes/odexp/libodexp.dylib -lm -o libodexp.dylib odexp.o methods_odexp.o 
 
-odexp.o: odexp.c odexp.h
+odexp.o: odexp.c odexp.h methods_odexp.h
 	    gcc -c odexp.c $(CFLAGS) 
+
+methods_odexp.o: methods_odexp.c methods_odexp.h odexp.h
+		gcc -c methods_odexp.c $(CFLAGS)
 
 
 clean:
