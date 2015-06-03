@@ -392,7 +392,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     quit = 1;
                     break;
                 case 'q' :  /* quit with save */
-                    quit = 1;
+                    op = getchar();
+                    if ( op == 'z' ) /* cancel quitting */
+                    {
+                        printf("\n");
+                        break; 
+                    }
+                    else
+                    {
+                        printf("  Enter a short description [optional]: ");
+                        quit = 1;
+                    }
                 case 's' : /* save file */
                     time_stamp = clock();
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
