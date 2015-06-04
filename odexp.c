@@ -142,15 +142,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '+' : /* increment the parameter and run */
                 case '=' : /* increment the parameter and run */
                     mu.value[p] *= 1.1;
-                    printf("%s = %f\n",mu.name[p],mu.value[p]);
+                    printf("\n%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
-                    printf("\n");
                     break;
                 case '-' : /* decrement the parameter and run */
                     mu.value[p] /= 1.1;
-                    printf("%s = %f\n",mu.name[p],mu.value[p]);
+                    printf("\n%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
-                    printf("\n");
                     break;                
                 case '0' : /* just run */
                     rerun = 1;
@@ -423,7 +421,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         status = phasespaceanalysis(multiroot_rhs,var,mu);
                     } 
-                    rerun = 1;
                     printf("\n");
                     break;
                 case EOF :  /* quit without saving */
