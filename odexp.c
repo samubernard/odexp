@@ -439,10 +439,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         quit = 1;
                     }
                 case 's' : /* save file */
+                    system ("/bin/stty icanon");
                     time_stamp = clock();
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
                     file_status = rename(temp_buffer,buffer);
                     file_status = fprintf_nameval(var,mu,tspan,time_stamp);
+                    system ("/bin/stty -icanon");
                     break;
                 default :
                     printf("  type q to quit, h for help\n");

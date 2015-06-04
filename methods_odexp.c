@@ -67,6 +67,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     dt = (t1-t)/(double)(nbr_out-1);
 
     printf("  running... ");
+    fflush(stdout);
     while (t < t1)
     {
         tnext = fmin(t+dt,t1);
