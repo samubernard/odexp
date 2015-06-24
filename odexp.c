@@ -375,6 +375,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("      or a[s][u]\n");
                     printf("    >, <      inc, dec          increase, decrease number of time steps\n");
                     printf("    x[i]      plot(x)           plot variable number i\n");
+                    printf("    v [i] [j] (v)iew            set view, x axis to i and y axis to j\n");
                     printf("    i         (i)init cond      set new initial condition\n");
                     printf("      l       (l)ast            set initial condition to last\n");
                     printf("      s       (s)teady state    set initial condition to steady state\n");
@@ -423,8 +424,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     } 
                     printf("\n");
                     break;
-                case EOF :  /* quit without saving */
+                case 'Q' :  /* quit without saving */
                     quit = 1;
+                    printf("\n");
                     break;
                 case 'q' :  /* quit with save */
                     op = getchar();
@@ -432,6 +434,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         printf("\n");
                         break; 
+                    } 
+                    else if ( op == '!') /* quit without saving */
+                    {
+                        printf("\n");
+                        quit = 1;
+                        break;
                     }
                     else
                     {
