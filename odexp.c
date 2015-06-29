@@ -3,6 +3,7 @@
 ================================================================= */
 
 #include <ctype.h>
+#include <string.h>
 #include <time.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
@@ -20,13 +21,14 @@
 
 /* main loop */
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
-    int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f) )
+    int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+    const char *odexp_filename )
 {
 
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
+    const char *helpcmd = "less -S ~/Documents/codes/odexp/help.txt";
     const char temp_buffer[] = "temp.tab";
     int32_t i;
-    const char params_filename[] = "params.in";
     int8_t success;
 
     double *lasty;
@@ -39,11 +41,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* system size */
     int32_t ode_system_size;
 
+    /* constants */
+    nv cst;
+
     /* parameters */
     nv mu;
 
     /* variables */
     nv var;
+
+    /* equations */
+    nv fcn;
+
+    /* equations */
+    nv eqn;
 
     /* last initial conditions */
     double *lastinit;
@@ -69,20 +80,32 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     system ("/bin/stty -icanon");
 
     /* begin */
-    printf("  params filename: %s\n",params_filename);
+    printf("params filename: %s\n",odexp_filename);
 
     /* get tspan */
-    printf("  getting time span\n");
-    success = load_double(params_filename, tspan, 2, ts_string, ts_len); 
+    printf("getting time span\n");
+    success = load_double(odexp_filename, tspan, 2, ts_string, ts_len); 
     if (!success)
     {
         printf("tspan not defined\n");
         exit ( EXIT_FAILURE );
     }
     
+    /* get constants */
+    printf("getting constants\n");
+    cst.nbr_el = get_nbr_el(odexp_filename,"C",1);
+    cst.value = malloc(cst.nbr_el*sizeof(double));
+    cst.name = malloc(cst.nbr_el*sizeof(char*));
+    cst.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < cst.nbr_el; i++)
+    {
+        cst.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+    }
+    load_nameval(odexp_filename,cst,"C",1);
+
     /* get parameters */
-    printf("  getting parameters\n");
-    mu.nbr_el = get_nbr_el(params_filename,"P",1);
+    printf("getting parameters\n");
+    mu.nbr_el = get_nbr_el(odexp_filename,"P",1);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
     mu.max_name_length = malloc(sizeof(int));
@@ -90,11 +113,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    load_nameval(params_filename,mu,"P",1);
+    load_nameval(odexp_filename,mu,"P",1);
 
     /* get variable names and initial conditions */
-    printf("  getting variable names and initial conditions\n");
-    var.nbr_el = get_nbr_el(params_filename,"X",1);
+    printf("getting variable names and initial conditions\n");
+    var.nbr_el = get_nbr_el(odexp_filename,"X",1);
     var.value = malloc(var.nbr_el*sizeof(double));
     var.name = malloc(var.nbr_el*sizeof(char*));
     var.max_name_length = malloc(sizeof(int));
@@ -102,17 +125,50 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    success = load_nameval(params_filename,var,"X",1);   
+    success = load_nameval(odexp_filename,var,"X",1);   
     if (!success)
     {
-        printf("vars not defined\n");
+        printf("variables not defined\n");
+        exit ( EXIT_FAILURE );
+    } 
+
+    /* get nonlinear functions */
+    printf("getting auxiliary functions\n");
+    fcn.nbr_el = get_nbr_el(odexp_filename,"A",1);
+    fcn.value = malloc(fcn.nbr_el*sizeof(double));
+    fcn.name = malloc(fcn.nbr_el*sizeof(char*));
+    fcn.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < fcn.nbr_el; i++)
+    {
+        fcn.name[i] = malloc(MAXLINELENGTH*sizeof(char));
+    }
+    success = load_strings(odexp_filename,fcn,"A",1);   
+    if (!success)
+    {
+        printf("no auxiliary function found\n");
+    } 
+
+    /* get equations */
+    printf("getting equations\n");
+    eqn.nbr_el = get_nbr_el(odexp_filename,"d",1);
+    eqn.value = malloc(eqn.nbr_el*sizeof(double));
+    eqn.name = malloc(eqn.nbr_el*sizeof(char*));
+    eqn.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < eqn.nbr_el; i++)
+    {
+        eqn.name[i] = malloc(MAXLINELENGTH*sizeof(char));
+    }
+    success = load_strings(odexp_filename,eqn,"d",1);   
+    if (!success)
+    {
+        printf("equations not defined\n");
         exit ( EXIT_FAILURE );
     } 
 
     /* get options */
-    printf("  getting options\n");
-    printf("    ntsteps = %u\n",opts.ntsteps = 201);
-    printf("    freeze  = %u\n",opts.freeze = 0);
+    printf("getting options\n");
+    printf("  ntsteps = %u\n",opts.ntsteps = 201);
+    printf("  freeze  = %u\n",opts.freeze = 0);
  
     ode_system_size = var.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
@@ -297,11 +353,25 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             printf("  P[%d] %-20s = %e\n",i,mu.name[i],mu.value[i]);
                         }
                     }
-                    else if (op == 'x')
+                    else if (op == 'x' || op == 'i')
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
                             printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
+                        }
+                    }
+                    else if (op == 'e')
+                    {
+                        for (i=0; i<ode_system_size; i++)
+                        {
+                            printf("  E[%d] %s",i,eqn.name[i]);
+                        }
+                    }
+                    else if (op == 'a')
+                    {
+                        for (i=0; i<fcn.nbr_el; i++)
+                        {
+                            printf("  A[%d] %s",i,fcn.name[i]);
                         }
                     }
                     else if (op == 't')
@@ -366,35 +436,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     rerun = 1;
                     break;
                 case 'h' : /* help */
-                    printf("\n  list of commands\n");
-                    printf("  N = ODE system size, P = number of parameters\n");
-                    printf("    + or =    plus              increment current par by factor 1.1\n");
-                    printf("    -         minus             decrement current par by factor 1.1\n");
-                    printf("    r         (r)eplot          repeat the last gnuplot command\n");
-                    printf("    a[u][s]   (a)xis            set axis u={x,y} to scale s={l,n}\n");
-                    printf("      or a[s][u]\n");
-                    printf("    >, <      inc, dec          increase, decrease number of time steps\n");
-                    printf("    x[i]      plot(x)           plot variable number i\n");
-                    printf("    v [i] [j] (v)iew            set view, x axis to i and y axis to j\n");
-                    printf("    i         (i)init cond      set new initial condition\n");
-                    printf("      l       (l)ast            set initial condition to last\n");
-                    printf("      s       (s)teady state    set initial condition to steady state\n");
-                    printf("    l         (l)ist            list\n");
-                    printf("      lp      (l)ist (p)ar      list all parameters and their values\n");
-                    printf("      lx      (l)ist (x)        list all variables with init conditions\n");
-                    printf("      ls      (l)ist (s)tst     list steady state\n");
-                    printf("    c         (c)hange          change value of parameter, init cond, or tpsan\n");
-                    printf("      cp[i] [v]                 set value of parameter i to v (i=0 to P-1)\n");
-                    printf("      ci[i] [v]                 set value of init cond i to v (i=0 to N-1)\n");
-                    printf("      ct[i] [v]                 set value of ti to v (i = 0 or 1)\n");
-                    printf("    h         (h)elp            this help\n");
-                    printf("    d         (d)efaults        reload the parameter file\n");
-                    printf("    g [cmd]   (g)nuplot         send the command cmd to gnuplot\n");
-                    printf("    p[i]      (p)ar             set the current parameter to i\n");
-                    printf("    s [msg]   (s)nap            snap current simulation and parameter values with msg\n");
-                    printf("    m         (m)ethods         run numerical method\n");
-                    printf("      s       (s)teady state    find a steady state with starting guess init cond\n");
-                    printf("    q [msg]   (q)uit            quit and snap\n");
+                    printf("\n");
+                    system ("/bin/stty icanon");
+                    system(helpcmd);
+                    system("/bin/stty -icanon");
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     printf("\n");
@@ -402,8 +447,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                         }
-                    load_nameval(params_filename, mu, "P", 1);
-                    load_nameval(params_filename, var, "X", 1);
+                    load_nameval(odexp_filename, mu, "P", 1);
+                    load_nameval(odexp_filename, var, "X", 1);
                     rerun = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
@@ -451,11 +496,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     time_stamp = clock();
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
                     file_status = rename(temp_buffer,buffer);
-                    file_status = fprintf_nameval(var,mu,tspan,time_stamp);
+                    file_status = fprintf_nameval(var,cst,mu,fcn,eqn,tspan,time_stamp);
                     system ("/bin/stty -icanon");
                     break;
                 default :
-                    printf("  type q to quit, h for help\n");
+                    printf("  Unknown command. Type q to quit, h for help\n");
             }  
             if (quit)
             {
@@ -491,8 +536,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     pclose(gnuplot_pipe);
 
+    free_name_value( cst );
     free_name_value( mu );
     free_name_value( var );
+    free_name_value( eqn );
+    free_name_value( fcn );
     free_steady_state( stst );
     free(lasty);
     free(lastinit);
@@ -655,6 +703,45 @@ int8_t load_double(const char *filename, double *mypars, size_t len, const char 
     
 }
 
+int8_t load_strings(const char *filename, struct nameval var, const char *sym, const size_t sym_len)
+{
+    size_t  i = 0,
+            k = 0,
+            linecap = 0;
+    ssize_t linelength;
+    char *line = NULL;
+    FILE *fr;
+    int8_t success = 0;
+    fr = fopen (filename, "rt");
+
+    *var.max_name_length = 0;
+    while( (linelength = getline(&line, &linecap, fr)) > 0)
+    {
+        while(line[k] == sym[k] && !isspace(line[k]) && \
+                k < sym_len && k < linelength)
+        {
+            k++;
+        }
+        if(k == sym_len) /* keyword was found */
+        {
+            success = 1;
+            strcpy(var.name[i],line);
+            if(linelength > *var.max_name_length)
+            {
+                *var.max_name_length = linelength;
+            }
+            var.value[i] = i+0.0;
+
+            printf("  [%zu] %s",i,var.name[i]);
+            i++;
+        }
+        k = 0; /* reset k */
+    }
+    fclose(fr);
+
+    return success;
+}
+
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len)
 {
     /* tries to find a line starting with string sym and copy integers on that line into mypars. If no line starts with sym, mypars is not assigned. */
@@ -693,7 +780,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_nameval(nv init, nv mu, double tspan[2], clock_t time_stamp)
+int8_t fprintf_nameval(nv init, nv cst, nv mu, nv fcn, nv eqn, double tspan[2], clock_t time_stamp)
 {
     int8_t success = 0;
     size_t i;
@@ -723,12 +810,27 @@ int8_t fprintf_nameval(nv init, nv mu, double tspan[2], clock_t time_stamp)
     {
         fprintf(fr,"X%zu %-*s %.5e\n",i,len,init.name[i],init.value[i]);
     }    
+    fprintf(fr,"\n# constants/values\n");
+    for(i=0;i<cst.nbr_el;i++)
+    {
+        fprintf(fr,"C%zu %-*s %.5e\n",i,len,cst.name[i],cst.value[i]);
+    }
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
     {
         fprintf(fr,"P%zu %-*s %.5e\n",i,len,mu.name[i],mu.value[i]);
     }
-    fprintf(fr,"\nsize %d\n",init.nbr_el);
+    fprintf(fr,"\n# nonlinear functions\n");
+    for(i=0;i<fcn.nbr_el;i++)
+    {
+        fprintf(fr,"%s",fcn.name[i]);
+    }
+    fprintf(fr,"\n# equations\n");
+    for(i=0;i<eqn.nbr_el;i++)
+    {
+        fprintf(fr,"%s",eqn.name[i]);
+    }
+
     fprintf(fr,"\ntspan %f %f\n",tspan[0],tspan[1]);
 
 

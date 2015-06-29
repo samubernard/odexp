@@ -13,6 +13,7 @@
 ================================================================= */
 #define MAXPARNAMELENGTH 15
 #define MAXFILENAMELENGTH 63
+#define MAXLINELENGTH 512                            
 
 
 typedef struct nameval
@@ -40,7 +41,8 @@ typedef struct steady_state
 /* function declaration */
 
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
-    int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f) );
+    int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+    const char *odexp_filename );
 
 void free_name_value(struct nameval mu );
 
@@ -55,9 +57,11 @@ int8_t load_nameval(const char *filename, struct nameval var, const char *sym, c
 int8_t load_double(const char *filename, double *vect, size_t len, \
         const char *sym, size_t sym_len);
 
+int8_t load_strings(const char *filename, struct nameval var, const char *sym, const size_t sym_len);
+
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
-int8_t fprintf_nameval(struct nameval init, struct nameval mu, double tspan[2], clock_t time_stamp);
+int8_t fprintf_nameval(struct nameval init, struct nameval cst, struct nameval mu, struct nameval fcn, struct nameval eqn, double tspan[2], clock_t time_stamp);
 
 
 

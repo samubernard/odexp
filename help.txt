@@ -1,0 +1,35 @@
+list of commands 
+ N = ODE system size, P = number of parameters 
+     + or =     plus            increment current par by factor 1.1 
+     -          minus           decrement current par by factor 1.1 
+     r          (r)eplot        repeat the last gnuplot command 
+     a[u][s]    (a)xis          set axis u={x,y} to scale s={l,n} 
+         or a[s][u] 
+     A          reset (A)xes    reset axes normal scale 
+     >, <       inc, dec        increase, decrease number of time steps 
+     x[i]       plot(x)         plot variable number i 
+     v [i] [j]  (v)iew          set view, x axis to i and y axis to j (t=-1) 
+     i          (i)init cond    set new initial condition 
+        l       (l)ast          set initial condition to last 
+        s       (s)teady state  set initial condition to steady state 
+     l          (l)ist          list 
+         p      (p)ar           list all parameters and their values 
+         x | i  (x) | (i)       list all variables with init conditions 
+         a      (a)ux           list all auxiliary functions 
+         e      (e)qn           list all equations 
+         s      (s)tst          list steady state 
+     c          (c)hange        change value of parameter, init cond, or tpsan 
+         p[i] [v]               set value of parameter i to v (i=0 to P-1) 
+         i[i] [v]               set value of init cond i to v (i=0 to N-1) 
+         t[i] [v]               set value of ti to v (i = 0 or 1) 
+     h          (h)elp          this help 
+     d          (d)efaults      reload the parameter file 
+     g [cmd]    (g)nuplot       send the command cmd to gnuplot 
+     p[i]       (p)ar           set the current parameter to i 
+     s [msg]    (s)nap          snapshot of current simulation and parameter values with msg 
+     m          (m)ethods       run numerical method 
+         s      (s)teady state  find a steady state with starting guess init cond 
+         m      (m)any stst     try to find all steady states 
+     q [msg]    (q)uit          quit and snap 
+     Q [msg]    (Q)uit          quit without snapshot 
+
