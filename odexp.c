@@ -67,8 +67,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     int status, file_status;
     int c, p=0, op = 0, op2 = 0;
-    int32_t gx = 1,gy = 2;
-    int replot = 0, rerun = 0, quit = 0;
+    int32_t gx = 1,gy = 2, gz = 3;
+    int replot = 0, 
+        rerun = 0, 
+        plot3d = 0,
+        quit = 0;
     char line[255];
     /*char cmd[255];*/
     clock_t time_stamp;
@@ -275,6 +278,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("\n");
                     replot = 1;
                     break;
+                case '2' : /* set 2D */
                 case 'v' : /* set view */
                     scanf("%d",&gx);
                     scanf("%d",&gy);
@@ -287,6 +291,27 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else
                         gy = 2;
                     replot = 1;
+                    plot3d = 0;
+                    printf("\n");
+                    break;
+                case '3' : /* set 3D view */
+                    scanf("%d",&gx);
+                    scanf("%d",&gy);
+                    scanf("%d",&gz);
+                    if ( gx >= -1 && gx <= ode_system_size-1)
+                        gx += 2;
+                    else
+                        gx = 1;
+                    if ( gy >= -1 && gy <= ode_system_size-1)
+                        gy += 2;
+                    else
+                        gy = 2;
+                    if ( gz >= -1 && gz <= ode_system_size-1)
+                        gz += 2;
+                    else
+                        gy = 1;
+                    replot = 1;
+                    plot3d = 1;
                     printf("\n");
                     break;
                 case 'x' :
@@ -456,7 +481,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     fgets(line, 255, stdin);
                     fprintf(gnuplot_pipe,"%s\n", line);
                     fflush(gnuplot_pipe);
-                    replot = 1;
                     system ("/bin/stty -icanon");
                     break;
                 case 'm' :
@@ -514,13 +538,27 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             }
             if (replot || rerun)    
             {
-                if (opts.freeze == 0)
+                if (plot3d == 0)
                 {
-                    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
-                } 
+                    if (opts.freeze == 0)
+                    {
+                        fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                    } 
+                    else
+                    {
+                        fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                    }
+                }
                 else
                 {
-                    fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                    if (opts.freeze == 0)
+                    {
+                        fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w l title \"%s\"\n",temp_buffer,gx,gy,gz,var.name[gy-2]);    
+                    } 
+                    else
+                    {
+                        fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d%d w l title \"%s\"\n",temp_buffer,gx,gy,gz,var.name[gy-2]);    
+                    }
                 }
 
                 fflush(gnuplot_pipe);
