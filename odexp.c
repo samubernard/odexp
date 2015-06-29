@@ -283,13 +283,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     scanf("%d",&gx);
                     scanf("%d",&gy);
                     if ( gx >= -1 && gx <= ode_system_size-1)
+                    {
+                        fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx]);
                         gx += 2;
+                    }
                     else
                         gx = 1;
                     if ( gy >= -1 && gy <= ode_system_size-1)
+                    {
+                        fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy]);
                         gy += 2;
+                    }
                     else
                         gy = 2;
+                    fflush(gnuplot_pipe);
                     replot = 1;
                     plot3d = 0;
                     printf("\n");
@@ -299,17 +306,27 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     scanf("%d",&gy);
                     scanf("%d",&gz);
                     if ( gx >= -1 && gx <= ode_system_size-1)
+                    {
+                        fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx]);
                         gx += 2;
+                    }
                     else
                         gx = 1;
                     if ( gy >= -1 && gy <= ode_system_size-1)
+                    {
+                        fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy]);
                         gy += 2;
+                    }
                     else
                         gy = 2;
                     if ( gz >= -1 && gz <= ode_system_size-1)
+                    {
+                        fprintf(gnuplot_pipe,"set zlabel '%s'\n",var.name[gz]);
                         gz += 2;
+                    }
                     else
                         gy = 1;
+                    fflush(gnuplot_pipe);
                     replot = 1;
                     plot3d = 1;
                     printf("\n");
@@ -542,22 +559,22 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 {
                     if (opts.freeze == 0)
                     {
-                        fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                        fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines \n",temp_buffer,gx,gy);    
                     } 
                     else
                     {
-                        fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                        fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines \n",temp_buffer,gx,gy);    
                     }
                 }
                 else
                 {
                     if (opts.freeze == 0)
                     {
-                        fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w l title \"%s\"\n",temp_buffer,gx,gy,gz,var.name[gy-2]);    
+                        fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w l \n",temp_buffer,gx,gy,gz);    
                     } 
                     else
                     {
-                        fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d%d w l title \"%s\"\n",temp_buffer,gx,gy,gz,var.name[gy-2]);    
+                        fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d%d w l \n",temp_buffer,gx,gy,gz);    
                     }
                 }
 
