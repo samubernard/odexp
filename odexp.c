@@ -452,10 +452,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     rerun = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
+                    system ("/bin/stty icanon");
                     fgets(line, 255, stdin);
                     fprintf(gnuplot_pipe,"%s\n", line);
                     fflush(gnuplot_pipe);
                     replot = 1;
+                    system ("/bin/stty -icanon");
                     break;
                 case 'm' :
                     op = getchar();
