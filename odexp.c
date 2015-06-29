@@ -284,14 +284,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     scanf("%d",&gy);
                     if ( gx >= -1 && gx <= ode_system_size-1)
                     {
-                        fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx]);
+                        if ( gx == -1 )
+                            fprintf(gnuplot_pipe,"set xlabel 't'\n");
+                        else 
+                            fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx]);
                         gx += 2;
                     }
                     else
                         gx = 1;
                     if ( gy >= -1 && gy <= ode_system_size-1)
                     {
-                        fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy]);
+                        if ( gy == -1 )
+                            fprintf(gnuplot_pipe,"set ylabel 't'\n");
+                        else 
+                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy]);
                         gy += 2;
                     }
                     else
@@ -307,21 +313,30 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     scanf("%d",&gz);
                     if ( gx >= -1 && gx <= ode_system_size-1)
                     {
-                        fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx]);
+                        if ( gx == -1 )
+                            fprintf(gnuplot_pipe,"set xlabel 't'\n");
+                        else 
+                            fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx]);
                         gx += 2;
                     }
                     else
                         gx = 1;
                     if ( gy >= -1 && gy <= ode_system_size-1)
                     {
-                        fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy]);
+                        if ( gy == -1 )
+                            fprintf(gnuplot_pipe,"set ylabel 't'\n");
+                        else 
+                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy]);
                         gy += 2;
                     }
                     else
                         gy = 2;
                     if ( gz >= -1 && gz <= ode_system_size-1)
                     {
-                        fprintf(gnuplot_pipe,"set zlabel '%s'\n",var.name[gz]);
+                        if ( gz == -1 )
+                            fprintf(gnuplot_pipe,"set zlabel 't'\n");
+                        else 
+                            fprintf(gnuplot_pipe,"set zlabel '%s'\n",var.name[gz]);
                         gz += 2;
                     }
                     else
