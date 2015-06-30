@@ -26,6 +26,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 {
 
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
+    const char *init_filename = ".odexp/init.in";
     const char *helpcmd = "less -S ~/Documents/codes/odexp/help.txt";
     const char temp_buffer[] = "temp.tab";
     int32_t i;
@@ -104,7 +105,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         cst.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    load_nameval(odexp_filename,cst,"C",1);
+    load_strings(odexp_filename,cst,"C",1);
 
     /* get parameters */
     printf("getting parameters\n");
@@ -120,7 +121,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get variable names and initial conditions */
     printf("getting variable names and initial conditions\n");
-    var.nbr_el = get_nbr_el(odexp_filename,"X",1);
+    var.nbr_el = get_nbr_el(init_filename,"X",1);
     var.value = malloc(var.nbr_el*sizeof(double));
     var.name = malloc(var.nbr_el*sizeof(char*));
     var.max_name_length = malloc(sizeof(int));
@@ -128,7 +129,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    success = load_nameval(odexp_filename,var,"X",1);   
+    success = load_nameval(init_filename,var,"X",1);   
     if (!success)
     {
         printf("variables not defined\n");
@@ -408,6 +409,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<mu.nbr_el; i++)
                         {
                             printf("  P[%d] %-20s = %e\n",i,mu.name[i],mu.value[i]);
+                        }
+                    }
+                    else if (op == 'c')
+                    {
+                        for (i=0; i<cst.nbr_el; i++)
+                        {
+                            printf("  C[%d] %-20s = %e\n",i,cst.name[i],cst.value[i]);
                         }
                     }
                     else if (op == 'x' || op == 'i')
