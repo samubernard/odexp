@@ -76,8 +76,8 @@ iterator=`awk '/_i/ {count++} END {print count++}' $file`
 if [ "$iterator" -gt 0  ] # found iterator
 then
     echo "    size_t _i;" >>.odexp/model.c
-    echo "    size_t _varcount = 0;" >>.odexp/model.c
 fi
+echo "    size_t _varcount = 0;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 
 echo "    /* default parameters */" >>.odexp/model.c
@@ -122,7 +122,7 @@ evic=(`awk -F ' ' -v OFS=':' '$1 ~ /^[xX][0-9]*/ {$1="";$2="";print $0}' $file`)
 
 # n is the number of distinct vectors and scalars
 n=$(( ${#v[@]} - 1 ))
-#echo "$n"
+echo "$n"
 
 if [ "$n" -ge 0 ]
 then
@@ -134,10 +134,10 @@ then
             echo "    {" >>.odexp/model.c
             echo "      ${v[$k]}[_i] = _y[_i+_varcount];" >>.odexp/model.c
             echo "    }" >>.odexp/model.c
-            echo "    _varcount += ${nv[$k]};" >>.odexp/model.c
         else
             echo "    ${v[$k]} = _y[_varcount];" >>.odexp/model.c
         fi
+        echo "    _varcount += ${nv[$k]};" >>.odexp/model.c
     done
 fi
 
@@ -148,14 +148,20 @@ then
     echo "/* initial conditions */" >.odexp/init.in
     for k in `seq 0 $n` 
     do
-        for m in `seq 0 $(( ${nv[$k]} - 1 ))`
-        do
-            icstring=`echo ${evic[$k]} | sed -e "s/:/ /g"`
-            icstring=`echo $icstring | sed -e "s/_i/$m/g"`
-            ic=`echo $icstring | bc`
-            echo "X$initc ${v[$k]}$m $ic" >>.odexp/init.in
+        icstring=`echo ${evic[$k]} | sed -e "s/:/ /g"`
+        if [ "${nv[$k]}" -gt 1 ]
+        then
+            for m in `seq 0 $(( ${nv[$k]} - 1 ))`
+            do
+                icstring=`echo $icstring | sed -e "s/_i/$m/g"`
+                ic=`echo $icstring | bc`
+                echo "X$initc ${v[$k]}$m $ic" >>.odexp/init.in
+                initc=$(( $initc + 1 ))
+            done
+        else
+            echo "X$initc ${v[$k]} $icstring" >>.odexp/init.in
             initc=$(( $initc + 1 ))
-        done     
+        fi     
     done
 fi
 

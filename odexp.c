@@ -415,7 +415,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for (i=0; i<cst.nbr_el; i++)
                         {
-                            printf("  C[%d] %-20s = %e\n",i,cst.name[i],cst.value[i]);
+                            printf("  %s",cst.name[i]);
                         }
                     }
                     else if (op == 'x' || op == 'i')
