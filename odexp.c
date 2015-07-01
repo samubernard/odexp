@@ -252,7 +252,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'a' : /* set axis scale  */
                     op = getchar();
                     op2 = getchar();
-                    if ( (op  == 'y' && op2 == 'l') || (op2  == 'y' && op == 'l') )
+                    if ( (op  == 'z' && op2 == 'l') || (op2  == 'z' && op == 'l') )
+                    {
+                        fprintf(gnuplot_pipe,"set logscale z\n");  
+                    }
+                    if ( (op  == 'z' && op2 == 'n') || (op2  == 'z' && op == 'n') )
+                    {
+                        fprintf(gnuplot_pipe,"set nologscale y\n");  
+                    }
+                    if ( (op  == 'y' && op2 == 'l') || (op2  == 'z' && op == 'l') )
                     {
                         fprintf(gnuplot_pipe,"set logscale y\n");  
                     }
@@ -273,6 +281,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("\n");
                     break;
                 case 'A' : /* reset axis scales to normal */
+                    fprintf(gnuplot_pipe,"set nologscale z\n");
                     fprintf(gnuplot_pipe,"set nologscale y\n"); 
                     fprintf(gnuplot_pipe,"set nologscale x\n");
                     fflush(gnuplot_pipe);
@@ -431,6 +440,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             printf("  E[%d] %s",i,eqn.name[i]);
                         }
+                        for (i=0; i<fcn.nbr_el; i++)
+                        {
+                            printf("  A[%d] %s",i,fcn.name[i]);
+                        }
                     }
                     else if (op == 'a')
                     {
@@ -532,6 +545,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     if ( op  == 's') /* compute steady state */
                     {
                         status = ststsolver(multiroot_rhs,var,mu, stst);
+                        if (!status && !plot3d)
+                        {
+                            fprintf(gnuplot_pipe,"replot \"<echo '%f %f'\"   with points ls 2 title \"stst\"\n",\
+                                stst->s[gx-2],stst->s[gy-2]);
+                            fflush(gnuplot_pipe);
+                        }
                     } 
                     else if ( op == 'm')
                     {
