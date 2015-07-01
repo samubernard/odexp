@@ -2,6 +2,28 @@
 
 set -eu # makes your program exit on error or unbound variable
 
+function parsevector 
+{
+    typ=$1
+    file=$2
+
+    v=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {split($2,a,/[\[\]]/); print a[1]}' $file`)
+    nv=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {split($2,a,/[\[\]]/); print a[2]}' $file`)
+    ev=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ { print $3}' $file`)
+
+    n=`expr ${#v[@]} - 1`
+    if [ "$n" -ge 0 ]
+    then
+        for k in `seq 0 $n`
+        do
+            echo "    for (_i=0; _i<${nv[$k]}; _i++)" >>.odexp/model.c
+            echo "    {" >>.odexp/model.c
+            echo "      ${v[$k]}[_i] = ${ev[k]};" >>.odexp/model.c
+            echo "    }" >>.odexp/model.c
+        done
+    fi
+}
+
 file=$1
 
 rm -fr .odexp/
@@ -99,7 +121,7 @@ awk -F ' ' '$1 ~ /^[xX][0-9]*/ {printf "    double %s;\n", $2 }' $file >>.odexp/
 echo "" >>.odexp/model.c
 echo "    /* Initialization */" >>.odexp/model.c
 # initialize constant parameter vectors and write them in .odexp/model.c
-~/Documents/codes/odexp/parsevector.sh C $file
+parsevector C $file
 
 echo "" >>.odexp/model.c
 
