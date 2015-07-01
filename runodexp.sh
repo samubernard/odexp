@@ -9,7 +9,8 @@ function parsevector
 
     v=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {split($2,a,/[\[\]]/); print a[1]}' $file`)
     nv=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {split($2,a,/[\[\]]/); print a[2]}' $file`)
-    ev=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ { print $3}' $file`)
+    ev=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {gsub("_i","(double)_i",$3); print $3}' $file`)
+    echo "$ev"
 
     n=`expr ${#v[@]} - 1`
     if [ "$n" -ge 0 ]
@@ -106,7 +107,7 @@ echo "    /* default parameters */" >>.odexp/model.c
 # find constant parameters and declare them in .odexp/model.c
 awk -F ' ' '$1 ~ /^[cC][0-9]*/ && $2 !~ /[\[\]]/ {printf "    double %s = %f;\n", $2, $3}' $file >>.odexp/model.c
 # find constant parameter vectors and declare them in .odexp/model.c
-awk -F ' ' '$1 ~ /^[cC][0-9]*/ && $2 ~ /[\[\]]/ {printf "    double %s;\n", $2, $3}' $file >>.odexp/model.c
+awk -F ' ' '$1 ~ /^[cC][0-9]*/ && $2 ~ /[\[\]]/ { printf "    double %s;\n", $2, $3}' $file >>.odexp/model.c
 
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
