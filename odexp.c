@@ -450,6 +450,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             printf("  S[%d] %-20s = %e\n",i,var.name[i],stst->s[i]);
                         }
                     }
+                    else if (op == 'n')
+                    {
+                        printf("  System size = %d\n",ode_system_size);
+                    }
                     break;
                 case 'p' : /* change current parameter */
                     i = 0;
