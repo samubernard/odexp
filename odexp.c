@@ -73,17 +73,18 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     steady_state *stst = malloc(sizeof(steady_state));
 
     int status, file_status;
-    int c, 
-        p=0,
-        np,
-        op = 0,
-        op2 = 0;
+    int p=0,
+        np;
+    char c,
+         op,
+         op2;
     int32_t gx = 1,
             gy = 2, 
             gz = 3,
             ngx,
             ngy,
             ngz;
+    double nvalue;
     int replot = 0, 
         rerun = 0, 
         plot3d = 0,
@@ -208,10 +209,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     while(1)
     {
         cmdline = readline("odexp> ");
-        add_history (cmdline);
+        if (input)
+        {
+            add_history (cmdline);
+        }
         //printf("odexp> ");
         /*fgets(line, 255, stdin);*/
-        c = getchar();
+        sscanf(cmdline,"%c",&c);
         if ( c != '\n')
         {
             switch(c)
@@ -268,24 +272,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'a' : /* set axis scale  */
                     //printf("\033[8C%s{xy}\033[12D%s",boldcyan,normal);
-                    op = getchar();
+                    sscanf(cmdline+1,"%c%c",&op,&op2);
                     //printf("\033[K\033[8C%s{ln}\033[12D%s",boldcyan,normal);
-                    if ( op == 127 || op == 8 )
-                    {
-                        //printf("\033[2K\033[E");
-                        replot = 0;
-                        rerun = 0;
-                        break;
-                    }
-                    op2 = getchar();
                     //printf("\033[K");
-                    if ( op2 == 127 || op2 == 8 )
-                    {
-                        //printf("\033[2K\033[E");
-                        replot = 0;
-                        rerun = 0;
-                        break;
-                    }
                     if ( (op  == 'z' && op2 == 'l') || (op2  == 'z' && op == 'l') )
                     {
                         fprintf(gnuplot_pipe,"set logscale z\n");  
@@ -326,8 +315,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'v' : /* set view */
                     //printf("\033[8C%s[x-axis] [y-axis]%s\033[24D",boldcyan,normal);
                     //system ("/bin/stty icanon");
-                    scanf("%d",&ngx);
-                    scanf("%d",&ngy);
+                    sscanf(cmdline+1,"%d %d",&ngx,&ngy);
                     if ( ngx >= -1 && ngx < ode_system_size)
                     {
                         if ( ngx == -1 )
@@ -359,9 +347,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '3' : /* set 3D view */
                     //printf("\033[8C%s[x-axis] [y-axis] [z-axis]%s\033[33D",boldcyan,normal);
                     //system ("/bin/stty icanon");
-                    scanf("%d",&ngx);
-                    scanf("%d",&ngy);
-                    scanf("%d",&ngz);
+                    sscanf(cmdline+1,"%d %d %d",&ngx,&ngy,&ngz);
                     if ( ngx >= -1 && ngx < ode_system_size)
                     {
                         if ( ngx == -1 )
@@ -406,7 +392,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'x' :
                     //printf("\033[8C%s[y-axis]%s\033[15D",boldcyan,normal);
                     //system ("/bin/stty icanon");
-                    scanf("%d",&ngy);
+                    sscanf(cmdline+1,"%d",&ngy);
                     if (ngy > -1 && ngy < ode_system_size)
                     {
                         if ( ngy == -1 )
@@ -424,7 +410,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'i' : /* run with initial conditions */
                     //printf("\033[8C%s{ls}%s\033[12D",boldcyan,normal);
-                    op = getchar();
+                    sscanf(cmdline+1,"%c",&op);
                     //printf("\033[K");
                     if ( op == 'l' ) /* last simulation value */
                     {
@@ -456,15 +442,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'l' : /* list name value pairs */
                     //printf("\033[8C%s{pxieatsn}%s\033[18D",boldcyan,normal);
-                    op = getchar();
-                    //printf("\033[K");
-                    if (op == 127 || op == 0x8)
-                    {
-                        //printf("\033[2K\033[E");
-                        replot = 0;
-                        rerun = 0;
-                        break;
-                    }       
+                    sscanf(cmdline+1,"%c",&op);
+                    //printf("\033[K");    
                     printf("\n");             
                     if (op == 'p')
                     {
@@ -527,7 +506,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'p' : /* change current parameter */
                     //printf("\033[8C%s[par]%s\033[12D",boldcyan,normal);
-                    scanf("%d",&np);
+                    sscanf(cmdline+1,"%d",&np);
                     if (np > -1 && np < mu.nbr_el)
                     {
                         p = np;
@@ -540,23 +519,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'c' : /* change parameter/init values */
                     //printf("\033[8C%s{pilt}%s\033[14D",boldcyan,normal);
-                    op = getchar();
-                    if (op == 127 || op == 0x8)
-                    {
-                        //printf("\033[2K\033[E");
-                        replot = 0;
-                        rerun = 0;
-                        break;
-                    }
+                    sscanf(cmdline+1,"%c",&op);
                     //system ("/bin/stty icanon");
                     if( op == 'p' )
                     {
                         //printf("\033[K\033[8C%s[par] [value]%s\033[20D",boldcyan,normal);
-                        scanf("%d",&np);
+                        sscanf(cmdline+2,"%d %lf",&np,&nvalue);
                         if ( np > -1 && np < mu.nbr_el )
                         {
                             p = np;
-                            scanf("%lf",&mu.value[p]);
+                            mu.value[p] = nvalue;
                         }
                         else
                         {
@@ -567,11 +539,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 'i' ) 
                     {
                         //printf("\033[K\033[8C%s[var] [value]%s\033[20D",boldcyan,normal);
-                        scanf("%d",&i);
+                        sscanf(cmdline+2,"%d %lf",&i,&nvalue);
                         if ( i > -1 && i<ode_system_size)
                         {
                             lastinit[i] = var.value[i];
-                            scanf("%lf",&var.value[i]);
+                            var.value[i] = nvalue;
                             rerun = 1;
                         }
                         else
@@ -592,10 +564,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 't' )
                     {
                         //printf("\033[K\033[8C%s[t] [value]%s\033[18D",boldcyan,normal);
-                        scanf("%d",&i);
+                        sscanf(cmdline+2,"%d %lf",&i,&nvalue);
                         if ( i == 0 || i == 1 )
                         {
-                            scanf("%lf",tspan+i);
+                            tspan[i] = nvalue;
                             rerun = 1;
                         }
                         else
@@ -622,21 +594,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'g' : /* issue a gnuplot command */
                     //system ("/bin/stty icanon");
-                    fgets(line, 255, stdin);
-                    fprintf(gnuplot_pipe,"%s\n", line);
+                    fprintf(gnuplot_pipe,"%s\n", cmdline+1);
                     fflush(gnuplot_pipe);
                     break;
                 case 'm' :
                     //printf("\033[8C%s{ms}%s\033[12D",boldcyan,normal);
-                    op = getchar();
+                    sscanf(cmdline+1,"%c",&op);
                     //printf("\033[K");
-                    if (op == 127 || op == 0x8)
-                    {
-                        printf("\033[2K\033[E");
-                        replot = 0;
-                        rerun = 0;
-                        break;
-                    }
                     if ( op  == 's') /* compute steady state */
                     {
                         status = ststsolver(multiroot_rhs,var,mu, stst);
@@ -659,15 +623,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'q' :  /* quit with save */
                     //printf("\033[8C%s{z to cancel}%s\033[21D",boldcyan,normal);
-                    op = getchar();
-                    printf("\033[K");
-                    if (op == 127 || op == 0x8)
-                    {
-                        printf("\033[2K\033[E");
-                        replot = 0;
-                        rerun = 0;
-                        break;
-                    }
+                    sscanf(cmdline+1,"%c",&op);
+                    //printf("\033[K");
                     if ( op == 'z' ) /* cancel quitting */
                     {
                         printf("\n");
@@ -751,7 +708,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_steady_state( stst );
     free(lasty);
     free(lastinit);
-    free(line);
+    free(cmdline);
 
     /* use system call to set terminal behaviour to more normal behaviour */
     //system ("/bin/stty icanon");
