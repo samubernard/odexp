@@ -290,7 +290,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         fprintf(gnuplot_pipe,"set nologscale y\n");  
                     }
-                    if ( (op  == 'y' && op2 == 'l') || (op2  == 'z' && op == 'l') )
+                    if ( (op  == 'y' && op2 == 'l') || (op2  == 'y' && op == 'l') )
                     {
                         fprintf(gnuplot_pipe,"set logscale y\n");  
                     }
