@@ -79,7 +79,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int32_t gx = 1,
             gy = 2, 
             gz = 3,
-            ngy;
+            ngx,
+            ngy,
+            ngz;
     int replot = 0, 
         rerun = 0, 
         plot3d = 0,
@@ -320,28 +322,32 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'v' : /* set view */
                     printf("\033[8C%s[x-axis] [y-axis]%s\033[24D",boldcyan,normal);
                     system ("/bin/stty icanon");
-                    scanf("%d",&gx);
-                    scanf("%d",&gy);
-                    if ( gx >= -1 && gx <= ode_system_size-1)
+                    scanf("%d",&ngx);
+                    scanf("%d",&ngy);
+                    if ( ngx >= -1 && ngx < ode_system_size)
                     {
-                        if ( gx == -1 )
+                        if ( ngx == -1 )
                             fprintf(gnuplot_pipe,"set xlabel 't'\n");
                         else 
-                            fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx]);
-                        gx += 2;
+                            fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[ngx]);
+                        gx = ngx + 2;
                     }
                     else
-                        gx = 1;
-                    if ( gy >= -1 && gy <= ode_system_size-1)
                     {
-                        if ( gy == -1 )
+                        printf("  warning: x-axis index out of bound\n");
+                    }
+                    if ( ngy >= -1 && ngy < ode_system_size)
+                    {
+                        if ( ngy == -1 )
                             fprintf(gnuplot_pipe,"set ylabel 't'\n");
                         else 
-                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy]);
-                        gy += 2;
+                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[ngy]);
+                        gy = ngy + 2;
                     }
                     else
-                        gy = 2;
+                    {
+                        printf("  warning: y-axis index out of bound\n");
+                    }
                     fflush(gnuplot_pipe);
                     replot = 1;
                     plot3d = 0;
@@ -350,39 +356,45 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '3' : /* set 3D view */
                     printf("\033[8C%s[x-axis] [y-axis] [z-axis]%s\033[33D",boldcyan,normal);
                     system ("/bin/stty icanon");
-                    scanf("%d",&gx);
-                    scanf("%d",&gy);
-                    scanf("%d",&gz);
-                    if ( gx >= -1 && gx <= ode_system_size-1)
+                    scanf("%d",&ngx);
+                    scanf("%d",&ngy);
+                    scanf("%d",&ngz);
+                    if ( ngx >= -1 && ngx < ode_system_size)
                     {
-                        if ( gx == -1 )
+                        if ( ngx == -1 )
                             fprintf(gnuplot_pipe,"set xlabel 't'\n");
                         else 
-                            fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx]);
-                        gx += 2;
+                            fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[ngx]);
+                        gx = ngx + 2;
                     }
                     else
-                        gx = 1;
-                    if ( gy >= -1 && gy <= ode_system_size-1)
                     {
-                        if ( gy == -1 )
+                        printf("  warning: x-axis index out of bound\n");
+                    }
+                    if ( ngy >= -1 && ngy < ode_system_size)
+                    {
+                        if ( ngy == -1 )
                             fprintf(gnuplot_pipe,"set ylabel 't'\n");
                         else 
-                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy]);
-                        gy += 2;
+                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[ngy]);
+                        gy = ngy + 2;
                     }
                     else
-                        gy = 2;
-                    if ( gz >= -1 && gz <= ode_system_size-1)
                     {
-                        if ( gz == -1 )
+                        printf("  warning: y-axis index out of bound\n");
+                    }
+                    if ( ngz >= -1 && ngz < ode_system_size)
+                    {
+                        if ( ngz == -1 )
                             fprintf(gnuplot_pipe,"set zlabel 't'\n");
                         else 
-                            fprintf(gnuplot_pipe,"set zlabel '%s'\n",var.name[gz]);
-                        gz += 2;
+                            fprintf(gnuplot_pipe,"set zlabel '%s'\n",var.name[ngz]);
+                        gz = ngz + 2;
                     }
                     else
-                        gy = 1;
+                    {
+                        printf("  warning: z-axis index out of bound\n");
+                    }
                     fflush(gnuplot_pipe);
                     replot = 1;
                     plot3d = 1;
@@ -395,7 +407,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     scanf("%d",&ngy);
                     if (ngy > -1 && ngy < ode_system_size)
                     {
-                        gy = ngy+2;
+                        if ( ngy == -1 )
+                            fprintf(gnuplot_pipe,"set ylabel 't'\n");
+                        else 
+                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[ngy]);
+                        gy = ngy + 2;
                         replot = 1;
                     }
                     else 
@@ -490,7 +506,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 't')
                     {
-                        printf("  tpsan = [%.5e %.5e]\n",tspan[0],tspan[1]);
+                        printf("  tspan = [%.5e %.5e]\n",tspan[0],tspan[1]);
                     }
                     else if (op == 's')
                     {
@@ -522,7 +538,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("  current par: %s\n", mu.name[p]);
                     break;
                 case 'c' : /* change parameter/init values */
-                    printf("\033[8C%s{plt}%s\033[13D",boldcyan,normal);
+                    printf("\033[8C%s{pilt}%s\033[14D",boldcyan,normal);
                     op = getchar();
                     if (op == 127 || op == 0x8)
                     {
@@ -535,21 +551,32 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     if( op == 'p' )
                     {
                         printf("\033[K\033[8C%s[par] [value]%s\033[20D",boldcyan,normal);
-                        scanf("%d",&p);
-                        scanf("%lf",&mu.value[p]);
+                        scanf("%d",&np);
+                        if ( np > -1 && np < mu.nbr_el )
+                        {
+                            p = np;
+                            scanf("%lf",&mu.value[p]);
+                        }
+                        else
+                        {
+                            printf("  error: par index out of bound\n");
+                            replot = 0;
+                        }
                     }
                     else if ( op == 'i' ) 
                     {
                         printf("\033[K\033[8C%s[var] [value]%s\033[20D",boldcyan,normal);
                         scanf("%d",&i);
-                        if ( i>=0 && i<ode_system_size)
+                        if ( i > -1 && i<ode_system_size)
                         {
                             lastinit[i] = var.value[i];
                             scanf("%lf",&var.value[i]);
+                            rerun = 1;
                         }
                         else
                         {
-                            printf("\n  choose init cond [0-%d]", ode_system_size-1);
+                            printf("  error: var index out of bound\n");
+                            replot = 0;
                         }
                     }
                     else if ( op == 'l' )
@@ -558,16 +585,25 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = lasty[i];
+                            rerun = 1;
                         }
                     }
                     else if ( op == 't' )
                     {
                         printf("\033[K\033[8C%s[t] [value]%s\033[18D",boldcyan,normal);
                         scanf("%d",&i);
-                        scanf("%lf",tspan+i);
+                        if ( i == 0 || i == 1 )
+                        {
+                            scanf("%lf",tspan+i);
+                            rerun = 1;
+                        }
+                        else
+                        {
+                            printf("  error: tspan index out of bound\n");
+                            replot = 0;
+                        }
                     }
                     system ("/bin/stty -icanon");
-                    rerun = 1;
                     break;
                 case 'h' : /* help */
                     printf("\n");
