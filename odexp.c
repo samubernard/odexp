@@ -71,8 +71,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     steady_state *stst = malloc(sizeof(steady_state));
 
     int status, file_status;
-    int c, p=0, op = 0, op2 = 0;
-    int32_t gx = 1,gy = 2, gz = 3;
+    int c, 
+        p=0,
+        np,
+        op = 0,
+        op2 = 0;
+    int32_t gx = 1,
+            gy = 2, 
+            gz = 3,
+            ngy;
     int replot = 0, 
         rerun = 0, 
         plot3d = 0,
@@ -385,27 +392,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'x' :
                     printf("\033[8C%s[y-axis]%s\033[15D",boldcyan,normal);
                     system ("/bin/stty icanon");
-                    i = 0;
-                    do
+                    scanf("%d",&ngy);
+                    if (ngy > -1 && ngy < ode_system_size)
                     {
-                        if (i>0)
-                        {
-                            printf("  choose var [0-%d]: ", ode_system_size-1);
-                        }
-                        scanf("%d",&gy);
-                        i++;
+                        gy = ngy+2;
+                        replot = 1;
                     }
-                    while ( (gy < 0 || gy > ode_system_size-1) && i<3);
-                    if (i>=3)
+                    else 
                     {
-                        printf("  cancelled, plot var set to 0\n");
-                        gy = 2;
+                        printf("  error: var index out of bound\n");
+                        replot = 0;
                     }
-                    else
-                    {
-                        gy += 2;
-                    }
-                    replot = 1;
                     system ("/bin/stty -icanon");
                     break;
                 case 'i' : /* run with initial conditions */
@@ -504,23 +501,25 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 'n')
                     {
-                        printf("  System size = %d\n",ode_system_size);
+                        printf("  system size = %d\n",ode_system_size);
+                    }
+                    else
+                    {
+                        printf("  error: unknown option\n");
                     }
                     break;
                 case 'p' : /* change current parameter */
                     printf("\033[8C%s[par]%s\033[12D",boldcyan,normal);
-                    i = 0;
-                    do
+                    scanf("%d",&np);
+                    if (np > -1 && np < mu.nbr_el)
                     {
-                        if (i > 0)
-                        {
-                            printf("  choose parameter [0-%d]:", mu.nbr_el-1);
-                        }
-                        scanf("%d",&p);
-                        i++;
+                        p = np;
                     }
-                    while ( p < 0 || p > mu.nbr_el-1);
-                    printf("\n  current par: %s\n", mu.name[p]);
+                    else
+                    {
+                        printf("  error: par index out of bound\n");
+                    }
+                    printf("  current par: %s\n", mu.name[p]);
                     break;
                 case 'c' : /* change parameter/init values */
                     printf("\033[8C%s{plt}%s\033[13D",boldcyan,normal);
@@ -532,6 +531,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         rerun = 0;
                         break;
                     }
+                    system ("/bin/stty icanon");
                     if( op == 'p' )
                     {
                         printf("\033[K\033[8C%s[par] [value]%s\033[20D",boldcyan,normal);
@@ -566,6 +566,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         scanf("%d",&i);
                         scanf("%lf",tspan+i);
                     }
+                    system ("/bin/stty -icanon");
                     rerun = 1;
                     break;
                 case 'h' : /* help */
