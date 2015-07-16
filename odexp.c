@@ -27,7 +27,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     static char *boldcyan = "\033[1;36m";
     static char *normal    = "\033[0m";
-    static char *lineup = "\033[F"; 
+    /* static char *lineup = "\033[F"; */
 
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *init_filename = ".odexp/init.in";
@@ -63,6 +63,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* last initial conditions */
     double *lastinit;
+
+    /* last command */
+    int lastcmd[MAXLINELENGTH];
+    size_t lastcmdlen = 0;
 
     /* options */
     options opts;
@@ -208,8 +212,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("odexp> ");
         /*fgets(line, 255, stdin);*/
         c = getchar();
+        if ( c == '.' )  /* last command */
+        {
+            printf("\033[1D\033[K");
+            for ( i=0; i<lastcmdlen; i++)
+            {
+                        ungetc(lastcmd[i],stdin);
+                        putchar(lastcmd[i]);
+            }
+            c = getchar();
+        }
         if ( c != '\n')
         {
+            lastcmd[0] = c;
+            lastcmdlen = 1;
             switch(c)
             {
                 case '+' : /* increment the parameter and run */
