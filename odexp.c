@@ -64,10 +64,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* last initial conditions */
     double *lastinit;
 
-    /* last command */
-    int lastcmd[MAXLINELENGTH];
-    size_t lastcmdlen = 0;
-
     /* options */
     options opts;
 
@@ -212,20 +208,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("odexp> ");
         /*fgets(line, 255, stdin);*/
         c = getchar();
-        if ( c == '.' )  /* last command */
-        {
-            printf("\033[1D\033[K");
-            for ( i=0; i<lastcmdlen; i++)
-            {
-                        ungetc(lastcmd[i],stdin);
-                        putchar(lastcmd[i]);
-            }
-            c = getchar();
-        }
         if ( c != '\n')
         {
-            lastcmd[0] = c;
-            lastcmdlen = 1;
             switch(c)
             {
                 case '+' : /* increment the parameter and run */
@@ -367,7 +351,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     fflush(gnuplot_pipe);
                     replot = 1;
                     plot3d = 0;
-                    system ("/bin/stty -icanon");
                     break;
                 case '3' : /* set 3D view */
                     printf("\033[8C%s[x-axis] [y-axis] [z-axis]%s\033[33D",boldcyan,normal);
@@ -415,7 +398,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     plot3d = 1;
                     printf("\n");
-                    system ("/bin/stty -icanon");
                     break;
                 case 'x' :
                     printf("\033[8C%s[y-axis]%s\033[15D",boldcyan,normal);
@@ -435,7 +417,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         printf("  error: var index out of bound\n");
                         replot = 0;
                     }
-                    system ("/bin/stty -icanon");
                     break;
                 case 'i' : /* run with initial conditions */
                     printf("\033[8C%s{ls}%s\033[12D",boldcyan,normal);
@@ -619,13 +600,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             replot = 0;
                         }
                     }
-                    system ("/bin/stty -icanon");
                     break;
                 case 'h' : /* help */
                     printf("\n");
                     system ("/bin/stty icanon");
                     system(helpcmd);
-                    system("/bin/stty -icanon");
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     printf("\n");
@@ -642,7 +621,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     fgets(line, 255, stdin);
                     fprintf(gnuplot_pipe,"%s\n", line);
                     fflush(gnuplot_pipe);
-                    system ("/bin/stty -icanon");
                     break;
                 case 'm' :
                     printf("\033[8C%s{ms}%s\033[12D",boldcyan,normal);
@@ -708,7 +686,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
                     file_status = rename(temp_buffer,buffer);
                     file_status = fprintf_nameval(var,cst,mu,fcn,eqn,tspan,time_stamp);
-                    system ("/bin/stty -icanon");
                     break;
                 default :
                     printf("\033[2K\033[Eodexp>\n  Unknown command. Type q to quit, h for help\n");
@@ -751,6 +728,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             fpurge(stdin);
             replot = 0;
             rerun = 0;
+            system("/bin/stty -icanon");
         }
         
 
