@@ -321,6 +321,7 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     {
         stst->s[i] = gsl_vector_get(s->x,i);
     }
+    stst->status = status;
 
     printf("\n  Steady State\n");
     gsl_vector_fprintf(stdout,s->x,"    %+.5e");

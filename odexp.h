@@ -36,6 +36,7 @@ typedef struct steady_state
     double *re;
     double *im; 
     uint32_t size;
+    int status;
 } steady_state;
 
 /* function declaration */
