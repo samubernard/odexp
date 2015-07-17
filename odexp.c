@@ -21,14 +21,15 @@
 #include "odexp.h"
 #include "methods_odexp.h"
 
+/* command line string */
+char *cmdline;
+
+
 /* main loop */
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     const char *odexp_filename )
 {
-
-    /*static char *boldcyan = "\033[1;36m";
-    static char *normal    = "\033[0m";*/
 
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *init_filename = ".odexp/init.in";
@@ -36,8 +37,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char temp_buffer[] = "temp.tab";
     int32_t i;
     int8_t success;
-    char *cmdline;
-
+    
     double *lasty;
     
     /* tspan parameters */
@@ -89,15 +89,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         rerun = 0, 
         plot3d = 0,
         quit = 0;
-    char line[255];
     /*char cmd[255];*/
     clock_t time_stamp;
     char buffer[MAXFILENAMELENGTH];
 
-    /* turn off buffering */
-    /*setvbuf(stdin, NULL, _IONBF, 0); */
-    /* use system call to make terminal send all keystrokes directly to stdin */
-    //system ("/bin/stty -icanon");
+    initialize_readline();
+    //printf("%x\n",rl_done);
 
     /* begin */
     printf("params filename: %s\n",odexp_filename);
@@ -209,7 +206,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     while(1)
     {
         cmdline = readline("odexp> ");
-        if (input)
+        if (cmdline)
         {
             add_history (cmdline);
         }
@@ -951,7 +948,6 @@ int8_t fprintf_nameval(nv init, nv cst, nv mu, nv fcn, nv eqn, double tspan[2], 
     size_t i;
     FILE *fr;
     char buffer[MAXFILENAMELENGTH];
-    char line[256];
     int len;
 
     if (*init.max_name_length > *mu.max_name_length)
@@ -966,9 +962,7 @@ int8_t fprintf_nameval(nv init, nv cst, nv mu, nv fcn, nv eqn, double tspan[2], 
     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
     fr = fopen(buffer,"w");
 
-    fgets(line, 256, stdin);
-
-    fprintf(fr,"# %s\n",line);
+    fprintf(fr,"#%s\n",cmdline+1);
 
     fprintf(fr,"\n# dynamical variables/initial conditions\n");
     for(i=0;i<init.nbr_el;i++)
@@ -1003,4 +997,12 @@ int8_t fprintf_nameval(nv init, nv cst, nv mu, nv fcn, nv eqn, double tspan[2], 
 
     return success;
 }
+
+void initialize_readline()
+{
+
+    rl_readline_name = "odexp";
+
+}
+
 

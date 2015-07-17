@@ -1,5 +1,5 @@
 CFLAGS=-Wall -g `pkg-config --cflags gsl` -lreadline -pedantic
-LDFLAGS=-g `pkg-config --libs gsl` -lm -lreadline
+LDFLAGS=-g `pkg-config --libs gsl` -lreadline -lm 
 
 all: libodexp.dylib
 
