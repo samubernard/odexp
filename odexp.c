@@ -116,7 +116,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     cst.max_name_length = malloc(sizeof(int));
     for (i = 0; i < cst.nbr_el; i++)
     {
-        cst.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        cst.name[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
     load_strings(odexp_filename,cst,"C",1);
 
@@ -434,9 +434,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
                         }
                     }
-                    else if (op == 'e')
+                    else if (op == 'e') /* list equations */
                     {
-                        for (i=0; i<ode_system_size; i++)
+                        for (i=0; i<eqn.nbr_el; i++)
                         {
                             printf("  E[%d] %s",i,eqn.name[i]);
                         }
@@ -924,7 +924,7 @@ int8_t fprintf_nameval(nv init, nv cst, nv mu, nv fcn, nv eqn, double tspan[2], 
     fprintf(fr,"\n# constants/values\n");
     for(i=0;i<cst.nbr_el;i++)
     {
-        fprintf(fr,"C%zu %-*s %.5e\n",i,len,cst.name[i],cst.value[i]);
+        fprintf(fr,"%s",cst.name[i]);
     }
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
