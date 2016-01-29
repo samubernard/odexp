@@ -32,7 +32,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 {
 
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
-    const char *init_filename = ".odexp/init.in";
+    const char *system_filename = ".odexp/system.par";
     const char *helpcmd = "less -S ~/Documents/codes/odexp/help.txt";
     const char temp_buffer[] = "temp.tab";
     int32_t i;
@@ -134,7 +134,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get variable names and initial conditions */
     printf("getting variable names and initial conditions\n");
-    var.nbr_el = get_nbr_el(init_filename,"X",1);
+    var.nbr_el = get_nbr_el(system_filename,"X",1);
     var.value = malloc(var.nbr_el*sizeof(double));
     var.name = malloc(var.nbr_el*sizeof(char*));
     var.max_name_length = malloc(sizeof(int));
@@ -142,7 +142,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    success = load_nameval(init_filename,var,"X",1);   
+    success = load_nameval(system_filename,var,"X",1);   
     if (!success)
     {
         printf("variables not defined\n");
@@ -167,7 +167,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get equations */
     printf("getting equations\n");
-    eqn.nbr_el = get_nbr_el(odexp_filename,"d",1);
+    eqn.nbr_el = get_nbr_el(system_filename,"d",1);
     eqn.value = malloc(eqn.nbr_el*sizeof(double));
     eqn.name = malloc(eqn.nbr_el*sizeof(char*));
     eqn.max_name_length = malloc(sizeof(int));
@@ -175,7 +175,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         eqn.name[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    success = load_strings(odexp_filename,eqn,"d",1);   
+    success = load_strings(system_filename,eqn,"d",1);   
     if (!success)
     {
         printf("equations not defined\n");
@@ -579,21 +579,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     quit = 1;
                     break;
                 case 'q' :  /* quit with save */
-                    sscanf(cmdline+1,"%c",&op);
-                    if ( op == 'z' ) /* cancel quitting */
-                    {
-                        break; 
-                    } 
-                    else if ( op == '!') /* quit without saving */
-                    {
-                        quit = 1;
-                        break;
-                    }
-                    else
-                    {
-                        printf("  Enter a short description [optional]: ");
-                        quit = 1;
-                    }
+                    quit = 1;
                 case 's' : /* save file */
                     time_stamp = clock();
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
