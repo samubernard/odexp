@@ -36,6 +36,7 @@ typedef struct steady_state
     double *re;
     double *im; 
     uint32_t size;
+    int status;
 } steady_state;
 
 /* function declaration */
@@ -63,5 +64,5 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
 
 int8_t fprintf_nameval(struct nameval init, struct nameval cst, struct nameval mu, struct nameval fcn, struct nameval eqn, double tspan[2], clock_t time_stamp);
 
-
+void initialize_readline(void);
 

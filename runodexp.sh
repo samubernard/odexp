@@ -2,16 +2,21 @@
 
 set -eu # makes your program exit on error or unbound variable
 
+# function parsevector parses lines of the form
+# X NAME[4] i_ + 1 
 function parsevector 
 {
     typ=$1
     file=$2
 
+    # get lines beginning with $typ, variable with brackets, and extract their names
     v=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {split($2,a,/[\[\]]/); print a[1]}' $file`)
+    # get lines beginning with $typ, variable with brackets, and extract the length
     nv=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {split($2,a,/[\[\]]/); print a[2]}' $file`)
-    ev=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {gsub("i_","(double)i_",$3); print $3}' $file`)
+    # get lines beginning with $typ, variable with brackets, and extract the right-hand-side 
+    ev=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {$1=""; $2=""; gsub(" ","",$0); gsub("i_","(double)i_",$0); print $0}' $file`)
 
-    n=`expr ${#v[@]} - 1`
+    n=$(( ${#v[@]} - 1 ))
     if [ "$n" -ge 0 ]
     then
         for k in `seq 0 $n`
@@ -93,6 +98,7 @@ echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
 echo "" >>.odexp/model.c
 
+# find iterators in the source file and declare them 
 echo "    /* iterator */" >>.odexp/model.c
 iterator=`awk '/i_/ {count++} END {print count++}' $file`
 if [ "$iterator" -gt 0  ] # found iterator
@@ -104,21 +110,21 @@ echo "" >>.odexp/model.c
 
 echo "    /* default parameters */" >>.odexp/model.c
 # find constant parameters and declare them in .odexp/model.c
-awk -F ' ' '$1 ~ /^[cC][0-9]*/ && $2 !~ /[\[\]]/ {printf "    double %s = %f;\n", $2, $3}' $file >>.odexp/model.c
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 !~ /[\[\]]/ {printf "    double %s = %f;\n", $2, $3}' $file >>.odexp/model.c
 # find constant parameter vectors and declare them in .odexp/model.c
-awk -F ' ' '$1 ~ /^[cC][0-9]*/ && $2 ~ /[\[\]]/ { printf "    double %s;\n", $2, $3}' $file >>.odexp/model.c
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 ~ /[\[\]]/ { printf "    double %s;\n", $2, $3}' $file >>.odexp/model.c
 
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them 
-awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*/ {printf "    double %s = _pars[%d];\n", $2, i++}' $file >>.odexp/model.c
+awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = _pars[%d];\n", $2, i++}' $file >>.odexp/model.c
 
 echo "" >>.odexp/model.c
 echo "    /* variables/nonlinear terms */" >>.odexp/model.c
 # find variables and declare them
-awk -F ' ' '$1 ~ /^[xX][0-9]*/ {printf "    double %s;\n", $2 }' $file >>.odexp/model.c 
+awk -F ' ' '$1 ~ /^[xX][0-9]*$/ {printf "    double %s;\n", $2 }' $file >>.odexp/model.c 
 # find auxiliary variables and declare them
-awk -F ' ' '$1 ~ /^[aA][0-9]*/ {printf "    double %s;\n", $2}' $file >>.odexp/model.c
+awk -F ' ' '$1 ~ /^[aA][0-9]*$/ {printf "    double %s;\n", $2}' $file >>.odexp/model.c
 
 echo "" >>.odexp/model.c
 echo "    /* Initialization */" >>.odexp/model.c
@@ -126,22 +132,35 @@ echo "    /* Initialization */" >>.odexp/model.c
 parsevector C $file
 
 # find equations and write them to .odexp/model.c
-# find all variable names
-v=(`awk -F ' ' '$1 ~ /\/[dD][tT]/ && $1 ~ /[\[\]]/ {split($1,a,/[dD\[\]]/); print a[2]}; $1 ~ /\/[dD][tT]/ && $1 !~ /[\[\]]/ {split($1,a,/[dD\/]/); print a[2]}' $file`)
+# find all variable name: dX/dt -> X; dX[4]/dt -> X
+# v is the array of all dynamical variable names
+# nv is the array of lengths of each variable, which are > 1 for vectors
+# ev is the array the rhs of the differential equations
+# evic is the array of initial conditions
+v=(`awk -F ' ' $'$1 ~ /\/[dD][tT]/ && $1 ~ /[\[\]]/ {split($1,a,/[dD\[\]]/); print a[2]}; 
+                $1 ~ /[[:alnum:]]\'/ && $1 !~ /[\[\]]/ {split($1,a,/\'/); print a[1]}; 
+                $1 ~ /\/[dD][tT]/ && $1 !~ /[\[\]]/ {split($1,a,/[dD\/]/); print a[2]}' $file`)
+
+echo "${v[@]}"
 
 # find length of vector (=1 if scalar)
-nv=(`awk -F ' ' '$1 ~ /^[xX][0-9]*/ && $2 ~ /[\[\]]/ {split($2,a,/[\[\]]/); print a[2]}; $1 ~ /^[xX][0-9]*/ && $2 !~ /[\[\]]/ {print 1}' $file`)
+nv=(`awk -F ' ' '$1 ~ /^[xX][0-9]*/ && $2 ~ /[\[\]]/ {split($2,a,/[\[\]]/); print a[2]}; 
+                 $1 ~ /^[xX][0-9]*/ && $2 !~ /[\[\]]/ {print 1}' $file`)
 
 # find equation expressions for each variable
-ev=(`awk -F '= ' '$1 ~ /\/[dD][tT]/ {gsub(" ",":",$2); print $2}' $file`)
-#echo "${ev[@]}"
+ev=(`awk -F '= ' $'$1 ~ /\/[dD][tT]/ {gsub(" ",":",$2); print $2};
+                  $1 ~ /[[:alnum:]]\'/ {gsub(" ",":",$2); print $2}' $file`)
+
+echo "${ev[@]}"                  
 
 # find initial conditions for each variable
-evic=(`awk -F ' ' -v OFS=':' '$1 ~ /^[xX][0-9]*/ {$1="";$2="";print $0}' $file`)
+evic=(`awk -F ' ' -v OFS=':' '$1 ~ /^[xX][0-9]*$/ {$1="";$2="";print $0}' $file`)
+
+echo "${evic[@]}"
 
 # n is the number of distinct vectors and scalars
 n=$(( ${#v[@]} - 1 ))
-#echo "$n"
+echo "$n"
 
 if [ "$n" -ge 0 ]
 then
@@ -164,7 +183,7 @@ fi
 if [ "$n" -ge 0 ]
 then
     initc=0
-    echo "/* initial conditions */" >.odexp/init.in
+    echo "/* initial conditions */" >.odexp/system.par
     for k in `seq 0 $n` 
     do
         icstring=`echo ${evic[$k]} | sed -e "s/:/ /g"`
@@ -174,11 +193,11 @@ then
             do
                 ic=`echo $icstring | sed -e "s/i_/$m/g" | bc`
                 #echo "$ic"
-                echo "X$initc ${v[$k]}$m $ic" >>.odexp/init.in
+                echo "X$initc ${v[$k]}$m $ic" >>.odexp/system.par
                 initc=$(( $initc + 1 ))
             done
         else
-            echo "X$initc ${v[$k]} $icstring" >>.odexp/init.in
+            echo "X$initc ${v[$k]} $icstring" >>.odexp/system.par
             initc=$(( $initc + 1 ))
         fi     
     done
@@ -192,8 +211,10 @@ echo "    /* Equations */ " >>.odexp/model.c
 # initialize auxiliary variables 
 awk -F ' ' '$1 ~ /^[aA][0-9]*/ {$1=""; printf "   %s;\n", $0}' $file >>.odexp/model.c
 
+# assign differential equations rhs
 if [ "$n" -ge 0 ]
 then
+    echo "/* differential equations */" >>.odexp/system.par
     echo "    j_ = 0;" >>.odexp/model.c
     for k in `seq 0 $n` 
     do
@@ -205,8 +226,12 @@ then
             echo "    {" >>.odexp/model.c
             echo "      f_[i_+j_] = $eqstring;" >>.odexp/model.c
             echo "    }" >>.odexp/model.c
+
+            echo "d${v[$k]}[${nv[$k]}]/dt = $eqstring" >>.odexp/system.par
         else
             echo "    f_[j_] = $eqstring;" >>.odexp/model.c
+            
+            echo "d${v[$k]}/dt = $eqstring" >>.odexp/system.par
         fi
             echo "    j_ += ${nv[$k]};" >>.odexp/model.c
     done
