@@ -41,9 +41,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     double *lasty;
     
     /* tspan parameters */
-    const char ts_string[] = "tspan"; 
+    const char ts_string[] = "T"; 
     double tspan[2];
-    const size_t ts_len = 5;
+    const size_t ts_len = 1;
 
     /* system size */
     int32_t ode_system_size;
@@ -97,20 +97,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     //printf("%x\n",rl_done);
 
     /* begin */
-    printf("params filename: %s\n",odexp_filename);
+    printf("odexp file: %s\n",odexp_filename);
 
     /* get tspan */
     printf("getting time span\n");
-    success = load_double(odexp_filename, tspan, 2, ts_string, ts_len); 
+    success = load_double(system_filename, tspan, 2, ts_string, ts_len); 
     if (!success)
     {
-        printf("tspan not defined\n");
+        printf("  tspan not defined, exiting...\n");
         exit ( EXIT_FAILURE );
     }
     
     /* get constants */
     printf("getting constants\n");
-    cst.nbr_el = get_nbr_el(odexp_filename,"C",1);
+    cst.nbr_el = get_nbr_el(system_filename,"C",1);
     cst.value = malloc(cst.nbr_el*sizeof(double));
     cst.name = malloc(cst.nbr_el*sizeof(char*));
     cst.max_name_length = malloc(sizeof(int));
@@ -118,11 +118,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         cst.name[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    load_strings(odexp_filename,cst,"C",1);
+    success = load_strings(system_filename,cst,"C",1);
+    if (!success)
+    {
+        printf("  no constant found\n");
+    } 
+
 
     /* get parameters */
     printf("getting parameters\n");
-    mu.nbr_el = get_nbr_el(odexp_filename,"P",1);
+    mu.nbr_el = get_nbr_el(system_filename,"P",1);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
     mu.max_name_length = malloc(sizeof(int));
@@ -130,7 +135,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    load_nameval(odexp_filename,mu,"P",1);
+    success = load_nameval(system_filename,mu,"P",1);
+    if (!success)
+    {
+        printf("  no  parameters found\n");
+    } 
+
 
     /* get variable names and initial conditions */
     printf("getting variable names and initial conditions\n");
@@ -145,13 +155,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_nameval(system_filename,var,"X",1);   
     if (!success)
     {
-        printf("variables not defined\n");
+        printf("  Dynamic variables not defined... exiting\n");
         exit ( EXIT_FAILURE );
     } 
 
     /* get nonlinear functions */
     printf("getting auxiliary functions\n");
-    fcn.nbr_el = get_nbr_el(odexp_filename,"A",1);
+    fcn.nbr_el = get_nbr_el(system_filename,"A",1);
     fcn.value = malloc(fcn.nbr_el*sizeof(double));
     fcn.name = malloc(fcn.nbr_el*sizeof(char*));
     fcn.max_name_length = malloc(sizeof(int));
@@ -159,10 +169,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         fcn.name[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    success = load_strings(odexp_filename,fcn,"A",1);   
+    success = load_strings(system_filename,fcn,"A",1);   
     if (!success)
     {
-        printf("no auxiliary function found\n");
+        printf("  no auxiliary function found\n");
     } 
 
     /* get equations */
@@ -178,7 +188,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_strings(system_filename,eqn,"d",1);   
     if (!success)
     {
-        printf("equations not defined\n");
+        printf("equations not defined... exiting\n");
         exit ( EXIT_FAILURE );
     } 
 
@@ -550,8 +560,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                         }
-                    load_nameval(odexp_filename, mu, "P", 1);
-                    load_nameval(odexp_filename, var, "X", 1);
+                    load_nameval(system_filename, mu, "P", 1);
+                    load_nameval(system_filename, var, "X", 0);
                     rerun = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */

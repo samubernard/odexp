@@ -34,7 +34,9 @@ file=$1
 rm -fr .odexp/
 mkdir .odexp
 
+# ==========================================================================================
 # Write C file
+# ==========================================================================================
 echo "/* function implementations */" >.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/* =================================================================" >>.odexp/model.c
@@ -97,7 +99,10 @@ echo "    double * _pars = _mu.value;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
 echo "" >>.odexp/model.c
+# ====================================================================================
 
+# ====================================================================================
+# ITERATORS
 # find iterators in the source file and declare them 
 echo "    /* iterator */" >>.odexp/model.c
 iterator=`awk '/i_/ {count++} END {print count++}' $file`
@@ -107,30 +112,61 @@ then
 fi
 echo "    size_t j_ = 0;" >>.odexp/model.c
 echo "" >>.odexp/model.c
+# ====================================================================================
 
-echo "    /* default parameters */" >>.odexp/model.c
+
+# ====================================================================================
+# FIND TSPAN
+echo "/* time span */" >.odexp/system.par
+awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {printf "T %f %f\n", $2, $3}' $file >>.odexp/system.par
+# ====================================================================================
+
+# ====================================================================================
+# DECLARE AND ASSIGN CONSTANTS
+echo "    /* constant parameters */" >>.odexp/model.c
 # find constant parameters and declare them in .odexp/model.c
 awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 !~ /[\[\]]/ {printf "    double %s = %f;\n", $2, $3}' $file >>.odexp/model.c
+# find constant parameters and write them in .odexp/system.par
+echo "/* constant parameters */" >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 !~ /[\[\]]/ {printf "C%d %s %f\n", i, $2, $3; i++}' $file >>.odexp/system.par
 # find constant parameter vectors and declare them in .odexp/model.c
-awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 ~ /[\[\]]/ { printf "    double %s;\n", $2, $3}' $file >>.odexp/model.c
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 ~ /[\[\]]/ {printf "    double %s;\n", $2, $3}' $file >>.odexp/model.c
+# find constant parameter vectors and declare them in .odexp/system.par
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 ~ /[\[\]]/ {$1=""; printf "C%d%s\n", i, $0; i++}' $file >>.odexp/system.par
+# ====================================================================================
 
+# ====================================================================================
+# DECLARE AND ASSIGN PARAMETERS
+# Parameters cannot be vectors
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
-# find variable parameters and declare them 
+# find variable parameters and declare them in model.c 
 awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = _pars[%d];\n", $2, i++}' $file >>.odexp/model.c
+echo "/* parameters */" >>.odexp/system.par
+# find variable parameters and declare them in system.par 
+awk -F ' ' '$1 ~ /^[pP][0-9]*$/ && $2 !~ /[\[\]]/ {printf "P%d %s %f\n", i, $2, $3; i++}' $file >>.odexp/system.par
+# ====================================================================================
 
+# ====================================================================================
+# DECLARE VARIABLES and AUXILIARY VARIABLES
 echo "" >>.odexp/model.c
 echo "    /* variables/nonlinear terms */" >>.odexp/model.c
-# find variables and declare them
-awk -F ' ' '$1 ~ /^[xX][0-9]*$/ {printf "    double %s;\n", $2 }' $file >>.odexp/model.c 
-# find auxiliary variables and declare them
+# find variables and declare them to model.c
+awk -F ' ' '$1 ~ /^[xXiI][0-9]*$/ {printf "    double %s;\n", $2 }' $file >>.odexp/model.c 
+# find auxiliary variables and declare them to model.c
 awk -F ' ' '$1 ~ /^[aA][0-9]*$/ {printf "    double %s;\n", $2}' $file >>.odexp/model.c
+# ====================================================================================
 
+# ====================================================================================
+# ASSIGN CONSTANT VECTORS
 echo "" >>.odexp/model.c
 echo "    /* Initialization */" >>.odexp/model.c
 # initialize constant parameter vectors and write them in .odexp/model.c
 parsevector C $file
+# ====================================================================================
 
+# ====================================================================================
+# ASSIGN VARIABLES AND AUXILIARY VARIABLES
 # find equations and write them to .odexp/model.c
 # find all variable name: dX/dt -> X; dX[4]/dt -> X
 # v is the array of all dynamical variable names
@@ -141,8 +177,6 @@ v=(`awk -F ' ' $'$1 ~ /\/[dD][tT]/ && $1 ~ /[\[\]]/ {split($1,a,/[dD\[\]]/); pri
                 $1 ~ /[[:alnum:]]\'/ && $1 !~ /[\[\]]/ {split($1,a,/\'/); print a[1]}; 
                 $1 ~ /\/[dD][tT]/ && $1 !~ /[\[\]]/ {split($1,a,/[dD\/]/); print a[2]}' $file`)
 
-echo "${v[@]}"
-
 # find length of vector (=1 if scalar)
 nv=(`awk -F ' ' '$1 ~ /^[xX][0-9]*/ && $2 ~ /[\[\]]/ {split($2,a,/[\[\]]/); print a[2]}; 
                  $1 ~ /^[xX][0-9]*/ && $2 !~ /[\[\]]/ {print 1}' $file`)
@@ -151,17 +185,13 @@ nv=(`awk -F ' ' '$1 ~ /^[xX][0-9]*/ && $2 ~ /[\[\]]/ {split($2,a,/[\[\]]/); prin
 ev=(`awk -F '= ' $'$1 ~ /\/[dD][tT]/ {gsub(" ",":",$2); print $2};
                   $1 ~ /[[:alnum:]]\'/ {gsub(" ",":",$2); print $2}' $file`)
 
-echo "${ev[@]}"                  
-
 # find initial conditions for each variable
 evic=(`awk -F ' ' -v OFS=':' '$1 ~ /^[xX][0-9]*$/ {$1="";$2="";print $0}' $file`)
 
-echo "${evic[@]}"
-
 # n is the number of distinct vectors and scalars
 n=$(( ${#v[@]} - 1 ))
-echo "$n"
 
+# assign dynamical variables
 if [ "$n" -ge 0 ]
 then
     for k in `seq 0 $n` 
@@ -178,12 +208,13 @@ then
         echo "    j_ += ${nv[$k]};" >>.odexp/model.c
     done
 fi
+# ====================================================================================
 
 # construct initial conditions
 if [ "$n" -ge 0 ]
 then
     initc=0
-    echo "/* initial conditions */" >.odexp/system.par
+    echo "/* initial conditions */" >>.odexp/system.par
     for k in `seq 0 $n` 
     do
         icstring=`echo ${evic[$k]} | sed -e "s/:/ /g"`
@@ -202,8 +233,6 @@ then
         fi     
     done
 fi
-
-
 
 echo "" >>.odexp/model.c
 echo "    /* Equations */ " >>.odexp/model.c
