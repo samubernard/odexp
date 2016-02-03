@@ -105,8 +105,9 @@ echo "" >>.odexp/model.c
 # ITERATORS
 # find iterators in the source file and declare them 
 echo "    /* iterator */" >>.odexp/model.c
-iterator=`awk '/i_/ {count++} END {print count++}' $file`
-if [ "$iterator" -gt 0  ] # found iterator
+niter=`awk '/\(.+:.*\)/ {count++} END {print count++}' $file`
+
+if [ "$niter" -gt 0  ] # found iterator
 then
     echo "    size_t i_;" >>.odexp/model.c
 fi
@@ -122,17 +123,17 @@ awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {printf "T %f %f\n", $2, $3}' $file >>.ode
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE AND ASSIGN CONSTANTS
+# DECLARE AND ASSIGN NONVECTOR CONSTANTS
 echo "    /* constant parameters */" >>.odexp/model.c
 # find constant parameters and declare them in .odexp/model.c
-awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 !~ /[\[\]]/ {printf "    double %s = %f;\n", $2, $3}' $file >>.odexp/model.c
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $0 !~ /\(.+:.+\)/ {printf "    double %s = %f;\n", $2, $3}' $file >>.odexp/model.c
 # find constant parameters and write them in .odexp/system.par
 echo "/* constant parameters */" >>.odexp/system.par
-awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 !~ /[\[\]]/ {printf "C%d %s %f\n", i, $2, $3; i++}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $0 !~ /\(.+:.+\)/ {printf "C%d %s %f\n", i, $2, $3; i++}' $file >>.odexp/system.par
 # find constant parameter vectors and declare them in .odexp/model.c
-awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 ~ /[\[\]]/ {printf "    double %s;\n", $2, $3}' $file >>.odexp/model.c
+awk -F '=' '$1 ~ /^[cC][0-9]*[ ]+[[:alnum:]][ ]*$/ && $2 ~ /\(.+:.+\)/ {split($1,a,/[ ]+/); split($2,b,/[\(:\)]/); printf "    double %s[%d];\n", a[2],b[3]-b[2]}' $file >>.odexp/model.c
 # find constant parameter vectors and declare them in .odexp/system.par
-awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $2 ~ /[\[\]]/ {$1=""; printf "C%d%s\n", i, $0; i++}' $file >>.odexp/system.par
+awk -F '=' '$1 ~ /^[cC][0-9]*[ ]+[[:alnum:]][ ]*$/ && $2 ~ /\(.+:.+\)/ {split($1,a,/[ ]+/); split($2,b,/[\(:\)]/); gsub(/\(.+:.+\)/,"i",$2); for(i=b[2];i<b[3];i++) {ex=$2; gsub("i",i,ex); printf "C%d %s[%d] %f\n", i,a[2],i, ex}  }' $file >>.odexp/system.par
 # ====================================================================================
 
 # ====================================================================================
@@ -162,7 +163,25 @@ awk -F ' ' '$1 ~ /^[aA][0-9]*$/ {printf "    double %s;\n", $2}' $file >>.odexp/
 echo "" >>.odexp/model.c
 echo "    /* Initialization */" >>.odexp/model.c
 # initialize constant parameter vectors and write them in .odexp/model.c
-parsevector C $file
+# get lines beginning with $typ, variable with brackets, and extract their names
+v=(`awk -F '=' '$1 ~ /^[cC][0-9]*[ ]+[[:alnum:]][ ]*$/ && $2 ~ /\(.+:.+\)/ {split($1,a,/[ ]+/); print a[2]}' $file`)
+# get lines beginning with $typ, variable with brackets, and extract begin and end of iteration 
+bnv=(`awk -F '=' '$2 ~ /\(.+:.+\)/ {split($2,a,/[\(:\)]/); print a[2]}' $file`)
+env=(`awk -F '=' '$2 ~ /\(.+:.+\)/ {split($2,a,/[\(:\)]/); print a[3]}' $file`)
+# get lines beginning with $typ, variable with brackets, and extract the right-hand-side 
+ev=(`awk -F '=' '$1 ~ /^[cC][0-9]*[ ]+[[:alnum:]][ ]*$/ && $2 ~ /\(.+:.+\)/ {$1=""; gsub(/\(.+:.+\)/,"i_",$0); print $0}' $file`)
+
+n=$(( ${#v[@]} - 1 ))
+if [ "$n" -ge 0 ]
+then
+    for k in `seq 0 $n`
+    do
+        echo "    for (i_=${bnv[$k]}; i_<${env[$k]}; i_++)" >>.odexp/model.c
+        echo "    {" >>.odexp/model.c
+        echo "      ${v[$k]}[i_] = ${ev[k]};" >>.odexp/model.c
+        echo "    }" >>.odexp/model.c
+    done
+fi
 # ====================================================================================
 
 # ====================================================================================
