@@ -46,6 +46,7 @@ echo "" >>.odexp/model.c
 echo "#include <gsl/gsl_errno.h>" >>.odexp/model.c
 echo "#include <gsl/gsl_vector.h>" >>.odexp/model.c
 echo "#include <gsl/gsl_matrix.h>                              " >>.odexp/model.c
+echo "#include <math.h>                              " >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/* =================================================================" >>.odexp/model.c
@@ -126,10 +127,10 @@ awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {printf "T %f %f\n", $2, $3}' $file >>.ode
 # DECLARE AND ASSIGN NONVECTOR CONSTANTS
 echo "    /* constant parameters */" >>.odexp/model.c
 # find constant parameters and declare them in .odexp/model.c
-awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $0 !~ /\(.+:.+\)/ {printf "    double %s = %f;\n", $2, $3}' $file >>.odexp/model.c
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $0 !~ /\(.+:.+\)/ {printf "    double %s = %s;\n", $2, $3}' $file >>.odexp/model.c
 # find constant parameters and write them in .odexp/system.par
 echo "/* constant parameters */" >>.odexp/system.par
-awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $0 !~ /\(.+:.+\)/ {printf "C%d %s %f\n", i, $2, $3; i++}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $0 !~ /\(.+:.+\)/ {printf "C%d %s %s\n", i, $2, $3; i++}' $file >>.odexp/system.par
 # find constant parameter vectors and declare them in .odexp/model.c
 awk -F '=' '$1 ~ /^[cC][0-9]*[ ]+[[:alnum:]][ ]*$/ && $2 ~ /\(.+:.+\)/ {split($1,a,/[ ]+/); split($2,b,/[\(:\)]/); printf "    double %s[%d];\n", a[2],b[3]-b[2]}' $file >>.odexp/model.c
 # find constant parameter vectors and declare them in .odexp/system.par
@@ -156,6 +157,8 @@ echo "    /* variables/nonlinear terms */" >>.odexp/model.c
 awk -F ' ' '$1 ~ /^[xXiI][0-9]*$/ {printf "    double %s;\n", $2 }' $file >>.odexp/model.c 
 # find auxiliary variables and declare them to model.c
 awk -F ' ' '$1 ~ /^[aA][0-9]*$/ {printf "    double %s;\n", $2}' $file >>.odexp/model.c
+# find auxiliary variables and declare them to system.par
+awk -F ' ' '$1 ~ /^[aA][0-9]*$/ {$1=""; printf "%s;\n",$0}' $file >>.odexp/system.par
 # ====================================================================================
 
 # ====================================================================================
