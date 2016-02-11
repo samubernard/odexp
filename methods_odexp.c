@@ -19,7 +19,7 @@
 #include "methods_odexp.h"
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- double *lasty, nv init, nv mu, double tspan[2], options opts)    
+ double *lasty, nv init, nv mu, nv fcn, double tspan[2], options opts)    
 {
  
     double *y;
@@ -69,6 +69,19 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     printf("  running... ");
     fflush(stdout);
 
+    /* fill in the variable/function names */
+    fprintf(file,"T\t");
+    for (i = 0; i<ode_system_size; i++)
+    {
+        fprintf(file,"%s\t",init.name[i]);
+    }
+    for (i = 0; i<fcn.nbr_el; i++)
+    {
+        /* fprintf(file,"%s\t",fcn.name[i]); */
+    }
+    fprintf(file,"\n");
+
+    /* fill in the initial conditions */
     fprintf(file,"%.15e ",t);
         for (i = 0; i < ode_system_size; i++)
         {
@@ -90,6 +103,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         for (i = 0; i < ode_system_size; i++)
         {
             fprintf (file,"\t%.15e",y[i]); 
+        }
+        for (i = 0; i < fcn.nbr_el; i++)
+        {
+            fprintf (file,"\t%.15e",fcn.value[i]);
         }
         fprintf(file,"\n");
     }

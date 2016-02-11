@@ -19,6 +19,7 @@
 typedef struct nameval
 {
     double *value;
+    double *aux_pointer;
     char **name;
     uint32_t nbr_el;
     int *max_name_length;

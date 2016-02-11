@@ -106,6 +106,7 @@ echo "int ode_rhs(double t, const double y_[], double f_[], void *_params)" >>.o
 echo "{" >>.odexp/model.c
 echo "    nv _mu = *(nv *)_params;" >>.odexp/model.c
 echo "    double * _pars = _mu.value;" >>.odexp/model.c
+echo "    double * _aux  = _mu.aux_pointer;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -270,6 +271,10 @@ echo "    /* Equations */ " >>.odexp/model.c
 
 # initialize auxiliary variables 
 awk -F ' ' '$1 ~ /^[aA][0-9]*/ {$1=""; printf "   %s;\n", $0}' $file >>.odexp/model.c
+
+# assign auxilary variabls to _mu.aux
+awk -F ' ' '$1 ~ /^[aA][0-9]*/ {printf "    _aux[%d] = %s;\n", i, $2; i++}' $file >>.odexp/model.c
+
 
 # assign differential equations rhs
 if [ "$n" -ge 0 ]

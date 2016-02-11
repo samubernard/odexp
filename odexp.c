@@ -174,6 +174,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         printf("  no auxiliary function found\n");
     } 
+    mu.aux_pointer = fcn.value; /* pointer to fcn.value */
 
     /* get equations */
     printf("getting equations\n");
@@ -208,7 +209,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stst->size = ode_system_size;
     
 
-    status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
+    status = odesolver(ode_rhs, lasty, var, mu, fcn, tspan, opts);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",\
         temp_buffer,gx,gy,var.name[gy-2]);
     fflush(gnuplot_pipe);
@@ -605,7 +606,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, lasty, var, mu, tspan, opts);
+                status = odesolver(ode_rhs, lasty, var, mu, fcn, tspan, opts);
             }
             if (replot || rerun)    
             {
@@ -667,6 +668,7 @@ void free_name_value(nv var )
 {
     int32_t i;
     free(var.value);
+    /* do not free aux_pointer, it will be freed from fcn */
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.name[i]);
