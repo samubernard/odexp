@@ -29,6 +29,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char temp_buffer[] = "temp.tab";
+    char header_name[MAXPARNAMELENGTH];
     int32_t i;
     
     /* tspan parameters */
@@ -70,14 +71,15 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fflush(stdout);
 
     /* fill in the variable/function names */
-    fprintf(file,"T\t");
+    fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
-        fprintf(file,"%s\t",init.name[i]);
+        fprintf(file,"\t%s",init.name[i]);
     }
     for (i = 0; i<fcn.nbr_el; i++)
     {
-        /* fprintf(file,"%s\t",fcn.name[i]); */
+        sscanf(fcn.name[i],"%*s %s",header_name);    
+        fprintf(file,"\t%s",header_name);
     }
     fprintf(file,"\n");
 

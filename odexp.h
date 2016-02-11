@@ -11,7 +11,7 @@
 /* =================================================================
                               DEFINE
 ================================================================= */
-#define MAXPARNAMELENGTH 15
+#define MAXPARNAMELENGTH 63
 #define MAXFILENAMELENGTH 63
 #define MAXLINELENGTH 512                            
 
