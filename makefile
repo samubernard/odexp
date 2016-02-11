@@ -1,10 +1,12 @@
-CFLAGS=-Wall -g `pkg-config --cflags gsl`  -pedantic
+CFLAGS=-Wall -g `pkg-config --cflags gsl`  -std=c99
 LDFLAGS=-g `pkg-config --libs gsl` -lreadline -lm 
+
+current_dir = $(shell pwd)
 
 all: libodexp.dylib
 
 libodexp.dylib: odexp.o methods_odexp.o
-		gcc $(LDFLAGS) -dynamiclib -install_name $(HOME)/Documents/codes/odexp/libodexp.dylib -lm -o libodexp.dylib odexp.o methods_odexp.o 
+		gcc $(LDFLAGS) -dynamiclib -install_name $(current_dir)/libodexp.dylib   -lm -o libodexp.dylib odexp.o methods_odexp.o 
 
 odexp.o: odexp.c odexp.h methods_odexp.h
 	    gcc -c odexp.c $(CFLAGS) 
