@@ -1,5 +1,14 @@
 #!/bin/bash
 
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+ODEXPDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
 set -eu # makes your program exit on error or unbound variable
 
 # function parsevector parses lines of the form
@@ -120,7 +129,7 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 # FIND TSPAN
 echo "/* time span */" >.odexp/system.par
-awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {printf "T %f %f\n", $2, $3}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {printf "T %s %s\n", $2, $3}' $file >>.odexp/system.par
 # ====================================================================================
 
 # ====================================================================================
@@ -134,7 +143,7 @@ awk -F ' ' '$1 ~ /^[cC][0-9]*$/ && $0 !~ /\(.+:.+\)/ {printf "C%d %s %s\n", i, $
 # find constant parameter vectors and declare them in .odexp/model.c
 awk -F '=' '$1 ~ /^[cC][0-9]*[ ]+[[:alnum:]][ ]*$/ && $2 ~ /\(.+:.+\)/ {split($1,a,/[ ]+/); split($2,b,/[\(:\)]/); printf "    double %s[%d];\n", a[2],b[3]-b[2]}' $file >>.odexp/model.c
 # find constant parameter vectors and declare them in .odexp/system.par
-awk -F '=' '$1 ~ /^[cC][0-9]*[ ]+[[:alnum:]][ ]*$/ && $2 ~ /\(.+:.+\)/ {split($1,a,/[ ]+/); split($2,b,/[\(:\)]/); gsub(/\(.+:.+\)/,"i",$2); for(i=b[2];i<b[3];i++) {ex=$2; gsub("i",i,ex); printf "C%d %s[%d] %f\n", i,a[2],i, ex}  }' $file >>.odexp/system.par
+awk -F '=' '$1 ~ /^[cC][0-9]*[ ]+[[:alnum:]][ ]*$/ && $2 ~ /\(.+:.+\)/ {split($1,a,/[ ]+/); split($2,b,/[\(:\)]/); gsub(/\(.+:.+\)/,"i",$2); for(i=b[2];i<b[3];i++) {ex=$2; gsub("i",i,ex); printf "C%d %s[%d] %s\n", i,a[2],i, ex}  }' $file >>.odexp/system.par
 # ====================================================================================
 
 # ====================================================================================
@@ -146,7 +155,7 @@ echo "    /* parameters */" >>.odexp/model.c
 awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = _pars[%d];\n", $2, i++}' $file >>.odexp/model.c
 echo "/* parameters */" >>.odexp/system.par
 # find variable parameters and declare them in system.par 
-awk -F ' ' '$1 ~ /^[pP][0-9]*$/ && $2 !~ /[\[\]]/ {printf "P%d %s %f\n", i, $2, $3; i++}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[pP][0-9]*$/ && $2 !~ /[\[\]]/ {printf "P%d %s %s\n", i, $2, $3; i++}' $file >>.odexp/system.par
 # ====================================================================================
 
 # ====================================================================================
@@ -295,16 +304,23 @@ echo "    return GSL_SUCCESS;" >>.odexp/model.c
 echo "}" >>.odexp/model.c
 echo "" >>.odexp/model.c
 
-echo "CFLAGS= -I/Users/samuel/Documents/codes/odexp -Wall -g `pkg-config --cflags gsl` -pedantic" >.odexp/makefile
-echo "LDFLAGS=-g `pkg-config --libs gsl` -lm -L/Users/samuel/Documents/codes/odexp -lodexp" >>.odexp/makefile
+
+
+cp "$ODEXPDIR"/help.txt .odexp/
+
+
+
+
+echo "CFLAGS= -I$ODEXPDIR -Wall -g `pkg-config --cflags gsl` -pedantic" >.odexp/makefile
+echo "LDFLAGS=-g `pkg-config --libs gsl` -lm -L$ODEXPDIR -lodexp" >>.odexp/makefile
 echo "" >>.odexp/makefile
 echo "all: model.out " >>.odexp/makefile
 echo "" >>.odexp/makefile
 echo "model.out: model.o " >>.odexp/makefile
 echo "		gcc -o model.out \$(LDFLAGS) model.o " >>.odexp/makefile
 echo "" >>.odexp/makefile
-echo "model.o: .odexp/model.c " >>.odexp/makefile
-echo "		gcc -c -o model.o \$(CFLAGS) .odexp/model.c " >>.odexp/makefile
+echo "model.o: model.c " >>.odexp/makefile
+echo "		gcc -c -o model.o \$(CFLAGS) model.c " >>.odexp/makefile
 echo "" >>.odexp/makefile
 echo "" >>.odexp/makefile
 echo "clean:" >>.odexp/makefile
@@ -313,7 +329,8 @@ echo "" >>.odexp/makefile
 echo "veryclean:" >>.odexp/makefile
 echo "		rm -f *.o; rm -f *.out; rm -rf *.out.dSYM" >>.odexp/makefile
 
-make -f .odexp/makefile && ./model.out $file
+cd .odexp
+make && cp model.out .. && cd .. && ./model.out $file
 
 
 
