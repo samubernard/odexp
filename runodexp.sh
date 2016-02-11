@@ -158,7 +158,7 @@ awk -F ' ' '$1 ~ /^[xXiI][0-9]*$/ {printf "    double %s;\n", $2 }' $file >>.ode
 # find auxiliary variables and declare them to model.c
 awk -F ' ' '$1 ~ /^[aA][0-9]*$/ {printf "    double %s;\n", $2}' $file >>.odexp/model.c
 # find auxiliary variables and declare them to system.par
-awk -F ' ' '$1 ~ /^[aA][0-9]*$/ {$1=""; printf "%s;\n",$0}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[aA][0-9]*$/ {$1=""; printf "A[%d] %s;\n", i, $0; i++}' $file >>.odexp/system.par
 # ====================================================================================
 
 # ====================================================================================

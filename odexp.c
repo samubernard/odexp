@@ -613,11 +613,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 {
                     if (opts.freeze == 0)
                     {
-                        fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines \n",temp_buffer,gx,gy);    
+                        fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
                     } 
                     else
                     {
-                        fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines \n",temp_buffer,gx,gy);    
+                        fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
                     }
                 }
                 else
