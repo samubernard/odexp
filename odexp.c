@@ -85,8 +85,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             ngy,
             ngz;
     double nvalue;
-    int replot = 0, 
-        rerun = 0, 
+    int replot = 0, /* replot the same gnuplot command with new data */
+        updateplot = 0,  /* update plot with new parameters/option */
+        rerun = 0, /* run a new simulation */
         plot3d = 0,
         quit = 0;
     /*char cmd[255];*/
@@ -228,18 +229,22 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     mu.value[p] *= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
+                    replot = 1;
                     break;
                 case '-' : /* decrement the parameter and run */
                     mu.value[p] /= 1.1;
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
+                    replot = 1;
                     break;                
                 case '0' : /* just run */
                     rerun = 1;
+                    replot = 1;
                     break;
                 case 'r' : /* replot */
                     fprintf(gnuplot_pipe,"replot\n");
                     fflush(gnuplot_pipe);
+                    replot = 1;
                     break;
                 case 'f' : /* toggle freeze */
                     opts.freeze = 1 - opts.freeze;
@@ -253,19 +258,23 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     opts.ntsteps <<= 1; /* left bitshift, *= 2 */ 
                     opts.ntsteps--; /* remove one */
                     rerun = 1;
+                    replot = 1;
                     break;
                 case '<' : /* decrease resolution */
                     opts.ntsteps >>= 1; /* right bitshift, integer part of division by 2 */
                     opts.ntsteps++; /* add one */
                     rerun = 1;
+                    replot = 1;
                     break;
                 case 'e' : /* extend the simulation */
                     tspan[1] += tspan[1]-tspan[0];
                     rerun = 1;
+                    replot = 1;
                     break;
                 case 'E' : /* shorten the simulation */
                     tspan[1] -= (tspan[1]-tspan[0])/2;
                     rerun = 1;
+                    replot = 1;
                     break;
                 case 'a' : /* set axis scale  */
                     sscanf(cmdline+1,"%c%c",&op,&op2);
@@ -331,7 +340,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         printf("  warning: y-axis index out of bound\n");
                     }
                     fflush(gnuplot_pipe);
-                    replot = 1;
+                    updateplot = 1;
                     plot3d = 0;
                     break;
                 case '3' : /* set 3D view */
@@ -373,7 +382,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         printf("  warning: z-axis index out of bound\n");
                     }
                     fflush(gnuplot_pipe);
-                    replot = 1;
+                    updateplot = 1;
                     plot3d = 1;
                     break;
                 case 'x' :
@@ -385,12 +394,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         else 
                             fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[ngy]);
                         gy = ngy + 2;
-                        replot = 1;
+                        updateplot = 1;
                     }
                     else 
                     {
                         printf("  error: var index out of bound\n");
                         replot = 0;
+                        updateplot = 0;
                     }
                     break;
                 case 'i' : /* run with initial conditions */
@@ -413,6 +423,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                     }
                     rerun = 1;
+                    replot = 1;
                     break;
                 case 'I' : /* set initial condition to previous ones */
                     for ( i=0; i<ode_system_size; i++ )
@@ -421,6 +432,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
                         }
                     rerun = 1;
+                    replot = 1;
                     break;
                 case 'l' : /* list name value pairs */
                     sscanf(cmdline+1,"%c",&op);               
@@ -507,6 +519,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             p = np;
                             mu.value[p] = nvalue;
                             rerun = 1;
+                            replot = 1;
                         }
                         else
                         {
@@ -522,6 +535,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             lastinit[i] = var.value[i];
                             var.value[i] = nvalue;
                             rerun = 1;
+                            replot = 1;
                         }
                         else
                         {
@@ -536,6 +550,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             lastinit[i] = var.value[i];
                             var.value[i] = lasty[i];
                             rerun = 1;
+                            replot = 1;
                         }
                     }
                     else if ( op == 't' )
@@ -545,6 +560,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             tspan[i] = nvalue;
                             rerun = 1;
+                            replot = 1;
                         }
                         else
                         {
@@ -564,6 +580,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     load_nameval(system_filename, mu, "P", 1);
                     load_nameval(system_filename, var, "X", 0);
                     rerun = 1;
+                    replot = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
                     fprintf(gnuplot_pipe,"%s\n", cmdline+1);
@@ -576,7 +593,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         status = ststsolver(multiroot_rhs,var,mu, stst);
                         if (!status && !plot3d)
                         {
-                            fprintf(gnuplot_pipe,"replot \"<echo '%f %f'\"   with points ls 2 title \"stst\"\n",\
+                            fprintf(gnuplot_pipe,"replot \"<echo '%f %f'\" with points ls 2 title \"stst\"\n",\
                                 stst->s[gx-2],stst->s[gy-2]);
                             fflush(gnuplot_pipe);
                         }
@@ -610,6 +627,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             }
             if (replot || rerun)    
             {
+                fprintf(gnuplot_pipe,"replot\n");
+                fflush(gnuplot_pipe);
+            }
+            else if (updateplot)
+            {
                 if (plot3d == 0)
                 {
                     if (opts.freeze == 0)
@@ -618,6 +640,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     } 
                     else
                     {
+                        fprintf(gnuplot_pipe,"unset ylabel\n");
                         fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
                     }
                 }
@@ -629,15 +652,18 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     } 
                     else
                     {
+                        fprintf(gnuplot_pipe,"unset ylabel\n");
                         fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d%d w l \n",temp_buffer,gx,gy,gz);    
                     }
                 }
 
                 fflush(gnuplot_pipe);
             }
+
             fpurge(stdin);
             replot = 0;
             rerun = 0;
+            updateplot = 0;
             //system("/bin/stty -icanon");
         }
         
