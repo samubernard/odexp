@@ -33,7 +33,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *system_filename = ".odexp/system.par";
-    const char *helpcmd = "less -S ~/Documents/codes/odexp/help.txt";
+    const char *helpcmd = "less -S .odexp/help.txt";
     const char temp_buffer[] = "temp.tab";
     int32_t i;
     int8_t success;
@@ -94,7 +94,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     char buffer[MAXFILENAMELENGTH];
 
     initialize_readline();
-    //printf("%x\n",rl_done);
+    /* printf("%x\n",rl_done);*/
 
     /* begin */
     printf("odexp file: %s\n",odexp_filename);
