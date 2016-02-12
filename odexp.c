@@ -46,7 +46,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const size_t ts_len = 1;
 
     /* system size */
-    int32_t ode_system_size;
+    int32_t ode_system_size,
+            total_nbr_vars;
 
     /* constants */
     nv cst;
@@ -200,6 +201,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("  freeze  = %u\n",opts.freeze = 0);
  
     ode_system_size = var.nbr_el;
+    total_nbr_vars = ode_system_size + fcn.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
     lastinit = malloc(ode_system_size*sizeof(double));
 
@@ -316,7 +318,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '2' : /* set 2D */
                 case 'v' : /* set view */
                     sscanf(cmdline+1,"%d %d",&ngx,&ngy);
-                    if ( ngx >= -1 && ngx < ode_system_size + fcn.nbr_el)
+                    if ( (ngx >= -1) && ngx < total_nbr_vars)
                     {
                         gx = ngx + 2;
                     }
@@ -324,7 +326,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         printf("  warning: x-axis index out of bound\n");
                     }
-                    if ( ngy >= -1 && ngy < ode_system_size + fcn.nbr_el)
+                    if ( (ngy >= -1) && ngy < total_nbr_vars)
                     {
                         gy = ngy + 2;
                     }
@@ -338,7 +340,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case '3' : /* set 3D view */
                     sscanf(cmdline+1,"%d %d %d",&ngx,&ngy,&ngz);
-                    if ( ngx >= -1 && ngx < ode_system_size + fcn.nbr_el)
+                    if ( ngx >= -1 && ngx < total_nbr_vars)
                     {
                         gx = ngx + 2;
                     }
@@ -346,7 +348,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         printf("  warning: x-axis index out of bound\n");
                     }
-                    if ( ngy >= -1 && ngy < ode_system_size + fcn.nbr_el)
+                    if ( ngy >= -1 && ngy < total_nbr_vars)
                     {
                         gy = ngy + 2;
                     }
@@ -354,7 +356,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         printf("  warning: y-axis index out of bound\n");
                     }
-                    if ( ngz >= -1 && ngz < ode_system_size + fcn.nbr_el)
+                    if ( ngz >= -1 && ngz < total_nbr_vars)
                     {
                         gz = ngz + 2;
                     }
@@ -368,8 +370,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'x' :
                     sscanf(cmdline+1,"%d",&ngy);
-                    if (ngy > -1 && ngy < ode_system_size +  + fcn.nbr_el)
+                    if (ngy > -1 && ngy < total_nbr_vars)
                     {
+                        gx = 1;
                         gy = ngy + 2;
                         updateplot = 1;
                     }
