@@ -213,9 +213,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
 
     status = odesolver(ode_rhs, lasty, var, mu, fcn, tspan, opts);
-    fprintf(gnuplot_pipe,"set key autotitle columnhead\n");
-    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines\n",\
-        temp_buffer,gx,gy);
+    /* fprintf(gnuplot_pipe,"set key autotitle columnhead\n"); */
+    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
+        temp_buffer,gx,gy,gy,gx);
     fflush(gnuplot_pipe);
 
     while(1)
@@ -611,16 +611,21 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 fflush(gnuplot_pipe);
             }
             else if (updateplot)
+                /* This is where the plot is updated */
             {
                 if (plot3d == 0)
                 {
                     if (opts.freeze == 0)
                     {
-                        fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines \n",temp_buffer,gx,gy);    
+                        fprintf(gnuplot_pipe,\
+                            "plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
+                            temp_buffer,gx,gy,gy,gx);    
                     } 
                     else
                     {
-                        fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines \n",temp_buffer,gx,gy);    
+                        fprintf(gnuplot_pipe,\
+                            "replot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
+                            temp_buffer,gx,gy,gy,gx);    
                     }
                 }
                 else

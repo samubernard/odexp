@@ -22,7 +22,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
  double *lasty, nv init, nv mu, nv fcn, double tspan[2], options opts)    
 {
  
-    double *y;
+    double *y,
+           *f;
     const double hmin = 1e-3;
     double h = 1e-1;
     uint32_t nbr_out = 201;
@@ -85,11 +86,17 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
     /* fill in the initial conditions */
     fprintf(file,"%.15e ",t);
-        for (i = 0; i < ode_system_size; i++)
-        {
-            fprintf (file,"\t%.15e",y[i]); 
-        }
-        fprintf(file,"\n");
+    for (i = 0; i < ode_system_size; i++)
+    {
+        fprintf (file,"\t%.15e",y[i]);  
+    }
+    f = malloc(ode_system_size*sizeof(double));
+    ode_rhs(t, y, f, &mu);
+    for (i = 0; i < fcn.nbr_el; i++)
+    {
+        fprintf (file,"\t%.15e",mu.aux_pointer[i]);
+    }
+    fprintf(file,"\n");
     while (t < t1)
     {
         tnext = fmin(t+dt,t1);
