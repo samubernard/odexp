@@ -104,7 +104,7 @@ echo "" >>.odexp/model.c
 echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single node */" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *_params)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
-echo "    nv _mu = *(nv *)_params;" >>.odexp/model.c
+echo "    nve _mu = *(nve *)_params;" >>.odexp/model.c
 echo "    double * _pars = _mu.value;" >>.odexp/model.c
 echo "    double * _aux  = _mu.aux_pointer;" >>.odexp/model.c
 echo "" >>.odexp/model.c

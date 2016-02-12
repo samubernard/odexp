@@ -19,7 +19,7 @@
 #include "methods_odexp.h"
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- double *lasty, nv init, nv mu, nv fcn, double tspan[2], options opts)    
+ double *lasty, nve init, nve mu, nve fcn, double tspan[2], options opts)    
 {
  
     double *y,
@@ -30,7 +30,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char temp_buffer[] = "temp.tab";
-    char header_name[MAXPARNAMELENGTH];
     int32_t i;
     
     /* tspan parameters */
@@ -79,8 +78,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
     for (i = 0; i<fcn.nbr_el; i++)
     {
-        sscanf(fcn.name[i],"%*s %s",header_name);    
-        fprintf(file,"\t%s",header_name);
+        fprintf(file,"\t%s",fcn.name[i]);
     }
     fprintf(file,"\n");
 
@@ -146,7 +144,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 }
 
 int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nv var, nv mu)
+    nve var, nve mu)
 {
     int status, status_res, status_delta, newstst;
     const size_t ode_system_size = var.nbr_el;
@@ -289,7 +287,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
 }
 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nv var, nv mu, steady_state *stst)
+    nve var, nve mu, steady_state *stst)
 {
     
 

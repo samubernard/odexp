@@ -13,17 +13,18 @@
 ================================================================= */
 #define MAXPARNAMELENGTH 63
 #define MAXFILENAMELENGTH 63
-#define MAXLINELENGTH 512                            
+#define MAXLINELENGTH 1023                            
 
 
-typedef struct nameval
+typedef struct namevalexp
 {
     double *value;
     double *aux_pointer;
     char **name;
+    char **expression;
     uint32_t nbr_el;
     int *max_name_length;
-} nv;
+} nve;
 
 typedef struct options
 {
@@ -46,7 +47,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     const char *odexp_filename );
 
-void free_name_value(struct nameval mu );
+void free_namevalexp(nve mu );
 
 void init_steady_state(steady_state *stst, uint32_t size);
 
@@ -54,16 +55,16 @@ void free_steady_state(steady_state *stst);
 
 int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len);
 
-int8_t load_nameval(const char *filename, struct nameval var, const char *sym, const size_t sym_len);
+int8_t load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
 
 int8_t load_double(const char *filename, double *vect, size_t len, \
         const char *sym, size_t sym_len);
 
-int8_t load_strings(const char *filename, struct nameval var, const char *sym, const size_t sym_len);
+int8_t load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep);
 
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
-int8_t fprintf_nameval(struct nameval init, struct nameval cst, struct nameval mu, struct nameval fcn, struct nameval eqn, double tspan[2], clock_t time_stamp);
+int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double tspan[2], clock_t time_stamp);
 
 void initialize_readline(void);
 

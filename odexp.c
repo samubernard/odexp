@@ -50,19 +50,19 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             total_nbr_vars;
 
     /* constants */
-    nv cst;
+    nve cst;
 
     /* parameters */
-    nv mu;
+    nve mu;
 
     /* variables */
-    nv var;
+    nve var;
 
     /* equations */
-    nv fcn;
+    nve fcn;
 
     /* equations */
-    nv eqn;
+    nve eqn;
 
     /* last initial conditions */
     double *lastinit;
@@ -75,7 +75,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     int status, file_status;
     int p=0,
-        np;
+        np,
+        padding;
     char c,
          op,
          op2;
@@ -115,12 +116,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     cst.nbr_el = get_nbr_el(system_filename,"C",1);
     cst.value = malloc(cst.nbr_el*sizeof(double));
     cst.name = malloc(cst.nbr_el*sizeof(char*));
+    cst.expression = malloc(cst.nbr_el*sizeof(char*));
     cst.max_name_length = malloc(sizeof(int));
     for (i = 0; i < cst.nbr_el; i++)
     {
-        cst.name[i] = malloc(MAXLINELENGTH*sizeof(char));
+        cst.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        cst.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,cst,"C",1);
+    success = load_strings(system_filename,cst,"C",1,1,' ');
     if (!success)
     {
         printf("  no constant found\n");
@@ -132,12 +135,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.nbr_el = get_nbr_el(system_filename,"P",1);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
+    mu.expression = malloc(mu.nbr_el*sizeof(char*));
     mu.max_name_length = malloc(sizeof(int));
     for (i = 0; i < mu.nbr_el; i++)
     {
         mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    success = load_nameval(system_filename,mu,"P",1);
+    success = load_namevalexp(system_filename,mu,"P",1);
     if (!success)
     {
         printf("  no  parameters found\n");
@@ -149,12 +153,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     var.nbr_el = get_nbr_el(system_filename,"X",1);
     var.value = malloc(var.nbr_el*sizeof(double));
     var.name = malloc(var.nbr_el*sizeof(char*));
+    var.expression = malloc(var.nbr_el*sizeof(char*));
     var.max_name_length = malloc(sizeof(int));
     for (i = 0; i < var.nbr_el; i++)
     {
         var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
     }
-    success = load_nameval(system_filename,var,"X",1);   
+    success = load_namevalexp(system_filename,var,"X",1);   
     if (!success)
     {
         printf("  Dynamic variables not defined... exiting\n");
@@ -166,12 +171,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     fcn.nbr_el = get_nbr_el(system_filename,"A",1);
     fcn.value = malloc(fcn.nbr_el*sizeof(double));
     fcn.name = malloc(fcn.nbr_el*sizeof(char*));
+    fcn.expression = malloc(fcn.nbr_el*sizeof(char*));
     fcn.max_name_length = malloc(sizeof(int));
     for (i = 0; i < fcn.nbr_el; i++)
     {
-        fcn.name[i] = malloc(MAXLINELENGTH*sizeof(char));
+        fcn.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        fcn.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,fcn,"A",1);   
+    success = load_strings(system_filename,fcn,"A",1,1,'=');
     if (!success)
     {
         printf("  no auxiliary function found\n");
@@ -183,12 +190,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     eqn.nbr_el = get_nbr_el(system_filename,"d",1);
     eqn.value = malloc(eqn.nbr_el*sizeof(double));
     eqn.name = malloc(eqn.nbr_el*sizeof(char*));
+    eqn.expression = malloc(eqn.nbr_el*sizeof(char*));
     eqn.max_name_length = malloc(sizeof(int));
     for (i = 0; i < eqn.nbr_el; i++)
     {
-        eqn.name[i] = malloc(MAXLINELENGTH*sizeof(char));
+        eqn.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        eqn.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,eqn,"d",1);   
+    success = load_strings(system_filename,eqn,"d",1,0,'=');   
     if (!success)
     {
         printf("equations not defined... exiting\n");
@@ -214,6 +223,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     status = odesolver(ode_rhs, lasty, var, mu, fcn, tspan, opts);
     /* fprintf(gnuplot_pipe,"set key autotitle columnhead\n"); */
+    fprintf(gnuplot_pipe,"set xlabel 'time'\n");
+    fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
         temp_buffer,gx,gy,gy,gx);
     fflush(gnuplot_pipe);
@@ -420,39 +431,50 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for (i=0; i<mu.nbr_el; i++)
                         {
-                            printf("  P[%d] %-20s = %e\n",i,mu.name[i],mu.value[i]);
+                            padding = (int)log10(mu.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf("  P[%d]%-*s %-*s = %e\n",\
+                                i, padding, "", *mu.max_name_length,mu.name[i],mu.value[i]);
                         }
                     }
                     else if (op == 'c')
                     {
                         for (i=0; i<cst.nbr_el; i++)
                         {
-                            printf("  %s",cst.name[i]);
+                            padding = (int)log10(cst.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf("  C[%d]%-*s %-*s = %s\n",\
+                                i, padding, "", *cst.max_name_length,cst.name[i],cst.expression[i]);
                         }
                     }
                     else if (op == 'x' || op == 'i')
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
-                            printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
+                            padding = (int)log10(var.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf("  I[%d]%-*s %-*s = %e\n",i, padding, "", *var.max_name_length,var.name[i],var.value[i]);
                         }
                     }
                     else if (op == 'e') /* list equations */
                     {
                         for (i=0; i<eqn.nbr_el; i++)
                         {
-                            printf("  E[%d] %s",i,eqn.name[i]);
+                            padding = (int)log10(eqn.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf("  E[%d]%-*s %-*s = %s\n",\
+                                i,padding, "", *eqn.max_name_length,eqn.name[i],eqn.expression[i]);
                         }
                         for (i=0; i<fcn.nbr_el; i++)
                         {
-                            printf("  A[%d] %s",i,fcn.name[i]);
+                            padding = (int)log10(fcn.nbr_el+ode_system_size+0.5)-(int)log10(i+0.5);
+                            printf("  A[%d]%-*s %-*s = %s\n",\
+                                i+ode_system_size,padding, "", *fcn.max_name_length,fcn.name[i],fcn.expression[i]);
                         }
                     }
                     else if (op == 'a')
                     {
                         for (i=0; i<fcn.nbr_el; i++)
                         {
-                            printf("  A[%d] %s",i,fcn.name[i]);
+                            padding = (int)log10(fcn.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf("  A[%d]%-*s %-*s = %s\n",\
+                                i+ode_system_size, padding, "", *fcn.max_name_length,fcn.name[i],fcn.expression[i]);
                         }
                     }
                     else if (op == 't')
@@ -463,7 +485,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
-                            printf("  S[%d] %-20s = %e\n",i,var.name[i],stst->s[i]);
+                            padding = (int)log10(var.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf("  S[%d]%-*s %-*s = %e\n",\
+                                i, padding, "", *var.max_name_length, var.name[i],stst->s[i]);
                         }
                         printf("  status: %s\n",gsl_strerror(status));
                     }
@@ -557,8 +581,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                         }
-                    load_nameval(system_filename, mu, "P", 1);
-                    load_nameval(system_filename, var, "X", 0);
+                    load_namevalexp(system_filename, mu, "P", 1);
+                    load_namevalexp(system_filename, var, "X", 0);
                     rerun = 1;
                     replot = 1;
                     break;
@@ -592,7 +616,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     time_stamp = clock();
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
                     file_status = rename(temp_buffer,buffer);
-                    file_status = fprintf_nameval(var,cst,mu,fcn,eqn,tspan,time_stamp);
+                    file_status = fprintf_namevalexp(var,cst,mu,fcn,eqn,tspan,time_stamp);
                     break;
                 default :
                     printf("  Unknown command. Type q to quit, h for help\n");
@@ -615,14 +639,27 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 if (plot3d == 0)
                 {
+                    if (gx == 1) /* time evolution */
+                    {
+                            fprintf(gnuplot_pipe,"set xlabel 'time'\n");
+                    }
                     if (opts.freeze == 0)
                     {
+                        if ( (gy-2) < ode_system_size )
+                        {
+                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
+                        }
+                        else /* auxiliary variable */
+                        {
+                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",fcn.name[gy - ode_system_size - 2]);
+                        }
                         fprintf(gnuplot_pipe,\
                             "plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
                             temp_buffer,gx,gy,gy,gx);    
                     } 
                     else
                     {
+                        fprintf(gnuplot_pipe,"unset ylabel\n");
                         fprintf(gnuplot_pipe,\
                             "replot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
                             temp_buffer,gx,gy,gy,gx);    
@@ -658,11 +695,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     pclose(gnuplot_pipe);
 
-    free_name_value( cst );
-    free_name_value( mu );
-    free_name_value( var );
-    free_name_value( eqn );
-    free_name_value( fcn );
+    free_namevalexp( cst );
+    free_namevalexp( mu );
+    free_namevalexp( var );
+    free_namevalexp( eqn );
+    free_namevalexp( fcn );
     free_steady_state( stst );
     free(lasty);
     free(lastinit);
@@ -673,7 +710,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 }
 
 
-void free_name_value(nv var )
+void free_namevalexp(nve var )
 {
     int32_t i;
     free(var.value);
@@ -681,6 +718,10 @@ void free_name_value(nv var )
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.name[i]);
+    }
+    for (i = 0; i < var.nbr_el; i++)
+    {
+        free(var.expression[i]);
     }
     free(var.name);
     free(var.max_name_length);
@@ -729,7 +770,7 @@ int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
 }
 
 
-int8_t load_nameval(const char *filename, nv var, const char *sym, const size_t sym_len)
+int8_t load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len)
 {
     size_t i = 0;
     size_t pos0, pos1, k = 0;
@@ -824,13 +865,16 @@ int8_t load_double(const char *filename, double *mypars, size_t len, const char 
     
 }
 
-int8_t load_strings(const char *filename, struct nameval var, const char *sym, const size_t sym_len)
+int8_t load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep)
 {
     size_t  i = 0,
             k = 0,
             linecap = 0;
     ssize_t linelength;
+    int     namelen0,
+            namelen1;
     char *line = NULL;
+    char str2match[64];
     FILE *fr;
     int8_t success = 0;
     fr = fopen (filename, "rt");
@@ -846,14 +890,27 @@ int8_t load_strings(const char *filename, struct nameval var, const char *sym, c
         if(k == sym_len) /* keyword was found */
         {
             success = 1;
-            strcpy(var.name[i],line);
-            if(linelength > *var.max_name_length)
             {
-                *var.max_name_length = linelength;
+                /* data */
             }
+            if ( prefix )
+            {
+                snprintf(str2match,63*sizeof(char),"%%*s %%n %%s %%n %c %%[^\n]", sep);
+            }
+            else
+            {
+                snprintf(str2match,63*sizeof(char),"%%n %%s %%n %c %%[^\n]", sep);
+            }
+            /* printf("%s\n",str2match); */
+            sscanf(line,str2match, &namelen0, var.name[i], &namelen1, var.expression[i]);
+            if( (namelen1-namelen0) > *var.max_name_length)
+            {
+                *var.max_name_length = (namelen1-namelen0);
+            }
+            /* printf("max_name_length = %d", *var.max_name_length); */
             var.value[i] = i+0.0;
 
-            printf("  [%zu] %s",i,var.name[i]);
+            printf("  [%zu] %-*s %c %s\n",i,*var.max_name_length,var.name[i],sep,var.expression[i]);
             i++;
         }
         k = 0; /* reset k */
@@ -901,7 +958,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_nameval(nv init, nv cst, nv mu, nv fcn, nv eqn, double tspan[2], clock_t time_stamp)
+int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double tspan[2], clock_t time_stamp)
 {
     int8_t success = 0;
     size_t i;
