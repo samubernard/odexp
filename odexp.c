@@ -211,8 +211,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
 
     status = odesolver(ode_rhs, lasty, var, mu, fcn, tspan, opts);
-    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",\
-        temp_buffer,gx,gy,var.name[gy-2]);
+    fprintf(gnuplot_pipe,"set key autotitle columnhead\n");
+    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines\n",\
+        temp_buffer,gx,gy);
     fflush(gnuplot_pipe);
 
     while(1)
@@ -315,24 +316,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '2' : /* set 2D */
                 case 'v' : /* set view */
                     sscanf(cmdline+1,"%d %d",&ngx,&ngy);
-                    if ( ngx >= -1 && ngx < ode_system_size)
+                    if ( ngx >= -1 && ngx < ode_system_size + fcn.nbr_el)
                     {
-                        if ( ngx == -1 )
-                            fprintf(gnuplot_pipe,"set xlabel 't'\n");
-                        else 
-                            fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[ngx]);
                         gx = ngx + 2;
                     }
                     else
                     {
                         printf("  warning: x-axis index out of bound\n");
                     }
-                    if ( ngy >= -1 && ngy < ode_system_size)
+                    if ( ngy >= -1 && ngy < ode_system_size + fcn.nbr_el)
                     {
-                        if ( ngy == -1 )
-                            fprintf(gnuplot_pipe,"set ylabel 't'\n");
-                        else 
-                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[ngy]);
                         gy = ngy + 2;
                     }
                     else
@@ -345,36 +338,24 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case '3' : /* set 3D view */
                     sscanf(cmdline+1,"%d %d %d",&ngx,&ngy,&ngz);
-                    if ( ngx >= -1 && ngx < ode_system_size)
+                    if ( ngx >= -1 && ngx < ode_system_size + fcn.nbr_el)
                     {
-                        if ( ngx == -1 )
-                            fprintf(gnuplot_pipe,"set xlabel 't'\n");
-                        else 
-                            fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[ngx]);
                         gx = ngx + 2;
                     }
                     else
                     {
                         printf("  warning: x-axis index out of bound\n");
                     }
-                    if ( ngy >= -1 && ngy < ode_system_size)
+                    if ( ngy >= -1 && ngy < ode_system_size + fcn.nbr_el)
                     {
-                        if ( ngy == -1 )
-                            fprintf(gnuplot_pipe,"set ylabel 't'\n");
-                        else 
-                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[ngy]);
                         gy = ngy + 2;
                     }
                     else
                     {
                         printf("  warning: y-axis index out of bound\n");
                     }
-                    if ( ngz >= -1 && ngz < ode_system_size)
+                    if ( ngz >= -1 && ngz < ode_system_size + fcn.nbr_el)
                     {
-                        if ( ngz == -1 )
-                            fprintf(gnuplot_pipe,"set zlabel 't'\n");
-                        else 
-                            fprintf(gnuplot_pipe,"set zlabel '%s'\n",var.name[ngz]);
                         gz = ngz + 2;
                     }
                     else
@@ -387,12 +368,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'x' :
                     sscanf(cmdline+1,"%d",&ngy);
-                    if (ngy > -1 && ngy < ode_system_size)
+                    if (ngy > -1 && ngy < ode_system_size +  + fcn.nbr_el)
                     {
-                        if ( ngy == -1 )
-                            fprintf(gnuplot_pipe,"set ylabel 't'\n");
-                        else 
-                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[ngy]);
                         gy = ngy + 2;
                         updateplot = 1;
                     }
@@ -636,12 +613,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 {
                     if (opts.freeze == 0)
                     {
-                        fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                        fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines \n",temp_buffer,gx,gy);    
                     } 
                     else
                     {
-                        fprintf(gnuplot_pipe,"unset ylabel\n");
-                        fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines title \"%s\"\n",temp_buffer,gx,gy,var.name[gy-2]);    
+                        fprintf(gnuplot_pipe,"replot \"%s\" using %d:%d with lines \n",temp_buffer,gx,gy);    
                     }
                 }
                 else
@@ -652,7 +628,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     } 
                     else
                     {
-                        fprintf(gnuplot_pipe,"unset ylabel\n");
                         fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d%d w l \n",temp_buffer,gx,gy,gz);    
                     }
                 }
