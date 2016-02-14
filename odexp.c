@@ -35,6 +35,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char *system_filename = ".odexp/system.par";
     const char *helpcmd = "less -S .odexp/help.txt";
     const char temp_buffer[] = "temp.tab";
+    const char *hline = "----------------";
     int32_t i;
     int8_t success;
     
@@ -103,7 +104,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("odexp file: %s\n",odexp_filename);
 
     /* get tspan */
-    printf("getting time span\n");
+    printf("\ntime span %s\n",hline);
     success = load_double(system_filename, tspan, 2, ts_string, ts_len); 
     if (!success)
     {
@@ -112,7 +113,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     }
     
     /* get constants */
-    printf("getting constants\n");
+    printf("\nconstants %s\n", hline);
     cst.nbr_el = get_nbr_el(system_filename,"C",1);
     cst.value = malloc(cst.nbr_el*sizeof(double));
     cst.name = malloc(cst.nbr_el*sizeof(char*));
@@ -131,7 +132,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 
     /* get parameters */
-    printf("getting parameters\n");
+    printf("parameters %s\n", hline);
     mu.nbr_el = get_nbr_el(system_filename,"P",1);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
@@ -149,7 +150,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 
     /* get variable names and initial conditions */
-    printf("getting variable names and initial conditions\n");
+    printf("\nvariable names and initial conditions %s\n", hline);
     var.nbr_el = get_nbr_el(system_filename,"X",1);
     var.value = malloc(var.nbr_el*sizeof(double));
     var.name = malloc(var.nbr_el*sizeof(char*));
@@ -167,7 +168,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     } 
 
     /* get nonlinear functions */
-    printf("getting auxiliary functions\n");
+    printf("\nauxiliary functions %s\n", hline);
     fcn.nbr_el = get_nbr_el(system_filename,"A",1);
     fcn.value = malloc(fcn.nbr_el*sizeof(double));
     fcn.name = malloc(fcn.nbr_el*sizeof(char*));
@@ -186,7 +187,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.aux_pointer = fcn.value; /* pointer to fcn.value */
 
     /* get equations */
-    printf("getting equations\n");
+    printf("\nequations %s\n", hline);
     eqn.nbr_el = get_nbr_el(system_filename,"d",1);
     eqn.value = malloc(eqn.nbr_el*sizeof(double));
     eqn.name = malloc(eqn.nbr_el*sizeof(char*));
@@ -205,7 +206,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     } 
 
     /* get options */
-    printf("getting options\n");
+    printf("\noptions %s\n", hline);
     printf("  ntsteps = %u\n",opts.ntsteps = 201);
     printf("  freeze  = %u\n",opts.freeze = 0);
  
