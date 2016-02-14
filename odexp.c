@@ -35,6 +35,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char *system_filename = ".odexp/system.par";
     const char *helpcmd = "less -S .odexp/help.txt";
     const char temp_buffer[] = "temp.tab";
+    /* const char *history_filename = ".odexp/history"; */
+    /* char *expansion; */
     const char *hline = "----------------";
     int32_t i;
     int8_t success;
@@ -229,6 +231,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
         temp_buffer,gx,gy,gy,gx);
     fflush(gnuplot_pipe);
+
+    /* history - initialize session */
+    /* using_history(); */
 
     while(1)
     {
