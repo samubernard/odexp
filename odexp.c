@@ -43,7 +43,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int8_t success;
     
     double *lasty;
-    int8_t *num_ic; 
     
     /* tspan parameters */
     const char ts_string[] = "T"; 
@@ -220,10 +219,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     ode_system_size = var.nbr_el;
     total_nbr_vars = ode_system_size + fcn.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
-    num_ic = malloc(ode_system_size*sizeof(int8_t));
+    opts.num_ic = malloc(ode_system_size*sizeof(uint8_t));
     for(i=0; i<ode_system_size; i++)
     {
-        num_ic = malloc(ode_system_size*sizeof(int8_t));    
+        opts.num_ic[0] = 0;    
     }
     lastinit = malloc(ode_system_size*sizeof(double));
 
@@ -418,7 +417,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = lasty[i];
-                            num_ic[i] = 1;
+                            opts.num_ic[i] = 1;
                         }
                     } 
                     else if ( op == 's') /* run from steady state */
@@ -427,7 +426,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = stst->s[i];
-                            num_ic[i] = 1;
+                            opts.num_ic[i] = 1;
                         }
                     }
                     rerun = 1;
@@ -437,7 +436,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     for ( i=0; i<ode_system_size; i++ )
                         {
                             var.value[i] = lastinit[i];
-                            num_ic[i] = 1;
+                            opts.num_ic[i] = 1;
                             printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
                         }
                     rerun = 1;
@@ -557,7 +556,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = nvalue;
-                            num_ic[i] = 1;
+                            opts.num_ic[i] = 1;
                             rerun = 1;
                             replot = 1;
                         }
@@ -573,7 +572,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         if ( i >= 0 && i<ode_system_size)
                         {
                             lastinit[i] = var.value[i];
-                            num_ic[i] = 0;
+                            opts.num_ic[i] = 0;
                             rerun = 1;
                             replot = 1;
                         }
@@ -737,6 +736,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_namevalexp( eqn );
     free_namevalexp( fcn );
     free_steady_state( stst );
+    free(opts.num_ic);
     free(lasty);
     free(lastinit);
     free(cmdline);

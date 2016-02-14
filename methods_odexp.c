@@ -53,10 +53,13 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     e = gsl_odeiv_evolve_alloc(ode_system_size);
 
     y = malloc(ode_system_size*sizeof(double));
-    ode_init_conditions(var.value,mu.value);
+    ode_init_conditions(y,mu.value);
     for (i = 0; i < ode_system_size; i++)
     {
-        y[i] = var.value[i];
+        if (opts.num_ic[i])
+        {
+            y[i] = var.value[i];
+        }
     }
 
     /* options */

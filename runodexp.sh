@@ -91,11 +91,16 @@ echo "" >>.odexp/model.c
 # find iterators in the source file and declare them 
 # Iterators have the syntax: (0:5)
 echo "    /* iterators */" >>.odexp/model.c
-niter=`awk '/\(.+:.*\)/ {count++} END {print count++}' $file`
+iternames=(`awk -F ' ' '/\[[[:alnum:]]+=.+:.+\]/ {print $2}' $file`)
 
-if [ "$niter" -gt 0  ] # found iterator
+itercount=$(( ${#iternames[@]} - 1 ))
+echo $itercount
+if [ "$itercount" -gt 0  ] # found iterator
 then
-    echo "    size_t i_;" >>.odexp/model.c
+    for k in `seq 0 $itercount`
+    do
+        echo "    size_t ${iternames[$k]};" >>.odexp/model.c
+    done
 fi
 echo "    size_t j_ = 0;" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -117,7 +122,7 @@ echo "    /* parameters */" >>.odexp/model.c
 awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $file >>.odexp/model.c
 echo "/* parameters */" >>.odexp/system.par
 # find variable parameters and declare them in system.par 
-awk -F ' ' '$1 ~ /^[pP][0-9]*$/ && $2 !~ /[\[\]]/ {printf "P%d %s %s\n", i, $2, $3; i++}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[pP][0-9]*$/ {printf "P%d %s %s\n", i, $2, $3; i++}' $file >>.odexp/system.par
 # ====================================================================================
 
 # ====================================================================================
@@ -180,17 +185,17 @@ fi
 # nv is the array of lengths of each variable, which are > 1 for vectors
 # ev is the array the rhs of the differential equations
 # evic is the array of initial conditions
-v=(`awk -F ' ' $'$1 ~ /\/[dD][tT]/ && $1 ~ /[\[\]]/ {split($1,a,/[dD\[\]]/); print a[2]}; 
-                $1 ~ /[[:alnum:]]\'/ && $1 !~ /[\[\]]/ {split($1,a,/\'/); print a[1]}; 
-                $1 ~ /\/[dD][tT]/ && $1 !~ /[\[\]]/ {split($1,a,/[dD\/]/); print a[2]}' $file`)
+v=(`awk -F ' ' $'$1 ~ /^[dD][[:alnum:]]+\/[dD][tT]/ && $1 ~ /[\[\]]/ {split($1,a,/[dD\[\]]/); print a[2]}; 
+                $1 ~ /^[[:alnum:]]\'/ && $1 !~ /[\[\]]/ {split($1,a,/\'/); print a[1]}; 
+                $1 ~ /^[dD][[:alnum:]]+\/[dD][tT]/ && $1 !~ /[\[\]]/ {split($1,a,/[dD\/]/); print a[2]}' $file`)
 
 # find length of vector (=1 if scalar)
 nv=(`awk -F ' ' '$1 ~ /^[xX][0-9]*/ && $2 ~ /[\[\]]/ {split($2,a,/[\[\]]/); print a[2]}; 
                  $1 ~ /^[xX][0-9]*/ && $2 !~ /[\[\]]/ {print 1}' $file`)
 
 # find equation expressions for each variable
-ev=(`awk -F '= ' $'$1 ~ /\/[dD][tT]/ {gsub(" ",":",$2); print $2};
-                  $1 ~ /[[:alnum:]]\'/ {gsub(" ",":",$2); print $2}' $file`)
+ev=(`awk -F '= ' $'$1 ~ /^[dD][[:alnum:]]+\/[dD][tT]/ {gsub(" ",":",$2); print $2};
+                  $1 ~ /^[[:alnum:]]+\'/ {gsub(" ",":",$2); print $2}' $file`)
 
 # find initial conditions for each variable
 evic=(`awk -F ' ' -v OFS=':' '$1 ~ /^[xX][0-9]*$/ {$1="";$2="";print $0}' $file`)
