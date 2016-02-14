@@ -965,16 +965,25 @@ int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double ts
     size_t i;
     FILE *fr;
     char buffer[MAXFILENAMELENGTH];
-    int len;
+    int len = *mu.max_name_length;
 
-    if (*init.max_name_length > *mu.max_name_length)
+    if (*init.max_name_length > len)
     {
         len = *init.max_name_length;
     }
-    else
+    if (*cst.max_name_length > len)
     {
-        len = *mu.max_name_length;   
+        len = *cst.max_name_length;   
     }
+    if (*fcn.max_name_length > len)
+    {
+        len = *fcn.max_name_length;
+    }
+    if (*eqn.max_name_length > len)
+    {
+        len = *eqn.max_name_length;
+    }
+
 
     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
     fr = fopen(buffer,"w");
@@ -989,7 +998,7 @@ int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double ts
     fprintf(fr,"\n# constants/values\n");
     for(i=0;i<cst.nbr_el;i++)
     {
-        fprintf(fr,"%s",cst.name[i]);
+        fprintf(fr,"C%zu %-*s = %s\n",i,len,cst.name[i],cst.expression[i]);
     }
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
@@ -999,12 +1008,12 @@ int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double ts
     fprintf(fr,"\n# nonlinear functions\n");
     for(i=0;i<fcn.nbr_el;i++)
     {
-        fprintf(fr,"%s",fcn.name[i]);
+        fprintf(fr,"A%zu %-*s = %s\n",i,len,fcn.name[i],fcn.expression[i]);
     }
     fprintf(fr,"\n# equations\n");
     for(i=0;i<eqn.nbr_el;i++)
     {
-        fprintf(fr,"%s",eqn.name[i]);
+        fprintf(fr,"%-*s = %s\n",len,eqn.name[i],eqn.expression[i]);
     }
 
     fprintf(fr,"\ntspan %f %f\n",tspan[0],tspan[1]);
