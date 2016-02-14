@@ -496,11 +496,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                 i+ode_system_size, padding, "", *fcn.max_name_length,fcn.name[i],fcn.expression[i]);
                         }
                     }
-                    else if (op == 't')
+                    else if (op == 't') /* list tspan */
                     {
                         printf("  tspan = [%.5e %.5e]\n",tspan[0],tspan[1]);
                     }
-                    else if (op == 's')
+                    else if (op == 's') /* list steady states */
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
@@ -510,7 +510,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         printf("  status: %s\n",gsl_strerror(status));
                     }
-                    else if (op == 'n')
+                    else if (op == 'n') /* list ode system size */
                     {
                         printf("  system size = %d\n",ode_system_size);
                     }
@@ -618,7 +618,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             lastinit[i] = var.value[i];
                         }
                     load_namevalexp(system_filename, mu, "P", 1);
-                    load_namevalexp(system_filename, var, "X", 0);
+                    load_strings(system_filename,var,"X",1,1,' ');
                     rerun = 1;
                     replot = 1;
                     break;

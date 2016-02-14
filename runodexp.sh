@@ -11,33 +11,6 @@ ODEXPDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 set -eu # makes your program exit on error or unbound variable
 
-# function parsevector parses lines of the form
-# X NAME[4] i_ + 1 
-function parsevector 
-{
-    typ=$1
-    file=$2
-
-    # get lines beginning with $typ, variable with brackets, and extract their names
-    v=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {split($2,a,/[\[\]]/); print a[1]}' $file`)
-    # get lines beginning with $typ, variable with brackets, and extract the length
-    nv=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {split($2,a,/[\[\]]/); print a[2]}' $file`)
-    # get lines beginning with $typ, variable with brackets, and extract the right-hand-side 
-    ev=(`awk -F ' ' -v vartype=$typ '$1 ~ vartype && $2 ~ /\[[0-9]+\]/ {$1=""; $2=""; gsub(" ","",$0); gsub("i_","(double)i_",$0); print $0}' $file`)
-
-    n=$(( ${#v[@]} - 1 ))
-    if [ "$n" -ge 0 ]
-    then
-        for k in `seq 0 $n`
-        do
-            echo "    for (i_=0; i_<${nv[$k]}; i_++)" >>.odexp/model.c
-            echo "    {" >>.odexp/model.c
-            echo "      ${v[$k]}[i_] = ${ev[k]};" >>.odexp/model.c
-            echo "    }" >>.odexp/model.c
-        done
-    fi
-}
-
 file=$1
 
 rm -fr .odexp/
@@ -116,7 +89,8 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 # ITERATORS
 # find iterators in the source file and declare them 
-echo "    /* iterator */" >>.odexp/model.c
+# Iterators have the syntax: (0:5)
+echo "    /* iterators */" >>.odexp/model.c
 niter=`awk '/\(.+:.*\)/ {count++} END {print count++}' $file`
 
 if [ "$niter" -gt 0  ] # found iterator
