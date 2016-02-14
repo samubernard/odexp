@@ -44,6 +44,7 @@ typedef struct steady_state
 /* function declaration */
 
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+    int (*ode_init_conditions)(double ic_[], const double par_[]),\
     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     const char *odexp_filename );
 

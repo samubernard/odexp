@@ -19,7 +19,8 @@
 #include "methods_odexp.h"
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- double *lasty, nve init, nve mu, nve fcn, double tspan[2], options opts)    
+ int (*ode_init_conditions)(double ic_[], const double par_[]),\
+ double *lasty, nve var, nve mu, nve fcn, double tspan[2], options opts)    
 {
  
     double *y,
@@ -36,7 +37,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     double t, t1, dt, tnext;
 
     /* system size */
-    int32_t ode_system_size = init.nbr_el;
+    int32_t ode_system_size = var.nbr_el;
 
     /* gsl ode */
     const gsl_odeiv_step_type * odeT;
@@ -52,9 +53,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     e = gsl_odeiv_evolve_alloc(ode_system_size);
 
     y = malloc(ode_system_size*sizeof(double));
+    ode_init_conditions(var.value,mu.value);
     for (i = 0; i < ode_system_size; i++)
     {
-        y[i] = init.value[i];
+        y[i] = var.value[i];
     }
 
     /* options */
@@ -74,7 +76,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
-        fprintf(file,"\t%s",init.name[i]);
+        fprintf(file,"\t%s",var.name[i]);
     }
     for (i = 0; i<fcn.nbr_el; i++)
     {

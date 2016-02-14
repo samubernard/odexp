@@ -27,6 +27,7 @@ char *cmdline;
 
 /* main loop */
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+    int (*ode_init_conditions)(double ic_[], const double par_[]),\
     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     const char *odexp_filename )
 {
@@ -42,6 +43,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int8_t success;
     
     double *lasty;
+    int8_t *num_ic; 
     
     /* tspan parameters */
     const char ts_string[] = "T"; 
@@ -52,8 +54,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int32_t ode_system_size,
             total_nbr_vars;
 
-    /* constants */
-    nve cst;
+    /* parametric expressions */
+    nve pex;
 
     /* parameters */
     nve mu;
@@ -114,19 +116,19 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         exit ( EXIT_FAILURE );
     }
     
-    /* get constants */
-    printf("\nconstants %s\n", hline);
-    cst.nbr_el = get_nbr_el(system_filename,"C",1);
-    cst.value = malloc(cst.nbr_el*sizeof(double));
-    cst.name = malloc(cst.nbr_el*sizeof(char*));
-    cst.expression = malloc(cst.nbr_el*sizeof(char*));
-    cst.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < cst.nbr_el; i++)
+    /* get parametric expressions */
+    printf("\nparametric expressions %s\n", hline);
+    pex.nbr_el = get_nbr_el(system_filename,"C",1);
+    pex.value = malloc(pex.nbr_el*sizeof(double));
+    pex.name = malloc(pex.nbr_el*sizeof(char*));
+    pex.expression = malloc(pex.nbr_el*sizeof(char*));
+    pex.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < pex.nbr_el; i++)
     {
-        cst.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
-        cst.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
+        pex.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        pex.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,cst,"C",1,1,' ');
+    success = load_strings(system_filename,pex,"C",1,1,' ');
     if (!success)
     {
         printf("  no constant found\n");
@@ -161,13 +163,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     for (i = 0; i < var.nbr_el; i++)
     {
         var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        var.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    success = load_namevalexp(system_filename,var,"X",1);   
+    success = load_strings(system_filename,var,"X",1,1,' ');
     if (!success)
     {
         printf("  Dynamic variables not defined... exiting\n");
         exit ( EXIT_FAILURE );
     } 
+    ode_init_conditions(var.value,mu.value);
+
 
     /* get nonlinear functions */
     printf("\nauxiliary functions %s\n", hline);
@@ -215,6 +220,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     ode_system_size = var.nbr_el;
     total_nbr_vars = ode_system_size + fcn.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
+    num_ic = malloc(ode_system_size*sizeof(int8_t));
+    for(i=0; i<ode_system_size; i++)
+    {
+        num_ic = malloc(ode_system_size*sizeof(int8_t));    
+    }
     lastinit = malloc(ode_system_size*sizeof(double));
 
     /* init steady state */
@@ -224,7 +234,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stst->size = ode_system_size;
     
 
-    status = odesolver(ode_rhs, lasty, var, mu, fcn, tspan, opts);
+    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
     /* fprintf(gnuplot_pipe,"set key autotitle columnhead\n"); */
     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
@@ -402,13 +412,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'i' : /* run with initial conditions */
                     sscanf(cmdline+1,"%c",&op);
-                    //printf("\033[K");
                     if ( op == 'l' ) /* last simulation value */
                     {
                         for ( i=0; i<ode_system_size; i++ )
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = lasty[i];
+                            num_ic[i] = 1;
                         }
                     } 
                     else if ( op == 's') /* run from steady state */
@@ -417,6 +427,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = stst->s[i];
+                            num_ic[i] = 1;
                         }
                     }
                     rerun = 1;
@@ -426,6 +437,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     for ( i=0; i<ode_system_size; i++ )
                         {
                             var.value[i] = lastinit[i];
+                            num_ic[i] = 1;
                             printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
                         }
                     rerun = 1;
@@ -442,29 +454,30 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                 i, padding, "", *mu.max_name_length,mu.name[i],mu.value[i]);
                         }
                     }
-                    else if (op == 'c')
+                    else if (op == 'e') /* list parametric expression */
                     {
-                        for (i=0; i<cst.nbr_el; i++)
+                        for (i=0; i<pex.nbr_el; i++)
                         {
-                            padding = (int)log10(cst.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf("  C[%d]%-*s %-*s = %s\n",\
-                                i, padding, "", *cst.max_name_length,cst.name[i],cst.expression[i]);
+                            padding = (int)log10(pex.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf("  E[%d]%-*s %-*s = %s\n",\
+                                i, padding, "", *pex.max_name_length,pex.name[i],pex.expression[i]);
                         }
                     }
-                    else if (op == 'x' || op == 'i')
+                    else if (op == 'i') /* list initial conditions */
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
                             padding = (int)log10(var.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf("  I[%d]%-*s %-*s = %e\n",i, padding, "", *var.max_name_length,var.name[i],var.value[i]);
+                            printf("  I[%d]%-*s %-*s = %.6e (%s)\n",\
+                                i, padding, "", *var.max_name_length,var.name[i],var.value[i],var.expression[i]);
                         }
                     }
-                    else if (op == 'e') /* list equations */
+                    else if (op == 'x') /* list equations */
                     {
                         for (i=0; i<eqn.nbr_el; i++)
                         {
                             padding = (int)log10(eqn.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf("  E[%d]%-*s %-*s = %s\n",\
+                            printf("  [%d]%-*s %-*s = %s\n",\
                                 i,padding, "", *eqn.max_name_length,eqn.name[i],eqn.expression[i]);
                         }
                         for (i=0; i<fcn.nbr_el; i++)
@@ -474,7 +487,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                 i+ode_system_size,padding, "", *fcn.max_name_length,fcn.name[i],fcn.expression[i]);
                         }
                     }
-                    else if (op == 'a')
+                    else if (op == 'a') /* list auxiliairy equation */ 
                     {
                         for (i=0; i<fcn.nbr_el; i++)
                         {
@@ -540,14 +553,31 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 'i' ) 
                     {
                         sscanf(cmdline+2,"%d %lf",&i,&nvalue);
-                        if ( i > -1 && i<ode_system_size)
+                        if ( i >= 0 && i<ode_system_size)
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = nvalue;
+                            num_ic[i] = 1;
                             rerun = 1;
                             replot = 1;
                         }
-                        else
+                        else 
+                        {
+                            printf("  error: var index out of bound\n");
+                            replot = 0;
+                        }
+                    }
+                    else if (op == 'I') /* revert initial condition i to expression */
+                    {
+                        sscanf(cmdline+2,"%d",&i);
+                        if ( i >= 0 && i<ode_system_size)
+                        {
+                            lastinit[i] = var.value[i];
+                            num_ic[i] = 0;
+                            rerun = 1;
+                            replot = 1;
+                        }
+                        else 
                         {
                             printf("  error: var index out of bound\n");
                             replot = 0;
@@ -622,7 +652,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     time_stamp = clock();
                     snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
                     file_status = rename(temp_buffer,buffer);
-                    file_status = fprintf_namevalexp(var,cst,mu,fcn,eqn,tspan,time_stamp);
+                    file_status = fprintf_namevalexp(var,pex,mu,fcn,eqn,tspan,time_stamp);
                     break;
                 default :
                     printf("  Unknown command. Type q to quit, h for help\n");
@@ -633,7 +663,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, lasty, var, mu, fcn, tspan, opts);
+                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
             }
             if (replot || rerun)    
             {
@@ -701,7 +731,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     pclose(gnuplot_pipe);
 
-    free_namevalexp( cst );
+    free_namevalexp( pex );
     free_namevalexp( mu );
     free_namevalexp( var );
     free_namevalexp( eqn );
@@ -964,7 +994,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double tspan[2], clock_t time_stamp)
+int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double tspan[2], clock_t time_stamp)
 {
     int8_t success = 0;
     size_t i;
@@ -976,9 +1006,9 @@ int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double ts
     {
         len = *init.max_name_length;
     }
-    if (*cst.max_name_length > len)
+    if (*pex.max_name_length > len)
     {
-        len = *cst.max_name_length;   
+        len = *pex.max_name_length;   
     }
     if (*fcn.max_name_length > len)
     {
@@ -1000,10 +1030,10 @@ int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double ts
     {
         fprintf(fr,"X%zu %-*s %.5e\n",i,len,init.name[i],init.value[i]);
     }    
-    fprintf(fr,"\n# constants/values\n");
-    for(i=0;i<cst.nbr_el;i++)
+    fprintf(fr,"\n# parametric expressions/constants\n");
+    for(i=0;i<pex.nbr_el;i++)
     {
-        fprintf(fr,"C%zu %-*s = %s\n",i,len,cst.name[i],cst.expression[i]);
+        fprintf(fr,"C%zu %-*s = %s\n",i,len,pex.name[i],pex.expression[i]);
     }
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
