@@ -158,7 +158,7 @@ system_auxiliary_functions () {
 }
 
 system_variables () {
-    awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[[:alnum:]]+(\[.+\])*\/[dD]{1}[tT]{1}/ {
+    awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[a-zA-Z0-9_]+(\[.+\])*\/[dD]{1}[tT]{1}/ {
       print $0
     }' $file >>.odexp/system.par
 }
@@ -253,15 +253,17 @@ assign_auxiliary_functions () {
 }
 
 assign_variables () {
-    awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[[:alnum:]]+\/[dD]{1}[tT]{1}/ && $1 !~ /[\[\]]/ {
-      split($1,lhs,/[dD\/]/); printf "    %s = y_[%d];\n", lhs[2], nv; nv++};
+    awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[a-zA-Z0-9_]+\/[dD]{1}[tT]{1}/ && $1 !~ /[\[\]]/ {
+      match($1,/^[dD][a-zA-Z0-9_]+/);
+      lhs=substr($1, RSTART+1,RLENGTH-1);
+      printf "    %s = y_[%d];\n", lhs, nv; nv++};
       
-      $1 ~ /^[dD]{1}[[:alnum:]]+(\[.+\])+\/[dD]{1}[tT]{1}/ {  
+      $1 ~ /^[dD][a-zA-Z0-9_]+(\[.+\])+\/[dD][tT]/ {  
       match($1,/(\[.+\])+/);
       a=substr($1, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
-      split($1,c,/[dD\[]/);
-      myvar=c[2];
+      match($1,/^[dD][a-zA-Z0-9_]+/);
+      myvar=substr($1, RSTART+1,RLENGTH-1);
       split($0,e,/=/);
       myexpr=e[length(e)];
       for (k=2; k<=length(b); k+=4) 
@@ -284,13 +286,13 @@ assign_variables () {
 }
 
 assign_equations () {
-    awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[[:alnum:]]+\/[dD]{1}[tT]{1}/ && $1 !~ /[\[\]]/ {
-      split($1,lhs,/[dD\/]/); split($0,ex,/=/); printf "    f_[%d] = %s;\n", nv, ex[2]; nv++};
+    awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[a-zA-Z0-9_]+\/[dD]{1}[tT]{1}/ && $1 !~ /[\[\]]/ { 
+      split($0,ex,/=/); printf "    f_[%d] = %s;\n", nv, ex[2]; nv++};
       
-      $1 ~ /^[dD]{1}[[:alnum:]]+(\[.+\])+\/[dD]{1}[tT]{1}/ {match($1,/(\[.+\])+/);
+      $1 ~ /^[dD]{1}[a-zA-Z0-9_]+(\[.+\])+\/[dD]{1}[tT]{1}/ {
+      match($1,/(\[.+\])+/);
       a=substr($1, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
-      split($1,c,/[[dD\[]/);
       myvar="f_";
       split($0,e,/=/);
       myexpr=e[length(e)];
@@ -313,7 +315,6 @@ assign_aux_pointer () {
       $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
-      split($2,c,/[[dD\[]/);
       myvar="aux_";
       split($0,e,/=/);
       myexpr=e[length(e)];
@@ -514,7 +515,7 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization - aux_pointer */" >>.odexp/model.c
 assign_aux_pointer
 
-# $1 ~ /^[[:alnum:]]\'/ && $1 !~ /[\[\]]/ {split($1,a,/\'/); print a[1]}; 
+# $1 ~ /^[a-zA-Z0-9_]\'/ && $1 !~ /[\[\]]/ {split($1,a,/\'/); print a[1]}; 
 
 # ====================================================================================
 # construct initial conditions
