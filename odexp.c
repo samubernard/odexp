@@ -114,25 +114,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  tspan not defined, exiting...\n");
         exit ( EXIT_FAILURE );
     }
-    
-    /* get parametric expressions */
-    printf("\nparametric expressions %s\n", hline);
-    pex.nbr_el = get_nbr_el(system_filename,"C",1);
-    pex.value = malloc(pex.nbr_el*sizeof(double));
-    pex.name = malloc(pex.nbr_el*sizeof(char*));
-    pex.expression = malloc(pex.nbr_el*sizeof(char*));
-    pex.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < pex.nbr_el; i++)
-    {
-        pex.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
-        pex.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
-    }
-    success = load_strings(system_filename,pex,"C",1,1,' ');
-    if (!success)
-    {
-        printf("  no constant found\n");
-    } 
-
 
     /* get parameters */
     printf("parameters %s\n", hline);
@@ -149,6 +130,24 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     if (!success)
     {
         printf("  no  parameters found\n");
+    } 
+    
+    /* get parametric expressions */
+    printf("\nparametric expressions %s\n", hline);
+    pex.nbr_el = get_nbr_el(system_filename,"E",1);
+    pex.value = malloc(pex.nbr_el*sizeof(double));
+    pex.name = malloc(pex.nbr_el*sizeof(char*));
+    pex.expression = malloc(pex.nbr_el*sizeof(char*));
+    pex.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < pex.nbr_el; i++)
+    {
+        pex.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        pex.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
+    }
+    success = load_strings(system_filename,pex,"E",1,1,' ');
+    if (!success)
+    {
+        printf("  no parametric expression found\n");
     } 
 
 
@@ -185,7 +184,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         fcn.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
         fcn.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,fcn,"A",1,1,'=');
+    success = load_strings(system_filename,fcn,"A",1,1,' ');
     if (!success)
     {
         printf("  no auxiliary function found\n");
@@ -786,6 +785,10 @@ int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
     ssize_t linelength;
     size_t linecap = 0;
     char *line = NULL;
+    size_t index0,
+           index1;
+    char sep;
+    int    nbr_index;
     FILE *fr;
     fr = fopen (filename, "rt");
     while( (linelength = getline(&line,&linecap,fr)) > 0)
@@ -797,10 +800,29 @@ int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
         }
         if(k == sym_len) /* keyword was found */
         {
-            nbr_el++;
+            nbr_index = sscanf(line,"%*[a-zA-Z=\[]%zd%[-:]%zd",&index0, &sep, &index1);
+            if (nbr_index == 0 | nbr_index == 1)
+            {
+                nbr_el++;
+            }
+            else if (sep == '-')
+            {
+                nbr_el += index1-index0+1;
+            }
+            else if (sep == ':')
+            {
+                nbr_el += index1-index0;
+            }
+            else
+            {
+                printf("  Error in determining number of elements... exiting\n");
+                exit ( EXIT_FAILURE );
+            }
+
         }
         k = 0; /* reset k */
     }
+    printf("nbr_el %zd\n",nbr_el);
     fclose(fr);
     return nbr_el;
 }
@@ -926,9 +948,6 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
         if(k == sym_len) /* keyword was found */
         {
             success = 1;
-            {
-                /* data */
-            }
             if ( prefix )
             {
                 snprintf(str2match,63*sizeof(char),"%%*s %%n %%s %%n %c %%[^\n]", sep);
@@ -937,7 +956,6 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
             {
                 snprintf(str2match,63*sizeof(char),"%%n %%s %%n %c %%[^\n]", sep);
             }
-            /* printf("%s\n",str2match); */
             sscanf(line,str2match, &namelen0, var.name[i], &namelen1, var.expression[i]);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
