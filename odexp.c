@@ -117,7 +117,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get parameters */
     printf("parameters %s\n", hline);
-    mu.nbr_el = get_nbr_el(system_filename,"P",1);
+    get_nbr_el(system_filename,"P",1, &mu.nbr_el, &mu.nbr_expr);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
     mu.expression = malloc(mu.nbr_el*sizeof(char*));
@@ -134,7 +134,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     /* get parametric expressions */
     printf("\nparametric expressions %s\n", hline);
-    pex.nbr_el = get_nbr_el(system_filename,"E",1);
+    get_nbr_el(system_filename,"E",1, &pex.nbr_el, &pex.nbr_expr);
     pex.value = malloc(pex.nbr_el*sizeof(double));
     pex.name = malloc(pex.nbr_el*sizeof(char*));
     pex.expression = malloc(pex.nbr_el*sizeof(char*));
@@ -153,7 +153,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get variable names and initial conditions */
     printf("\nvariable names and initial conditions %s\n", hline);
-    var.nbr_el = get_nbr_el(system_filename,"X",1);
+    get_nbr_el(system_filename,"X",1, &var.nbr_el, &var.nbr_expr);
     var.value = malloc(var.nbr_el*sizeof(double));
     var.name = malloc(var.nbr_el*sizeof(char*));
     var.expression = malloc(var.nbr_el*sizeof(char*));
@@ -174,7 +174,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get nonlinear functions */
     printf("\nauxiliary functions %s\n", hline);
-    fcn.nbr_el = get_nbr_el(system_filename,"A",1);
+    get_nbr_el(system_filename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
     fcn.value = malloc(fcn.nbr_el*sizeof(double));
     fcn.name = malloc(fcn.nbr_el*sizeof(char*));
     fcn.expression = malloc(fcn.nbr_el*sizeof(char*));
@@ -193,7 +193,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get equations */
     printf("\nequations %s\n", hline);
-    eqn.nbr_el = get_nbr_el(system_filename,"d",1);
+    get_nbr_el(system_filename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
     eqn.value = malloc(eqn.nbr_el*sizeof(double));
     eqn.name = malloc(eqn.nbr_el*sizeof(char*));
     eqn.expression = malloc(eqn.nbr_el*sizeof(char*));
@@ -221,7 +221,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     opts.num_ic = malloc(ode_system_size*sizeof(uint8_t));
     for(i=0; i<ode_system_size; i++)
     {
-        opts.num_ic[0] = 0;    
+        opts.num_ic[i] = 0;    
     }
     lastinit = malloc(ode_system_size*sizeof(double));
 
@@ -778,9 +778,9 @@ void free_steady_state( steady_state *stst )
     free(stst->im);
 }
 
-int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
+int get_nbr_el(const char *filename, const char *sym,\
+               const size_t sym_len, uint32_t *nbr_el, uint32_t *nbr_expr)
 {
-    int32_t nbr_el = 0;
     size_t k = 0;
     ssize_t linelength;
     size_t linecap = 0;
@@ -788,9 +788,13 @@ int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
     size_t index0,
            index1;
     char sep;
-    int    nbr_index;
+    int    nbr_index,
+           success = 0; 
     FILE *fr;
     fr = fopen (filename, "rt");
+    
+    *nbr_el = 0;
+    *nbr_expr = 0;
     while( (linelength = getline(&line,&linecap,fr)) > 0)
     {
         while(line[k] == sym[k] && !isspace(line[k]) && \
@@ -800,18 +804,19 @@ int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
         }
         if(k == sym_len) /* keyword was found */
         {
+            (*nbr_expr)++;
             nbr_index = sscanf(line,"%*[a-zA-Z=\[]%zd%[-:]%zd",&index0, &sep, &index1);
-            if (nbr_index == 0 | nbr_index == 1)
+            if (nbr_index == 0 | nbr_index == 1) /* a match to a scalar was found */
             {
-                nbr_el++;
+                (*nbr_el)++;
             }
             else if (sep == '-')
             {
-                nbr_el += index1-index0+1;
+                *nbr_el += index1-index0+1;
             }
             else if (sep == ':')
             {
-                nbr_el += index1-index0;
+                *nbr_el += index1-index0;
             }
             else
             {
@@ -822,9 +827,9 @@ int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len)
         }
         k = 0; /* reset k */
     }
-    printf("nbr_el %zd\n",nbr_el);
     fclose(fr);
-    return nbr_el;
+    success = 1;  
+    return success;
 }
 
 
@@ -926,13 +931,24 @@ int8_t load_double(const char *filename, double *mypars, size_t len, const char 
 int8_t load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep)
 {
     size_t  i = 0,
+            j = 0,
             k = 0,
             linecap = 0;
     ssize_t linelength;
     int     namelen0,
-            namelen1;
+            namelen1,
+            index0,
+            index1,
+            bracket0,
+            bracket1,
+            nbr_index_found,
+            success_brackets;
+    int     expr_size;
     char *line = NULL;
-    char str2match[64];
+    char *temploc = NULL;
+    char str2match[64],
+         str4size[64],
+         temp[64];
     FILE *fr;
     int8_t success = 0;
     fr = fopen (filename, "rt");
@@ -948,24 +964,88 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
         if(k == sym_len) /* keyword was found */
         {
             success = 1;
+            /* get the size of the expression */
             if ( prefix )
             {
-                snprintf(str2match,63*sizeof(char),"%%*s %%n %%s %%n %c %%[^\n]", sep);
+                snprintf(str4size,63*sizeof(char),"%s%%d-%%d",sym);
             }
             else
             {
-                snprintf(str2match,63*sizeof(char),"%%n %%s %%n %c %%[^\n]", sep);
+                snprintf(str4size,63*sizeof(char),"%s%%*[^=]=%%d:%%d]",sym);
             }
-            sscanf(line,str2match, &namelen0, var.name[i], &namelen1, var.expression[i]);
+            nbr_index_found = sscanf(line,str4size, &index0, &index1);
+            switch (nbr_index_found)
+            {
+              case 0 : /* scalar expression no prefix */
+              case 1 : /* scalar expression with prefix */
+                expr_size = 1;
+                break;
+              case 2 : /* vector expression */
+                if (prefix) /* vector expression with prefix */
+                  expr_size = index1 - index0 + 1; 
+                else
+                  expr_size = index1 - index0;
+                break;
+              default :
+                printf("  Error in determining number of elements (load_strings)... exiting\n");
+                exit ( EXIT_FAILURE );
+            } 
+            /* ("index: %d %d, nbr_index_found %d, expr_size %d\n",index0,index1,nbr_index_found,expr_size); */
+            /* find the name root and expression */
+            if ( prefix && expr_size == 1 )
+            {
+                snprintf(str2match,63*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
+            }
+            else if ( prefix && expr_size > 1 )
+            {
+                snprintf(str2match,63*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
+            }
+            else if ( prefix == 0 && expr_size == 1)
+            {
+                snprintf(str2match,63*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep);
+            }
+            else
+            {
+                snprintf(str2match,63*sizeof(char),"%%n %%s%%n  %c %%[^\n]", sep);
+            }
+              sscanf(line,str2match, &namelen0, var.name[i], &namelen1, var.expression[i]);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
                 *var.max_name_length = (namelen1-namelen0);
             }
             /* printf("max_name_length = %d", *var.max_name_length); */
+            
+            /* assign the name root and expression  */
             var.value[i] = i+0.0;
-
-            printf("  [%zu] %-*s %c %s\n",i,*var.max_name_length,var.name[i],sep,var.expression[i]);
-            i++;
+            for (j=1;j<expr_size;j++)
+            {
+              if ( i+j >= var.nbr_el )
+              {
+                printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", sym);
+                exit ( EXIT_FAILURE );
+              }
+              var.name[i+j] = var.name[i];
+              var.expression[i+j] = var.expression[i];
+            }
+            
+            /* prune strings [i=a:b] -> [#index] */
+            for (j=0;j<expr_size;j++)
+            {
+              success_brackets = sscanf(var.name[i],"%*[^[] %n %*[^]] %n",&bracket0,&bracket1);
+              if (success_brackets == 0)
+              {
+                temploc = stpncpy(temp,var.name[i],bracket0+1);
+                strncpy(temploc,var.name[i]+bracket1,63);
+                strncpy(var.name[i],temp,63);
+              }
+               
+            }
+            
+            for (j=0;j<expr_size;j++)
+            {
+              printf("  [%zu] %-*s %c %s\n",i+j,*var.max_name_length,var.name[i+j], sep,var.expression[i+j]);
+            }
+            i += expr_size;
         }
         k = 0; /* reset k */
     }

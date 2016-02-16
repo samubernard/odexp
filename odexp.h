@@ -22,7 +22,8 @@ typedef struct namevalexp
     double *aux_pointer;
     char **name;
     char **expression;
-    uint32_t nbr_el;
+    uint32_t nbr_el; 
+    uint32_t nbr_expr;
     int *max_name_length;
 } nve;
 
@@ -55,7 +56,7 @@ void init_steady_state(steady_state *stst, uint32_t size);
 
 void free_steady_state(steady_state *stst);
 
-int32_t get_nbr_el(const char *filename, const char *sym, const size_t sym_len);
+int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, uint32_t *nbr_el, uint32_t *nbr_epxr);
 
 int8_t load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
 

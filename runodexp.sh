@@ -16,6 +16,22 @@ file=$1
 rm -fr .odexp/
 mkdir .odexp
 
+# replace all constants with their actual value
+constantname=(`awk -F ' ' '$1 ~ /^[cC]/ {print $2}' $file`)
+constantvalue=(`awk -F ' ' '$1 ~ /^[cC]/ {print $3}' $file`)
+
+cp $file .odexp/temp.odexp
+for ((k=0;k<${#constantname[@]};k++))
+do
+  sea=${constantname[$k]}
+  rep=${constantvalue[$k]}
+  sed -E "s/$sea/$rep/g" .odexp/temp.odexp >.odexp/temp2.odexp
+  cp .odexp/temp2.odexp .odexp/temp.odexp   
+done
+
+file=.odexp/temp.odexp
+
+
 declare_iterators () {
     awk -F ' ' -v i=1 '/(\[.+\])+/ { match($2,/(\[.+\])+/);
         a=substr($2, RSTART, RLENGTH);
@@ -100,6 +116,10 @@ declare_iterators_init_conditions () {
       }' $file >>.odexp/model.c
 }
 
+declare_assign_constants () {
+    awk -F ' ' '$1 ~ /^[cC][0-9]*$/ { printf "#define %s %s\n", $2, $3 }' $file >>.odexp/model.c
+}
+
 declare_parametric_expressions () {
     # find parametric expressions and declare them in .odexp/model.c
     # find parametric expression vectors and declare them in .odexp/model.c
@@ -111,7 +131,7 @@ declare_parametric_expressions () {
       split($2,c,/\[/);
       myvar=c[1];
       {printf "    double %s", myvar };
-      for (k=2; k<=length(b); k+=4) { printf "[%d]", b[k+2] }; 
+      for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
       {printf ";\n"} }' $file >>.odexp/model.c
 }
 
@@ -192,7 +212,7 @@ declare_variables () {
       split($2,c,/\[/);
       myvar=c[1];
       {printf "    double %s", myvar };
-      for (k=2; k<=length(b); k+=4) { printf "[%d]", b[k+2] }; 
+      for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
       {printf ";\n"} }' $file >>.odexp/model.c
 }
 
@@ -206,7 +226,7 @@ declare_auxiliary_functions () {
       split($2,c,/\[/);
       myvar=c[1];
       {printf "    double %s", myvar };
-      for (k=2; k<=length(b); k+=4) { printf "[%d]", b[k+2] }; 
+      for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
       {printf ";\n"} }' $file >>.odexp/model.c
 }
 
@@ -222,7 +242,7 @@ assign_parametric_expressions () {
       myvar=c[1];
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%d;%s<%d;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -242,7 +262,7 @@ assign_auxiliary_functions () {
       myvar=c[1];
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%d;%s<%d;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -268,7 +288,7 @@ assign_variables () {
       myexpr=e[length(e)];
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%d;%s<%d;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -298,7 +318,7 @@ assign_equations () {
       myexpr=e[length(e)];
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%d;%s<%d;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -320,7 +340,7 @@ assign_aux_pointer () {
       myexpr=e[length(e)];
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%d;%s<%d;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -341,7 +361,7 @@ assign_initial_conditions () {
       myvar="ic_";
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%d;%s<%d;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -372,6 +392,10 @@ echo "                              Header files" >>.odexp/model.c
 echo "================================================================= */" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "#include \"odexp.h\"" >>.odexp/model.c
+#echo "/* =================================================================" >>.odexp/model.c
+#echo "                              Defines" >>.odexp/model.c
+#echo "================================================================= */" >>.odexp/model.c
+#declare_assign_constants
 echo "" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
@@ -442,6 +466,11 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 # DECLARE AND ASSIGN PARAMETERS
 # Parameters cannot be vectors
+
+#echo "/* constants */" >>.odexp/system.par
+# find variable parameters and declare them in system.par 
+#awk -F ' ' '$1 ~ /^[cC][0-9]*$/ {printf "C%d %s %s\n", i, $2, $3; i++}' $file >>.odexp/system.par
+
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
