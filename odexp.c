@@ -213,7 +213,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get options */
     printf("\noptions %s\n", hline);
     printf("  Note: at the moment, options cannot be modified at run time\n");
-    printf("  ntsteps = %u\n",opts.ntsteps = 201);
+    printf("  odesolver_output_time_step = %u\n",opts.odesolver_output_time_step = 201);
     printf("  freeze  = %u\n",opts.freeze = 0);
     printf("  odesolver_min_h = %e\n",opts.odesolver_min_h = 1e-5);
      
@@ -285,14 +285,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("\n");
                     break;
                 case '>' : /* increase resolution */
-                    opts.ntsteps <<= 1; /* left bitshift, *= 2 */ 
-                    opts.ntsteps--; /* remove one */
+                    opts.odesolver_output_time_step <<= 1; /* left bitshift, *= 2 */ 
+                    opts.odesolver_output_time_step--; /* remove one to keep odd */
                     rerun = 1;
                     replot = 1;
                     break;
                 case '<' : /* decrease resolution */
-                    opts.ntsteps >>= 1; /* right bitshift, integer part of division by 2 */
-                    opts.ntsteps++; /* add one */
+                    opts.odesolver_output_time_step >>= 1; /* right bitshift, integer part of division by 2 */
+                    opts.odesolver_output_time_step++; /* add one */
                     rerun = 1;
                     replot = 1;
                     break;
@@ -513,6 +513,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if (op == 'n') /* list ode system size */
                     {
                         printf("  system size = %d\n",ode_system_size);
+                    }
+                    else if (op == 'o') /* list options */
+                    {
+                        /* get options */
+                        printf("  options\n");
+                        printf("  Note: at the moment, options cannot be modified at run time\n");
+                        printf("  odesolver_output_time_step = %u\n",opts.odesolver_output_time_step = 201);
+                        printf("  freeze  = %u\n",opts.freeze = 0);
+                        printf("  odesolver_min_h = %e\n",opts.odesolver_min_h = 1e-5);
                     }
                     else
                     {

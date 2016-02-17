@@ -29,10 +29,11 @@ typedef struct namevalexp
 
 typedef struct options
 {
-    uint32_t ntsteps;
+    uint32_t odesolver_output_time_step;
+    double odesolver_min_h;
     uint8_t freeze;
     uint8_t *num_ic;
-    double odesolver_min_h; 
+     
 } options;
 
 typedef struct steady_state

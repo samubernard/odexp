@@ -28,7 +28,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     double hmin = opts.odesolver_min_h,
            h = 1e-1;
     uint8_t hmin_alert = 0;
-    uint32_t nbr_out = opts.ntsteps;
+    uint32_t nbr_out = opts.odesolver_output_time_step;
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char temp_buffer[] = "temp.tab";
