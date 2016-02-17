@@ -806,7 +806,7 @@ int get_nbr_el(const char *filename, const char *sym,\
         {
             (*nbr_expr)++;
             nbr_index = sscanf(line,"%*[a-zA-Z=\[]%zd%[-:]%zd",&index0, &sep, &index1);
-            if (nbr_index == 0 | nbr_index == 1) /* a match to a scalar was found */
+            if ( (nbr_index == 0) || (nbr_index == 1) ) /* a match to a scalar was found */
             {
                 (*nbr_el)++;
             }

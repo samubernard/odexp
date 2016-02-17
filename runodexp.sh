@@ -16,22 +16,6 @@ file=$1
 rm -fr .odexp/
 mkdir .odexp
 
-# replace all constants with their actual value
-constantname=(`awk -F ' ' '$1 ~ /^[cC]/ {print $2}' $file`)
-constantvalue=(`awk -F ' ' '$1 ~ /^[cC]/ {print $3}' $file`)
-
-cp $file .odexp/temp.odexp
-for ((k=0;k<${#constantname[@]};k++))
-do
-  sea=${constantname[$k]}
-  rep=${constantvalue[$k]}
-  sed -E "s/$sea/$rep/g" .odexp/temp.odexp >.odexp/temp2.odexp
-  cp .odexp/temp2.odexp .odexp/temp.odexp   
-done
-
-file=.odexp/temp.odexp
-
-
 declare_iterators () {
     awk -F ' ' -v i=1 '/(\[.+\])+/ { match($2,/(\[.+\])+/);
         a=substr($2, RSTART, RLENGTH);
