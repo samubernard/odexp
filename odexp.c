@@ -212,9 +212,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("\noptions %s\n", hline);
+    printf("  Note: at the moment, options cannot be modified at run time\n");
     printf("  ntsteps = %u\n",opts.ntsteps = 201);
     printf("  freeze  = %u\n",opts.freeze = 0);
- 
+    printf("  odesolver_min_h = %e\n",opts.odesolver_min_h = 1e-5);
+     
     ode_system_size = var.nbr_el;
     total_nbr_vars = ode_system_size + fcn.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));

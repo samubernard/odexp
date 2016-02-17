@@ -32,6 +32,7 @@ typedef struct options
     uint32_t ntsteps;
     uint8_t freeze;
     uint8_t *num_ic;
+    double odesolver_min_h; 
 } options;
 
 typedef struct steady_state

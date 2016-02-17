@@ -25,9 +25,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
  
     double *y,
            *f;
-    const double hmin = 1e-3;
-    double h = 1e-1;
-    uint32_t nbr_out = 201;
+    double hmin = opts.odesolver_min_h,
+           h = 1e-1;
+    uint8_t hmin_alert = 0;
+    uint32_t nbr_out = opts.ntsteps;
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char temp_buffer[] = "temp.tab";
@@ -61,10 +62,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
             y[i] = var.value[i];
         }
     }
-
-    /* options */
-    /* possible option: ntsteps */
-    nbr_out = opts.ntsteps;
 
     /* open output file */
     file = fopen(temp_buffer,"w");
@@ -107,10 +104,18 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         {
             sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
             status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+            if (h < hmin)
+            {
+              h = hmin;
+              if (hmin_alert == 0)
+              {
+                printf("  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e\n",t, hmin);
+                hmin_alert = 1; 
+              }
+            }
             if (status != GSL_SUCCESS)
                 break;
         }
-        h = fmax(h,hmin);
         fprintf(file,"%.15e ",t);
         for (i = 0; i < ode_system_size; i++)
         {
@@ -121,6 +126,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
             fprintf (file,"\t%.15e",fcn.value[i]);
         }
         fprintf(file,"\n");
+        
+        hmin_alert = 0;
     }
     if (status == GSL_SUCCESS)
     {
