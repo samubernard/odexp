@@ -1,37 +1,43 @@
 list of commands 
  N = ODE system size, P = number of parameters 
-     + or =     plus            increment current par by factor 1.1 
-     -          minus           decrement current par by factor 1.1 
-     r          (r)eplot        repeat the last gnuplot command 
-     a[u][s]    (a)xis          set axis u={x,y} to scale s={l,n} 
+     + or =         plus            increment current par by factor 1.1 
+     -              minus           decrement current par by factor 1.1 
+     r              (r)eplot        repeat the last gnuplot command 
+     a[u][s]        (a)xis          set axis u={x,y} to scale s={l,n} 
          or a[s][u] 
-     A          reset (A)xes    reset axes normal scale 
-     >, <       inc, dec        increase, decrease number of time steps 
-     x[i]       plot(x)         plot variable number i 
-     v [x] [y]  (v)iew          set 2D view, x axis to x and y axis to y (t=-1) 
-     2 [x] [y]  2D vie          set 2D view, x axis to x and y axis to y (t=-1) 
-     3 [x] [y] [z] 3D           set 3D view (t=-1) 
-     i          (i)init cond    set new initial condition 
-        l       (l)ast          set initial condition to last 
-        s       (s)teady state  set initial condition to steady state 
-     l          (l)ist          list 
-         p      (p)ar           list all parameters and their values 
-         x | i  (x) | (i)       list all variables with init conditions 
-         a      (a)ux           list all auxiliary functions 
-         e      (e)qn           list all equations 
-         s      (s)tst          list steady state 
-     c          (c)hange        change value of parameter, init cond, or tpsan 
-         p[i] [v]               set value of parameter i to v (i=0 to P-1) 
-         i[i] [v]               set value of init cond i to v (i=0 to N-1) 
-         t[i] [v]               set value of ti to v (i = 0 or 1) 
-     h          (h)elp          this help 
-     d          (d)efaults      reload the parameter file 
-     g [cmd]    (g)nuplot       send the command cmd to gnuplot 
-     p[i]       (p)ar           set the current parameter to i 
-     s [msg]    (s)nap          snapshot of current simulation and parameter values with msg 
-     m          (m)ethods       run numerical method 
-         s      (s)teady state  find a steady state with starting guess init cond 
-         m      (m)any stst     try to find all steady states 
-     q [msg]    (q)uit          quit and snap 
-     Q [msg]    (Q)uit          quit without snapshot 
+     A              reset (A)xes    reset axes normal scale 
+     >, <           inc, dec        increase, decrease number of time steps 
+     x[i]           plot(x)         plot variable number i 
+     [              plot previous,  plot previous variable (cyclic)
+     ]              plot next       plot next variable (cyclic)
+     v [x] [y]      (v)iew          set 2D view, x axis to x and y axis to y (t=-1) 
+     2 [x] [y]      2D view         set 2D view, x axis to x and y axis to y (t=-1) 
+     3 [x] [y] [z]  3D              set 3D view (t=-1) 
+     i              (i)init cond    set new initial condition 
+       l            (l)ast          set initial conditions to last 
+     I              reset (I)nit    set initial conditions to previous 
+       s            (s)teady state  set initial condition to steady state 
+     l              (l)ist          list 
+       a            (a)ux           list all auxiliary functions 
+       e            (e)expressions  list all parametric expressions
+       i            (i)init         list all variables with init conditions 
+       n            (n)nbr eqs      display system size
+       p            (p)ar           list all parameters and their values 
+       x            d(x)/dt         list all equations and auxiliary functions 
+       s            (s)tst          list steady state 
+     c              (c)hange        change value of parameter, init cond, or tpsan 
+       p[i] [v]                     set value of parameter i to v (i=0 to P-1) 
+       i[i] [v]                     set value of init cond i to v (i=0 to N-1) 
+       t[i] [v]                     set value of ti to v (i = 0 or 1) 
+     h              (h)elp          this help 
+     d              (d)efaults      reload the parameter file 
+     f              (f)reeze        toggle plot freeze (on/off) 
+     g [cmd]        (g)nuplot       send the command cmd to gnuplot 
+     p[i]           (p)ar           set the current parameter to i 
+     s [msg]        (s)nap          snapshot of current simulation and parameter values with msg 
+     m              (m)ethods       run numerical method 
+         s          (s)teady state  find a steady state with starting guess init cond 
+         m          (m)any stst     try to find all steady states 
+     q [msg]        (q)uit          quit and snap 
+     Q [msg]        (Q)uit          quit without snapshot 
 

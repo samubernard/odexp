@@ -31,7 +31,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     uint32_t nbr_out = opts.odesolver_output_time_step;
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
-    const char temp_buffer[] = "temp.tab";
+    const char current_data_buffer[] = "current.tab";
     int32_t i;
     
     /* tspan parameters */
@@ -64,7 +64,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
 
     /* open output file */
-    file = fopen(temp_buffer,"w");
+    file = fopen(current_data_buffer,"w");
     t = tspan[0];
     t1 = tspan[1];
     dt = (t1-t)/(double)(nbr_out-1);

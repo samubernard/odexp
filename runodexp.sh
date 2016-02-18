@@ -123,8 +123,16 @@ system_parametric_expression () {
     # find parametric expressions and declare them in .odexp/system.par
     # find parametric expression vectors and declare them in .odexp/system.par
     awk -F ' ' -v nv=0 '$1 ~ /^[eE][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      lhs = $2; $1=""; $2="";
-      printf "E%d %s %s\n", nv, lhs, $0; nv++ };
+      lhs = $2;
+      split($0,ex," ");
+      printf "E%-3d %-16s", nv, lhs;
+      nv++; 
+      for(k=3;k<=length(ex);k++)
+      {
+        printf "%s ", ex[k]
+      };
+      printf "\n"
+      };
       
       $1 ~ /^[eE]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
@@ -135,7 +143,7 @@ system_parametric_expression () {
       {
         len*=b[k+2]-b[k+1]
       }
-      { printf "E%d-%d %s\n", nv, nv+len-1, $0 };
+      { printf "E%d-%-3d %s\n", nv, nv+len-1, $0 };
       nv+=len; 
     }' $file >>.odexp/system.par
 }
@@ -143,8 +151,14 @@ system_parametric_expression () {
 system_auxiliary_functions () {
    awk -F ' ' -v nv=0 '$1 ~ /^[aA][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       lhs = $2; 
-      split($0,ex,/=/);
-      printf "A%d %s %s\n", nv, lhs, ex[2]; nv++ 
+      split($0,ex," ");
+      printf "A%-3d %-16s", nv, lhs;
+      nv++; 
+      for(k=3;k<=length(ex);k++)
+      {
+        printf "%s ", ex[k]
+      };
+      printf "\n"
       };
       
       $1 ~ /^[aA]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
@@ -156,21 +170,36 @@ system_auxiliary_functions () {
       {
         len*=b[k+2]-b[k+1]
       }
-      { printf "A%d-%d %s\n", nv, nv+len-1, $0 };
+      { printf "A%d-%-3d %-16s\n", nv, nv+len-1, $0 };
       nv+=len; 
     }' $file >>.odexp/system.par
 }
 
 system_variables () {
     awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[a-zA-Z0-9_]+(\[.+\])*\/[dD]{1}[tT]{1}/ {
-      print $0
+      lhs = $1;
+      split($0,ex," ");
+      printf "%-18s = ", lhs;
+      for(k=3;k<=length(ex);k++)
+      {
+        printf "%s ", ex[k]
+      };
+      printf "\n"
     }' $file >>.odexp/system.par
 }
 
 system_init_conditions () {
     awk -F ' ' -v nv=0 '$1 ~ /^[xXiI][0-9-]*$/ && $2 !~ /\[.+:.+\]/ {
-      lhs = $2; $1=""; $2="";
-      printf "X%d %s %s\n", nv, lhs, $0; nv++ };
+      lhs = $2;
+      split($0,ex," ");
+      printf "X%-3d %-16s", nv, lhs;
+      nv++; 
+      for(k=3;k<=length(ex);k++)
+      {
+        printf "%s ", ex[k]
+      };
+      printf "\n"
+      };
       
       $1 ~ /^[xXiI]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
@@ -181,7 +210,7 @@ system_init_conditions () {
       {
         len*=b[k+2]-b[k+1]
       }
-      { printf "X%d-%d %s\n", nv, nv+len-1, $0 };
+      { printf "X%d-%-3d %-16s\n", nv, nv+len-1, $0 };
       nv+=len; 
     }' $file >>.odexp/system.par
 }
@@ -238,7 +267,14 @@ assign_parametric_expressions () {
 
 assign_auxiliary_functions () {
     # assign auxiliary function to model.c
-    awk -F ' ' '$1 ~ /^[aA][0-9]*$/ && $2 !~ /\[.+:.+\]/ {split($0,ex,/=/); printf "    %s = %s;\n", $2, ex[2]};
+    awk -F ' ' '$1 ~ /^[aA][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+      lhs=$2;
+      $1="";
+      $2="";
+      ex=$0;
+      printf "    %s = %s;\n", lhs, ex
+      };
+      
       $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
@@ -314,7 +350,12 @@ assign_equations () {
 }
 
 assign_aux_pointer () {
-    awk -F ' ' -v nv=0 '$1 ~ /^[aA][0-9]*$/ && $2 !~ /\[.+:.+\]/ {split($0,ex,/=/); printf "    aux_[%d] = %s;\n", nv, ex[2]; nv++};
+    awk -F ' ' -v nv=0 '$1 ~ /^[aA][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+      $1="";
+      $2="";
+      ex=$0
+      printf "    aux_[%d] = %s;\n", nv, ex; nv++
+      };
       
       $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
@@ -436,6 +477,7 @@ echo "" >>.odexp/model.c
 # FIND TSPAN
 echo "/* time span */" >.odexp/system.par
 awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {printf "T %s %s\n", $2, $3}' $file >>.odexp/system.par
+echo "" >>.odexp/system.par
 # ====================================================================================
 
 # ====================================================================================
@@ -461,7 +503,7 @@ echo "    /* parameters */" >>.odexp/model.c
 awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $file >>.odexp/model.c
 echo "/* parameters */" >>.odexp/system.par
 # find variable parameters and declare them in system.par 
-awk -F ' ' '$1 ~ /^[pP][0-9]*$/ {printf "P%d %s %s\n", i, $2, $3; i++}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[pP][0-9]*$/ {printf "P%-3d %-16s%s\n", i, $2, $3; i++}' $file >>.odexp/system.par
 echo "" >>.odexp/model.c
 # ====================================================================================
 
@@ -484,7 +526,7 @@ echo "    /* Declaration - auxiliary functions */" >>.odexp/model.c
 # find vector variables and declare them to model.c
 declare_auxiliary_functions
 echo "" >>.odexp/system.par
-echo "    /* auxiliary functions */" >>.odexp/system.par
+echo "/* auxiliary functions */" >>.odexp/system.par
 system_auxiliary_functions 
 echo "" >>.odexp/model.c  
 
@@ -493,7 +535,7 @@ echo "    /* Declaration - variables */" >>.odexp/model.c
 declare_variables
 
 echo "" >>.odexp/system.par
-echo "    /* equations */" >>.odexp/system.par
+echo "/* equations */" >>.odexp/system.par
 system_variables
 
 # ====================================================================================
@@ -579,7 +621,7 @@ echo "    /* Initialization - initial condition */" >>.odexp/model.c
 assign_initial_conditions
 
 echo "" >>.odexp/system.par
-echo "    /* initial condition */" >>.odexp/system.par
+echo "/* initial condition */" >>.odexp/system.par
 system_init_conditions
 # ====================================================================================
 

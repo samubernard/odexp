@@ -11,10 +11,15 @@
 /* =================================================================
                               DEFINE
 ================================================================= */
-#define MAXPARNAMELENGTH 63
+#define MAXPARNAMELENGTH  63
 #define MAXFILENAMELENGTH 63
-#define MAXLINELENGTH 1023                            
+#define MAXROOTLENGTH    15 
+#define MAXLINELENGTH     1023                            
 
+#define max(a,b) \
+       ({ __typeof__ (a) _a = (a); \
+           __typeof__ (b) _b = (b); \
+         _a > _b ? _a : _b; })
 
 typedef struct namevalexp
 {
@@ -69,7 +74,7 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
 
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
-int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double tspan[2], clock_t time_stamp);
+int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double tspan[2], const char *curr_buffer);
 
 void initialize_readline(void);
 
