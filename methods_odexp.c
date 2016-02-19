@@ -27,7 +27,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
            *f;
     double hmin = opts.odesolver_min_h,
            h = 1e-1;
-    uint8_t hmin_alert = 0;
+    uint8_t hmin_alert = 0,
+            disc_alert = 0;
     uint32_t nbr_out = opts.odesolver_output_time_step;
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
@@ -100,6 +101,15 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     while (t < t1)
     {
         tnext = fmin(t+dt,t1);
+        
+        /* discontinuities */
+        /* if ( (t<500) &&  (tnext>=500) )
+         * {
+         * tnext = 500;
+         * disc_alert = 1;
+         * printf("  Crossing discontinuity point at t=500\n");
+         *}
+         */       
         while ( t < tnext)
         {
             sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
@@ -127,7 +137,30 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         }
         fprintf(file,"\n");
         
+        if (disc_alert == 1)
+        {
+          /* reset dynamical variables */
+          for (i = 0; i < ode_system_size; i++)
+          {
+              y[i] /= 2; 
+          }
+          /* update auxiliary functions */
+          ode_rhs(t, y, f, &mu);
+          /* write the new state to file */
+          fprintf(file,"%.15e ",t);
+          for (i = 0; i < ode_system_size; i++)
+          {
+              fprintf (file,"\t%.15e",y[i]); 
+          }
+          for (i = 0; i < fcn.nbr_el; i++)
+          {
+              fprintf (file,"\t%.15e",fcn.value[i]);
+          }
+          fprintf(file,"\n");      
+        }
+        
         hmin_alert = 0;
+        disc_alert = 0;
     }
     if (status == GSL_SUCCESS)
     {

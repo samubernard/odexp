@@ -59,7 +59,7 @@ declare_iterators () {
 }
 
 declare_iterators_init_conditions () {
-    awk -F ' ' -v i=1 '$1 ~ /^[xXiI][0-9]*$/ && $2 ~ /(\[.+\])+/ { match($2,/(\[.+\])+/);
+    awk -F ' ' -v i=1 '$1 ~ /^[eExXiI][0-9]*$/ && $2 ~ /(\[.+\])+/ { match($2,/(\[.+\])+/);
         a=substr($2, RSTART, RLENGTH);
         split(a,b,/[\[\]=:]/);
         for(k=2;k<=length(b);k+=4) 

@@ -778,7 +778,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 void free_namevalexp(nve var )
 {
     int32_t i;
-    free(var.value);
+    
     /* do not free aux_pointer, it will be freed from fcn */
     for (i = 0; i < var.nbr_el; i++)
     {
@@ -788,8 +788,9 @@ void free_namevalexp(nve var )
     {
         free(var.expression[i]);
     }
+    free(var.value);
     free(var.name);
-    free(var.max_name_length);
+    free(var.expression);
 }
 
 void init_steady_state(steady_state *stst, uint32_t size)
@@ -1046,7 +1047,6 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
             /* printf("max_name_length = %d", *var.max_name_length); */
             
             /* assign the name root and expression  */
-            var.value[i] = i+0.0;
             for (j=1;j<expr_size;j++)
             {
               if ( i+j >= var.nbr_el )
@@ -1054,6 +1054,7 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
                 printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", sym);
                 exit ( EXIT_FAILURE );
               }
+              var.value[i+j] = i+j+0.0;
               var.name[i+j] = var.name[i];
               var.expression[i+j] = var.expression[i];
             }
@@ -1161,21 +1162,16 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double ts
     fr = fopen(buffer,"w");
 
     fprintf(fr,"#%s\n",cmdline+1);
-
-    fprintf(fr,"\n# dynamical variables/initial conditions\n");
-    for(i=0;i<init.nbr_el;i++)
-    {
-        fprintf(fr,"X%zu %-*s %.5e\n",i,len,init.name[i],init.value[i]);
-    }    
-    fprintf(fr,"\n# parametric expressions/constants\n");
-    for(i=0;i<pex.nbr_el;i++)
-    {
-        fprintf(fr,"C%zu %-*s = %s\n",i,len,pex.name[i],pex.expression[i]);
-    }
+    
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
     {
         fprintf(fr,"P%zu %-*s %.5e\n",i,len,mu.name[i],mu.value[i]);
+    }
+    fprintf(fr,"\n# parametric expressions/constants\n");
+    for(i=0;i<pex.nbr_el;i++)
+    {
+        fprintf(fr,"E%zu %-*s = %s\n",i,len,pex.name[i],pex.expression[i]);
     }
     fprintf(fr,"\n# nonlinear functions\n");
     for(i=0;i<fcn.nbr_el;i++)
@@ -1187,6 +1183,11 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double ts
     {
         fprintf(fr,"%-*s = %s\n",len,eqn.name[i],eqn.expression[i]);
     }
+    fprintf(fr,"\n# dynamical variables/initial conditions\n");
+    for(i=0;i<init.nbr_el;i++)
+    {
+        fprintf(fr,"X%zu %-*s %.5e\n",i,len,init.name[i],init.value[i]);
+    }    
 
     fprintf(fr,"\ntspan %f %f\n",tspan[0],tspan[1]);
 
