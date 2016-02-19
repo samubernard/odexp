@@ -32,7 +32,7 @@ char *cmdline;
 
 /* main loop */
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
-    int (*ode_init_conditions)(double ic_[], const double par_[]),\
+    int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     const char *odexp_filename )
 {
@@ -51,8 +51,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     /* tspan parameters */
     const char ts_string[] = "T"; 
-    double tspan[2];
+    double  *tspan;
     const size_t ts_len = 1;
+    size_t tspan_length;
 
     /* system size */
     int32_t ode_system_size,
@@ -111,12 +112,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get tspan */
     printf("\ntime span %s\n",hline);
-    success = load_double(system_filename, tspan, 2, ts_string, ts_len); 
+    success = load_varnbr_double(system_filename, &tspan, &tspan_length, ts_string, ts_len); 
     if (!success)
     {
         printf("  tspan not found, exiting...\n");
         exit ( EXIT_FAILURE );
     }
+    printf("  found %zu time points, of which %zu stopping points\n", tspan_length, tspan_length-2);
 
     /* get parameters */
     printf("parameters %s\n", hline);
@@ -172,7 +174,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  Dynamic variables not found... exiting\n");
         exit ( EXIT_FAILURE );
     } 
-    ode_init_conditions(var.value,mu.value);
+    ode_init_conditions(tspan[0],var.value,mu.value);
 
 
     /* get nonlinear functions */
@@ -237,7 +239,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stst->size = ode_system_size;
     
 
-    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
+    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, tspan_length, opts);
     /* fprintf(gnuplot_pipe,"set key autotitle columnhead\n"); */
     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
@@ -300,12 +302,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     break;
                 case 'e' : /* extend the simulation */
-                    tspan[1] += tspan[1]-tspan[0];
+                    tspan[tspan_length-1] += tspan[tspan_length-1]-tspan[0];
                     rerun = 1;
                     replot = 1;
                     break;
                 case 'E' : /* shorten the simulation */
-                    tspan[1] -= (tspan[1]-tspan[0])/2;
+                    tspan[tspan_length-1] -= (tspan[tspan_length-1]-tspan[0])/2;
                     rerun = 1;
                     replot = 1;
                     break;
@@ -518,7 +520,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 't') /* list tspan */
                     {
-                        printf("  tspan = [%.5e %.5e]\n",tspan[0],tspan[1]);
+                        printf("  tspan = "); 
+                        for(i=0;i<tspan_length;i++)
+                        {
+                          printf("%.2e ",tspan[i]);
+                        }
+                        printf("\n");
                     }
                     else if (op == 's') /* list steady states */
                     {
@@ -627,7 +634,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 't' )
                     {
                         sscanf(cmdline+2,"%d %lf",&i,&nvalue);
-                        if ( i == 0 || i == 1 )
+                        if ( i >=0 && i < tspan_length )
                         {
                             tspan[i] = nvalue;
                             rerun = 1;
@@ -680,7 +687,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case 's' : /* save file */
-                    file_status = fprintf_namevalexp(var,pex,mu,fcn,eqn,tspan, current_data_buffer);
+                    file_status = fprintf_namevalexp(var,pex,mu,fcn,eqn,tspan, tspan_length, current_data_buffer);
                     break;
                 default :
                     printf("  Unknown command. Type q to quit, h for help\n");
@@ -691,7 +698,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
+                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, tspan_length, opts);
             }
             if (replot || rerun)    
             {
@@ -765,6 +772,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_namevalexp( eqn );
     free_namevalexp( fcn );
     free_steady_state( stst );
+    free(tspan);
     free(opts.num_ic);
     free(lasty);
     free(lastinit);
@@ -920,19 +928,25 @@ int8_t load_namevalexp(const char *filename, nve var, const char *sym, const siz
     return success;
 }
 
-int8_t load_double(const char *filename, double *mypars, size_t len, const char *sym, size_t sym_len)
+int8_t load_varnbr_double(const char *filename, double **array_ptr, size_t *len, const char *sym, size_t sym_len)
 {
-    /* tries to find a line starting with string sym and copy doubles on that line into mypars. If no line starts with sym, mypars is not assigned. */
+    /* Find the last line starting with string sym and copy doubles on 
+     * that line into *array_ptr. If no line starts with sym, *array_ptr is not assigned.
+     * len is the number of doubles assigned. 
+     */
     ssize_t linelength;
     size_t linecap = 0;
     char *line = NULL;
     char *current_ptr;
+    int has_read = 0;
+    double r;
     FILE *fr;
     size_t i;
-    size_t k = 0;
+    int k = 0;
     int8_t success = 0;
     fr = fopen (filename, "rt");
     printf("  %s: ",sym);
+    
     /* search for keyword sym */
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
@@ -943,12 +957,44 @@ int8_t load_double(const char *filename, double *mypars, size_t len, const char 
         }
         if(line[k] == ' ' && k == sym_len) /* keyword was found */
         {
+            *len = 1;
+            *array_ptr = malloc(*len*sizeof(double));
             current_ptr = line+k;
+            i = 0;
+            r = 0.0;
+            do
+            {
+              
+              has_read = sscanf(current_ptr,"%lf%n",&r,&k); 
+              current_ptr += k;
+              if (has_read > 0)
+              {
+                *(*array_ptr + i) = r;
+                i++;
+                if ( i > (*len - 1) )
+                {
+                  *len *= 2;  
+                  *array_ptr = realloc(*array_ptr, *len*sizeof(double));
+                }
+              }
+              
+            }
+            while ( has_read > 0 );
+            
+            *len = i;
+            *array_ptr = realloc(*array_ptr, *len*sizeof(double));
+            
+            for (i=0;i<*len;i++)
+            {
+              printf("%.2f ",*(*array_ptr + i));
+            }
+            /*            
             for (i = 0; i < len; i++)
             {
                 mypars[i] = strtod(current_ptr,&current_ptr); 
                 printf("%f ",mypars[i]);
             }
+            */
             success = 1;
         }
         k = 0; /* reset k */
@@ -1123,7 +1169,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double tspan[2], const char *curr_buffer)
+int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double *tspan, size_t tspan_length, const char *curr_buffer)
 {
     int8_t success = 0;
     size_t i;
@@ -1188,9 +1234,13 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double ts
     {
         fprintf(fr,"X%zu %-*s %s\n",i,len,init.name[i],init.expression[i]);
     }    
-
-    fprintf(fr,"\ntspan %f %f\n",tspan[0],tspan[1]);
-
+    
+    fprintf(fr,"\ntspan ");
+    for(i=0;i<tspan_length;i++)
+    {
+      fprintf(fr,"%f \n",tspan[i]);
+    }
+    fprintf(fr,"\n");
 
     fclose(fr);
     

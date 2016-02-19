@@ -19,8 +19,8 @@
 #include "methods_odexp.h"
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- int (*ode_init_conditions)(double ic_[], const double par_[]),\
- double *lasty, nve var, nve mu, nve fcn, double tspan[2], options opts)    
+ int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
+ double *lasty, nve var, nve mu, nve fcn, double *tspan, size_t tspan_length, options opts)    
 {
  
     double *y,
@@ -54,8 +54,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     c = gsl_odeiv_control_y_new(1e-6,0.0);
     e = gsl_odeiv_evolve_alloc(ode_system_size);
 
+    /* tspan */
+    t = tspan[0];
+    t1 = tspan[tspan_length-1];
+    dt = (t1-t)/(double)(nbr_out-1);
+
+
     y = malloc(ode_system_size*sizeof(double));
-    ode_init_conditions(y,mu.value);
+    ode_init_conditions(t, y, mu.value);
     for (i = 0; i < ode_system_size; i++)
     {
         if (opts.num_ic[i])
@@ -66,11 +72,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
     /* open output file */
     file = fopen(current_data_buffer,"w");
-    t = tspan[0];
-    t1 = tspan[1];
-    dt = (t1-t)/(double)(nbr_out-1);
-
-    printf("  running... ");
+    
+    printf("  running from t=%f to t=%f... ", t,t1);
     fflush(stdout);
 
     /* fill in the variable/function names */
@@ -103,6 +106,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         tnext = fmin(t+dt,t1);
         
         /* discontinuities */
+        /*if ( tspan_length > 2 )
+        {
+          
+        }*/
         /* if ( (t<500) &&  (tnext>=500) )
          * {
          * tnext = 500;

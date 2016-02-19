@@ -378,12 +378,12 @@ assign_aux_pointer () {
 
 assign_initial_conditions () {
     awk -F ' ' -v nv=0 '$1 ~ /^[xXiI][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      printf "    ic_[%d] = %s;\n", nv, $3; nv++};
+      printf "    y_[%d] = %s;\n", nv, $3; nv++};
       $1 ~ /^[xXiI][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
-      myvar="ic_";
+      myvar="y_";
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
@@ -424,7 +424,7 @@ echo "#include \"odexp.h\"" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
-echo "int ode_init_conditions(double ic_[], const double pars_[]);" >>.odexp/model.c
+echo "int ode_init_conditions(const double t, double y_[], const double pars_[]);" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "int main ( int argc, char *argv[] )" >>.odexp/model.c
 echo "{" >>.odexp/model.c
@@ -476,7 +476,7 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 # FIND TSPAN
 echo "/* time span */" >.odexp/system.par
-awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {printf "T %s %s\n", $2, $3}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {$1=""; printf "T %s\n", $0}' $file >>.odexp/system.par
 echo "" >>.odexp/system.par
 # ====================================================================================
 
@@ -586,7 +586,7 @@ echo "" >>.odexp/model.c
 # ODE_INIT_CONDITIONS
 # =================================================================================
 # function ode_init_conditions
-echo "int ode_init_conditions(double ic_[], const double pars_[])" >>.odexp/model.c
+echo "int ode_init_conditions(const double t, double y_[], const double pars_[])" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    int success_ = 0;" >>.odexp/model.c
 # ITERATORS
@@ -611,10 +611,32 @@ declare_parametric_expressions
 # ====================================================================================
 
 # ====================================================================================
-# ASSIGN DYNAMICAL VARIABLES
+# DECLARE VARIABLES and AUXILIARY VARIABLES
+echo "" >>.odexp/model.c
+echo "    /* Declaration - auxiliary functions */" >>.odexp/model.c
+# find vector variables and declare them to model.c
+declare_auxiliary_functions
+
+echo "" >>.odexp/model.c
+echo "    /* Declaration - variables */" >>.odexp/model.c
+declare_variables
+# ====================================================================================
+
+# ====================================================================================
+# ASSIGN
 echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
 assign_parametric_expressions
+
+echo "" >>.odexp/model.c
+echo "    /* Initialization - variables */" >>.odexp/model.c
+assign_variables
+
+# ASSIGN AUXILIARY FUNCTIONS
+echo "" >>.odexp/model.c
+echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
+# initialize auxiliary function 
+assign_auxiliary_functions
 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - initial condition */" >>.odexp/model.c
