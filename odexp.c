@@ -1171,7 +1171,7 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double ts
     fprintf(fr,"\n# parametric expressions/constants\n");
     for(i=0;i<pex.nbr_el;i++)
     {
-        fprintf(fr,"E%zu %-*s = %s\n",i,len,pex.name[i],pex.expression[i]);
+        fprintf(fr,"E%zu %-*s %s\n",i,len,pex.name[i],pex.expression[i]);
     }
     fprintf(fr,"\n# nonlinear functions\n");
     for(i=0;i<fcn.nbr_el;i++)
