@@ -1176,7 +1176,7 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double ts
     fprintf(fr,"\n# nonlinear functions\n");
     for(i=0;i<fcn.nbr_el;i++)
     {
-        fprintf(fr,"A%zu %-*s = %s\n",i,len,fcn.name[i],fcn.expression[i]);
+        fprintf(fr,"A%zu %-*s %s\n",i,len,fcn.name[i],fcn.expression[i]);
     }
     fprintf(fr,"\n# equations\n");
     for(i=0;i<eqn.nbr_el;i++)
