@@ -247,7 +247,12 @@ assign_parametric_expressions () {
     # assign parametric expressions and declare them in .odexp/model.c
     # assign vector parametric expressions and declare them in .odexp/model.c
     awk -F ' ' '$1 ~ /^[eE][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      printf "    %s = %s;\n", $2, $3};
+      lhs=$2;
+      $1="";
+      $2="";
+      ex=$0;
+      printf "    %s = %s;\n", lhs, ex
+      };
       $1 ~ /^[eE]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
@@ -378,7 +383,12 @@ assign_aux_pointer () {
 
 assign_initial_conditions () {
     awk -F ' ' -v nv=0 '$1 ~ /^[xXiI][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      printf "    y_[%d] = %s;\n", nv, $3; nv++};
+      $1="";
+      $2="";
+      ex=$0;
+      printf "    y_[%d] = %s;\n", nv, ex;
+      nv++
+      };
       $1 ~ /^[xXiI][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);

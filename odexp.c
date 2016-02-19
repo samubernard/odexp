@@ -29,7 +29,6 @@
 /* command line string */
 char *cmdline;
 
-
 /* main loop */
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
     int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\

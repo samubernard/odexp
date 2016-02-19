@@ -18,6 +18,8 @@
 #include "odexp.h"
 #include "methods_odexp.h"
 
+static int compare (void const *a, void const *b);
+
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
  double *lasty, nve var, nve mu, nve fcn, double *tspan, size_t tspan_length, options opts)    
@@ -36,7 +38,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     int32_t i;
     
     /* tspan parameters */
-    double t, t1, dt, tnext;
+    double  t, 
+            t1, 
+            dt, 
+            tnext,
+            nextstop,
+            nbr_stops,
+           *tstops = NULL;
+    size_t idx_stop = 0;
 
     /* system size */
     int32_t ode_system_size = var.nbr_el;
@@ -55,6 +64,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     e = gsl_odeiv_evolve_alloc(ode_system_size);
 
     /* tspan */
+    /* it is assumed that tspan is sorted by increasing values */
     t = tspan[0];
     t1 = tspan[tspan_length-1];
     dt = (t1-t)/(double)(nbr_out-1);
@@ -73,7 +83,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     /* open output file */
     file = fopen(current_data_buffer,"w");
     
-    printf("  running from t=%f to t=%f... ", t,t1);
+    printf("  running from t=%.2f to t=%.2f... ", t,t1);
     fflush(stdout);
 
     /* fill in the variable/function names */
@@ -101,22 +111,33 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf (file,"\t%.15e",mu.aux_pointer[i]);
     }
     fprintf(file,"\n");
+    
+    /* discontinuities */
+    if ( tspan_length > 2 )
+    {
+       nbr_stops = tspan_length-2;
+       tstops = malloc( nbr_stops*sizeof(double) );
+       for(i=0;i<nbr_stops;i++)
+       {
+          tstops[i] = tspan[i+1];
+       }
+       mergesort(tstops, nbr_stops, sizeof(double),compare);
+       nextstop = tstops[idx_stop];
+       idx_stop++;
+    }
+    
     while (t < t1)
     {
         tnext = fmin(t+dt,t1);
         
-        /* discontinuities */
-        /*if ( tspan_length > 2 )
+        /* printf("t=%.2f, tnext=%.2f, nextstop=%.2f\n",t,tnext,nextstop); */
+        if ( (t<nextstop) &&  (tnext>=nextstop) )
         {
-          
-        }*/
-        /* if ( (t<500) &&  (tnext>=500) )
-         * {
-         * tnext = 500;
-         * disc_alert = 1;
-         * printf("  Crossing discontinuity point at t=500\n");
-         *}
-         */       
+          tnext = nextstop;
+          disc_alert = 1;
+          printf("\n  Crossing discontinuity point at t=%.2e...", nextstop);
+        }
+               
         while ( t < tnext)
         {
             sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
@@ -126,7 +147,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
               h = hmin;
               if (hmin_alert == 0)
               {
-                printf("  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e\n",t, hmin);
+                printf("\n  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e",t, hmin);
                 hmin_alert = 1; 
               }
             }
@@ -147,10 +168,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
-          for (i = 0; i < ode_system_size; i++)
-          {
-              y[i] /= 2; 
-          }
+          ode_init_conditions(t, y, mu.value);
           /* update auxiliary functions */
           ode_rhs(t, y, f, &mu);
           /* write the new state to file */
@@ -163,15 +181,22 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           {
               fprintf (file,"\t%.15e",fcn.value[i]);
           }
-          fprintf(file,"\n");      
+          fprintf(file,"\n");  
+          
+          /* calculating next stop */
+          nextstop = tstops[idx_stop];
+          idx_stop++;
+
+              
         }
+        
         
         hmin_alert = 0;
         disc_alert = 0;
     }
     if (status == GSL_SUCCESS)
     {
-        printf("done.\n");
+        printf("  ...done.\n");
     }
     else
     {
@@ -190,6 +215,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     gsl_odeiv_step_free(s);
     
     free(y);
+    free(tstops);
       
     return status;
 
@@ -447,5 +473,16 @@ int eig(gsl_matrix *J, steady_state *stst)
 
     return status;
 
+}
+
+static int compare (void const *a, void const *b)
+{
+    /* definir des pointeurs type's et initialise's
+       avec les parametres */
+    int const *pa = a;
+    int const *pb = b;
+
+    /* evaluer et retourner l'etat de l'evaluation (tri croissant) */
+    return *pa - *pb;
 }
 
