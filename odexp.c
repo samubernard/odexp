@@ -1186,7 +1186,7 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double ts
     fprintf(fr,"\n# dynamical variables/initial conditions\n");
     for(i=0;i<init.nbr_el;i++)
     {
-        fprintf(fr,"X%zu %-*s %.5e\n",i,len,init.name[i],init.value[i]);
+        fprintf(fr,"X%zu %-*s %s\n",i,len,init.name[i],init.expression[i]);
     }    
 
     fprintf(fr,"\ntspan %f %f\n",tspan[0],tspan[1]);
