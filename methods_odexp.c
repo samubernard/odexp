@@ -68,6 +68,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     t = tspan[0];
     t1 = tspan[tspan_length-1];
     dt = (t1-t)/(double)(nbr_out-1);
+    nextstop = t;
 
 
     y = malloc(ode_system_size*sizeof(double));
@@ -131,7 +132,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         tnext = fmin(t+dt,t1);
         
         /* printf("t=%.2f, tnext=%.2f, nextstop=%.2f\n",t,tnext,nextstop); */
-        if ( (t<nextstop) &&  (tnext>=nextstop) )
+        if ( (t<nextstop) && (tnext>=nextstop) )
         {
           tnext = nextstop;
           disc_alert = 1;
@@ -147,12 +148,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
               h = hmin;
               if (hmin_alert == 0)
               {
-                printf("\n  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e",t, hmin);
+                printf("\n  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e\n",t, hmin);
                 hmin_alert = 1; 
               }
             }
             if (status != GSL_SUCCESS)
                 break;
+                
+            /* printf("\n--> t = %.2f, h = %e",t, h);   */
         }
         fprintf(file,"%.15e ",t);
         for (i = 0; i < ode_system_size; i++)
@@ -168,6 +171,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
+          printf(" passed!");
           ode_init_conditions(t, y, mu.value);
           /* update auxiliary functions */
           ode_rhs(t, y, f, &mu);

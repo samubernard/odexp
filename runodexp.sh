@@ -215,6 +215,13 @@ system_init_conditions () {
     }' $file >>.odexp/system.par
 }
 
+system_tspan () {
+    awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {
+      $1=""; 
+      printf "T %s\n", $0
+      }' $file >>.odexp/system.par
+}
+
 declare_variables () {
     # find variables and declare them to model.c
     # find vector variables and declare them to model.c
@@ -486,7 +493,7 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 # FIND TSPAN
 echo "/* time span */" >.odexp/system.par
-awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {$1=""; printf "T %s\n", $0}' $file >>.odexp/system.par
+system_tspan
 echo "" >>.odexp/system.par
 # ====================================================================================
 

@@ -247,7 +247,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     fflush(gnuplot_pipe);
 
     /* history - initialize session */
-    /* using_history(); */
+    using_history();
+    if ( read_history(".history") )
+    {
+      printf("\n  warning: history file .history not found\n");
+    }
+    
+    stifle_history( 200 );
+    
 
     while(1)
     {
@@ -776,6 +783,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free(lasty);
     free(lastinit);
     free(cmdline);
+
+    /* write history */
+    if ( write_history(".history") )
+    {
+      printf("\n  error: could not write history\n");
+    }
 
     return status;
 
