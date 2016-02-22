@@ -50,6 +50,11 @@ typedef struct steady_state
     int status;
 } steady_state;
 
+typedef struct double_array
+{
+    double *array;
+    size_t length;
+} double_array;
 
 /* function declaration */
 
@@ -57,6 +62,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     const char *odexp_filename );
+
+void free_double_array( double_array var );
 
 void free_namevalexp(nve mu );
 
@@ -68,7 +75,7 @@ int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, uint
 
 int8_t load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
 
-int8_t load_varnbr_double(const char *filename, double **vect, size_t *len, \
+int8_t load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len);
 
 int8_t load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep);

@@ -50,9 +50,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     /* tspan parameters */
     const char ts_string[] = "T"; 
-    double  *tspan;
     const size_t ts_len = 1;
-    size_t tspan_length;
+    double_array  tspan;
 
     /* system size */
     int32_t ode_system_size,
@@ -111,13 +110,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get tspan */
     printf("\ntime span %s\n",hline);
-    success = load_varnbr_double(system_filename, &tspan, &tspan_length, ts_string, ts_len); 
+    success = load_double_array(system_filename, &tspan, ts_string, ts_len); 
     if (!success)
     {
         printf("  tspan not found, exiting...\n");
         exit ( EXIT_FAILURE );
     }
-    printf("  found %zu time points, of which %zu stopping points\n", tspan_length, tspan_length-2);
+    printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
 
     /* get parameters */
     printf("parameters %s\n", hline);
@@ -173,7 +172,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  Dynamic variables not found... exiting\n");
         exit ( EXIT_FAILURE );
     } 
-    ode_init_conditions(tspan[0],var.value,mu.value);
+    ode_init_conditions(tspan.array[0],var.value,mu.value);
 
 
     /* get nonlinear functions */
@@ -238,7 +237,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stst->size = ode_system_size;
     
 
-    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, tspan_length, opts);
+    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan.array, tspan.length, opts);
     /* fprintf(gnuplot_pipe,"set key autotitle columnhead\n"); */
     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
@@ -308,12 +307,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     break;
                 case 'e' : /* extend the simulation */
-                    tspan[tspan_length-1] += tspan[tspan_length-1]-tspan[0];
+                    tspan.array[tspan.length-1] += tspan.array[tspan.length-1]-tspan.array[0];
                     rerun = 1;
                     replot = 1;
                     break;
                 case 'E' : /* shorten the simulation */
-                    tspan[tspan_length-1] -= (tspan[tspan_length-1]-tspan[0])/2;
+                    tspan.array[tspan.length-1] -= (tspan.array[tspan.length-1]-tspan.array[0])/2;
                     rerun = 1;
                     replot = 1;
                     break;
@@ -527,9 +526,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if (op == 't') /* list tspan */
                     {
                         printf("  tspan = "); 
-                        for(i=0;i<tspan_length;i++)
+                        for(i=0;i<tspan.length;i++)
                         {
-                          printf("%.2e ",tspan[i]);
+                          printf("%.2e ",tspan.array[i]);
                         }
                         printf("\n");
                     }
@@ -640,9 +639,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 't' )
                     {
                         sscanf(cmdline+2,"%d %lf",&i,&nvalue);
-                        if ( i >=0 && i < tspan_length )
+                        if ( i >=0 && i < tspan.length )
                         {
-                            tspan[i] = nvalue;
+                            tspan.array[i] = nvalue;
                             rerun = 1;
                             replot = 1;
                         }
@@ -693,7 +692,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case 's' : /* save file */
-                    file_status = fprintf_namevalexp(var,pex,mu,fcn,eqn,tspan, tspan_length, current_data_buffer);
+                    file_status = fprintf_namevalexp(var,pex,mu,fcn,eqn,tspan.array, tspan.length, current_data_buffer);
                     break;
                 default :
                     printf("  Unknown command. Type q to quit, h for help\n");
@@ -704,7 +703,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, tspan_length, opts);
+                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan.array, tspan.length, opts);
             }
             if (replot || rerun)    
             {
@@ -778,7 +777,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_namevalexp( eqn );
     free_namevalexp( fcn );
     free_steady_state( stst );
-    free(tspan);
+    free_double_array( tspan );
     free(opts.num_ic);
     free(lasty);
     free(lastinit);
@@ -794,6 +793,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 }
 
+void free_double_array(double_array var)
+{
+    free(var.array);
+}
 
 void free_namevalexp(nve var )
 {
@@ -940,7 +943,7 @@ int8_t load_namevalexp(const char *filename, nve var, const char *sym, const siz
     return success;
 }
 
-int8_t load_varnbr_double(const char *filename, double **array_ptr, size_t *len, const char *sym, size_t sym_len)
+int8_t load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len)
 {
     /* Find the last line starting with string sym and copy doubles on 
      * that line into *array_ptr. If no line starts with sym, *array_ptr is not assigned.
@@ -969,8 +972,8 @@ int8_t load_varnbr_double(const char *filename, double **array_ptr, size_t *len,
         }
         if(line[k] == ' ' && k == sym_len) /* keyword was found */
         {
-            *len = 1;
-            *array_ptr = malloc(*len*sizeof(double));
+            array_ptr->length = 1;
+            array_ptr->array = malloc(array_ptr->length*sizeof(double));
             current_ptr = line+k;
             i = 0;
             r = 0.0;
@@ -981,24 +984,24 @@ int8_t load_varnbr_double(const char *filename, double **array_ptr, size_t *len,
               current_ptr += k;
               if (has_read > 0)
               {
-                *(*array_ptr + i) = r;
+                array_ptr->array[i] = r;
                 i++;
-                if ( i > (*len - 1) )
+                if ( i > (array_ptr->length - 1) )
                 {
-                  *len *= 2;  
-                  *array_ptr = realloc(*array_ptr, *len*sizeof(double));
+                  array_ptr->length *= 2;  
+                  array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
                 }
               }
               
             }
             while ( has_read > 0 );
             
-            *len = i;
-            *array_ptr = realloc(*array_ptr, *len*sizeof(double));
+            array_ptr->length = i;
+            array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
             
-            for (i=0;i<*len;i++)
+            for (i=0;i<array_ptr->length;i++)
             {
-              printf("%.2f ",*(*array_ptr + i));
+              printf("%.2f ", array_ptr->array[i] );
             }
             /*            
             for (i = 0; i < len; i++)
