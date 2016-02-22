@@ -1188,7 +1188,8 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double *t
     FILE *fr;
     char rootname[MAXROOTLENGTH];
     int  rootnamescanned = 0;
-    char buffer[MAXFILENAMELENGTH];
+    char tab_buffer[MAXFILENAMELENGTH];
+    char par_buffer[MAXFILENAMELENGTH];
     int len = *mu.max_name_length;
     clock_t time_stamp;
 
@@ -1210,14 +1211,25 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double *t
     }
 
     time_stamp = clock();
-    rootnamescanned = sscanf(cmdline,"s %[a-zA-Z0-9_]",rootname);
-    if (rootnamescanned)
-      snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%s_%ju.tab",rootname,(uintmax_t)time_stamp);
+    rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_]",rootname);
+    printf("rootnamedscanned: %d, rootname: %s", rootnamescanned, rootname);
+
+    if (rootnamescanned > 0)
+    {
+      snprintf(tab_buffer,sizeof(char)*MAXFILENAMELENGTH,"%s_%ju.tab",rootname,(uintmax_t)time_stamp);
+      snprintf(par_buffer,sizeof(char)*MAXFILENAMELENGTH,"%s_%ju.par",rootname,(uintmax_t)time_stamp);
+    }  
     else
-      snprintf(buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
-    
-    success = rename(curr_buffer,buffer);
-    fr = fopen(buffer,"w");
+    {  
+      snprintf(tab_buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
+      snprintf(par_buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
+    }
+
+    /* rename "current.tab" to tab_buffer */
+    success = rename(curr_buffer,tab_buffer);
+
+    /* open buffer parameter file (par) */
+    fr = fopen(par_buffer,"w");
 
     fprintf(fr,"#%s\n",cmdline+1);
     
@@ -1256,7 +1268,7 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double *t
 
     fclose(fr);
     
-    printf("  wrote %s\n",buffer);
+    printf("  wrote %s and %s\n",par_buffer, tab_buffer);
 
     return success;
 }
