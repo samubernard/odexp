@@ -237,7 +237,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stst->size = ode_system_size;
     
 
-    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan.array, tspan.length, opts);
+    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
     /* fprintf(gnuplot_pipe,"set key autotitle columnhead\n"); */
     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
@@ -692,7 +692,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case 's' : /* save file */
-                    file_status = fprintf_namevalexp(var,pex,mu,fcn,eqn,tspan.array, tspan.length, current_data_buffer);
+                    file_status = fprintf_namevalexp(var,pex,mu,fcn,eqn,tspan, current_data_buffer);
                     break;
                 default :
                     printf("  Unknown command. Type q to quit, h for help\n");
@@ -703,7 +703,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan.array, tspan.length, opts);
+                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
             }
             if (replot || rerun)    
             {
@@ -1184,7 +1184,7 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     return success;
 } 
 
-int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double *tspan, size_t tspan_length, const char *curr_buffer)
+int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer)
 {
     int8_t success = 0;
     size_t i;
@@ -1263,9 +1263,9 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double *t
     }    
     
     fprintf(fr,"\ntspan ");
-    for(i=0;i<tspan_length;i++)
+    for(i=0;i<tspan.length;i++)
     {
-      fprintf(fr,"%f \n",tspan[i]);
+      fprintf(fr,"%f \n",tspan.array[i]);
     }
     fprintf(fr,"\n");
 

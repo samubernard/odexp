@@ -12,7 +12,7 @@
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
- double *lasty, nve init, nve mu, nve fcn, double *tspan, size_t tspan_length, options opts);
+ double *lasty, nve init, nve mu, nve fcn, double_array tspan, options opts);
 
 int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     nve var, nve mu);

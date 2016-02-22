@@ -82,7 +82,7 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
 
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
-int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double *tspan, size_t tspan_length, const char *curr_buffer);
+int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer);
 
 void initialize_readline(void);
 

@@ -22,7 +22,7 @@ static int compare (void const *a, void const *b);
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
- double *lasty, nve var, nve mu, nve fcn, double *tspan, size_t tspan_length, options opts)    
+ double *lasty, nve var, nve mu, nve fcn, double_array tspan, options opts)    
 {
  
     double *y,
@@ -65,8 +65,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
     /* tspan */
     /* it is assumed that tspan is sorted by increasing values */
-    t = tspan[0];
-    t1 = tspan[tspan_length-1];
+    t = tspan.array[0];
+    t1 = tspan.array[tspan.length-1];
     dt = (t1-t)/(double)(nbr_out-1);
     nextstop = t;
 
@@ -114,13 +114,13 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fprintf(file,"\n");
     
     /* discontinuities */
-    if ( tspan_length > 2 )
+    if ( tspan.length > 2 )
     {
-       nbr_stops = tspan_length-2;
+       nbr_stops = tspan.length-2;
        tstops = malloc( nbr_stops*sizeof(double) );
        for(i=0;i<nbr_stops;i++)
        {
-          tstops[i] = tspan[i+1];
+          tstops[i] = tspan.array[i+1];
        }
        mergesort(tstops, nbr_stops, sizeof(double),compare);
        nextstop = tstops[idx_stop];
