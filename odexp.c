@@ -96,11 +96,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             ngy,
             ngz;
     double nvalue;
-    int replot = 0, /* replot the same gnuplot command with new data */
-        updateplot = 0,  /* update plot with new parameters/option */
-        rerun = 0, /* run a new simulation */
-        plot3d = 0,
-        quit = 0;
+    int replot      = 0, /* replot the same gnuplot command with new data */
+        updateplot  = 0,  /* update plot with new parameters/option */
+        rerun       = 0, /* run a new simulation */
+        plot3d      = 0,
+        quit        = 0;
 
     initialize_readline();
     /* printf("%x\n",rl_done);*/

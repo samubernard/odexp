@@ -10,6 +10,7 @@
 #include <gsl/gsl_eigen.h> 
 #include <gsl/gsl_qrng.h>   
 #include <math.h>                          
+#include <signal.h>                          
 
 /* =================================================================
                               Header files
@@ -19,6 +20,13 @@
 #include "methods_odexp.h"
 
 static int compare (void const *a, void const *b);
+
+static volatile sig_atomic_t abort_odesolver_flag;
+
+static void set_abort_odesolver_flag(int sig)
+{
+    abort_odesolver_flag = 1;
+}
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
@@ -30,13 +38,17 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     double hmin = opts.odesolver_min_h,
            h = 1e-1;
     uint8_t hmin_alert = 0,
-            disc_alert = 0;
+            disc_alert = 0,
+            abort_odesolver_alert = 0;
     uint32_t nbr_out = opts.odesolver_output_time_step;
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
     int32_t i;
     
+    /* sigaction */
+    struct sigaction abort_act;
+
     /* tspan parameters */
     double  t, 
             t1, 
@@ -127,7 +139,17 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
        idx_stop++;
     }
     
-    while (t < t1)
+    /* sigaction */
+    abort_odesolver_flag = 0;
+    abort_act.sa_handler = &set_abort_odesolver_flag;
+    abort_act.sa_flags = 0;
+    if ((sigemptyset(&abort_act.sa_mask) == -1) || (sigaction(SIGINT, &abort_act, NULL) == -1)) 
+    {  
+         perror("Failed to set SIGINT handler");  
+         return 1;  
+    }  
+
+    while (t < t1 && !abort_odesolver_flag)
     {
         tnext = fmin(t+dt,t1);
         
@@ -136,7 +158,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         {
           tnext = nextstop;
           disc_alert = 1;
-          printf("\n  Crossing discontinuity point at t=%.2e...", nextstop);
+          printf(" ts =%.2e", nextstop);
+          fflush(stdout);
         }
                
         while ( t < tnext)
@@ -171,7 +194,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
-          printf(" passed!");
           ode_init_conditions(t, y, mu.value);
           /* update auxiliary functions */
           ode_rhs(t, y, f, &mu);
@@ -190,11 +212,18 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           /* calculating next stop */
           nextstop = tstops[idx_stop];
           idx_stop++;
-
-              
+             
         }
         
-        
+        if (abort_odesolver_flag)
+        {
+          if ( abort_odesolver_alert == 0) /* print only once */
+          {  
+            printf ("\n  simulation aborted at t = %f\n", t);
+            abort_odesolver_alert = 1;
+          }
+        }
+       
         hmin_alert = 0;
         disc_alert = 0;
     }
@@ -483,8 +512,8 @@ static int compare (void const *a, void const *b)
 {
     /* definir des pointeurs type's et initialise's
        avec les parametres */
-    int const *pa = a;
-    int const *pb = b;
+    double const *pa = a;
+    double const *pb = b;
 
     /* evaluer et retourner l'etat de l'evaluation (tri croissant) */
     return *pa - *pb;
