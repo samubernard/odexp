@@ -85,7 +85,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int p=0,
         np,
         padding,
-        namelength;
+        namelength,
+        nbr_read;
     char c,
          op,
          op2;
@@ -101,7 +102,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         rerun       = 0, /* run a new simulation */
         plot3d      = 0,
         quit        = 0;
-
+    
     initialize_readline();
     /* printf("%x\n",rl_done);*/
 
@@ -236,6 +237,21 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stst->im = malloc(ode_system_size*sizeof(double));
     stst->size = ode_system_size;
     
+    /* readline init file */
+/*    printf("rl_read_init_file\n");
+    if (rl_read_init_file (".odexpinputrc") )
+    {
+      printf("\n  warning: inputrc file not found\n");
+    }
+*/
+    /* history - initialize session */
+    using_history();
+    if ( read_history(".history") )
+    {
+      printf("\n  warning: history file .history not found\n");
+    }
+    
+    stifle_history( 200 );
 
     status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
     /* fprintf(gnuplot_pipe,"set key autotitle columnhead\n"); */
@@ -245,15 +261,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         current_data_buffer,gx,gy,gy,gx);
     fflush(gnuplot_pipe);
 
-    /* history - initialize session */
-    using_history();
-    if ( read_history(".history") )
-    {
-      printf("\n  warning: history file .history not found\n");
-    }
-    
-    stifle_history( 200 );
-    
+   
 
     while(1)
     {
@@ -563,51 +571,67 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     break;
                 case 'p' : /* change current parameter */
-                    sscanf(cmdline+1,"%d",&np);
-                    if (np > -1 && np < mu.nbr_el)
+                    nbr_read = sscanf(cmdline+1,"%d",&np);
+                    if (nbr_read == 1)
                     {
-                        p = np;
-                    }
-                    else
-                    {
-                        printf("  error: par index out of bound\n");
+                      if (np > -1 && np < mu.nbr_el)
+                      {
+                          p = np;
+                      }
+                      else
+                      {
+                          printf("  error: par index out of bound\n");
+                      }
                     }
                     printf("  current par: %s\n", mu.name[p]);
                     break;
                 case 'c' : /* change parameter/init values */
                     sscanf(cmdline+1,"%c",&op);
-                    //system ("/bin/stty icanon");
                     if( op == 'p' )
                     {
-                        sscanf(cmdline+2,"%d %lf",&np,&nvalue);
-                        if ( np > -1 && np < mu.nbr_el )
+                        nbr_read = sscanf(cmdline+2,"%d %lf",&np,&nvalue);
+                        if (nbr_read == 2)
                         {
+                          if ( np > -1 && np < mu.nbr_el )
+                          {
                             p = np;
                             mu.value[p] = nvalue;
                             rerun = 1;
                             replot = 1;
+                          }
+                          else
+                          {
+                            printf("  error: par index out of bound\n");
+                            replot = 0;
+                          }
                         }
                         else
                         {
-                            printf("  error: par index out of bound\n");
-                            replot = 0;
+                          printf("  error: no parameter/value pair provided\n");
                         }
                     }
                     else if ( op == 'i' ) 
                     {
-                        sscanf(cmdline+2,"%d %lf",&i,&nvalue);
-                        if ( i >= 0 && i<ode_system_size)
+                        nbr_read = sscanf(cmdline+2,"%d %lf",&i,&nvalue);
+                        if (nbr_read == 2)
                         {
+                          if ( i >= 0 && i<ode_system_size)
+                          {
                             lastinit[i] = var.value[i];
                             var.value[i] = nvalue;
                             opts.num_ic[i] = 1;
                             rerun = 1;
                             replot = 1;
-                        }
-                        else 
-                        {
+                          }
+                          else 
+                          {
                             printf("  error: var index out of bound\n");
                             replot = 0;
+                          }
+                        }
+                        else
+                        {
+                          printf("  error: no parameter/value pair provided\n");
                         }
                     }
                     else if (op == 'I') /* revert initial condition i to expression */

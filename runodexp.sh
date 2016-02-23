@@ -13,8 +13,7 @@ set -eu # makes your program exit on error or unbound variable
 
 file=$1
 
-rm -fr .odexp/
-mkdir .odexp
+mkdir -p .odexp
 
 declare_iterators () {
     awk -F ' ' -v i=1 '/(\[.+\])+/ { match($2,/(\[.+\])+/);
