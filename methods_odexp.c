@@ -32,15 +32,16 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
  double *lasty, nve var, nve mu, nve fcn, double_array tspan, options opts)    
 {
- 
     double *y,
            *f;
-    double hmin = opts.odesolver_min_h,
-           h = 1e-1;
+    double hmin = get_options(opts,"odesolver_min_h"),
+           h = get_options(opts,"odesolver_init_h"),
+           eps_abs = get_options(opts,"odesolver_eps_abs"),
+           eps_rel = get_options(opts,"odesolver_eps_rel");
     uint8_t hmin_alert = 0,
             disc_alert = 0,
             abort_odesolver_alert = 0;
-    uint32_t nbr_out = opts.odesolver_output_time_step;
+    uint32_t nbr_out = (uint32_t)get_options(opts,"odesolver_output_resolution");
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
@@ -59,9 +60,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
            *tstops = NULL;
     size_t idx_stop = 0;
 
-    /* system size */
-    int32_t ode_system_size = var.nbr_el;
-
     /* gsl ode */
     const gsl_odeiv_step_type * odeT;
     gsl_odeiv_step * s;
@@ -72,8 +70,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
     odeT = gsl_odeiv_step_rk4;
     s = gsl_odeiv_step_alloc(odeT,ode_system_size);
-    c = gsl_odeiv_control_y_new(1e-6,0.0);
+    c = gsl_odeiv_control_y_new(eps_abs,eps_rel);
     e = gsl_odeiv_evolve_alloc(ode_system_size);
+    
+
 
     /* tspan */
     /* it is assumed that tspan is sorted by increasing values */

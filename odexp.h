@@ -12,6 +12,7 @@
                               DEFINE
 ================================================================= */
 #define MAXPARNAMELENGTH  63
+#define MAXOPTNAMELENGTH  63
 #define MAXFILENAMELENGTH 63
 #define MAXROOTLENGTH    15 
 #define MAXLINELENGTH     1023                            
@@ -20,6 +21,8 @@
        ({ __typeof__ (a) _a = (a); \
            __typeof__ (b) _b = (b); \
          _a > _b ? _a : _b; })
+
+extern int32_t ode_system_size;
 
 typedef struct namevalexp
 {
@@ -34,9 +37,9 @@ typedef struct namevalexp
 
 typedef struct options
 {
-    uint32_t odesolver_output_time_step;
-    double odesolver_min_h;
-    uint8_t freeze;
+    uint32_t nbr_el;
+    char **name;
+    double *value;
     uint8_t *num_ic;
      
 } options;
@@ -71,6 +74,8 @@ void init_steady_state(steady_state *stst, uint32_t size);
 
 void free_steady_state(steady_state *stst);
 
+void free_options(options opts);
+
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, uint32_t *nbr_el, uint32_t *nbr_epxr);
 
 int8_t load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
@@ -83,6 +88,11 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
 int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
 
 int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer);
+
+int8_t init_options(options *opt);
+int8_t printf_options(const options opt);
+int8_t set_options(options *opt, const char *name, const double val); 
+double get_options(const options opts, const char *name);
 
 /* readline */
 void initialize_readline(void);
