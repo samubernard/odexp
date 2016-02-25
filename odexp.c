@@ -36,6 +36,12 @@ static char *cmdline = (char *)NULL;
 /* system size */
 int32_t ode_system_size;
 
+/* options */
+options opts;
+
+/* what kind of initial conditions to take */
+uint8_t *num_ic;
+
 /* =================================================================
                              Main Loop 
 ================================================================= */
@@ -82,7 +88,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     double *lastinit;
 
     /* options */
-    options opts;
     double  v;
 
     /* steady states */
@@ -219,14 +224,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         exit ( EXIT_FAILURE );
     } 
 
-    /* get options */
-    printf("\noptions %s\n", hline);
-    success = init_options(&opts);
-     
     ode_system_size = var.nbr_el;
     total_nbr_x = ode_system_size + fcn.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
     lastinit = malloc(ode_system_size*sizeof(double));
+
+    /* get options */
+    printf("\noptions %s\n", hline);
+    success = init_options();
+    printf_options();
+    num_ic = malloc(ode_system_size*sizeof(uint8_t));
+    for(i=0; i<ode_system_size; i++)
+    {
+      num_ic[i]=0;
+    }
 
     /* init steady state */
     stst->s =  malloc(ode_system_size*sizeof(double));
@@ -252,7 +263,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     stifle_history( 200 );
 
-    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
+    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan);
     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
@@ -291,8 +302,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     break;
                 case 'f' : /* toggle freeze */
-                    v = 1-get_options(opts,"freeze");
-                    set_options(&opts,"freeze",v);
+                    v = 1-get_option("freeze");
+                    set_option("freeze",v);
                     if ( v == 0.0 )
                         printf("  freeze is off (not working as expected)\n");
                     else
@@ -300,16 +311,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("\n");
                     break;
                 case '>' : /* increase resolution */
-                    v = get_options(opts,"odesolver_output_resolution");
+                    v = get_option("odesolver_output_resolution");
                     v *= 2;
-                    set_options(&opts,"odesolver_output_resolution",v);
+                    set_option("odesolver_output_resolution",v);
                     rerun = 1;
                     replot = 1;
                     break;
                 case '<' : /* decrease resolution */
-                    v = get_options(opts,"odesolver_output_resolution");
+                    v = get_option("odesolver_output_resolution");
                     v /= 2;
-                    set_options(&opts,"odesolver_output_resolution",v);
+                    set_option("odesolver_output_resolution",v);
                     rerun = 1;
                     replot = 1;
                     break;
@@ -451,7 +462,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = lasty[i];
-                            opts.num_ic[i] = 1;
+                            num_ic[i] = 1;
                         }
                     } 
                     else if ( op == 's') /* run from steady state */
@@ -460,7 +471,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                             var.value[i] = stst->s[i];
-                            opts.num_ic[i] = 1;
+                            num_ic[i] = 1;
                         }
                     }
                     rerun = 1;
@@ -470,7 +481,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     for ( i=0; i<ode_system_size; i++ )
                         {
                             var.value[i] = lastinit[i];
-                            opts.num_ic[i] = 1;
+                            num_ic[i] = 1;
                             printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
                         }
                     rerun = 1;
@@ -613,7 +624,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           {
                             lastinit[i] = var.value[i];
                             var.value[i] = nvalue;
-                            opts.num_ic[i] = 1;
+                            num_ic[i] = 1;
                             rerun = 1;
                             replot = 1;
                           }
@@ -634,7 +645,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         if ( i >= 0 && i<ode_system_size)
                         {
                             lastinit[i] = var.value[i];
-                            opts.num_ic[i] = 0;
+                            num_ic[i] = 0;
                             rerun = 1;
                             replot = 1;
                         }
@@ -672,7 +683,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 'o' ) /* change options */
                     {
                         sscanf(cmdline+2,"%d %lf",&i,&nvalue);
-                        if ( i >=0 && i < opts.nbr_el )
+                        if ( i >=0 && i < NBROPTS )
                         {
                             opts.value[i] = nvalue;
                             rerun = 1;
@@ -736,7 +747,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
+                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan);
             }
             if (replot || rerun)    
             {
@@ -752,7 +763,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                             fprintf(gnuplot_pipe,"set xlabel 'time'\n");
                     }
-                    if ( get_options(opts,"freeze") == 0.0)
+                    if ( get_option("freeze") == 0.0)
                     {
                         if ( (gy-2) < ode_system_size )
                         {
@@ -776,7 +787,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 }
                 else
                 {
-                    if ( get_options(opts,"freeze") == 0)
+                    if ( get_option("freeze") == 0)
                     {
                         fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w l \n",current_data_buffer,gx,gy,gz);    
                     } 
@@ -811,7 +822,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_namevalexp( fcn );
     free_steady_state( stst );
     free_double_array( tspan );
-    free_options(opts);
+    free_options();
     free(lasty);
     free(lastinit);
 
@@ -851,13 +862,10 @@ void free_namevalexp(nve var )
 void free_options(options opts)
 {
   size_t i;
-  for(i=0;i<opts.nbr_el;i++)
+  for(i=0;i<NBROPTS;i++)
   {
     free(opts.name[i]);
   }
-  free(opts.value);
-  free(opts.name);
-  free(opts.num_ic);
 }
 
 void init_steady_state(steady_state *stst, uint32_t size)
@@ -1314,43 +1322,21 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
     return success;
 }
 
-int8_t init_options(options *opts_ptr)
+int8_t init_options()
 {
-    size_t i;
-    opts_ptr->nbr_el = 7;
-    char **names = (char *[]){"odesolver_output_resolution",
-                      "odesolver_min_h",
-                      "odesolver_init_h",
-                      "odesolver_eps_abs",
-                      "odesolver_eps_rel",
-                      "freeze",
-                      "num_ic"};
-    opts_ptr->name = malloc(opts_ptr->nbr_el*sizeof(char*));
-    opts_ptr->value = malloc(opts_ptr->nbr_el*sizeof(double));
-    for (i=0; i<opts_ptr->nbr_el; i++)
-    {
-      opts_ptr->name[i] = malloc(MAXOPTNAMELENGTH*sizeof(char));
-      strncpy(opts_ptr->name[i],names[i],MAXOPTNAMELENGTH);
-    }
-    set_options(opts_ptr, "odesolver_output_resolution", 201);
-    set_options(opts_ptr, "odesolver_min_h", 1e-5);
-    set_options(opts_ptr, "odesolver_init_h", 1e-1);
-    set_options(opts_ptr, "odesolver_eps_abs", 1e-6);
-    set_options(opts_ptr, "odesolver_eps_rel", 0.0);
-    set_options(opts_ptr, "odesolver_min_h", 1e-5);
-    set_options(opts_ptr, "freeze", 0.0);
-    opts_ptr->num_ic = malloc(ode_system_size*sizeof(uint8_t));
-    for(i=0; i<ode_system_size; i++)
-    {
-        opts_ptr->num_ic[i] = 0;    
-    }
-
+    opts = (options) {.name = {"odesolver_output_resolution",
+                                        "odesolver_min_h",
+                                        "odesolver_init_h",
+                                        "odesolver_eps_abs",
+                                        "odesolver_eps_rel",
+                                        "phasespace_max_fail",
+                                        "freeze"},
+                      .value = {201.0,1e-5,1e-1,1e-6,0.0,1000.0,0.0} };
     return 1;
 }
 
-int8_t printf_options(const options opts)
+int8_t printf_options()
 {
-    printf("  options\n");
     printf("  O[0] %s = %f\n",opts.name[0],opts.value[0]);
     printf("  O[1] %s = %e\n",opts.name[1],opts.value[1]);
     printf("  O[2] %s = %e\n",opts.name[2],opts.value[2]);
@@ -1361,31 +1347,35 @@ int8_t printf_options(const options opts)
     return 1;
 }
 
-int8_t set_options(options *opts, const char *name, const double val) 
+int8_t set_option(const char *name, const double val) 
 {
     size_t idx_opt = 0;
     int8_t success = 0;
-    while ( strcmp(name, opts->name[idx_opt]) && idx_opt < opts->nbr_el)
+    while ( strcmp(name, opts.name[idx_opt]) && idx_opt < NBROPTS)
     {
       idx_opt++;
     }
-    if (idx_opt < opts->nbr_el)
+    if (idx_opt < NBROPTS)
     {
-      opts->value[idx_opt] = val;
+      opts.value[idx_opt] = val;
       success = 1;
+    }
+    else
+    {
+      printf("  error: could not assign option %s\n", name);
     }
 
     return success;
 }
 
-double get_options(const options opts, const char *name)
+double get_option(const char *name)
 {
     size_t idx_opt = 0;
-    while ( strcmp(name, opts.name[idx_opt]) && idx_opt < opts.nbr_el)
+    while ( strcmp(name, opts.name[idx_opt]) && idx_opt < NBROPTS)
     {
       idx_opt++;
     }
-    if (idx_opt < opts.nbr_el)
+    if (idx_opt < NBROPTS)
     {
       return opts.value[idx_opt];
     }

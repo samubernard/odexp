@@ -30,18 +30,18 @@ static void set_abort_odesolver_flag(int sig)
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
- double *lasty, nve var, nve mu, nve fcn, double_array tspan, options opts)    
+ double *lasty, nve var, nve mu, nve fcn, double_array tspan)    
 {
     double *y,
            *f;
-    double hmin = get_options(opts,"odesolver_min_h"),
-           h = get_options(opts,"odesolver_init_h"),
-           eps_abs = get_options(opts,"odesolver_eps_abs"),
-           eps_rel = get_options(opts,"odesolver_eps_rel");
+    double hmin = get_option("odesolver_min_h"),
+           h = get_option("odesolver_init_h"),
+           eps_abs = get_option("odesolver_eps_abs"),
+           eps_rel = get_option("odesolver_eps_rel");
     uint8_t hmin_alert = 0,
             disc_alert = 0,
             abort_odesolver_alert = 0;
-    uint32_t nbr_out = (uint32_t)get_options(opts,"odesolver_output_resolution");
+    uint32_t nbr_out = (uint32_t)get_option("odesolver_output_resolution");
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
@@ -87,7 +87,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     ode_init_conditions(t, y, mu.value);
     for (i = 0; i < ode_system_size; i++)
     {
-        if (opts.num_ic[i])
+        if (num_ic[i])
         {
             y[i] = var.value[i];
         }
@@ -262,7 +262,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
     double *var_max; /* bounds on parameter values */
     size_t ntry = 0;
-    size_t max_fail = 1000; /* max number of iteration without finding a new steady state */
+    size_t max_fail = (size_t)get_option("phasespace_max_fail"); /* max number of iteration without finding a new steady state */
     steady_state *stst; /* new steady state */
     size_t nbr_stst = 0; /* number of steady state found so far */
     size_t i,j;

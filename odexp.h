@@ -17,12 +17,16 @@
 #define MAXROOTLENGTH    15 
 #define MAXLINELENGTH     1023                            
 
+#define NBROPTS 7
+
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
            __typeof__ (b) _b = (b); \
          _a > _b ? _a : _b; })
 
 extern int32_t ode_system_size;
+extern struct options opts;
+extern uint8_t *num_ic;
 
 typedef struct namevalexp
 {
@@ -37,11 +41,8 @@ typedef struct namevalexp
 
 typedef struct options
 {
-    uint32_t nbr_el;
-    char **name;
-    double *value;
-    uint8_t *num_ic;
-     
+    char    *name[NBROPTS];
+    double  value[NBROPTS];
 } options;
 
 typedef struct steady_state
@@ -74,7 +75,7 @@ void init_steady_state(steady_state *stst, uint32_t size);
 
 void free_steady_state(steady_state *stst);
 
-void free_options(options opts);
+void free_options();
 
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, uint32_t *nbr_el, uint32_t *nbr_epxr);
 
@@ -89,10 +90,10 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
 
 int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer);
 
-int8_t init_options(options *opt);
-int8_t printf_options(const options opt);
-int8_t set_options(options *opt, const char *name, const double val); 
-double get_options(const options opts, const char *name);
+int8_t init_options();
+int8_t printf_options();
+int8_t set_option(const char *name, const double val); 
+double get_option(const char *name);
 
 /* readline */
 void initialize_readline(void);
