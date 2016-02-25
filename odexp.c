@@ -37,7 +37,14 @@ static char *cmdline = (char *)NULL;
 int32_t ode_system_size;
 
 /* options */
-options opts;
+struct option opts[NBROPTS] = { 
+             {"odesolver_output_resolution", 201.0, "nominal number of output time points"},
+             {"odesolver_min_h", 1e-5, "minimal time step"},
+             {"odesolver_init_h", 1e-1, "initial time step"},
+             {"odesolver_eps_abs", 1e-6, "ode solver absolute tolerance"},
+             {"odesolver_eps_rel", 0.0, "ode solver relative tolerance"},
+             {"phasespace_max_fail", 1000.0, "max number if starting guesses for steady states"},  
+             {"freeze", 0.0, "add (on) or replace (off) curves on plot"} };
 
 /* what kind of initial conditions to take */
 uint8_t *num_ic;
@@ -231,7 +238,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("\noptions %s\n", hline);
-    success = init_options();
+    printf("%lu",sizeof(option));
+    /* success = init_options(); */
     printf_options();
     num_ic = malloc(ode_system_size*sizeof(uint8_t));
     for(i=0; i<ode_system_size; i++)
@@ -685,7 +693,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         sscanf(cmdline+2,"%d %lf",&i,&nvalue);
                         if ( i >=0 && i < NBROPTS )
                         {
-                            opts.value[i] = nvalue;
+                            opts[i].value = nvalue;
                             rerun = 1;
                             replot = 1;
                         }
@@ -823,6 +831,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_steady_state( stst );
     free_double_array( tspan );
     free_options();
+    free(num_ic);
     free(lasty);
     free(lastinit);
 
@@ -859,13 +868,8 @@ void free_namevalexp(nve var )
     free(var.expression);
 }
 
-void free_options(options opts)
+void free_options()
 {
-  size_t i;
-  for(i=0;i<NBROPTS;i++)
-  {
-    free(opts.name[i]);
-  }
 }
 
 void init_steady_state(steady_state *stst, uint32_t size)
@@ -1322,28 +1326,29 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
     return success;
 }
 
+/*
 int8_t init_options()
 {
-    opts = (options) {.name = {"odesolver_output_resolution",
-                                        "odesolver_min_h",
-                                        "odesolver_init_h",
-                                        "odesolver_eps_abs",
-                                        "odesolver_eps_rel",
-                                        "phasespace_max_fail",
-                                        "freeze"},
-                      .value = {201.0,1e-5,1e-1,1e-6,0.0,1000.0,0.0} };
+    opts =  (option [NBROPTS]) { 
+             {"odesolver_output_resolution", 201.0, "nominal number of output time points"},
+             {"odesolver_min_h", 1e-5, "minimal time step"},
+             {"odesolver_init_h", 1e-1, "initial time step"},
+             {"odesolver_eps_abs", 1e-6, "ode solver absolute tolerance"},
+             {"odesolver_eps_rel", 0.0, "ode solver relative tolerance"},
+             {"phasespace_max_fail", 1000.0, "max number if starting guesses for steady states"},  
+             {"freeze", 0.0, "add (on) or replace (off) curves on plot"} };
+
     return 1;
 }
+*/
 
 int8_t printf_options()
 {
-    printf("  O[0] %s = %f\n",opts.name[0],opts.value[0]);
-    printf("  O[1] %s = %e\n",opts.name[1],opts.value[1]);
-    printf("  O[2] %s = %e\n",opts.name[2],opts.value[2]);
-    printf("  O[3] %s = %e\n",opts.name[3],opts.value[3]);
-    printf("  O[4] %s = %e\n",opts.name[4],opts.value[4]);
-    printf("  O[5] %s = %f\n",opts.name[5],opts.value[5]);
-
+    size_t i;
+    for(i=0;i<NBROPTS;i++)
+    {
+      printf("  O[%zu] %s = %f (%s)\n",i,opts[i].name,opts[i].value, opts[i].descr);
+    }
     return 1;
 }
 
@@ -1351,13 +1356,13 @@ int8_t set_option(const char *name, const double val)
 {
     size_t idx_opt = 0;
     int8_t success = 0;
-    while ( strcmp(name, opts.name[idx_opt]) && idx_opt < NBROPTS)
+    while ( strcmp(name, opts[idx_opt].name) && idx_opt < NBROPTS)
     {
       idx_opt++;
     }
     if (idx_opt < NBROPTS)
     {
-      opts.value[idx_opt] = val;
+      opts[idx_opt].value = val;
       success = 1;
     }
     else
@@ -1371,13 +1376,13 @@ int8_t set_option(const char *name, const double val)
 double get_option(const char *name)
 {
     size_t idx_opt = 0;
-    while ( strcmp(name, opts.name[idx_opt]) && idx_opt < NBROPTS)
+    while ( strcmp(name, opts[idx_opt].name) && idx_opt < NBROPTS)
     {
       idx_opt++;
     }
     if (idx_opt < NBROPTS)
     {
-      return opts.value[idx_opt];
+      return opts[idx_opt].value;
     }
     else
     {  

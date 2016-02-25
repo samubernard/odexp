@@ -24,8 +24,11 @@
            __typeof__ (b) _b = (b); \
          _a > _b ? _a : _b; })
 
+
+/* =================================================================
+                              EXTERN
+================================================================= */
 extern int32_t ode_system_size;
-extern struct options opts;
 extern uint8_t *num_ic;
 
 typedef struct namevalexp
@@ -39,11 +42,14 @@ typedef struct namevalexp
     int *max_name_length;
 } nve;
 
-typedef struct options
+typedef struct option
 {
-    char    *name[NBROPTS];
-    double  value[NBROPTS];
-} options;
+    char    name[MAXOPTNAMELENGTH];
+    double  value;
+    char    descr[MAXLINELENGTH];
+} option;
+
+extern struct option opts[NBROPTS];
 
 typedef struct steady_state
 {
