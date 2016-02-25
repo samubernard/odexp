@@ -26,8 +26,8 @@
 ================================================================= */
 
 
-/* command line string */
-char *cmdline;
+/* static variable for holding the command line string */
+static char *cmdline = (char *)NULL;
 
 /* main loop */
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
@@ -40,8 +40,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char *system_filename = ".odexp/system.par";
     const char *helpcmd = "less -S .odexp/help.txt";
     const char current_data_buffer[] = "current.tab";
-    /* const char *history_filename = ".odexp/history"; */
-    /* char *expansion; */
     const char *hline = "----------------";
     int32_t i;
     int8_t success;
@@ -103,8 +101,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         plot3d      = 0,
         quit        = 0;
     
-    initialize_readline();
-    /* printf("%x\n",rl_done);*/
 
     /* begin */
     printf("odexp file: %s\n",odexp_filename);
@@ -237,13 +233,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stst->im = malloc(ode_system_size*sizeof(double));
     stst->size = ode_system_size;
     
+    /* readline */
+    printf("  readline library version: %s\n", rl_library_version);
+    initialize_readline();
     /* readline init file */
-/*    printf("rl_read_init_file\n");
-    if (rl_read_init_file (".odexpinputrc") )
+    if (rl_read_init_file (".odexp/.inputrc") )
     {
-      printf("\n  warning: inputrc file not found\n");
+      printf("\n  warning: inputrc file for readline not found\n");
     }
-*/
+    
     /* history - initialize session */
     using_history();
     if ( read_history(".history") )
@@ -254,14 +252,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stifle_history( 200 );
 
     status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan, opts);
-    /* fprintf(gnuplot_pipe,"set key autotitle columnhead\n"); */
     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
         current_data_buffer,gx,gy,gy,gx);
     fflush(gnuplot_pipe);
-
-   
 
     while(1)
     {
@@ -784,7 +779,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             replot = 0;
             rerun = 0;
             updateplot = 0;
-            //system("/bin/stty -icanon");
+            free(cmdline);
         }
         
 
@@ -805,7 +800,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free(opts.num_ic);
     free(lasty);
     free(lastinit);
-    free(cmdline);
 
     /* write history */
     if ( write_history(".history") )
@@ -1027,13 +1021,7 @@ int8_t load_double_array(const char *filename, double_array *array_ptr, const ch
             {
               printf("%.2f ", array_ptr->array[i] );
             }
-            /*            
-            for (i = 0; i < len; i++)
-            {
-                mypars[i] = strtod(current_ptr,&current_ptr); 
-                printf("%f ",mypars[i]);
-            }
-            */
+            
             success = 1;
         }
         k = 0; /* reset k */
@@ -1302,9 +1290,6 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
 
 void initialize_readline()
 {
-
-    rl_readline_name = "odexp";
-
+    rl_readline_name = "Odexp";
 }
-
 
