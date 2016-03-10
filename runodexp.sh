@@ -264,6 +264,9 @@ assign_parametric_expressions () {
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
       myvar=c[1];
+      $1="";
+      $2="";
+      ex=$0;
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
@@ -273,7 +276,7 @@ assign_parametric_expressions () {
       { 
         printf "[%s]", b[k] 
       }; 
-      {printf " = %s;\n", $3}; }' $file >>.odexp/model.c
+      {printf " = %s;\n", ex} }' $file >>.odexp/model.c
 }
 
 assign_auxiliary_functions () {
@@ -400,6 +403,9 @@ assign_initial_conditions () {
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
       myvar="y_";
+      $1="";
+      $2="";
+      ex=$0;
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
@@ -410,7 +416,7 @@ assign_initial_conditions () {
         printf "[%s+%d]", b[k], nv 
         nv+=b[k+2]-b[k+1]
       }; 
-      {printf " = %s;\n", $3}; }' $file >>.odexp/model.c
+      {printf " = %s;\n", ex}; }' $file >>.odexp/model.c
 }
 
 # ==========================================================================================

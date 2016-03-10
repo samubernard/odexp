@@ -238,7 +238,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("\noptions %s\n", hline);
-    printf("%lu",sizeof(option));
     /* success = init_options(); */
     printf_options();
     num_ic = malloc(ode_system_size*sizeof(uint8_t));
