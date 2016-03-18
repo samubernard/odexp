@@ -76,6 +76,3 @@ double conv(double *u, double *v, int32_t len) /* convolution product */
   return s;
 }
 
-
-
-

@@ -21,6 +21,7 @@
 #include "odexp.h"
 #include "methods_odexp.h"
 #include "utils_odexp.h"
+#include "rand_gen.h"
 
 /* =================================================================
                               Defines
@@ -123,6 +124,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         plot3d      = 0,
         quit        = 0;
     
+    unsigned long randseed;
+    
 
     /* begin */
     printf("odexp file: %s\n",odexp_filename);
@@ -147,6 +150,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     for (i = 0; i < mu.nbr_el; i++)
     {
         mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
+        mu.expression[i] = malloc(MAXLINELENGTH*sizeof(char*));
     }
     success = load_namevalexp(system_filename,mu,"P",1);
     if (!success)
@@ -253,6 +257,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stst->im = malloc(ode_system_size*sizeof(double));
     stst->size = ode_system_size;
     
+    /* seed random number generator */
+    randseed = 1306;
+    srand(randsseed);
+
     /* readline */
     printf("  readline library version: %s\n", rl_library_version);
     initialize_readline();
@@ -823,16 +831,27 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     pclose(gnuplot_pipe);
 
+    /* printf("--free pex\n"); */
     free_namevalexp( pex );
+    /* printf("--free mu\n"); */
     free_namevalexp( mu );
+    /* printf("--free var\n"); */
     free_namevalexp( var );
+    /* printf("--free eqn\n"); */
     free_namevalexp( eqn );
+    /* printf("--free fcn\n"); */
     free_namevalexp( fcn );
+    /* printf("--free stst\n"); */
     free_steady_state( stst );
+    /* printf("--free tspan\n"); */
     free_double_array( tspan );
+    /* printf("--free options\n"); */
     free_options();
+    /* printf("--free num_ic\n"); */
     free(num_ic);
+    /* printf("--free lasty\n"); */
     free(lasty);
+    /* printf("--free lastinit\n"); */
     free(lastinit);
 
     /* write history */
@@ -855,12 +874,12 @@ void free_namevalexp(nve var )
     int32_t i;
     
     /* do not free aux_pointer, it will be freed from fcn */
-    /* printf("free var.name\n"); */
+    /* printf("--free var.name\n");  */
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.name[i]);
     }
-    /* printf("free var.expression\n"); */
+    /* printf("--free var.expression\n");  */
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.expression[i]);
