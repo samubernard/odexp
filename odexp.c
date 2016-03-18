@@ -20,6 +20,7 @@
 
 #include "odexp.h"
 #include "methods_odexp.h"
+#include "utils_odexp.h"
 
 /* =================================================================
                               Defines
@@ -156,6 +157,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get parametric expressions */
     printf("\nparametric expressions %s\n", hline);
     get_nbr_el(system_filename,"E",1, &pex.nbr_el, &pex.nbr_expr);
+    printf("pex: nbr_el = %u, nbr_expr = %u\n",pex.nbr_el,pex.nbr_expr);
     pex.value = malloc(pex.nbr_el*sizeof(double));
     pex.name = malloc(pex.nbr_el*sizeof(char*));
     pex.expression = malloc(pex.nbr_el*sizeof(char*));
@@ -170,7 +172,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         printf("  no parametric expression found\n");
     } 
-
 
     /* get variable names and initial conditions */
     printf("\nvariable names and initial conditions %s\n", hline);
@@ -854,10 +855,12 @@ void free_namevalexp(nve var )
     int32_t i;
     
     /* do not free aux_pointer, it will be freed from fcn */
+    /* printf("free var.name\n"); */
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.name[i]);
     }
+    /* printf("free var.expression\n"); */
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.expression[i]);
@@ -1106,12 +1109,14 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
         {
             success = 1;
             /* get the size of the expression */
-            if ( prefix )
+            if ( prefix ) /* look for expression X0-3 */
             {
+                /* create a search pattern of the type X0-3 */
                 snprintf(str4size,63*sizeof(char),"%s%%d-%%d",sym);
             }
             else
             {
+                /* create a search pattern of the type A0-3 X[i=0:3] */
                 snprintf(str4size,63*sizeof(char),"%s%%*[^=]=%%d:%%d]",sym);
             }
             nbr_index_found = sscanf(line,str4size, &index0, &index1);
@@ -1149,27 +1154,14 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
             {
                 snprintf(str2match,63*sizeof(char),"%%n %%s%%n  %c %%[^\n]", sep);
             }
-              sscanf(line,str2match, &namelen0, var.name[i], &namelen1, var.expression[i]);
+            sscanf(line,str2match, &namelen0, var.name[i], &namelen1, var.expression[i]);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
                 *var.max_name_length = (namelen1-namelen0);
             }
             /* printf("max_name_length = %d", *var.max_name_length); */
-            
-            /* assign the name root and expression  */
-            for (j=1;j<expr_size;j++)
-            {
-              if ( i+j >= var.nbr_el )
-              {
-                printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", sym);
-                exit ( EXIT_FAILURE );
-              }
-              var.value[i+j] = i+j+0.0;
-              var.name[i+j] = var.name[i];
-              var.expression[i+j] = var.expression[i];
-            }
-            
-            /* prune strings [i=a:b] -> [#index] */
+
+            /* prune strings [i=a:b] -> [] */
             for (j=0;j<expr_size;j++)
             {
               success_brackets = sscanf(var.name[i],"%*[^[] %n %*[^]] %n",&bracket0,&bracket1);
@@ -1182,6 +1174,19 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
                
             }
             
+            /* copy the name root and expression  */
+            for (j=1;j<expr_size;j++)
+            {
+              if ( i+j >= var.nbr_el )
+              {
+                printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", sym);
+                exit ( EXIT_FAILURE );
+              }
+              var.value[i+j] = i+j+0.0;
+              strncpy(var.name[i+j],var.name[i],MAXPARNAMELENGTH);
+              strncpy(var.expression[i+j],var.expression[i],MAXPARNAMELENGTH);
+            }
+           
             for (j=0;j<expr_size;j++)
             {
               printf("  [%zu] %-*s %c %s\n",i+j,*var.max_name_length,var.name[i+j], sep,var.expression[i+j]);

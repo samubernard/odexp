@@ -5,14 +5,18 @@ current_dir = $(shell pwd)
 
 all: libodexp.dylib
 
-libodexp.dylib: odexp.o methods_odexp.o
-		gcc $(LDFLAGS) -dynamiclib -install_name $(current_dir)/libodexp.dylib   -lm -o libodexp.dylib odexp.o methods_odexp.o 
+libodexp.dylib: odexp.o methods_odexp.o utils_odexp.o
+		gcc $(LDFLAGS) -dynamiclib -install_name $(current_dir)/libodexp.dylib   -lm -o libodexp.dylib odexp.o methods_odexp.o utils_odexp.o
 
-odexp.o: odexp.c odexp.h methods_odexp.h
+odexp.o: odexp.c odexp.h methods_odexp.h utils_odexp.o
 	    gcc -c odexp.c $(CFLAGS) 
 
 methods_odexp.o: methods_odexp.c methods_odexp.h odexp.h
 		gcc -c methods_odexp.c $(CFLAGS)
+
+utils_odexp.o: utils_odexp.c utils_odexp.h odexp.h
+		gcc -c utils_odexp.c $(CFLAGS)
+
 
 
 clean:
