@@ -260,7 +260,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     /* seed random number generator */
     randseed = 1306;
-    srand(randsseed);
+    srand(randseed);
 
     /* readline */
     printf("  readline library version: %s\n", rl_library_version);

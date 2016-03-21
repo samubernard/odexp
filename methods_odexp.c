@@ -166,10 +166,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         {
             sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
             status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
-            if (h < hmin)
+            if ( h < hmin )
             {
               h = hmin;
-              if (hmin_alert == 0)
+              if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
               {
                 printf("\n  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e\n",t, hmin);
                 hmin_alert = 1; 
