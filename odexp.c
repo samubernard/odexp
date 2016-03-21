@@ -47,6 +47,7 @@ struct option opts[NBROPTS] = {
              {"odesolver_eps_rel", 0.0, "ode solver relative tolerance"},
              {"phasespace_max_fail", 1000.0, "max number if starting guesses for steady states"},  
              {"freeze", 0.0, "add (on) or replace (off) curves on plot"} };
+            
 
 /* what kind of initial conditions to take */
 uint8_t *num_ic;
@@ -446,6 +447,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         gx = 1;
                         gy = ngy + 2;
+                        plot3d = 0;
                         updateplot = 1;
                     }
                     else 
@@ -774,56 +776,74 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             else if (updateplot)
                 /* This is where the plot is updated */
             {
-                /* set axis labels */
-                if (plot3d == 0)
+              /* set axis labels and plot */
+              if ( get_option("freeze") == 0 )
+              {
+                  if (gx == 1) /* time evolution: xlabel = 'time' */
+                  {
+                    fprintf(gnuplot_pipe,"set xlabel 'time'\n");
+                  }
+                  else if ( (gx-2) < ode_system_size ) /* xlabel = name of variable  */
+                  {
+                    fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx-2]);
+                  }
+                  else if ( (gx-2) < total_nbr_x ) /* xlabel = name of auxiliary function */ 
+                  {
+                    fprintf(gnuplot_pipe,"set xlabel '%s'\n",fcn.name[gx - ode_system_size - 2]);
+                  }
+                  if ( (gy-2) < ode_system_size ) /* variable */
+                  {
+                    fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
+                  }
+                  else if ( (gy-2) < total_nbr_x ) /* auxiliary variable */
+                  {
+                    fprintf(gnuplot_pipe,"set ylabel '%s'\n",fcn.name[gy - ode_system_size - 2]);
+                  }
+                  if ( plot3d == 1 )
+                  {
+                    if ( (gz-2) < ode_system_size ) /* variable */
+                    {
+                      fprintf(gnuplot_pipe,"set zlabel '%s'\n",var.name[gz-2]);
+                    }
+                    else if ( (gz-2) < total_nbr_x ) /* auxiliary variable */
+                    {
+                      fprintf(gnuplot_pipe,"set zlabel '%s'\n",fcn.name[gz - ode_system_size - 2]);
+                    }
+                  }
+              }
+              else /* freeze is off */
+              {
+                  fprintf(gnuplot_pipe,"unset xlabel\n");
+                  fprintf(gnuplot_pipe,"unset ylabel\n");
+                  fprintf(gnuplot_pipe,"unset zlabel\n");
+              }
+              if ( plot3d == 0 )
+              {
+                if ( get_option("freeze") == 0 )
                 {
-                    if (gx == 1) /* time evolution: xlabel = 'time' */
-                    {
-                        fprintf(gnuplot_pipe,"set xlabel 'time'\n");
-                    }
-                    else if ( (gx-2) < ode_system_size ) /* xlabel = name of variable  */
-                    {
-                      fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx-2]);
-                    }
-                    else if ( (gx-2) < total_nbr_x ) /* xlabel = name of auxiliary function */ 
-                    {
-                      fprintf(gnuplot_pipe,"set xlabel '%s'\n",fcn.name[gx - ode_system_size - 2]);
-                    }
-                    if ( get_option("freeze") == 0.0)
-                    {
-                        if ( (gy-2) < ode_system_size )
-                        {
-                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
-                        }
-                        else /* auxiliary variable */
-                        {
-                            fprintf(gnuplot_pipe,"set ylabel '%s'\n",fcn.name[gy - ode_system_size - 2]);
-                        }
-                        fprintf(gnuplot_pipe,\
-                            "plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
-                            current_data_buffer,gx,gy,gy,gx);    
-                    } 
-                    else
-                    {
-                        fprintf(gnuplot_pipe,"unset ylabel\n");
-                        fprintf(gnuplot_pipe,\
-                            "replot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
-                            current_data_buffer,gx,gy,gy,gx);    
-                    }
+                  fprintf(gnuplot_pipe,\
+                      "plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
+                      current_data_buffer,gx,gy,gy,gx);    
                 }
                 else
                 {
-                    if ( get_option("freeze") == 0)
-                    {
-                        fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w l \n",current_data_buffer,gx,gy,gz);    
-                    } 
-                    else
-                    {
-                        fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d%d w l \n",current_data_buffer,gx,gy,gz);    
-                    }
+                  fprintf(gnuplot_pipe,\
+                      "replot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
+                      current_data_buffer,gx,gy,gy,gx); 
                 }
-
-                fflush(gnuplot_pipe);
+              } 
+              else /* plot3d == 1 */
+              {
+                if ( get_option("freeze") == 0 )
+                {
+                  fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w l \n",current_data_buffer,gx,gy,gz);    
+                }
+                else
+                {
+                  fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d:%d w l \n",current_data_buffer,gx,gy,gz);    
+                }
+              }
+              fflush(gnuplot_pipe);
             }
 
             fpurge(stdin);
