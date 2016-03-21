@@ -1,0 +1,32 @@
+# This file controls the behaviour of line input editing for
+# programs that use the GNU Readline library.  Existing
+# programs include FTP, Bash, and GDB.
+#
+# You can re-read the inputrc file with C-x C-r.
+# Lines beginning with '#' are comments.
+#
+# First, include any system-wide bindings and variable
+# assignments from /etc/Inputrc
+$include /etc/Inputrc
+
+#
+# Set various bindings for emacs mode.
+
+TAB: complete
+
+# use a visible bell if one is available
+set bell-style visible
+
+# if there are more than 150 possible completions for
+# a word, ask the user if he wants to see all of them
+set completion-query-items 150
+
+# Odexp specific 
+# increment parameter value and run
+"\C-a": "+\C-j"
+# decrement parameter value and run
+"\C-x": "+\C-j"
+# plot next variable
+"\C-]": "]\C-j"
+# plot previous variable
+"\C-[": "]\C-j"

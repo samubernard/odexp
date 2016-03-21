@@ -243,12 +243,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("\noptions %s\n", hline);
-    /* success = init_options(); */
     printf_options();
     num_ic = malloc(ode_system_size*sizeof(uint8_t));
     for(i=0; i<ode_system_size; i++)
     {
-      num_ic[i]=0;
+      num_ic[i]=0; /* 0 if using expression as init cond; 
+                    * 1 if using runtime numrical values 
+                    */
     }
 
     /* init steady state */

@@ -677,7 +677,7 @@ echo "}" >>.odexp/model.c
 
 
 cp "$ODEXPDIR"/help.txt .odexp/
-
+cp "$ODEXPDIR"/.inputrc .odexp/
 
 
 
