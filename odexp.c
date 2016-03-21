@@ -774,11 +774,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             else if (updateplot)
                 /* This is where the plot is updated */
             {
+                /* set axis labels */
                 if (plot3d == 0)
                 {
-                    if (gx == 1) /* time evolution */
+                    if (gx == 1) /* time evolution: xlabel = 'time' */
                     {
-                            fprintf(gnuplot_pipe,"set xlabel 'time'\n");
+                        fprintf(gnuplot_pipe,"set xlabel 'time'\n");
+                    }
+                    else if ( (gx-2) < ode_system_size ) /* xlabel = name of variable  */
+                    {
+                      fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx-2]);
+                    }
+                    else if ( (gx-2) < total_nbr_x ) /* xlabel = name of auxiliary function */ 
+                    {
+                      fprintf(gnuplot_pipe,"set xlabel '%s'\n",fcn.name[gx - ode_system_size - 2]);
                     }
                     if ( get_option("freeze") == 0.0)
                     {

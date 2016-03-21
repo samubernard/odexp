@@ -25,7 +25,7 @@ set completion-query-items 150
 # increment parameter value and run
 "\C-a": "+\C-j"
 # decrement parameter value and run
-"\C-x": "+\C-j"
+"\C-x": "-\C-j"
 # plot next variable
 "\C-]": "]\C-j"
 # plot previous variable
