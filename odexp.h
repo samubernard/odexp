@@ -11,13 +11,14 @@
 /* =================================================================
                               DEFINE
 ================================================================= */
-#define MAXPARNAMELENGTH  63
-#define MAXOPTNAMELENGTH  63
+#define NAMELENGTH  63
 #define MAXFILENAMELENGTH 63
-#define MAXROOTLENGTH    15 
-#define MAXLINELENGTH     1023                            
+#define MAXROOTLENGTH     15 
+#define EXPRLENGTH     1023                            
 
-#define NBROPTS 7
+#define NBRNOPTS 7
+#define NBRSOPTS 1
+#define NBROPTS 8
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
@@ -42,14 +43,34 @@ typedef struct namevalexp
     int *max_name_length;
 } nve;
 
-typedef struct option
+typedef struct gen_option
 {
-    char    name[MAXOPTNAMELENGTH];
-    double  value;
-    char    descr[MAXLINELENGTH];
-} option;
+    char    name[NAMELENGTH];
+    char    valtype; /* d: double; i: int; s: string */
+    double  numval;
+    long    intval;
+    char    strval[NAMELENGTH];
+    char    descr[EXPRLENGTH];
+} gopt;
 
-extern struct option opts[NBROPTS];
+typedef struct numerical_option
+{
+    char    name[NAMELENGTH];
+    double  value;
+    char    descr[EXPRLENGTH];
+} nopt;
+
+typedef struct string_option
+{
+    char    name[NAMELENGTH];
+    char    value[EXPRLENGTH];
+    char    descr[EXPRLENGTH];
+} sopt;
+
+
+extern struct numerical_option nopts[NBRNOPTS];
+extern struct string_option sopts[NBRSOPTS];
+extern struct gen_option gopts[NBROPTS];
 
 typedef struct steady_state
 {
@@ -81,7 +102,8 @@ void init_steady_state(steady_state *stst, uint32_t size);
 
 void free_steady_state(steady_state *stst);
 
-void free_options();
+void free_noptions();
+void free_soptions();
 
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, uint32_t *nbr_el, uint32_t *nbr_epxr);
 
@@ -96,10 +118,13 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
 
 int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer);
 
-int8_t init_options();
 int8_t printf_options();
-int8_t set_option(const char *name, const double val); 
-double get_option(const char *name);
+int8_t set_dou(const char *name, const double val); 
+int8_t set_int(const char *name, const int val); 
+int8_t set_str(const char *name, const char * val); 
+double get_dou(const char *name);
+long   get_int(const char *name);
+char*  get_str(const char *name);
 
 /* readline */
 void initialize_readline(void);

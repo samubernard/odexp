@@ -39,16 +39,16 @@ static char *cmdline = (char *)NULL;
 int32_t ode_system_size;
 
 /* options */
-struct option opts[NBROPTS] = { 
-             {"odesolver_output_resolution", 201.0, "nominal number of output time points"},
-             {"odesolver_min_h", 1e-5, "minimal time step"},
-             {"odesolver_init_h", 1e-1, "initial time step"},
-             {"odesolver_eps_abs", 1e-6, "ode solver absolute tolerance"},
-             {"odesolver_eps_rel", 0.0, "ode solver relative tolerance"},
-             {"phasespace_max_fail", 1000.0, "max number if starting guesses for steady states"},  
-             {"freeze", 0.0, "add (on) or replace (off) curves on plot"} };
-            
-
+struct gen_option gopts[NBROPTS] = { 
+             {"odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
+             {"odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
+             {"odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
+             {"odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
+             {"odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
+             {"phasespace_max_fail", 'i', 1000.0, 1000, "", "max number if starting guesses for steady states"},  
+             {"freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
+             {"plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
+ 
 /* what kind of initial conditions to take */
 uint8_t *num_ic;
 
@@ -97,9 +97,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* last initial conditions */
     double *lastinit;
 
-    /* options */
-    double  v;
-
     /* steady states */
     steady_state *stst = malloc(sizeof(steady_state));
 
@@ -119,6 +116,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             ngy,
             ngz;
     double nvalue;
+    char svalue[NAMELENGTH];
     int replot      = 0, /* replot the same gnuplot command with new data */
         updateplot  = 0,  /* update plot with new parameters/option */
         rerun       = 0, /* run a new simulation */
@@ -150,8 +148,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.max_name_length = malloc(sizeof(int));
     for (i = 0; i < mu.nbr_el; i++)
     {
-        mu.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
-        mu.expression[i] = malloc(MAXLINELENGTH*sizeof(char*));
+        mu.name[i] = malloc(NAMELENGTH*sizeof(char));
+        mu.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
     success = load_namevalexp(system_filename,mu,"P",1);
     if (!success)
@@ -169,8 +167,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     pex.max_name_length = malloc(sizeof(int));
     for (i = 0; i < pex.nbr_el; i++)
     {
-        pex.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
-        pex.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
+        pex.name[i] = malloc(NAMELENGTH*sizeof(char));
+        pex.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
     success = load_strings(system_filename,pex,"E",1,1,' ');
     if (!success)
@@ -187,8 +185,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     var.max_name_length = malloc(sizeof(int));
     for (i = 0; i < var.nbr_el; i++)
     {
-        var.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
-        var.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
+        var.name[i] = malloc(NAMELENGTH*sizeof(char));
+        var.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
     success = load_strings(system_filename,var,"X",1,1,' ');
     if (!success)
@@ -208,8 +206,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     fcn.max_name_length = malloc(sizeof(int));
     for (i = 0; i < fcn.nbr_el; i++)
     {
-        fcn.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
-        fcn.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
+        fcn.name[i] = malloc(NAMELENGTH*sizeof(char));
+        fcn.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
     success = load_strings(system_filename,fcn,"A",1,1,' ');
     if (!success)
@@ -227,8 +225,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     eqn.max_name_length = malloc(sizeof(int));
     for (i = 0; i < eqn.nbr_el; i++)
     {
-        eqn.name[i] = malloc(MAXPARNAMELENGTH*sizeof(char));
-        eqn.expression[i] = malloc(MAXLINELENGTH*sizeof(char));
+        eqn.name[i] = malloc(NAMELENGTH*sizeof(char));
+        eqn.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
     success = load_strings(system_filename,eqn,"d",1,0,'=');   
     if (!success)
@@ -284,8 +282,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan);
     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
-    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
-        current_data_buffer,gx,gy,gy,gx);
+    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
+        current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
 
     while(1)
@@ -320,25 +318,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     break;
                 case 'f' : /* toggle freeze */
-                    v = 1-get_option("freeze");
-                    set_option("freeze",v);
-                    if ( v == 0.0 )
+                    set_int("freeze",1-get_int("freeze"));
+                    if ( get_int("freeze") == 0 )
                         printf("  freeze is off (not working as expected)\n");
                     else
                         printf("  freeze is on (not working as expected)\n");
                     printf("\n");
                     break;
                 case '>' : /* increase resolution */
-                    v = get_option("odesolver_output_resolution");
-                    v *= 2;
-                    set_option("odesolver_output_resolution",v);
+                    set_int("odesolver_output_resolution",2*get_int("odesolver_output_resolution"));
                     rerun = 1;
                     replot = 1;
                     break;
                 case '<' : /* decrease resolution */
-                    v = get_option("odesolver_output_resolution");
-                    v /= 2;
-                    set_option("odesolver_output_resolution",v);
+                    set_int("odesolver_output_resolution",get_int("odesolver_output_resolution")/2);
                     rerun = 1;
                     replot = 1;
                     break;
@@ -587,7 +580,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 'o') /* list options */
                     {
-                        printf_options(opts);
+                        printf_options();
                     }
                     else
                     {
@@ -701,12 +694,25 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if ( op == 'o' ) /* change options */
                     {
-                        sscanf(cmdline+2,"%d %lf",&i,&nvalue);
+                        sscanf(cmdline+2,"%d %s",&i,svalue);
                         if ( i >=0 && i < NBROPTS )
                         {
-                            opts[i].value = nvalue;
+                            switch (gopts[i].valtype)
+                            {
+                              case 'd':
+                                gopts[i].numval = strtod(svalue,NULL);
+                                break;
+                              case 'i':
+                                gopts[i].intval = strtol(svalue,NULL,10);
+                                break;
+                              case 's':
+                                strncpy(gopts[i].strval,svalue,NAMELENGTH);
+                                break;
+                              default:
+                                printf("  Warning: option not defined\n");
+                            }
                             rerun = 1;
-                            replot = 1;
+                            updateplot = 1;
                         }
                         else
                         {
@@ -768,7 +774,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan);
             }
-            if (replot || rerun)    
+            if (replot)    
             {
                 fprintf(gnuplot_pipe,"replot\n");
                 fflush(gnuplot_pipe);
@@ -777,7 +783,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 /* This is where the plot is updated */
             {
               /* set axis labels and plot */
-              if ( get_option("freeze") == 0 )
+              if ( get_int("freeze") == 0 )
               {
                   if (gx == 1) /* time evolution: xlabel = 'time' */
                   {
@@ -819,28 +825,30 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
               }
               if ( plot3d == 0 )
               {
-                if ( get_option("freeze") == 0 )
+                if ( get_int("freeze") == 0 )
                 {
                   fprintf(gnuplot_pipe,\
-                      "plot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
-                      current_data_buffer,gx,gy,gy,gx);    
+                      "plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
+                      current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);    
                 }
                 else
                 {
                   fprintf(gnuplot_pipe,\
-                      "replot \"%s\" using %d:%d with lines title columnhead(%d).\" vs \".columnhead(%d)\n",\
-                      current_data_buffer,gx,gy,gy,gx); 
+                      "replot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
+                      current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx); 
                 }
               } 
               else /* plot3d == 1 */
               {
-                if ( get_option("freeze") == 0 )
+                if ( get_int("freeze") == 0 )
                 {
-                  fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w l \n",current_data_buffer,gx,gy,gz);    
+                  fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w %s \n",current_data_buffer,gx,gy,gz,\
+                      get_str("plot_with_style"));    
                 }
                 else
                 {
-                  fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d:%d w l \n",current_data_buffer,gx,gy,gz);    
+                  fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d:%d w %s \n",current_data_buffer,gx,gy,gz,\
+                      get_str("plot_with_style"));    
                 }
               }
               fflush(gnuplot_pipe);
@@ -876,7 +884,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* printf("--free tspan\n"); */
     free_double_array( tspan );
     /* printf("--free options\n"); */
-    free_options();
+    free_noptions();
+    free_soptions();
     /* printf("--free num_ic\n"); */
     free(num_ic);
     /* printf("--free lasty\n"); */
@@ -919,7 +928,11 @@ void free_namevalexp(nve var )
     free(var.expression);
 }
 
-void free_options()
+void free_noptions()
+{
+}
+
+void free_soptions()
 {
 }
 
@@ -1028,9 +1041,9 @@ int8_t load_namevalexp(const char *filename, nve var, const char *sym, const siz
                 pos1++;
 
             length_name = pos1-pos0;
-            if (length_name > MAXPARNAMELENGTH)
+            if (length_name > NAMELENGTH)
             {
-                length_name = MAXPARNAMELENGTH;
+                length_name = NAMELENGTH;
             }
 
             sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]);
@@ -1232,8 +1245,8 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
                 exit ( EXIT_FAILURE );
               }
               var.value[i+j] = i+j+0.0;
-              strncpy(var.name[i+j],var.name[i],MAXPARNAMELENGTH);
-              strncpy(var.expression[i+j],var.expression[i],MAXPARNAMELENGTH);
+              strncpy(var.name[i+j],var.name[i],NAMELENGTH);
+              strncpy(var.expression[i+j],var.expression[i],NAMELENGTH);
             }
            
             for (j=0;j<expr_size;j++)
@@ -1379,43 +1392,40 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
     return success;
 }
 
-/*
-int8_t init_options()
-{
-    opts =  (option [NBROPTS]) { 
-             {"odesolver_output_resolution", 201.0, "nominal number of output time points"},
-             {"odesolver_min_h", 1e-5, "minimal time step"},
-             {"odesolver_init_h", 1e-1, "initial time step"},
-             {"odesolver_eps_abs", 1e-6, "ode solver absolute tolerance"},
-             {"odesolver_eps_rel", 0.0, "ode solver relative tolerance"},
-             {"phasespace_max_fail", 1000.0, "max number if starting guesses for steady states"},  
-             {"freeze", 0.0, "add (on) or replace (off) curves on plot"} };
-
-    return 1;
-}
-*/
-
 int8_t printf_options()
 {
     size_t i;
     for(i=0;i<NBROPTS;i++)
     {
-      printf("  O[%zu] %s = %f (%s)\n",i,opts[i].name,opts[i].value, opts[i].descr);
+      switch (gopts[i].valtype)
+      {
+        case 'd':
+          printf("  O[%zu] %s = %f (%s)\n",i,gopts[i].name,gopts[i].numval, gopts[i].descr);
+          break;
+        case 'i':
+          printf("  O[%zu] %s = %ld (%s)\n",i,gopts[i].name,gopts[i].intval, gopts[i].descr);
+          break;
+        case 's':
+          printf("  O[%zu] %s = %s (%s)\n",i,gopts[i].name,gopts[i].strval, gopts[i].descr);
+          break;
+        default:
+          printf("  O[%zu] %s = not defined\n",i,gopts[i].name);
+      }
     }
     return 1;
 }
 
-int8_t set_option(const char *name, const double val) 
+int8_t set_dou(const char *name, const double val) 
 {
     size_t idx_opt = 0;
     int8_t success = 0;
-    while ( strcmp(name, opts[idx_opt].name) && idx_opt < NBROPTS)
+    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
     {
       idx_opt++;
     }
     if (idx_opt < NBROPTS)
     {
-      opts[idx_opt].value = val;
+      gopts[idx_opt].numval = val;
       success = 1;
     }
     else
@@ -1426,23 +1436,100 @@ int8_t set_option(const char *name, const double val)
     return success;
 }
 
-double get_option(const char *name)
+int8_t set_int(const char *name, const int val) 
 {
     size_t idx_opt = 0;
-    while ( strcmp(name, opts[idx_opt].name) && idx_opt < NBROPTS)
+    int8_t success = 0;
+    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
     {
       idx_opt++;
     }
     if (idx_opt < NBROPTS)
     {
-      return opts[idx_opt].value;
+      gopts[idx_opt].intval = val;
+      success = 1;
+    }
+    else
+    {
+      printf("  error: could not assign option %s\n", name);
+    }
+
+    return success;
+}
+
+int8_t set_str(const char *name, const char * val) 
+{
+    size_t idx_opt = 0;
+    int8_t success = 0;
+    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    {
+      idx_opt++;
+    }
+    if (idx_opt < NBROPTS)
+    {
+      strncpy(gopts[idx_opt].strval,val,NAMELENGTH);
+      success = 1;
+    }
+    else
+    {
+      printf("  error: could not assign option %s\n", name);
+    }
+
+    return success;
+}
+
+
+double get_dou(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    {
+      idx_opt++;
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return gopts[idx_opt].numval;
     }
     else
     {  
-      return 0.0;
+      return -1.0;
     }
 }
 
+long get_int(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    {
+      idx_opt++;
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return gopts[idx_opt].intval;
+    }
+    else
+    {  
+      return -1;
+    }
+}
+
+
+char * get_str(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    {
+      idx_opt++;
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return gopts[idx_opt].strval;
+    }
+    else
+    {  
+      return NULL;
+    }
+}
 
 void initialize_readline()
 {

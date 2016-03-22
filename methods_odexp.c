@@ -34,14 +34,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 {
     double *y,
            *f;
-    double hmin = get_option("odesolver_min_h"),
-           h = get_option("odesolver_init_h"),
-           eps_abs = get_option("odesolver_eps_abs"),
-           eps_rel = get_option("odesolver_eps_rel");
+    double hmin = get_dou("odesolver_min_h"),
+           h = get_dou("odesolver_init_h"),
+           eps_abs = get_dou("odesolver_eps_abs"),
+           eps_rel = get_dou("odesolver_eps_rel");
     uint8_t hmin_alert = 0,
             disc_alert = 0,
             abort_odesolver_alert = 0;
-    uint32_t nbr_out = (uint32_t)get_option("odesolver_output_resolution");
+    uint32_t nbr_out = (uint32_t)get_int("odesolver_output_resolution");
     FILE *file;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
@@ -262,7 +262,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
     double *var_max; /* bounds on parameter values */
     size_t ntry = 0;
-    size_t max_fail = (size_t)get_option("phasespace_max_fail"); /* max number of iteration without finding a new steady state */
+    size_t max_fail = get_int("phasespace_max_fail"); /* max number of iteration without finding a new steady state */
     steady_state *stst; /* new steady state */
     size_t nbr_stst = 0; /* number of steady state found so far */
     size_t i,j;
