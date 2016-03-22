@@ -266,7 +266,10 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     steady_state *stst; /* new steady state */
     size_t nbr_stst = 0; /* number of steady state found so far */
     size_t i,j;
-    double rel_tol = 1e-2, abs_tol = 1e-2, err, ststn1;
+    double rel_tol = get_dou("phasespace_abs_tol"), 
+           abs_tol = get_dou("phasespace_rel_tol"), 
+           err, 
+           ststn1;
 
     /* stst solver */
     gsl_matrix *J = gsl_matrix_alloc(ode_system_size,ode_system_size);
@@ -298,7 +301,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     var_max = malloc(ode_system_size*sizeof(double));
     for ( i=0; i<ode_system_size; i++)
     {
-        var_max[i] = 2*var.value[i];
+        var_max[i] = get_dou("phasespace_search_range")*var.value[i];
     }
 
     /* search for steady states */

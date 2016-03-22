@@ -46,6 +46,9 @@ struct gen_option gopts[NBROPTS] = {
              {"odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
              {"odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
              {"phasespace_max_fail", 'i', 1000.0, 1000, "", "max number if starting guesses for steady states"},  
+             {"phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
+             {"phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
+             {"phasespace_search_range", 'd', 2, 0, "", "search range [0, v var value]"},  
              {"freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
              {"plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
  

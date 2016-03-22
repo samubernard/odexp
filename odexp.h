@@ -16,9 +16,7 @@
 #define MAXROOTLENGTH     15 
 #define EXPRLENGTH     1023                            
 
-#define NBRNOPTS 7
-#define NBRSOPTS 1
-#define NBROPTS 8
+#define NBROPTS 10
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
@@ -68,8 +66,6 @@ typedef struct string_option
 } sopt;
 
 
-extern struct numerical_option nopts[NBRNOPTS];
-extern struct string_option sopts[NBRSOPTS];
 extern struct gen_option gopts[NBROPTS];
 
 typedef struct steady_state
