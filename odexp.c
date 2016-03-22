@@ -48,7 +48,7 @@ struct gen_option gopts[NBROPTS] = {
              {"phasespace_max_fail", 'i', 1000.0, 1000, "", "max number if starting guesses for steady states"},  
              {"phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
              {"phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
-             {"phasespace_search_range", 'd', 2, 0, "", "search range [0, v var value]"},  
+             {"phasespace_search_range", 'd', 2.0, 0, "", "search range [0, v var value]"},  
              {"freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
              {"plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
  
@@ -163,7 +163,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get parametric expressions */
     printf("\nparametric expressions %s\n", hline);
     get_nbr_el(system_filename,"E",1, &pex.nbr_el, &pex.nbr_expr);
-    printf("pex: nbr_el = %u, nbr_expr = %u\n",pex.nbr_el,pex.nbr_expr);
     pex.value = malloc(pex.nbr_el*sizeof(double));
     pex.name = malloc(pex.nbr_el*sizeof(char*));
     pex.expression = malloc(pex.nbr_el*sizeof(char*));
@@ -746,12 +745,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     if ( op  == 's') /* compute steady state */
                     {
                         status = ststsolver(multiroot_rhs,var,mu, stst);
-                        if (!status && !plot3d)
-                        {
-                            fprintf(gnuplot_pipe,"replot \"<echo '%f %f'\" with points ls 2 title \"stst\"\n",\
-                                stst->s[gx-2],stst->s[gy-2]);
-                            fflush(gnuplot_pipe);
-                        }
                     } 
                     else if ( op == 'm')
                     {
