@@ -260,7 +260,8 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     int status, status_res, status_delta, newstst;
     const size_t ode_system_size = var.nbr_el;
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
-    double *var_max; /* bounds on parameter values */
+    double *var_min, /* lower bounds on steady state values */
+          *var_max; /* bounds on steady state values */
     size_t ntry = 0;
     size_t max_fail = get_int("phasespace_max_fail"); /* max number of iteration without finding a new steady state */
     steady_state *stst; /* new steady state */
@@ -297,6 +298,13 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     nbr_stst++;
     printf("First steady state found, looking for more...\n");
 
+    /* var_min */
+    var_min = malloc(ode_system_size*sizeof(double));
+    for ( i=0; i<ode_system_size; i++)
+    {
+        var_min[i] = get_dou("phasespace_search_min")*var.value[i];
+    }
+
     /* var_max */
     var_max = malloc(ode_system_size*sizeof(double));
     for ( i=0; i<ode_system_size; i++)
@@ -311,8 +319,8 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
         /*printf("  Finding a steady with initial guess\n");*/
         for ( i=0; i<ode_system_size; i++)
         {
-            var.value[i] *= var_max[i];
-            /*printf("  I[%zu] %+.5e\n",i,var.value[i]);*/
+            var.value[i] *= (var_max[i] - var_min[i]);
+            var.value[i] += var_min[i];
         }
         for ( i=0; i<ode_system_size; i++)
         {
@@ -391,6 +399,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     }
     free(stst);
     free(var_max);
+    free(var_min);
     gsl_qrng_free (q);
 
     gsl_multiroot_fsolver_free(s);

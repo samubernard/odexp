@@ -45,10 +45,11 @@ struct gen_option gopts[NBROPTS] = {
              {"odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
              {"odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
              {"odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
-             {"phasespace_max_fail", 'i', 1000.0, 1000, "", "max number if starting guesses for steady states"},  
+             {"phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
              {"phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
              {"phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
-             {"phasespace_search_range", 'd', 2.0, 0, "", "search range [0, v var value]"},  
+             {"phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v var value]"},  
+             {"phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v var value]"},  
              {"freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
              {"plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
  
@@ -731,8 +732,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = var.value[i];
                         }
+                    /* reset parameter values */
                     load_namevalexp(system_filename, mu, "P", 1);
-                    load_strings(system_filename,var,"X",1,1,' ');
+                    /* reset initial condtitions */
+                    ode_init_conditions(tspan.array[0], var.value, mu.value);
                     rerun = 1;
                     replot = 1;
                     break;

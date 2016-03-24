@@ -16,7 +16,7 @@
 #define MAXROOTLENGTH     15 
 #define EXPRLENGTH     1023                            
 
-#define NBROPTS 11
+#define NBROPTS 12
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
