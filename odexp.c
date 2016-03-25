@@ -978,7 +978,9 @@ int get_nbr_el(const char *filename, const char *sym,\
         {
             printf("--nbr_el = %u, found line = %s\n",*nbr_el,line);
             (*nbr_expr)++;
-            nbr_index = sscanf(line,"%*[a-zA-Z=\[]%zd:%zd",&index0, &index1);
+            /* scan for two integers, index0, index1 in [iter=i0:i1] */
+            nbr_index = sscanf(line,"%*[a-zA-Z0-9_: \[]=%zd:%zd",&index0, &index1);
+            printf("--nbr_index found = %d\n",nbr_index);
             if ( (nbr_index == 0) || (nbr_index == 1) ) /* a match to a scalar was found */
             {
                 (*nbr_el)++;
