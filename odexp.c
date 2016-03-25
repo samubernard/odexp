@@ -976,11 +976,11 @@ int get_nbr_el(const char *filename, const char *sym,\
         }
         if(k == sym_len) /* keyword was found */
         {
-            printf("--nbr_el = %u, found line = %s\n",*nbr_el,line);
+            /* printf("--nbr_el = %u, found line = %s\n",*nbr_el,line); */
             (*nbr_expr)++;
             /* scan for two integers, index0, index1 in [iter=i0:i1] */
             nbr_index = sscanf(line,"%*[a-zA-Z0-9_: \[]=%zd:%zd",&index0, &index1);
-            printf("--nbr_index found = %d\n",nbr_index);
+            /* printf("--nbr_index found = %d\n",nbr_index); */
             if ( (nbr_index == 0) || (nbr_index == 1) ) /* a match to a scalar was found */
             {
                 (*nbr_el)++;
@@ -994,7 +994,7 @@ int get_nbr_el(const char *filename, const char *sym,\
                 printf("  Error in determining number of elements... exiting\n");
                 exit ( EXIT_FAILURE );
             }
-            printf("--new nbr_el = %u\n",*nbr_el);
+            /* printf("--new nbr_el = %u\n",*nbr_el); */
 
         }
         k = 0; /* reset k */
@@ -1150,9 +1150,11 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
     int     expr_size;
     char *line = NULL;
     char *temploc = NULL;
-    char str2match[64],
-         str4size[64],
-         temp[64];
+    char str2match[NAMELENGTH],
+         str4size[NAMELENGTH],
+         temp[NAMELENGTH],
+         old_var_name[NAMELENGTH],
+         str_index[16];
     FILE *fr;
     int8_t success = 0;
     fr = fopen (filename, "rt");
@@ -1169,28 +1171,19 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
         {
             success = 1;
             /* get the size of the expression */
-            if ( prefix ) /* look for expression X0-3 */
-            {
-                /* create a search pattern of the type X0-3 */
-                snprintf(str4size,63*sizeof(char),"%s%%d-%%d",sym);
-            }
-            else
-            {
-                /* create a search pattern of the type A0-3 X[i=0:3] */
-                snprintf(str4size,63*sizeof(char),"%s%%*[^=]=%%d:%%d]",sym);
-            }
+            /* create a search pattern of the type A0:3 X[i=0:3] */
+            snprintf(str4size,NAMELENGTH*sizeof(char),"%s%%*[^=]=%%d:%%d]",sym);
             nbr_index_found = sscanf(line,str4size, &index0, &index1);
+            /* printf("--load_strings nbr_index_found = %d, for line = %s",nbr_index_found,line); */
             switch (nbr_index_found)
             {
+              case -1: /* scalar expression no prefix */
               case 0 : /* scalar expression no prefix */
               case 1 : /* scalar expression with prefix */
                 expr_size = 1;
                 break;
-              case 2 : /* vector expression */
-                if (prefix) /* vector expression with prefix */
-                  expr_size = index1 - index0 + 1; 
-                else
-                  expr_size = index1 - index0;
+              case 2 : /* vector expression, with or without prefix */
+                expr_size = index1 - index0;
                 break;
               default :
                 printf("  Error in determining number of elements (load_strings)... exiting\n");
@@ -1222,32 +1215,37 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
             /* printf("max_name_length = %d", *var.max_name_length); */
 
             /* prune strings [i=a:b] -> [] */
-            for (j=0;j<expr_size;j++)
+            success_brackets = sscanf(var.name[i],"%*[^[] %n %*[^=] %*[^]] %n",&bracket0,&bracket1);
+            strncpy(old_var_name,var.name[i],NAMELENGTH);
+            if ( expr_size > 1 && success_brackets == 0 )
             {
-              success_brackets = sscanf(var.name[i],"%*[^[] %n %*[^]] %n",&bracket0,&bracket1);
-              if (success_brackets == 0)
+              for(j=0;j<expr_size;j++)
               {
-                temploc = stpncpy(temp,var.name[i],bracket0+1);
-                strncpy(temploc,var.name[i]+bracket1,63);
-                strncpy(var.name[i],temp,63);
+                if ( i+j >= var.nbr_el )
+                {
+                  printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", sym);
+                  printf("  Number of variables is %u, index of variable is i=%zu, index of expression is %zu\n",\
+                      var.nbr_el,i,j);
+                  exit ( EXIT_FAILURE );
+                }
+                else
+                {
+                  printf("-- old_var_name = %s\n",old_var_name);
+                  temploc = stpncpy(temp,old_var_name,bracket0+1);
+                  printf("-- 1 temp = %s\n",temp);
+                  snprintf(str_index,15*sizeof(char),"%lu",index0+j);  
+                  temploc = stpncpy(temploc,str_index,15);
+                  printf("-- 2 temp = %s\n",temp);
+                  strncpy(temploc,old_var_name+bracket1,NAMELENGTH);
+                  printf("-- 3 temp = %s\n",temp);
+                  strncpy(var.name[i+j],temp,NAMELENGTH);
+                  var.value[i+j] = i+j+0.0;
+                }
               }
-               
             }
-            
-            /* copy the name root and expression  */
-            for (j=1;j<expr_size;j++)
-            {
-              if ( i+j >= var.nbr_el )
-              {
-                printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", sym);
-                printf("  Number of variables is %u, index of variable is i=%zu, index of expression is %zu\n", var.nbr_el,i,j);
-                exit ( EXIT_FAILURE );
-              }
-              var.value[i+j] = i+j+0.0;
-              strncpy(var.name[i+j],var.name[i],NAMELENGTH);
-              strncpy(var.expression[i+j],var.expression[i],NAMELENGTH);
-            }
-           
+            else if ( expr_size == 1 && success_brackets != 0 ) /* expr_size == 1 */
+            { /* do nothing */ }
+
             for (j=0;j<expr_size;j++)
             {
               printf("  [%zu] %-*s %c %s\n",i+j,*var.max_name_length,var.name[i+j], sep,var.expression[i+j]);
