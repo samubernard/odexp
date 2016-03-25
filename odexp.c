@@ -960,7 +960,6 @@ int get_nbr_el(const char *filename, const char *sym,\
     char *line = NULL;
     size_t index0,
            index1;
-    char sep;
     int    nbr_index,
            success = 0; 
     FILE *fr;
@@ -977,17 +976,14 @@ int get_nbr_el(const char *filename, const char *sym,\
         }
         if(k == sym_len) /* keyword was found */
         {
+            printf("--nbr_el = %u, found line = %s\n",*nbr_el,line);
             (*nbr_expr)++;
-            nbr_index = sscanf(line,"%*[a-zA-Z=\[]%zd%[-:]%zd",&index0, &sep, &index1);
+            nbr_index = sscanf(line,"%*[a-zA-Z=\[]%zd:%zd",&index0, &index1);
             if ( (nbr_index == 0) || (nbr_index == 1) ) /* a match to a scalar was found */
             {
                 (*nbr_el)++;
             }
-            else if (sep == '-')
-            {
-                *nbr_el += index1-index0+1;
-            }
-            else if (sep == ':')
+            else if ( nbr_index == 2 )
             {
                 *nbr_el += index1-index0;
             }
@@ -996,6 +992,7 @@ int get_nbr_el(const char *filename, const char *sym,\
                 printf("  Error in determining number of elements... exiting\n");
                 exit ( EXIT_FAILURE );
             }
+            printf("--new nbr_el = %u\n",*nbr_el);
 
         }
         k = 0; /* reset k */
@@ -1241,6 +1238,7 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
               if ( i+j >= var.nbr_el )
               {
                 printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", sym);
+                printf("  Number of variables is %u, index of variable is i=%zu, index of expression is %zu\n", var.nbr_el,i,j);
                 exit ( EXIT_FAILURE );
               }
               var.value[i+j] = i+j+0.0;

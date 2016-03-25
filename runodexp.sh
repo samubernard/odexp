@@ -142,7 +142,7 @@ system_parametric_expression () {
       {
         len*=b[k+2]-b[k+1]
       }
-      { printf "E%d-%-3d %s\n", nv, nv+len-1, $0 };
+      { printf "E%d:%-3d %s\n", nv, nv+len, $0 };
       nv+=len; 
     }' $file >>.odexp/system.par
 }
@@ -169,7 +169,7 @@ system_auxiliary_functions () {
       {
         len*=b[k+2]-b[k+1]
       }
-      { printf "A%d-%-3d %-16s\n", nv, nv+len-1, $0 };
+      { printf "A%d:%-3d %-16s\n", nv, nv+len, $0 };
       nv+=len; 
     }' $file >>.odexp/system.par
 }
@@ -209,7 +209,7 @@ system_init_conditions () {
       {
         len*=b[k+2]-b[k+1]
       }
-      { printf "X%d-%-3d %-16s\n", nv, nv+len-1, $0 };
+      { printf "X%d:%-3d %-16s\n", nv, nv+len, $0 };
       nv+=len; 
     }' $file >>.odexp/system.par
 }
@@ -307,12 +307,12 @@ assign_auxiliary_functions () {
 }
 
 assign_variables () {
-    awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[a-zA-Z0-9_]+\/[dD]{1}[tT]{1}/ && $1 !~ /[\[\]]/ {
-      match($1,/^[dD][a-zA-Z0-9_]+/);
+  awk -F ' ' -v nv=0 '$1 ~ /^[dD][a-zA-Z0-9_]+(\[[^:]\])*\/[dD]{1}[tT]{1}/ {
+      match($1,/^[dD][a-zA-Z0-9_\[\]]+/);
       lhs=substr($1, RSTART+1,RLENGTH-1);
       printf "    %s = y_[%d];\n", lhs, nv; nv++};
       
-      $1 ~ /^[dD][a-zA-Z0-9_]+(\[.+\])+\/[dD][tT]/ {  
+      $1 ~ /^[dD][a-zA-Z0-9_]+(\[.+=.+:.+\])+\/[dD][tT]/ {  
       match($1,/(\[.+\])+/);
       a=substr($1, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
@@ -332,7 +332,7 @@ assign_variables () {
       {printf " = y_["};
       for (k=2; k<=length(b); k+=4)
       {
-        printf "%s+%d", b[k], nv;
+        printf "%s+%d", b[k], nv-b[k+1];
         nv+=b[k+2]-b[k+1]
       }
       {  printf "];\n" };  
@@ -340,10 +340,10 @@ assign_variables () {
 }
 
 assign_equations () {
-    awk -F ' ' -v nv=0 '$1 ~ /^[dD]{1}[a-zA-Z0-9_]+\/[dD]{1}[tT]{1}/ && $1 !~ /[\[\]]/ { 
+    awk -F ' ' -v nv=0 '$1 ~ /^[dD][a-zA-Z0-9_]+(\[[^:]\])*\/[dD]{1}[tT]{1}/ {
       split($0,ex,/=/); printf "    f_[%d] = %s;\n", nv, ex[2]; nv++};
       
-      $1 ~ /^[dD]{1}[a-zA-Z0-9_]+(\[.+\])+\/[dD]{1}[tT]{1}/ {
+      $1 ~ /^[dD][a-zA-Z0-9_]+(\[.+=.+:.+\])+\/[dD][tT]/ {
       match($1,/(\[.+\])+/);
       a=substr($1, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
@@ -357,7 +357,7 @@ assign_equations () {
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "[%s+%d]", b[k], nv
+        printf "[%s+%d]", b[k], nv-b[k+1]
         nv+=b[k+2]-b[k+1] 
       }; 
       {printf " = %s;\n", myexpr}; }' $file >>.odexp/model.c
