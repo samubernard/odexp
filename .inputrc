@@ -30,3 +30,6 @@ set completion-query-items 150
 "\C-]": "]\C-j"
 # plot previous variable
 "\C-[": "[\C-j"
+# extend 
+"\C-e": "e\C-j"
+

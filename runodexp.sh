@@ -203,13 +203,19 @@ system_init_conditions () {
       $1 ~ /^[xXiI]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
-      $1="";
+      lhs=$2;
+      split($0,ex," ");
       len=1;
       for (k=2; k<=length(b); k+=4)
       {
         len*=b[k+2]-b[k+1]
       }
-      { printf "X%d:%-3d %-16s\n", nv, nv+len, $0 };
+      printf "X%d:%d %-16s", nv, nv+len, lhs;
+      for(k=3;k<=length(ex);k++)
+      {
+        printf "%s ", ex[k]
+      };
+      printf "\n";
       nv+=len; 
     }' $file >>.odexp/system.par
 }

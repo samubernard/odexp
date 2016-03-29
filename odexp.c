@@ -263,7 +263,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* seed random number generator */
     randseed = 1306;
     srand(randseed);
-
+    /* test rng */
+    printf("\nrandom number generator %s\n", hline);
+    printf("  RAND_MAX %d\n",RAND_MAX);
+    printf("  rand01() = %f\n\n", rand01());
+    
     /* readline */
     printf("  readline library version: %s\n", rl_library_version);
     initialize_readline();
@@ -1230,17 +1234,21 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
                 }
                 else
                 {
-                  printf("-- old_var_name = %s\n",old_var_name);
+                  /* printf("-- old_var_name = %s\n",old_var_name); */
                   temploc = stpncpy(temp,old_var_name,bracket0+1);
-                  printf("-- 1 temp = %s\n",temp);
+                  /* printf("-- 1 temp = %s\n",temp); */
                   snprintf(str_index,15*sizeof(char),"%lu",index0+j);  
                   temploc = stpncpy(temploc,str_index,15);
-                  printf("-- 2 temp = %s\n",temp);
+                  /* printf("-- 2 temp = %s\n",temp); */
                   strncpy(temploc,old_var_name+bracket1,NAMELENGTH);
-                  printf("-- 3 temp = %s\n",temp);
+                  /* printf("-- 3 temp = %s\n",temp); */
                   strncpy(var.name[i+j],temp,NAMELENGTH);
                   var.value[i+j] = i+j+0.0;
                 }
+                if ( j > 0 )
+                {
+                  strncpy(var.expression[i+j],var.expression[i],EXPRLENGTH);
+                } 
               }
             }
             else if ( expr_size == 1 && success_brackets != 0 ) /* expr_size == 1 */

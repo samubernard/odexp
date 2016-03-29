@@ -7,7 +7,7 @@ list of commands
          or a[s][u] 
      A              reset (A)xes    reset axes normal scale 
      >, <           inc, dec        increase, decrease number of time steps 
-     x[i]           plot(x)         plot variable number i 
+     x[i]           plot(x)         plot variable number i againts t
      [              plot previous,  plot previous variable (cyclic)
      ]              plot next       plot next variable (cyclic)
      v [x] [y]      (v)iew          set 2D view, x axis to x and y axis to y (t=-1) 
@@ -19,25 +19,27 @@ list of commands
      I              reset (I)nit    set initial conditions to previous 
      l              (l)ist          list 
        a            (a)ux           list all auxiliary functions 
-       e            (e)expressions  list all parametric expressions
-       i            (i)init         list all variables with init conditions 
-       n            (n)nbr eqs      display system size
+       e            (e)xpressions   list all parametric expressions
+       i            (i)nit          list all variables with init conditions 
+       n            (n)br eqs       display system size
        p            (p)ar           list all parameters and their values 
        x            d(x)/dt         list all equations and auxiliary functions 
        s            (s)tst          list steady state 
+       o            (o)ptions       list options 
      c              (c)hange        change value of parameter, init cond, or tpsan 
        p[i] [v]                     set value of parameter i to v (i=0 to P-1) 
        i[i] [v]                     set value of init cond i to v (i=0 to N-1) 
        t[i] [v]                     set value of ti to v (i = 0 or 1) 
-     h              (h)elp          this help 
+       o[i] [v]                     set value of option i to v
      d              (d)efaults      reload the parameter file 
      f              (f)reeze        toggle plot freeze (on/off) 
      g [cmd]        (g)nuplot       send the command cmd to gnuplot 
+     h              (h)elp          this help 
      p[i]           (p)ar           set the current parameter to i 
-     s [msg]        (s)nap          snapshot of current simulation and parameter values with msg 
      m              (m)ethods       run numerical method 
-         s          (s)teady state  find a steady state with starting guess init cond 
-         m          (m)any stst     try to find all steady states 
+       s            (s)teady state  find a steady state with starting guess init cond 
+       m            (m)any stst     try to find all steady states 
+     s [msg]        (s)nap          snapshot of current simulation and parameter values with msg 
      q [msg]        (q)uit          quit and snap 
      Q [msg]        (Q)uit          quit without snapshot 
 
