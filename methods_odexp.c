@@ -87,11 +87,15 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     ode_init_conditions(t, y, mu.value);
     for (i = 0; i < ode_system_size; i++)
     {
-        printf("--ic[%d]=%f\n",i,y[i]); 
-        if (num_ic[i])
+        if (num_ic[i]) /* use var.value as initial condition */
         {
             y[i] = var.value[i];
         }
+        else /* set var.value to y as initial condition */
+        {
+            var.value[i] = y[i];
+        }
+        printf("--ic[%d]=%f\n",i,var.value[i]); 
     }
 
     /* open output file */

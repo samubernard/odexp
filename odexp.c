@@ -1386,7 +1386,7 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
     fprintf(fr,"\ntspan ");
     for(i=0;i<tspan.length;i++)
     {
-      fprintf(fr,"%f \n",tspan.array[i]);
+      fprintf(fr,"%f ",tspan.array[i]);
     }
     fprintf(fr,"\n");
 
