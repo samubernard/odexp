@@ -270,13 +270,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     /* readline */
     printf("  readline library version: %s\n", rl_library_version);
-    initialize_readline();
-    /* readline init file */
-    if (rl_read_init_file (".odexp/.inputrc") )
+    
+    if (strcmp("EditLine wrapper",rl_library_version) == 0)
+    {
+        printf("  warning: inputrc will not work\n");
+    }
+    else if ( rl_read_init_file (".odexp/.inputrc") ) /* readline init file */
     {
       printf("\n  warning: inputrc file for readline not found\n");
     }
-    
+    initialize_readline();
+
     /* history - initialize session */
     using_history();
     if ( read_history(".history") )
@@ -595,21 +599,48 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     break;
                 case 'p' : /* change current parameter */
-                    nbr_read = sscanf(cmdline+1,"%d",&np);
-                    if (nbr_read == 1)
+                    nbr_read = sscanf(cmdline+1,"%d %lf",&np,&nvalue);
+
+                    if (nbr_read >= 1)
                     {
                       if (np > -1 && np < mu.nbr_el)
                       {
                           p = np;
+                          if ( nbr_read == 2 )
+                          {
+                              mu.value[p] = nvalue;
+                          } 
+                          rerun = 1;
+                          replot = 1;
+                          printf("  current parameter set to %s = %lf\n", mu.name[p],mu.value[p]);
                       }
                       else
                       {
                           printf("  error: par index out of bound\n");
+                          printf("  current parameter %s = %lf\n", mu.name[p],mu.value[p]);
                       }
+                      
                     }
-                    printf("  current par: %s\n", mu.name[p]);
+                    else if (nbr_read <= 0)
+                    {
+                        printf("  current parameter is %s = %lf\n", mu.name[p],mu.value[p]);
+                    }
                     break;
-                case 'c' : /* change parameter/init values */
+                case 'P' : /* set value of current parameter */
+                    nbr_read = sscanf(cmdline+1,"%lf",&nvalue);
+                    if (nbr_read == 1)
+                    {
+                        mu.value[p] = nvalue;
+                        printf("  set to %s = %lf\n", mu.name[p],mu.value[p]);
+                        rerun = 1;
+                        replot = 1;
+                    }
+                    else
+                    {
+                        printf("  error: expected a parameter value (double)\n");
+                    }
+                    break;
+               case 'c' : /* change parameter/init values */
                     sscanf(cmdline+1,"%c",&op);
                     if( op == 'p' )
                     {
@@ -618,8 +649,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                           if ( np > -1 && np < mu.nbr_el )
                           {
-                            p = np;
-                            mu.value[p] = nvalue;
+                            mu.value[np] = nvalue;
+                            printf("  %s = %lf\n",mu.name[np],mu.value[np]);
                             rerun = 1;
                             replot = 1;
                           }
