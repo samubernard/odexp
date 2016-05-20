@@ -95,7 +95,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         {
             var.value[i] = y[i];
         }
-        printf("--ic[%d]=%f\n",i,var.value[i]); 
+        /* printf("--ic[%d]=%f\n",i,var.value[i]);  */
     }
 
     /* open output file */

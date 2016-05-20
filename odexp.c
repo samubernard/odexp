@@ -246,6 +246,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get options */
     printf("\noptions %s\n", hline);
     printf_options();
+
+    /* set IC to their numerical values */
     num_ic = malloc(ode_system_size*sizeof(uint8_t));
     for(i=0; i<ode_system_size; i++)
     {
@@ -1430,22 +1432,39 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
 
 int8_t printf_options()
 {
-    size_t i;
+    size_t i; 
+    int p = 32;
+    int s = (int)log(NBROPTS);
+    int d = 16;
+    static char *index = "\033[1;35m";
+    static char *details = "\033[3;36m";
+    static char *val = "\033[3;31m";
+    static char *normal = "\033[0m";
+
     for(i=0;i<NBROPTS;i++)
     {
       switch (gopts[i].valtype)
       {
         case 'd':
-          printf("  O[%zu] %s = %f (%s)\n",i,gopts[i].name,gopts[i].numval, gopts[i].descr);
+          printf("  O[%s%*zu%s] ",index,s,i,normal);
+          printf("%-*s = ",p,gopts[i].name);
+          printf("%s%-*f ",val,d,gopts[i].numval);
+          printf("%s%s%s\n",details,gopts[i].descr,normal);
           break;
         case 'i':
-          printf("  O[%zu] %s = %ld (%s)\n",i,gopts[i].name,gopts[i].intval, gopts[i].descr);
+          printf("  O[%s%*zu%s] ",index,s,i,normal);
+          printf("%-*s = ",p,gopts[i].name);
+          printf("%s%-*ld ",val,d,gopts[i].intval);
+          printf("%s%s%s\n",details,gopts[i].descr,normal);
           break;
         case 's':
-          printf("  O[%zu] %s = %s (%s)\n",i,gopts[i].name,gopts[i].strval, gopts[i].descr);
+          printf("  O[%s%*zu%s] ",index,s,i,normal);
+          printf("%-*s = ",p,gopts[i].name);
+          printf("%s%-*s ",val,d,gopts[i].strval);
+          printf("%s%s%s\n",details,gopts[i].descr,normal);
           break;
         default:
-          printf("  O[%zu] %s = not defined\n",i,gopts[i].name);
+          printf("  O[%-*zu] %-*s = not defined\n",s,i,p,gopts[i].name);
       }
     }
     return 1;
