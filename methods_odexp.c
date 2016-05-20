@@ -154,6 +154,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
          return 1;  
     }  
 
+    /* ODE solver - main loop */
     while (t < t1 && !abort_odesolver_flag)
     {
         tnext = fmin(t+dt,t1);
@@ -167,6 +168,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           fflush(stdout);
         }
                
+        /* ODE solver - time step */
         while ( t < tnext)
         {
             sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
@@ -238,7 +240,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
     else
     {
-        printf("an error occured, GSL STATUS = %d.\n", status);
+        printf("GSL Error %d occured.\n", status);
     }
 
     for (i = 0; i < ode_system_size; i++)

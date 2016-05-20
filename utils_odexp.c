@@ -76,3 +76,27 @@ double conv(double *u, double *v, int32_t len) /* convolution product */
   return s;
 }
 
+double minus(double x, double y)
+{
+    return x-y;    
+}
+
+double plus(double x, double y)
+{
+    return x+y;
+}
+
+double sumxy(const double *x, int32_t len, const double yi, double (*f)(double), double (*g)(double, double) )
+{
+    double s = 0.0;
+    int32_t j;
+    
+    for (j=0;j<len;j++)
+    {
+        s += f( g(x[j],yi) );
+    }
+    
+    return s;
+}
+
+

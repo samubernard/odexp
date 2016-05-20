@@ -11,9 +11,16 @@ ODEXPDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 set -eu # makes your program exit on error or unbound variable
 
-file=$1
-
 mkdir -p .odexp
+
+awk '$1 ~ /C/ {n++; name[n]=$2; val[n]=$3};
+    $1 !~ /C/ { 
+    for(i=1;i<=n;i++) {
+        gsub(name[i],val[i],$0);
+        print $0 
+    }
+    }' coupled.odexp >.odexp/sub.odexp
+file=.odexp/sub.odexp
 
 declare_iterators () {
     awk -F ' ' -v i=1 '/(\[.+\])+/ { match($2,/(\[.+\])+/);
@@ -300,6 +307,9 @@ assign_auxiliary_functions () {
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
       myvar=c[1];
+      $1="";
+      $2="";
+      ex=$0;
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
@@ -309,7 +319,7 @@ assign_auxiliary_functions () {
       { 
         printf "[%s]", b[k] 
       }; 
-      {printf " = %s;\n", $4}; }' $file >>.odexp/model.c
+      {printf " = %s;\n", ex}; }' $file >>.odexp/model.c
 }
 
 assign_variables () {
@@ -371,29 +381,21 @@ assign_equations () {
 
 assign_aux_pointer () {
     awk -F ' ' -v nv=0 '$1 ~ /^[aA][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      $1="";
-      $2="";
-      ex=$0
+      ex=$2;
       printf "    aux_[%d] = %s;\n", nv, ex; nv++
       };
       
-      $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+\])+/ { match($2,/(\[.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       myvar="aux_";
-      split($0,e,/=/);
-      myexpr=e[length(e)];
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
-      };
-      {printf "%-*s%s", k+2, "", myvar};
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "[%s+%d]", b[k], nv
-        nv+=b[k+2]-b[k+1] 
-      }; 
-      {printf " = %s;\n", myexpr}; }' $file >>.odexp/model.c
+      split($2,c,/\[/);
+      ex=c[1];
+      printf "%-*sfor(%s=%s;%s<%s;%s++)\n", 5, "", b[2], b[3], b[2], b[4], b[2]; 
+      printf "%-*s%s[%s+%d]", 7, "", myvar, b[2], nv;
+      printf " = %s[%s];\n", ex, b[2];
+      nv+=b[4]-b[3]
+      }' $file >>.odexp/model.c
 }
 
 assign_initial_conditions () {
@@ -445,6 +447,7 @@ echo "                              Header files" >>.odexp/model.c
 echo "================================================================= */" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "#include \"odexp.h\"" >>.odexp/model.c
+echo "#include \"utils_odexp.h\"" >>.odexp/model.c
 #echo "/* =================================================================" >>.odexp/model.c
 #echo "                              Defines" >>.odexp/model.c
 #echo "================================================================= */" >>.odexp/model.c
@@ -620,7 +623,8 @@ echo "    int success_ = 0;" >>.odexp/model.c
 # ITERATORS
 # find iterators in the source file and declare them 
 echo "    /* iterators */" >>.odexp/model.c
-declare_iterators_init_conditions
+declare_iterators
+#declare_iterators_init_conditions
 echo "" >>.odexp/model.c
 
 # ====================================================================================
