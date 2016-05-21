@@ -122,6 +122,9 @@ double get_dou(const char *name);
 long   get_int(const char *name);
 char*  get_str(const char *name);
 
+void printf_list_val(char type, int32_t i, int padding, int max_name_length, char *name, double value, char *descr);
+void printf_list_str(char type, int32_t i, int padding, int max_name_length, char *name, char  *expr);
+
 /* readline */
 void initialize_readline(void);
 

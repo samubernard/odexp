@@ -13,8 +13,8 @@ set -eu # makes your program exit on error or unbound variable
 
 mkdir -p .odexp
 
-awk '$1 ~ /C/ {n++; name[n]=$2; val[n]=$3};
-    $1 !~ /C/ { 
+awk '$1 ~ /^%/ {n++; name[n]=$1; val[n]=$2; print $0};
+    $1 !~ /^%/ { 
     for(i=1;i<=n;i++) {
         gsub(name[i],val[i],$0);
         print $0 

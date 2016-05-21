@@ -16,5 +16,5 @@ double dotprod(double *x, double *y, int32_t len); /* scalar product of two arra
 double conv(double *u, double *v, int32_t len); /* convolution product */ 
 double minus(double x, double y);
 double plus(double x, double y);
-double sumxy(const double *x, int32_t len, const double yi, double (*f)(double), double (*g)(double, double) );
+double sumxy(int32_t len, double (*f)(double), double (*g)(double, double), const double *x, const double yi);
 

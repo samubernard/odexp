@@ -86,7 +86,7 @@ double plus(double x, double y)
     return x+y;
 }
 
-double sumxy(const double *x, int32_t len, const double yi, double (*f)(double), double (*g)(double, double) )
+double sumxy(int32_t len, double (*f)(double), double (*g)(double, double), const double *x, const double yi)
 {
     double s = 0.0;
     int32_t j;

@@ -56,6 +56,13 @@ struct gen_option gopts[NBROPTS] = {
 /* what kind of initial conditions to take */
 uint8_t *num_ic;
 
+static char *T_IND = "\033[1;35m";
+static char *T_DET = "\033[3;36m";
+static char *T_VAL = "\033[3;31m";
+static char *T_EXPR = "\033[3;36m";
+static char *T_NOR = "\033[0m";
+
+
 /* =================================================================
                              Main Loop 
 ================================================================= */
@@ -301,6 +308,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     while(1)
     {
+        printf("%s",T_NOR);
         cmdline = readline("odexp> ");
         if (cmdline && *cmdline) /* check if cmdline is not empty */
         {
@@ -519,8 +527,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<mu.nbr_el; i++)
                         {
                             padding = (int)log10(mu.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf("  P[%d]%-*s %-*s = %e\n",\
-                                i, padding, "", *mu.max_name_length,mu.name[i],mu.value[i]);
+                            printf_list_val('P',i,padding,*mu.max_name_length,mu.name[i],mu.value[i],"--");
                         }
                     }
                     else if (op == 'e') /* list parametric expression */
@@ -528,8 +535,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<pex.nbr_el; i++)
                         {
                             padding = (int)log10(pex.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf("  E[%d]%-*s %-*s = %s\n",\
-                                i, padding, "", *pex.max_name_length,pex.name[i],pex.expression[i]);
+                            printf_list_str('E',i,padding,*pex.max_name_length,pex.name[i],pex.expression[i]);
                         }
                     }
                     else if (op == 'i') /* list initial conditions */
@@ -537,8 +543,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<ode_system_size; i++)
                         {
                             padding = (int)log10(var.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf("  I[%d]%-*s %-*s = %.6e (%s)\n",\
-                                i, padding, "", *var.max_name_length,var.name[i],var.value[i],var.expression[i]);
+                            printf_list_val('I',i,padding,*var.max_name_length,var.name[i],var.value[i],var.expression[i]);
                         }
                     }
                     else if (op == 'x') /* list equations */
@@ -547,23 +552,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<eqn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                            printf("  D[%d]%-*s %-*s = %s\n",\
-                                i,padding, "", namelength,eqn.name[i],eqn.expression[i]);
+                            printf_list_str('D',i,padding,namelength,eqn.name[i],eqn.expression[i]);
                         }
                         for (i=0; i<fcn.nbr_el; i++)
                         {
-                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+ode_system_size+0.5);
-                            printf("  A[%d]%-*s %-*s = %s\n",\
-                                i+ode_system_size,padding, "", namelength,fcn.name[i],fcn.expression[i]);
+                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
+                            printf_list_str('A',i,padding,namelength,fcn.name[i],fcn.expression[i]);
                         }
                     }
                     else if (op == 'a') /* list auxiliairy equation */ 
                     {
                         for (i=0; i<fcn.nbr_el; i++)
                         {
-                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+ode_system_size+0.5);
-                            printf("  A[%d]%-*s %-*s = %s\n",\
-                                i+ode_system_size, padding, "", *fcn.max_name_length,fcn.name[i],fcn.expression[i]);
+                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
+                            printf_list_str('A',i,padding,namelength,fcn.name[i],fcn.expression[i]);
                         }
                     }
                     else if (op == 't') /* list tspan */
@@ -571,7 +573,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         printf("  tspan = "); 
                         for(i=0;i<tspan.length;i++)
                         {
-                          printf("%.2e ",tspan.array[i]);
+                          printf("%s%.2e%s ",T_VAL,tspan.array[i],T_NOR);
                         }
                         printf("\n");
                     }
@@ -580,16 +582,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<ode_system_size; i++)
                         {
                             padding = (int)log10(var.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf("  S[%d]%-*s %-*s = %e\n",\
-                                i, padding, "", *var.max_name_length, var.name[i],stst->s[i]);
+                            printf_list_val('S',i,padding,*var.max_name_length,var.name[i],stst->s[i],"*");
                         }
-                        printf("  status: %s\n",gsl_strerror(status));
+                        printf("  *status: %s%s%s\n",T_DET,gsl_strerror(status),T_NOR);
                     }
                     else if (op == 'n') /* list ode system size */
                     {
-                        printf("  ode system size = %d\n",ode_system_size);
-                        printf("  number auxiliary functions = %d\n",fcn.nbr_el);
-                        printf("  total number of variables = %d\n",total_nbr_x);
+                        printf("  ode system size            = %s%d%s\n",T_VAL,ode_system_size,T_NOR);
+                        printf("  number auxiliary functions = %s%d%s\n",T_VAL,fcn.nbr_el,T_NOR);
+                        printf("  total number of variables  = %s%d%s\n",T_VAL,total_nbr_x,T_NOR);
                     }
                     else if (op == 'o') /* list options */
                     {
@@ -605,27 +606,31 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
                     if (nbr_read >= 1)
                     {
-                      if (np > -1 && np < mu.nbr_el)
+                      if (np > -1 && np < mu.nbr_el) /* new active parameter */
                       {
                           p = np;
-                          if ( nbr_read == 2 )
+                          if ( nbr_read == 2 ) /* new active parameter with new value */ 
                           {
                               mu.value[p] = nvalue;
-                          } 
-                          rerun = 1;
-                          replot = 1;
-                          printf("  current parameter set to %s = %lf\n", mu.name[p],mu.value[p]);
+                              rerun = 1;
+                              replot = 1;
+                              printf("  new active parameter %s set to %lg\n", mu.name[p],mu.value[p]);
+                          }
+                          else /* new active parameter without new value */
+                          {
+                              printf("  new active parameter %s with value %lg\n", mu.name[p],mu.value[p]);
+                          }
                       }
                       else
                       {
-                          printf("  error: par index out of bound\n");
-                          printf("  current parameter %s = %lf\n", mu.name[p],mu.value[p]);
+                          printf("  error: parameter index out of bound. Use lp to list parameters\n");
+                          printf("  active parameter %s = %lg\n", mu.name[p],mu.value[p]);
                       }
                       
                     }
-                    else if (nbr_read <= 0)
+                    else if (nbr_read <= 0) /* just show the active parameter and its value */
                     {
-                        printf("  current parameter is %s = %lf\n", mu.name[p],mu.value[p]);
+                        printf("  %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                     }
                     break;
                 case 'P' : /* set value of current parameter */
@@ -633,7 +638,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     if (nbr_read == 1)
                     {
                         mu.value[p] = nvalue;
-                        printf("  set to %s = %lf\n", mu.name[p],mu.value[p]);
+                        printf("  set to %s = %lg\n", mu.name[p],mu.value[p]);
                         rerun = 1;
                         replot = 1;
                     }
@@ -652,7 +657,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           if ( np > -1 && np < mu.nbr_el )
                           {
                             mu.value[np] = nvalue;
-                            printf("  %s = %lf\n",mu.name[np],mu.value[np]);
+                            printf("  %s = %lg\n",mu.name[np],mu.value[np]);
                             rerun = 1;
                             replot = 1;
                           }
@@ -1436,32 +1441,28 @@ int8_t printf_options()
     int p = 32;
     int s = (int)log(NBROPTS);
     int d = 16;
-    static char *index = "\033[1;35m";
-    static char *details = "\033[3;36m";
-    static char *val = "\033[3;31m";
-    static char *normal = "\033[0m";
 
     for(i=0;i<NBROPTS;i++)
     {
       switch (gopts[i].valtype)
       {
         case 'd':
-          printf("  O[%s%*zu%s] ",index,s,i,normal);
+          printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
           printf("%-*s = ",p,gopts[i].name);
-          printf("%s%-*f ",val,d,gopts[i].numval);
-          printf("%s%s%s\n",details,gopts[i].descr,normal);
+          printf("%s%-*g ",T_VAL,d,gopts[i].numval);
+          printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
           break;
         case 'i':
-          printf("  O[%s%*zu%s] ",index,s,i,normal);
+          printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
           printf("%-*s = ",p,gopts[i].name);
-          printf("%s%-*ld ",val,d,gopts[i].intval);
-          printf("%s%s%s\n",details,gopts[i].descr,normal);
+          printf("%s%-*ld ",T_VAL,d,gopts[i].intval);
+          printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
           break;
         case 's':
-          printf("  O[%s%*zu%s] ",index,s,i,normal);
+          printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
           printf("%-*s = ",p,gopts[i].name);
-          printf("%s%-*s ",val,d,gopts[i].strval);
-          printf("%s%s%s\n",details,gopts[i].descr,normal);
+          printf("%s%-*s ",T_VAL,d,gopts[i].strval);
+          printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
           break;
         default:
           printf("  O[%-*zu] %-*s = not defined\n",s,i,p,gopts[i].name);
@@ -1585,6 +1586,22 @@ char * get_str(const char *name)
       return NULL;
     }
 }
+
+void printf_list_val(char type, int32_t i, int padding, int max_name_length, char *name, double value, char *descr)
+{
+    printf("  %c[%s%d%s]%-*s %-*s = %s%14e%s   %s%s%s\n",\
+            type,T_IND,i,T_NOR, padding, "", max_name_length,name, T_VAL,value,T_NOR,T_DET,descr,T_NOR);
+ 
+}
+
+void printf_list_str(char type, int32_t i, int padding, int max_name_length, char *name, char  *expr)
+{
+    printf("  %c[%s%d%s]%-*s %-*s = %s%s%s\n",\
+            type,T_IND,i,T_NOR, padding, "", max_name_length,name,T_EXPR,expr,T_NOR);
+ 
+}
+
+
 
 void initialize_readline()
 {
