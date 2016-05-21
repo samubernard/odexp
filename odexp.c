@@ -1589,7 +1589,7 @@ char * get_str(const char *name)
 
 void printf_list_val(char type, int32_t i, int padding, int max_name_length, char *name, double value, char *descr)
 {
-    printf("  %c[%s%d%s]%-*s %-*s = %s%14e%s   %s%s%s\n",\
+    printf("  %c[%s%d%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
             type,T_IND,i,T_NOR, padding, "", max_name_length,name, T_VAL,value,T_NOR,T_DET,descr,T_NOR);
  
 }
