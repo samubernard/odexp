@@ -77,7 +77,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char *helpcmd = "less -S .odexp/help.txt";
     const char current_data_buffer[] = "current.tab";
     const char *hline = "----------------";
-    char       *par_details = NULL;
+    char       par_details[32];
     int32_t i;
     int8_t success;
     
@@ -530,11 +530,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             padding = (int)log10(mu.nbr_el+0.5)-(int)log10(i+0.5);
                             if ( i == p ) /* listing active parameter */
                             {
-                                snprintf(par_details,16*sizeof(char),"active parameter");  
+                                snprintf(par_details,17*sizeof(char),"active parameter");  
                             }
                             else
                             {
-                                snprintf(par_details,2*sizeof(char),"--");  
+                                snprintf(par_details,3*sizeof(char),"--");  
                             }
                             printf_list_val('P',i,padding,*mu.max_name_length,mu.name[i],mu.value[i],par_details);
                         }
