@@ -527,7 +527,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<mu.nbr_el; i++)
                         {
                             padding = (int)log10(mu.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_val('P',i,padding,*mu.max_name_length,mu.name[i],mu.value[i],"--");
+                            if ( i = p ) /* listing active parameter */
+                            {
+                                snprintf(par_details,16*sizeof(char),"active parameter");  
+                            }
+                            else
+                            {
+                                snprintf(par_details,2*sizeof(char),"--");  
+                            }
+                            printf_list_val('P',i,padding,*mu.max_name_length,mu.name[i],mu.value[i],par_details);
                         }
                     }
                     else if (op == 'e') /* list parametric expression */
