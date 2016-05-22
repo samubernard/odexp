@@ -13,13 +13,17 @@ set -eu # makes your program exit on error or unbound variable
 
 mkdir -p .odexp
 
-awk '$1 ~ /^%/ {n++; name[n]=$1; val[n]=$2; print $0};
+echo "# odexp file name: $1" >.odexp/sub.odexp
+echo "" >>.odexp/sub.odexp
+
+awk '$1 ~ /^#/ { print $0 };
+    $1 ~ /^%/ {n++; name[n]=$1; val[n]=$2; print $0};
     $1 !~ /^%/ { 
     for(i=1;i<=n;i++) {
         gsub(name[i],val[i],$0);
         print $0 
     }
-    }' coupled.odexp >.odexp/sub.odexp
+    }' coupled.odexp >>.odexp/sub.odexp
 file=.odexp/sub.odexp
 
 declare_iterators () {
@@ -506,7 +510,7 @@ echo "" >>.odexp/model.c
 # WRITE SYSTEM.PAR 
 # ====================================================================================
 # FIND TSPAN
-echo "/* time span */" >.odexp/system.par
+echo "# time span " >.odexp/system.par
 system_tspan
 echo "" >>.odexp/system.par
 # ====================================================================================
@@ -524,7 +528,7 @@ echo "" >>.odexp/model.c
 # DECLARE AND ASSIGN PARAMETERS
 # Parameters cannot be vectors
 
-#echo "/* constants */" >>.odexp/system.par
+#echo "# constants " >>.odexp/system.par
 # find variable parameters and declare them in system.par 
 #awk -F ' ' '$1 ~ /^[cC][0-9]*$/ {printf "C%d %s %s\n", i, $2, $3; i++}' $file >>.odexp/system.par
 
@@ -532,7 +536,7 @@ echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
 awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $file >>.odexp/model.c
-echo "/* parameters */" >>.odexp/system.par
+echo "# parameters " >>.odexp/system.par
 # find variable parameters and declare them in system.par 
 awk -F ' ' '$1 ~ /^[pP][0-9]*$/ {printf "P%-3d %-16s%s\n", i, $2, $3; i++}' $file >>.odexp/system.par
 echo "" >>.odexp/model.c
@@ -545,7 +549,7 @@ declare_parametric_expressions
 
 # find parametric expression parameters and write them in .odexp/system.par
 echo "" >>.odexp/system.par
-echo "/* parametric expressions */" >>.odexp/system.par
+echo "# parametric expressions " >>.odexp/system.par
 system_parametric_expression
 
 # ====================================================================================
@@ -557,7 +561,7 @@ echo "    /* Declaration - auxiliary functions */" >>.odexp/model.c
 # find vector variables and declare them to model.c
 declare_auxiliary_functions
 echo "" >>.odexp/system.par
-echo "/* auxiliary functions */" >>.odexp/system.par
+echo "# auxiliary functions " >>.odexp/system.par
 system_auxiliary_functions 
 echo "" >>.odexp/model.c  
 
@@ -566,7 +570,7 @@ echo "    /* Declaration - variables */" >>.odexp/model.c
 declare_variables
 
 echo "" >>.odexp/system.par
-echo "/* equations */" >>.odexp/system.par
+echo "# equations " >>.odexp/system.par
 system_variables
 
 # ====================================================================================
@@ -675,7 +679,7 @@ echo "    /* Initialization - initial condition */" >>.odexp/model.c
 assign_initial_conditions
 
 echo "" >>.odexp/system.par
-echo "/* initial condition */" >>.odexp/system.par
+echo "# initial condition " >>.odexp/system.par
 system_init_conditions
 # ====================================================================================
 
@@ -710,6 +714,9 @@ echo "veryclean:" >>.odexp/makefile
 echo "		rm -f *.o; rm -f *.out; rm -rf *.out.dSYM" >>.odexp/makefile
 
 cd .odexp
+
+rm sub.odexp
+
 make && cp model.out .. && cd .. && ./model.out $file
 
 

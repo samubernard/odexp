@@ -1383,7 +1383,7 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
 
     time_stamp = clock();
     rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_]",rootname);
-    printf("rootnamedscanned: %d, rootname: %s", rootnamescanned, rootname);
+    /* printf("rootnamescanned: %d, rootname: %s", rootnamescanned, rootname); */
 
     if (rootnamescanned > 0)
     {
@@ -1407,33 +1407,42 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
     {
-        fprintf(fr,"P%zu %-*s %.5e\n",i,len,mu.name[i],mu.value[i]);
+        fprintf(fr,"P%zu %-*s %g\n",i,len,mu.name[i],mu.value[i]);
     }
-    fprintf(fr,"\n# parametric expressions/constants\n");
-    for(i=0;i<pex.nbr_el;i++)
-    {
-        fprintf(fr,"E%zu %-*s %s\n",i,len,pex.name[i],pex.expression[i]);
-    }
-    fprintf(fr,"\n# nonlinear functions\n");
-    for(i=0;i<fcn.nbr_el;i++)
-    {
-        fprintf(fr,"A%zu %-*s %s\n",i,len,fcn.name[i],fcn.expression[i]);
-    }
-    fprintf(fr,"\n# equations\n");
-    for(i=0;i<eqn.nbr_el;i++)
-    {
-        fprintf(fr,"%-*s = %s\n",len,eqn.name[i],eqn.expression[i]);
-    }
+    /*
+    * fprintf(fr,"\n# parametric expressions/constants\n");
+    * for(i=0;i<pex.nbr_el;i++)
+    * {
+    *     fprintf(fr,"E%zu %-*s %s\n",i,len,pex.name[i],pex.expression[i]);
+    * }
+    * fprintf(fr,"\n# nonlinear functions\n");
+    * for(i=0;i<fcn.nbr_el;i++)
+    * {
+    *     fprintf(fr,"A%zu %-*s %s\n",i,len,fcn.name[i],fcn.expression[i]);
+    * }
+    * fprintf(fr,"\n# equations\n");
+    * for(i=0;i<eqn.nbr_el;i++)
+    * {
+    *     fprintf(fr,"%-*s = %s\n",len,eqn.name[i],eqn.expression[i]);
+    * }
+    *
+    * fprintf(fr,"\n# dynamical variables/initial conditions\n");
+    * for(i=0;i<init.nbr_el;i++)
+    * {
+    *     fprintf(fr,"X%zu %-*s %s\n",i,len,init.name[i],init.expression[i]);
+    * }    
+    */
+     
     fprintf(fr,"\n# dynamical variables/initial conditions\n");
     for(i=0;i<init.nbr_el;i++)
     {
-        fprintf(fr,"X%zu %-*s %s\n",i,len,init.name[i],init.expression[i]);
+        fprintf(fr,"X%zu %-*s %g\n",i,len,init.name[i],init.value[i]);
     }    
     
     fprintf(fr,"\ntspan ");
     for(i=0;i<tspan.length;i++)
     {
-      fprintf(fr,"%f ",tspan.array[i]);
+      fprintf(fr,"%g ",tspan.array[i]);
     }
     fprintf(fr,"\n");
 
