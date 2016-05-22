@@ -779,6 +779,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     system(helpcmd);
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
+                    nbr_read = sscanf(cmdline+2,"%d %lf",&i,&nvalue);
                     for ( i=0; i<ode_system_size; i++ )
                         {
                             lastinit[i] = var.value[i];
@@ -1409,29 +1410,6 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
     {
         fprintf(fr,"P%zu %-*s %g\n",i,len,mu.name[i],mu.value[i]);
     }
-    /*
-    * fprintf(fr,"\n# parametric expressions/constants\n");
-    * for(i=0;i<pex.nbr_el;i++)
-    * {
-    *     fprintf(fr,"E%zu %-*s %s\n",i,len,pex.name[i],pex.expression[i]);
-    * }
-    * fprintf(fr,"\n# nonlinear functions\n");
-    * for(i=0;i<fcn.nbr_el;i++)
-    * {
-    *     fprintf(fr,"A%zu %-*s %s\n",i,len,fcn.name[i],fcn.expression[i]);
-    * }
-    * fprintf(fr,"\n# equations\n");
-    * for(i=0;i<eqn.nbr_el;i++)
-    * {
-    *     fprintf(fr,"%-*s = %s\n",len,eqn.name[i],eqn.expression[i]);
-    * }
-    *
-    * fprintf(fr,"\n# dynamical variables/initial conditions\n");
-    * for(i=0;i<init.nbr_el;i++)
-    * {
-    *     fprintf(fr,"X%zu %-*s %s\n",i,len,init.name[i],init.expression[i]);
-    * }    
-    */
      
     fprintf(fr,"\n# dynamical variables/initial conditions\n");
     for(i=0;i<init.nbr_el;i++)

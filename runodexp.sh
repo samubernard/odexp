@@ -16,6 +16,7 @@ mkdir -p .odexp
 echo "# odexp file name: $1" >.odexp/sub.odexp
 echo "" >>.odexp/sub.odexp
 
+# replace all constants (variable starting with '%') by their value
 awk '$1 ~ /^#/ { print $0 };
     $1 ~ /^%/ {n++; name[n]=$1; val[n]=$2; print $0};
     $1 !~ /^%/ { 
@@ -25,6 +26,14 @@ awk '$1 ~ /^#/ { print $0 };
     }
     }' coupled.odexp >>.odexp/sub.odexp
 file=.odexp/sub.odexp
+
+# if two input files, then second one should contain parameters
+if [ "$#" -eq 2 ]; then
+    parfile=$2    
+else
+    parfile=$file
+fi
+
 
 declare_iterators () {
     awk -F ' ' -v i=1 '/(\[.+\])+/ { match($2,/(\[.+\])+/);
@@ -68,58 +77,12 @@ declare_iterators () {
       }' $file >>.odexp/model.c
 }
 
-declare_iterators_init_conditions () {
-    awk -F ' ' -v i=1 '$1 ~ /^[eExXiI][0-9]*$/ && $2 ~ /(\[.+\])+/ { match($2,/(\[.+\])+/);
-        a=substr($2, RSTART, RLENGTH);
-        split(a,b,/[\[\]=:]/);
-        for(k=2;k<=length(b);k+=4) 
-        { 
-          iter[i]=b[k]; 
-          i++
-        }
-      }
-      END {
-        for(j=1;j<length(iter);j++) 
-        { 
-          for(k=j+1;k<=length(iter);k++)
-          {
-            if(iter[j]==iter[k])
-            {
-              iter[k]=""
-            }
-          }
-        };
-        nu=1;
-        for(j=1;j<=length(iter);j++)
-        {
-          if(iter[j]!="")
-          {
-            uniq[nu]=iter[j];
-            nu++
-          }
-        }
-        if(length(uniq)>0)
-        { 
-          printf "    size_t ";
-          for(k=1;k<length(uniq);k++)
-          {
-            printf "%s,", uniq[k] 
-          };
-          printf "%s;\n", uniq[length(uniq)]; 
-        };
-      }' $file >>.odexp/model.c
-}
-
-declare_assign_constants () {
-    awk -F ' ' '$1 ~ /^[cC][0-9]*$/ { printf "#define %s %s\n", $2, $3 }' $file >>.odexp/model.c
-}
-
 declare_parametric_expressions () {
     # find parametric expressions and declare them in .odexp/model.c
     # find parametric expression vectors and declare them in .odexp/model.c
     awk -F ' ' '$1 ~ /^[eE][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       printf "    double %s;\n", $2 };
-      $1 ~ /^[eE]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[eE]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
@@ -144,7 +107,7 @@ system_parametric_expression () {
       printf "\n"
       };
       
-      $1 ~ /^[eE]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[eE]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       $1="";
@@ -171,7 +134,7 @@ system_auxiliary_functions () {
       printf "\n"
       };
       
-      $1 ~ /^[aA]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[aA]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       $1="";
@@ -211,7 +174,7 @@ system_init_conditions () {
       printf "\n"
       };
       
-      $1 ~ /^[xXiI]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[xXiI]/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       lhs=$2;
@@ -228,21 +191,21 @@ system_init_conditions () {
       };
       printf "\n";
       nv+=len; 
-    }' $file >>.odexp/system.par
+    }' $parfile >>.odexp/system.par
 }
 
 system_tspan () {
     awk -F ' ' '$1 ~ /^[tT][[:alpha:]]*$/ {
       $1=""; 
       printf "T %s\n", $0
-      }' $file >>.odexp/system.par
+      }' $parfile >>.odexp/system.par
 }
 
 declare_variables () {
     # find variables and declare them to model.c
     # find vector variables and declare them to model.c
     awk -F ' ' '$1 ~ /^[xXiI][0-9]*$/ && $2 !~ /\[.+:.+\]/ {printf "    double %s;\n", $2 };
-      $1 ~ /^[xXiI][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[xXiI][0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
@@ -256,7 +219,7 @@ declare_auxiliary_functions () {
     # find auxiliary variables and declare them to model.c
     # find vector auxiliary functiond and declare them to model.c
     awk -F ' ' '$1 ~ /^[aA][0-9]*$/ && $2 !~ /\[.+:.+\]/ {printf "    double %s;\n", $2};
-      $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
@@ -276,7 +239,7 @@ assign_parametric_expressions () {
       ex=$0;
       printf "    %s = %s;\n", lhs, ex
       };
-      $1 ~ /^[eE]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[eE]/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
@@ -306,7 +269,7 @@ assign_auxiliary_functions () {
       printf "    %s = %s;\n", lhs, ex
       };
       
-      $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
@@ -389,7 +352,7 @@ assign_aux_pointer () {
       printf "    aux_[%d] = %s;\n", nv, ex; nv++
       };
       
-      $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+\])+/ { match($2,/(\[.+\])+/);
+      $1 ~ /^[aA][0-9]*$/ && $2 ~ /(\[.+:.+\])+/ { match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       myvar="aux_";
@@ -410,7 +373,7 @@ assign_initial_conditions () {
       printf "    y_[%d] = %s;\n", nv, ex;
       nv++
       };
-      $1 ~ /^[xXiI][0-9]*$/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+\])+/);
+      $1 ~ /^[xXiI][0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       split($2,c,/\[/);
@@ -428,7 +391,7 @@ assign_initial_conditions () {
         printf "[%s+%d]", b[k], nv 
         nv+=b[k+2]-b[k+1]
       }; 
-      {printf " = %s;\n", ex}; }' $file >>.odexp/model.c
+      {printf " = %s;\n", ex}; }' $parfile >>.odexp/model.c
 }
 
 # ==========================================================================================
@@ -452,10 +415,6 @@ echo "================================================================= */" >>.o
 echo "" >>.odexp/model.c
 echo "#include \"odexp.h\"" >>.odexp/model.c
 echo "#include \"utils_odexp.h\"" >>.odexp/model.c
-#echo "/* =================================================================" >>.odexp/model.c
-#echo "                              Defines" >>.odexp/model.c
-#echo "================================================================= */" >>.odexp/model.c
-#declare_assign_constants
 echo "" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
@@ -535,10 +494,10 @@ echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
-awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $file >>.odexp/model.c
+awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $parfile >>.odexp/model.c
 echo "# parameters " >>.odexp/system.par
 # find variable parameters and declare them in system.par 
-awk -F ' ' '$1 ~ /^[pP][0-9]*$/ {printf "P%-3d %-16s%s\n", i, $2, $3; i++}' $file >>.odexp/system.par
+awk -F ' ' '$1 ~ /^[pP][0-9]*$/ {printf "P%-3d %-16s%s\n", i, $2, $3; i++}' $parfile >>.odexp/system.par
 echo "" >>.odexp/model.c
 # ====================================================================================
 
@@ -637,7 +596,7 @@ echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
-awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $file >>.odexp/model.c
+awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $parfile >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
