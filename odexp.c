@@ -50,8 +50,11 @@ struct gen_option gopts[NBROPTS] = {
              {"phsp:rel_tol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
              {"phsp:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v var value]"},  
              {"phsp:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v var value]"},  
-             {"g:freeze","freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
-             {"g:style","plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
+             {"pl:x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T) not working"},
+             {"pl:y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0) not working"},
+             {"pl:z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1) not working"},
+             {"pl:freeze","freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
+             {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
  
 /* what kind of initial conditions to take */
 uint8_t *num_ic;
@@ -125,9 +128,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int32_t gx = 1,
             gy = 2, 
             gz = 3,
-            ngx,
-            ngy,
-            ngz;
+            ngx = -1,
+            ngy =  0,
+            ngz =  1;
     double nvalue;
     char svalue[NAMELENGTH];
     int replot      = 0, /* replot the same gnuplot command with new data */
@@ -254,7 +257,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("\noptions %s\n", hline);
-    success = load_options(system_filename);
+    success = load_options(system_filename); 
+
     printf_options();
 
     /* set IC to their numerical values */
@@ -567,7 +571,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         for (i=0; i<fcn.nbr_el; i++)
                         {
-                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
+                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
                             printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
                         }
                     }
@@ -575,7 +579,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for (i=0; i<fcn.nbr_el; i++)
                         {
-                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
+                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
                             printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
                         }
                     }
@@ -943,7 +947,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 }
               }
               fflush(gnuplot_pipe);
+
+
             }
+            /* update option pl:x, pl:y, pl:z */
+            update_plot_options(ngx,ngy,ngz,var,fcn);
 
             fpurge(stdin);
             replot = 0;
@@ -1221,9 +1229,6 @@ int8_t load_options(const char *filename)
                     fprintf(stderr,"  warning: could not assign option %s\n", opt_name);
 
                 }
-
-
-
             }
         }
     }
@@ -1233,6 +1238,31 @@ int8_t load_options(const char *filename)
     return success;
 }
 
+int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve var, nve fcn)
+{
+
+    if ( ngx == -1 )
+      set_str("plot_x","T");
+    else if ( ngx < var.nbr_el )
+      set_str("plot_x",var.name[ngx]);
+    else if ( ngx < var.nbr_el + fcn.nbr_el )
+      set_str("plot_x",fcn.name[ ngx-var.nbr_el ] );
+    if ( ngy == -1 )
+      set_str("plot_y","T");
+    else if ( ngy < var.nbr_el )
+      set_str("plot_y",var.name[ngy]);
+    else if ( ngy < var.nbr_el + fcn.nbr_el )
+      set_str("plot_y",fcn.name[ ngy-var.nbr_el ] );
+    if ( ngz == -1 )
+      set_str("plot_z","T");
+    else if ( ngz < var.nbr_el )
+      set_str("plot_z",var.name[ngz]);
+    else if ( ngy < var.nbr_el + fcn.nbr_el )
+      set_str("plot_z",fcn.name[ ngz-var.nbr_el ] );
+
+    return 1;
+
+}
 
 int8_t load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len)
 {
