@@ -78,6 +78,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char current_data_buffer[] = "current.tab";
     const char *hline = "----------------";
     char       par_details[32];
+    char       par_filename[MAXFILENAMELENGTH];
     int32_t i;
     int8_t success;
     
@@ -467,7 +468,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else 
                     {
-                        printf("  error: var index out of bound\n");
+                        fprintf(stderr,"  error: var index out of bound\n");
                         replot = 0;
                         updateplot = 0;
                     }
@@ -566,7 +567,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                            printf_list_str('A',i,padding,namelength,fcn.name[i],fcn.expression[i]);
+                            printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
                         }
                     }
                     else if (op == 'a') /* list auxiliairy equation */ 
@@ -574,7 +575,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                            printf_list_str('A',i,padding,namelength,fcn.name[i],fcn.expression[i]);
+                            printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
                         }
                     }
                     else if (op == 't') /* list tspan */
@@ -607,7 +608,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else
                     {
-                        printf("  error: unknown option\n");
+                        fprintf(stderr,"  error: unknown option\n");
                     }
                     break;
                 case 'p' : /* change current parameter */
@@ -632,7 +633,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                       }
                       else
                       {
-                          printf("  error: parameter index out of bound. Use lp to list parameters\n");
+                          fprintf(stderr,"  error: parameter index out of bound. Use lp to list parameters\n");
                           printf("  active parameter %s = %lg\n", mu.name[p],mu.value[p]);
                       }
                       
@@ -653,7 +654,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else
                     {
-                        printf("  error: expected a parameter value (double)\n");
+                        fprintf(stderr,"  error: expected a parameter value (double)\n");
                     }
                     break;
                case 'c' : /* change parameter/init values */
@@ -672,13 +673,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           }
                           else
                           {
-                            printf("  error: par index out of bound\n");
+                            fprintf(stderr,"  error: par index out of bound\n");
                             replot = 0;
                           }
                         }
                         else
                         {
-                          printf("  error: no parameter/value pair provided\n");
+                          fprintf(stderr,"  error: no parameter/value pair provided\n");
                         }
                     }
                     else if ( op == 'i' ) 
@@ -696,13 +697,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           }
                           else 
                           {
-                            printf("  error: var index out of bound\n");
+                            fprintf(stderr,"  error: var index out of bound\n");
                             replot = 0;
                           }
                         }
                         else
                         {
-                          printf("  error: no parameter/value pair provided\n");
+                          fprintf(stderr,"  error: no parameter/value pair provided\n");
                         }
                     }
                     else if (op == 'I') /* revert initial condition i to expression */
@@ -717,7 +718,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else 
                         {
-                            printf("  error: var index out of bound\n");
+                            fprintf(stderr,"  error: var index out of bound\n");
                             replot = 0;
                         }
                     }
@@ -742,7 +743,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            printf("  error: tspan index out of bound\n");
+                            fprintf(stderr,"  error: tspan index out of bound\n");
                             replot = 0;
                         }
                     }
@@ -770,7 +771,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            printf("  error: option index out of bound\n");
+                            fprintf(stderr,"  error: option index out of bound\n");
                             replot = 0;
                         }
                     }
@@ -779,15 +780,53 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     system(helpcmd);
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
-                    nbr_read = sscanf(cmdline+2,"%d %lf",&i,&nvalue);
                     for ( i=0; i<ode_system_size; i++ )
                         {
                             lastinit[i] = var.value[i];
+                            num_ic[i] = 0;
                         }
                     /* reset parameter values */
                     load_namevalexp(system_filename, mu, "P", 1);
                     /* reset initial condtitions */
                     ode_init_conditions(tspan.array[0], var.value, mu.value);
+                    rerun = 1;
+                    replot = 1;
+                    break;
+                case 'o' : /* open a parameter file */
+                    nbr_read = sscanf(cmdline+2,"%s",par_filename);
+                    if ( nbr_read < 1 )
+                    {
+                        fprintf(stderr,"  error: missing parameter file name.\n");
+                    }
+                    else /* read par_filename for parameters, initial conditions, and tspan */
+                    {
+                        /* load parameter values */
+                        success = load_namevalexp(par_filename, mu, "P", 1);
+                        if ( success == 0 )
+                        {
+                            printf("  warning: could not load parameters.\n");
+                        }
+                        success = load_namevalexp(par_filename, var, "X", 1); /* load initial conditions value from file */
+                        if ( success == 1)
+                        {
+                            /* reset initial condtitions */
+                            for ( i=0; i<ode_system_size; i++ )
+                            {
+                                num_ic[i] = 1;
+                                lastinit[i] = var.value[i];
+                            }
+                        }
+                        else
+                        {
+                            printf("  warning: could not load initial conditions.\n");
+                        }
+                        success = load_double_array(par_filename, &tspan, ts_string, ts_len); 
+                        if ( success == 0 )
+                        {
+                            printf("  warning: could not load tspan.\n");
+                        }
+
+                    }
                     rerun = 1;
                     replot = 1;
                     break;
@@ -1016,6 +1055,12 @@ int get_nbr_el(const char *filename, const char *sym,\
            success = 0; 
     FILE *fr;
     fr = fopen (filename, "rt");
+
+    if ( fr == NULL )
+    {
+        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        exit ( EXIT_FAILURE );
+    }
     
     *nbr_el = 0;
     *nbr_expr = 0;
@@ -1069,45 +1114,54 @@ int8_t load_namevalexp(const char *filename, nve var, const char *sym, const siz
     int8_t success = 0;
     fr = fopen (filename, "rt");
 
-    *var.max_name_length = 0;
-    while( (linelength = getline(&line, &linecap, fr)) > 0)
+    if ( fr == NULL )
     {
-        while(line[k] == sym[k] && !isspace(line[k]) && \
-                k < sym_len && k < linelength)
-        {
-            k++;
-        }
-        if(k == sym_len) /* keyword was found */
-        {
-            success = 1;
-            pos0 = k;
-            while(line[pos0] != ' ' && line[pos0] != '\t')
-                pos0++;
-            while(line[pos0] == ' ' || line[pos0] == '\t')
-                pos0++;
-            
-            pos1 = pos0;
-            while(line[pos1] != ' ' && line[pos1] != '\t')
-                pos1++;
-
-            length_name = pos1-pos0;
-            if (length_name > NAMELENGTH)
-            {
-                length_name = NAMELENGTH;
-            }
-
-            sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]);
-            if(length_name > *var.max_name_length)
-            {
-                *var.max_name_length = length_name;
-            }
-
-            printf("  [%zu] %-*s=",i,*var.max_name_length+2,var.name[i]);
-            printf(" %f\n",var.value[i]);
-            i++;
-        }
-        k = 0; /* reset k */
+        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        exit ( EXIT_FAILURE );
     }
+    else
+    {
+        *var.max_name_length = 0;
+        while( (linelength = getline(&line, &linecap, fr)) > 0)
+        {
+            while(line[k] == sym[k] && !isspace(line[k]) && \
+                    k < sym_len && k < linelength)
+            {
+                k++;
+            }
+            if(k == sym_len) /* keyword was found */
+            {
+                success = 1;
+                pos0 = k;
+                while(line[pos0] != ' ' && line[pos0] != '\t')
+                    pos0++;
+                while(line[pos0] == ' ' || line[pos0] == '\t')
+                    pos0++;
+
+                pos1 = pos0;
+                while(line[pos1] != ' ' && line[pos1] != '\t')
+                    pos1++;
+
+                length_name = pos1-pos0;
+                if (length_name > NAMELENGTH)
+                {
+                    length_name = NAMELENGTH;
+                }
+
+                sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]);
+                if(length_name > *var.max_name_length)
+                {
+                    *var.max_name_length = length_name;
+                }
+
+                printf("  [%zu] %-*s=",i,*var.max_name_length+2,var.name[i]);
+                printf(" %f\n",var.value[i]);
+                i++;
+            }
+            k = 0; /* reset k */
+        }
+    }
+    
     fclose(fr);
 
     return success;
@@ -1131,7 +1185,13 @@ int8_t load_double_array(const char *filename, double_array *array_ptr, const ch
     int8_t success = 0;
     fr = fopen (filename, "rt");
     printf("  %s: ",sym);
-    
+
+    if ( fr == NULL )
+    {
+        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        exit ( EXIT_FAILURE );
+    }
+ 
     /* search for keyword sym */
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
@@ -1211,6 +1271,12 @@ int8_t load_strings(const char *filename, nve var, const char *sym, const size_t
     int8_t success = 0;
     fr = fopen (filename, "rt");
 
+    if ( fr == NULL )
+    {
+        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        exit ( EXIT_FAILURE );
+    }
+ 
     *var.max_name_length = 0;
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
@@ -1327,6 +1393,13 @@ int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *s
     size_t k = 0;
     int8_t success = 0;
     fr = fopen (filename, "rt");
+
+    if ( fr == NULL )
+    {
+        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        exit ( EXIT_FAILURE );
+    }
+
     printf("  %s: ",sym);
     /* search for keyword sym */
     while( (linelength = getline(&line, &linecap, fr)) > 0)
@@ -1398,36 +1471,44 @@ int8_t fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_ar
     }
 
     /* rename "current.tab" to tab_buffer */
-    success = rename(curr_buffer,tab_buffer);
+    rename(curr_buffer,tab_buffer);
 
     /* open buffer parameter file (par) */
     fr = fopen(par_buffer,"w");
 
-    fprintf(fr,"#%s\n",cmdline+1);
-    
-    fprintf(fr,"\n# parameters/values\n");
-    for(i=0;i<mu.nbr_el;i++)
+    if ( fr == NULL )
     {
-        fprintf(fr,"P%zu %-*s %g\n",i,len,mu.name[i],mu.value[i]);
+        fprintf(stderr,"  File %s could not be opened. Nothing was written\n",par_buffer);
     }
-     
-    fprintf(fr,"\n# dynamical variables/initial conditions\n");
-    for(i=0;i<init.nbr_el;i++)
+    else
     {
-        fprintf(fr,"X%zu %-*s %g\n",i,len,init.name[i],init.value[i]);
-    }    
-    
-    fprintf(fr,"\ntspan ");
-    for(i=0;i<tspan.length;i++)
-    {
-      fprintf(fr,"%g ",tspan.array[i]);
+        fprintf(fr,"#%s\n",cmdline+1);
+
+        fprintf(fr,"\n# parameters/values\n");
+        for(i=0;i<mu.nbr_el;i++)
+        {
+            fprintf(fr,"P%zu %-*s %g\n",i,len,mu.name[i],mu.value[i]);
+        }
+
+        fprintf(fr,"\n# dynamical variables/initial conditions\n");
+        for(i=0;i<init.nbr_el;i++)
+        {
+            fprintf(fr,"X%zu %-*s %g\n",i,len,init.name[i],init.value[i]);
+        }    
+
+        fprintf(fr,"\nT ");
+        for(i=0;i<tspan.length;i++)
+        {
+            fprintf(fr,"%g ",tspan.array[i]);
+        }
+        fprintf(fr,"\n");
+
+        fclose(fr);
+
+        printf("  wrote %s and %s\n",par_buffer, tab_buffer);
+
+        success = 1;
     }
-    fprintf(fr,"\n");
-
-    fclose(fr);
-    
-    printf("  wrote %s and %s\n",par_buffer, tab_buffer);
-
     return success;
 }
 
@@ -1482,7 +1563,7 @@ int8_t set_dou(const char *name, const double val)
     }
     else
     {
-      printf("  error: could not assign option %s\n", name);
+      fprintf(stderr,"  error: could not assign option %s\n", name);
     }
 
     return success;
@@ -1503,7 +1584,7 @@ int8_t set_int(const char *name, const int val)
     }
     else
     {
-      printf("  error: could not assign option %s\n", name);
+      fprintf(stderr,"  error: could not assign option %s\n", name);
     }
 
     return success;
@@ -1524,7 +1605,7 @@ int8_t set_str(const char *name, const char * val)
     }
     else
     {
-      printf("  error: could not assign option %s\n", name);
+      fprintf(stderr,"  error: could not assign option %s\n", name);
     }
 
     return success;
