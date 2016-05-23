@@ -40,18 +40,18 @@ int32_t ode_system_size;
 
 /* options */
 struct gen_option gopts[NBROPTS] = { 
-             {"odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
-             {"odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
-             {"odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
-             {"odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
-             {"odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
-             {"phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
-             {"phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
-             {"phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
-             {"phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v var value]"},  
-             {"phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v var value]"},  
-             {"freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
-             {"plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
+             {"ode:res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
+             {"ode:minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
+             {"ode:h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
+             {"ode:epsabs","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
+             {"ode:epsrel","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
+             {"phsp:maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
+             {"phsp:abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
+             {"phsp:rel_tol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
+             {"phsp:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v var value]"},  
+             {"phsp:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v var value]"},  
+             {"g:freeze","freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
+             {"g:style","plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
  
 /* what kind of initial conditions to take */
 uint8_t *num_ic;
@@ -254,6 +254,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("\noptions %s\n", hline);
+    success = load_options(system_filename);
     printf_options();
 
     /* set IC to their numerical values */
@@ -1166,6 +1167,72 @@ int8_t load_namevalexp(const char *filename, nve var, const char *sym, const siz
 
     return success;
 }
+
+int8_t load_options(const char *filename)
+{
+    size_t idx_opt;
+    ssize_t linelength;
+    size_t linecap = 0;
+    char *line = NULL;
+    FILE *fr;
+    int8_t success = 0;
+    char opt_name[NAMELENGTH];
+    fr = fopen (filename, "rt");
+
+    if ( fr == NULL )
+    {
+        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        exit ( EXIT_FAILURE );
+    }
+    else
+    {
+        while( (linelength = getline(&line, &linecap, fr)) > 0)
+        {
+            if(line[0] == 'O' || line[0] == 'o') /* keyword was found */
+            {
+                sscanf(line,"%*s %s",opt_name);
+
+                idx_opt = 0;
+                while (    strncmp(opt_name, gopts[idx_opt].name, NAMELENGTH) 
+                        && strncmp(opt_name, gopts[idx_opt].abbr,NAMELENGTH) 
+                        && idx_opt < NBROPTS)
+                {
+                  idx_opt++;
+                }
+                if (idx_opt < NBROPTS)
+                {
+                    switch (gopts[idx_opt].valtype)
+                    {
+                        case 'i':
+                            sscanf(line,"%*s %*s %ld",&gopts[idx_opt].intval);
+                            break;
+                        case 'd':
+                            sscanf(line,"%*s %*s %lf",&gopts[idx_opt].numval);
+                            break;
+                        case 's':
+                            sscanf(line,"%*s %*s %s",gopts[idx_opt].strval);
+                            break;
+                    }
+                  success = 1;
+                  printf("--options %s loaded from file %s\n",opt_name, filename);
+                }
+                else
+                {
+                    fprintf(stderr,"  warning: could not assign option %s\n", opt_name);
+
+                }
+
+
+
+            }
+        }
+    }
+    
+    fclose(fr);
+
+    return success;
+}
+
 
 int8_t load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len)
 {

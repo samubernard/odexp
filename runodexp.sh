@@ -201,6 +201,13 @@ system_tspan () {
       }' $parfile >>.odexp/system.par
 }
 
+system_options () {
+    awk -F ' ' '$1 ~ /^[oO]/ {
+    $1="";
+    printf "O %s\n", $0
+    }' $parfile >>.odexp/system.par
+}
+
 declare_variables () {
     # find variables and declare them to model.c
     # find vector variables and declare them to model.c
@@ -640,6 +647,11 @@ assign_initial_conditions
 echo "" >>.odexp/system.par
 echo "# initial condition " >>.odexp/system.par
 system_init_conditions
+
+echo "" >>.odexp/sytem.par
+echo "# options " >>.odexp/system.par
+system_options
+
 # ====================================================================================
 
 echo "    " >>.odexp/model.c

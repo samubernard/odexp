@@ -43,6 +43,7 @@ typedef struct namevalexp
 
 typedef struct gen_option
 {
+    char    abbr[NAMELENGTH];
     char    name[NAMELENGTH];
     char    valtype; /* d: double; i: int; s: string */
     double  numval;
@@ -104,6 +105,8 @@ void free_soptions();
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, uint32_t *nbr_el, uint32_t *nbr_epxr);
 
 int8_t load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
+
+int8_t load_options(const char *filename);
 
 int8_t load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len);
