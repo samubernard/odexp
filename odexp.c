@@ -101,14 +101,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* parameters */
     nve mu;
 
-    /* variables */
-    nve var;
+    /* initial conditions */
+    nve ics;
 
     /* equations */
     nve fcn;
 
     /* equations */
     nve eqn;
+
+    /* list of all Dynamical  + auXiliary Variables */
+    nve dxv;
 
     /* last initial conditions */
     double *lastinit;
@@ -193,23 +196,23 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get variable names and initial conditions */
     printf("\nvariable names and initial conditions %s\n", hline);
-    get_nbr_el(system_filename,"X",1, &var.nbr_el, &var.nbr_expr);
-    var.value = malloc(var.nbr_el*sizeof(double));
-    var.name = malloc(var.nbr_el*sizeof(char*));
-    var.expression = malloc(var.nbr_el*sizeof(char*));
-    var.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < var.nbr_el; i++)
+    get_nbr_el(system_filename,"X",1, &ics.nbr_el, &ics.nbr_expr);
+    ics.value = malloc(ics.nbr_el*sizeof(double));
+    ics.name = malloc(ics.nbr_el*sizeof(char*));
+    ics.expression = malloc(ics.nbr_el*sizeof(char*));
+    ics.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < ics.nbr_el; i++)
     {
-        var.name[i] = malloc(NAMELENGTH*sizeof(char));
-        var.expression[i] = malloc(EXPRLENGTH*sizeof(char));
+        ics.name[i] = malloc(NAMELENGTH*sizeof(char));
+        ics.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,var,"X",1,1,' ');
+    success = load_strings(system_filename,ics,"X",1,1,' ');
     if (!success)
     {
         printf("  Dynamic variables not found... exiting\n");
         exit ( EXIT_FAILURE );
     } 
-    ode_init_conditions(tspan.array[0],var.value,mu.value);
+    ode_init_conditions(tspan.array[0],ics.value,mu.value);
 
 
     /* get nonlinear functions */
@@ -250,10 +253,33 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         exit ( EXIT_FAILURE );
     } 
 
-    ode_system_size = var.nbr_el;
+    ode_system_size = ics.nbr_el;
     total_nbr_x = ode_system_size + fcn.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
     lastinit = malloc(ode_system_size*sizeof(double));
+
+    /* define dxv */
+    dxv.value = malloc(total_nbr_x*sizeof(double));
+    dxv.name = malloc(total_nbr_x*sizeof(char*));
+    dxv.expression = malloc(total_nbr_x*sizeof(char*));
+    dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr;
+    dxv.nbr_el = total_nbr_x;
+    dxv.max_name_length = max(ics.max_name_length, fcn.max_name_length);
+    for (i = 0; i < dxv.nbr_el; i++)
+    {
+        dxv.name[i] = malloc(NAMELENGTH*sizeof(char));
+        dxv.expression[i] = malloc(EXPRLENGTH*sizeof(char));
+    }
+    for (i = 0; i < ode_system_size; i++)
+    {
+        strcpy(dxv.name[i],ics.name[i]);
+        strcpy(dxv.expression[i],ics.expression[i]);
+    }
+    for (i = ode_system_size; i < dxv.nbr_el; i++)
+    {
+        strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
+        strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
+    }
 
     /* get options */
     printf("\noptions %s\n", hline);
@@ -306,9 +332,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     stifle_history( 200 );
 
-    status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan);
+    status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan);
     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
-    fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
+    fprintf(gnuplot_pipe,"set ylabel '%s'\n",ics.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
@@ -500,8 +526,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for ( i=0; i<ode_system_size; i++ )
                         {
-                            lastinit[i] = var.value[i];
-                            var.value[i] = lasty[i];
+                            lastinit[i] = ics.value[i];
+                            ics.value[i] = lasty[i];
                             num_ic[i] = 1;
                         }
                     } 
@@ -509,8 +535,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for ( i=0; i<ode_system_size; i++ )
                         {
-                            lastinit[i] = var.value[i];
-                            var.value[i] = stst->s[i];
+                            lastinit[i] = ics.value[i];
+                            ics.value[i] = stst->s[i];
                             num_ic[i] = 1;
                         }
                     }
@@ -520,9 +546,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'I' : /* set initial condition to previous ones */
                     for ( i=0; i<ode_system_size; i++ )
                         {
-                            var.value[i] = lastinit[i];
+                            ics.value[i] = lastinit[i];
                             num_ic[i] = 1;
-                            printf("  I[%d] %-20s = %e\n",i,var.name[i],var.value[i]);
+                            printf("  I[%d] %-20s = %e\n",i,ics.name[i],ics.value[i]);
                         }
                     rerun = 1;
                     replot = 1;
@@ -557,8 +583,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
-                            padding = (int)log10(var.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_val('I',i,padding,*var.max_name_length,var.name[i],var.value[i],var.expression[i]);
+                            padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf_list_val('I',i,padding,*ics.max_name_length,ics.name[i],ics.value[i],ics.expression[i]);
                         }
                     }
                     else if (op == 'x') /* list equations */
@@ -596,8 +622,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
-                            padding = (int)log10(var.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_val('S',i,padding,*var.max_name_length,var.name[i],stst->s[i],"*");
+                            padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf_list_val('S',i,padding,*ics.max_name_length,ics.name[i],stst->s[i],"*");
                         }
                         printf("  *status: %s%s%s\n",T_DET,gsl_strerror(status),T_NOR);
                     }
@@ -694,8 +720,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                           if ( i >= 0 && i<ode_system_size)
                           {
-                            lastinit[i] = var.value[i];
-                            var.value[i] = nvalue;
+                            lastinit[i] = ics.value[i];
+                            ics.value[i] = nvalue;
                             num_ic[i] = 1;
                             rerun = 1;
                             replot = 1;
@@ -716,7 +742,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         sscanf(cmdline+2,"%d",&i);
                         if ( i >= 0 && i<ode_system_size)
                         {
-                            lastinit[i] = var.value[i];
+                            lastinit[i] = ics.value[i];
                             num_ic[i] = 0;
                             rerun = 1;
                             replot = 1;
@@ -731,8 +757,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for ( i=0; i<ode_system_size; i++ )
                         {
-                            lastinit[i] = var.value[i];
-                            var.value[i] = lasty[i];
+                            lastinit[i] = ics.value[i];
+                            ics.value[i] = lasty[i];
                             rerun = 1;
                             replot = 1;
                         }
@@ -787,13 +813,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'd' : /* reset parameters and initial cond to defaults */
                     for ( i=0; i<ode_system_size; i++ )
                         {
-                            lastinit[i] = var.value[i];
+                            lastinit[i] = ics.value[i];
                             num_ic[i] = 0;
                         }
                     /* reset parameter values */
                     load_namevalexp(system_filename, mu, "P", 1);
                     /* reset initial condtitions */
-                    ode_init_conditions(tspan.array[0], var.value, mu.value);
+                    ode_init_conditions(tspan.array[0], ics.value, mu.value);
                     rerun = 1;
                     replot = 1;
                     break;
@@ -811,14 +837,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             printf("  warning: could not load parameters.\n");
                         }
-                        success = load_namevalexp(par_filename, var, "X", 1); /* load initial conditions value from file */
+                        success = load_namevalexp(par_filename, ics, "X", 1); /* load initial conditions value from file */
                         if ( success == 1)
                         {
                             /* reset initial condtitions */
                             for ( i=0; i<ode_system_size; i++ )
                             {
                                 num_ic[i] = 1;
-                                lastinit[i] = var.value[i];
+                                lastinit[i] = ics.value[i];
                             }
                         }
                         else
@@ -843,11 +869,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     sscanf(cmdline+1,"%c",&op);
                     if ( op  == 's') /* compute steady state */
                     {
-                        status = ststsolver(multiroot_rhs,var,mu, stst);
+                        status = ststsolver(multiroot_rhs,ics,mu, stst);
                     } 
                     else if ( op == 'm')
                     {
-                        status = phasespaceanalysis(multiroot_rhs,var,mu);
+                        status = phasespaceanalysis(multiroot_rhs,ics,mu);
                     } 
                     break;
                 case 'Q' :  /* quit without saving */
@@ -856,7 +882,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case 's' : /* save file */
-                    file_status = fprintf_namevalexp(var,pex,mu,fcn,eqn,tspan, current_data_buffer);
+                    file_status = fprintf_namevalexp(ics,pex,mu,fcn,eqn,tspan, current_data_buffer);
                     break;
                 default :
                     printf("  Unknown command. Type q to quit, h for help\n");
@@ -867,7 +893,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_init_conditions, lasty, var, mu, fcn, tspan);
+                status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan);
             }
             if (replot)    
             {
@@ -886,7 +912,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                   }
                   else if ( (gx-2) < ode_system_size ) /* xlabel = name of variable  */
                   {
-                    fprintf(gnuplot_pipe,"set xlabel '%s'\n",var.name[gx-2]);
+                    fprintf(gnuplot_pipe,"set xlabel '%s'\n",ics.name[gx-2]);
                   }
                   else if ( (gx-2) < total_nbr_x ) /* xlabel = name of auxiliary function */ 
                   {
@@ -894,7 +920,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                   }
                   if ( (gy-2) < ode_system_size ) /* variable */
                   {
-                    fprintf(gnuplot_pipe,"set ylabel '%s'\n",var.name[gy-2]);
+                    fprintf(gnuplot_pipe,"set ylabel '%s'\n",ics.name[gy-2]);
                   }
                   else if ( (gy-2) < total_nbr_x ) /* auxiliary variable */
                   {
@@ -904,7 +930,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                   {
                     if ( (gz-2) < ode_system_size ) /* variable */
                     {
-                      fprintf(gnuplot_pipe,"set zlabel '%s'\n",var.name[gz-2]);
+                      fprintf(gnuplot_pipe,"set zlabel '%s'\n",ics.name[gz-2]);
                     }
                     else if ( (gz-2) < total_nbr_x ) /* auxiliary variable */
                     {
@@ -951,7 +977,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
             }
             /* update option pl:x, pl:y, pl:z */
-            update_plot_options(ngx,ngy,ngz,var,fcn);
+            update_plot_options(ngx,ngy,ngz,ics,fcn);
 
             fpurge(stdin);
             replot = 0;
@@ -972,12 +998,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_namevalexp( pex );
     /* printf("--free mu\n"); */
     free_namevalexp( mu );
-    /* printf("--free var\n"); */
-    free_namevalexp( var );
+    /* printf("--free ics\n"); */
+    free_namevalexp( ics );
     /* printf("--free eqn\n"); */
     free_namevalexp( eqn );
     /* printf("--free fcn\n"); */
     free_namevalexp( fcn );
+    /* printf("--free dxv\n"); */
+    free_namevalexp( dxv );
     /* printf("--free stst\n"); */
     free_steady_state( stst );
     /* printf("--free tspan\n"); */
@@ -1238,27 +1266,27 @@ int8_t load_options(const char *filename)
     return success;
 }
 
-int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve var, nve fcn)
+int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve ics, nve fcn)
 {
 
     if ( ngx == -1 )
       set_str("plot_x","T");
-    else if ( ngx < var.nbr_el )
-      set_str("plot_x",var.name[ngx]);
-    else if ( ngx < var.nbr_el + fcn.nbr_el )
-      set_str("plot_x",fcn.name[ ngx-var.nbr_el ] );
+    else if ( ngx < ics.nbr_el )
+      set_str("plot_x",ics.name[ngx]);
+    else if ( ngx < ics.nbr_el + fcn.nbr_el )
+      set_str("plot_x",fcn.name[ ngx-ics.nbr_el ] );
     if ( ngy == -1 )
       set_str("plot_y","T");
-    else if ( ngy < var.nbr_el )
-      set_str("plot_y",var.name[ngy]);
-    else if ( ngy < var.nbr_el + fcn.nbr_el )
-      set_str("plot_y",fcn.name[ ngy-var.nbr_el ] );
+    else if ( ngy < ics.nbr_el )
+      set_str("plot_y",ics.name[ngy]);
+    else if ( ngy < ics.nbr_el + fcn.nbr_el )
+      set_str("plot_y",fcn.name[ ngy-ics.nbr_el ] );
     if ( ngz == -1 )
       set_str("plot_z","T");
-    else if ( ngz < var.nbr_el )
-      set_str("plot_z",var.name[ngz]);
-    else if ( ngy < var.nbr_el + fcn.nbr_el )
-      set_str("plot_z",fcn.name[ ngz-var.nbr_el ] );
+    else if ( ngz < ics.nbr_el )
+      set_str("plot_z",ics.name[ngz]);
+    else if ( ngy < ics.nbr_el + fcn.nbr_el )
+      set_str("plot_z",fcn.name[ ngz-ics.nbr_el ] );
 
     return 1;
 

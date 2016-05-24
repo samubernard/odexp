@@ -107,7 +107,7 @@ int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, uint
 int8_t load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
 
 int8_t load_options(const char *filename);
-int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve var, nve fcn);
+int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve ics, nve fcn);
 
 int8_t load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len);

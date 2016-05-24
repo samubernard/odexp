@@ -30,7 +30,7 @@ static void set_abort_odesolver_flag(int sig)
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
- double *lasty, nve var, nve mu, nve fcn, double_array tspan)    
+ double *lasty, nve ics, nve mu, nve fcn, double_array tspan)    
 {
     double *y,
            *f;
@@ -87,15 +87,15 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     ode_init_conditions(t, y, mu.value);
     for (i = 0; i < ode_system_size; i++)
     {
-        if (num_ic[i]) /* use var.value as initial condition */
+        if (num_ic[i]) /* use ics.value as initial condition */
         {
-            y[i] = var.value[i];
+            y[i] = ics.value[i];
         }
-        else /* set var.value to y as initial condition */
+        else /* set ics.value to y as initial condition */
         {
-            var.value[i] = y[i];
+            ics.value[i] = y[i];
         }
-        /* printf("--ic[%d]=%f\n",i,var.value[i]);  */
+        /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
     }
 
     /* open output file */
@@ -108,7 +108,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
-        fprintf(file,"\t%s",var.name[i]);
+        fprintf(file,"\t%s",ics.name[i]);
     }
     for (i = 0; i<fcn.nbr_el; i++)
     {
@@ -262,13 +262,13 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 }
 
 int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve var, nve mu)
+    nve ics, nve mu)
 {
     int status, status_res, status_delta, newstst;
-    const size_t ode_system_size = var.nbr_el;
+    const size_t ode_system_size = ics.nbr_el;
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
-    double *var_min, /* lower bounds on steady state values */
-          *var_max; /* bounds on steady state values */
+    double *ics_min, /* lower bounds on steady state values */
+          *ics_max; /* bounds on steady state values */
     size_t ntry = 0;
     size_t max_fail = get_int("phasespace_max_fail"); /* max number of iteration without finding a new steady state */
     steady_state *stst; /* new steady state */
@@ -301,37 +301,37 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     {
         init_steady_state(stst+i, ode_system_size);
     }
-    status = ststsolver(multiroot_rhs,var,mu, stst);
+    status = ststsolver(multiroot_rhs,ics,mu, stst);
     nbr_stst++;
     printf("First steady state found, looking for more...\n");
 
-    /* var_min */
-    var_min = malloc(ode_system_size*sizeof(double));
+    /* ics_min */
+    ics_min = malloc(ode_system_size*sizeof(double));
     for ( i=0; i<ode_system_size; i++)
     {
-        var_min[i] = get_dou("phasespace_search_min")*var.value[i];
+        ics_min[i] = get_dou("phasespace_search_min")*ics.value[i];
     }
 
-    /* var_max */
-    var_max = malloc(ode_system_size*sizeof(double));
+    /* ics_max */
+    ics_max = malloc(ode_system_size*sizeof(double));
     for ( i=0; i<ode_system_size; i++)
     {
-        var_max[i] = get_dou("phasespace_search_range")*var.value[i];
+        ics_max[i] = get_dou("phasespace_search_range")*ics.value[i];
     }
 
     /* search for steady states */
     while (ntry < max_fail)
     {
-        gsl_qrng_get (q, var.value); /* new starting guess */
+        gsl_qrng_get (q, ics.value); /* new starting guess */
         /*printf("  Finding a steady with initial guess\n");*/
         for ( i=0; i<ode_system_size; i++)
         {
-            var.value[i] *= (var_max[i] - var_min[i]);
-            var.value[i] += var_min[i];
+            ics.value[i] *= (ics_max[i] - ics_min[i]);
+            ics.value[i] += ics_min[i];
         }
         for ( i=0; i<ode_system_size; i++)
         {
-            gsl_vector_set(x,i,var.value[i]);
+            gsl_vector_set(x,i,ics.value[i]);
         }
 
         gsl_multiroot_fsolver_set (s, &f, x);
@@ -405,8 +405,8 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
         free_steady_state(stst+i);
     }
     free(stst);
-    free(var_max);
-    free(var_min);
+    free(ics_max);
+    free(ics_min);
     gsl_qrng_free (q);
 
     gsl_multiroot_fsolver_free(s);
@@ -417,7 +417,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
 }
 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve var, nve mu, steady_state *stst)
+    nve ics, nve mu, steady_state *stst)
 {
     
 
@@ -427,7 +427,7 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     int status;
     size_t i, iter = 0;
 
-    const size_t n = var.nbr_el;
+    const size_t n = ics.nbr_el;
     gsl_multiroot_function f = {multiroot_rhs, n, &mu};
 
     gsl_matrix *J = gsl_matrix_alloc(n,n);
@@ -435,7 +435,7 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     gsl_vector *x = gsl_vector_alloc(n);
     for ( i=0; i<n; i++)
     {
-        gsl_vector_set(x,i,var.value[i]);
+        gsl_vector_set(x,i,ics.value[i]);
     }
 
     T = gsl_multiroot_fsolver_hybrids;

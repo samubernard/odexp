@@ -15,10 +15,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
  double *lasty, nve init, nve mu, nve fcn, double_array tspan);
 
 int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve var, nve mu);
+    nve ics, nve mu);
 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve var, nve mu, steady_state *stst);
+    nve ics, nve mu, steady_state *stst);
 
 int eig(gsl_matrix *J, steady_state *stst);
 
