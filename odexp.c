@@ -40,6 +40,11 @@ int32_t ode_system_size;
 
 /* options */
 struct gen_option gopts[NBROPTS] = { 
+             {"pl:x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)"},
+             {"pl:y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)"},
+             {"pl:z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)"},
+             {"pl:freeze","freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
+             {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."},
              {"ode:res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
              {"ode:minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
              {"ode:h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
@@ -49,13 +54,8 @@ struct gen_option gopts[NBROPTS] = {
              {"phsp:abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
              {"phsp:rel_tol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
              {"phsp:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v var value]"},  
-             {"phsp:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v var value]"},  
-             {"pl:x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T) not working"},
-             {"pl:y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0) not working"},
-             {"pl:z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1) not working"},
-             {"pl:freeze","freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
-             {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."} };
- 
+             {"phsp:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v var value]"} };
+
 /* what kind of initial conditions to take */
 uint8_t *num_ic;
 
@@ -128,9 +128,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     char c,
          op,
          op2;
-    int32_t gx = 1,
-            gy = 2, 
-            gz = 3,
+    int32_t gx,
+            gy, 
+            gz,
             ngx = -1,
             ngy =  0,
             ngz =  1;
@@ -259,12 +259,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     lastinit = malloc(ode_system_size*sizeof(double));
 
     /* define dxv */
+    
     dxv.value = malloc(total_nbr_x*sizeof(double));
     dxv.name = malloc(total_nbr_x*sizeof(char*));
     dxv.expression = malloc(total_nbr_x*sizeof(char*));
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr;
     dxv.nbr_el = total_nbr_x;
-    dxv.max_name_length = max(ics.max_name_length, fcn.max_name_length);
+    dxv.max_name_length = malloc(sizeof(int));
+    *dxv.max_name_length = max(*ics.max_name_length, *fcn.max_name_length);
     for (i = 0; i < dxv.nbr_el; i++)
     {
         dxv.name[i] = malloc(NAMELENGTH*sizeof(char));
@@ -280,11 +282,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
         strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
     }
+    printf("--dxv.nbr_el = %d\n",dxv.nbr_el);
 
     /* get options */
     printf("\noptions %s\n", hline);
     success = load_options(system_filename); 
-
+    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+    update_plot_options(ngx,ngy,ngz,dxv);
     printf_options();
 
     /* set IC to their numerical values */
@@ -457,6 +461,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     fflush(gnuplot_pipe);
                     updateplot = 1;
                     plot3d = 0;
+                    update_plot_options(ngx,ngy,ngz,dxv);
                     break;
                 case '3' : /* set 3D view */
                     sscanf(cmdline+1,"%d %d %d",&ngx,&ngy,&ngz);
@@ -487,15 +492,29 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     fflush(gnuplot_pipe);
                     updateplot = 1;
                     plot3d = 1;
+                    update_plot_options(ngx,ngy,ngz,dxv);
                     break;
                 case 'x' :
-                    sscanf(cmdline+1,"%d",&ngy);
-                    if (ngy > -1 && ngy < total_nbr_x)
+                    nbr_read = sscanf(cmdline+1,"%d",&ngy);
+                    if ( nbr_read == 0 ) /* try reading a string */
+                    {
+                        nbr_read = sscanf(cmdline+1,"%s", svalue);
+                        if ( nbr_read == 1 )
+                        {
+                            set_str("plot_y",svalue);
+                            update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                            update_plot_options(ngx,ngy,ngz,dxv);
+                            plot3d = 0;
+                            updateplot = 1;
+                        }
+                    }
+                    else if (ngy > -1 && ngy < total_nbr_x)
                     {
                         gx = 1;
                         gy = ngy + 2;
                         plot3d = 0;
                         updateplot = 1;
+                        update_plot_options(ngx,ngy,ngz,dxv);
                     }
                     else 
                     {
@@ -510,6 +529,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     ngy %= total_nbr_x;
                     gy = ngy+2;
                     updateplot=1;
+                    update_plot_options(ngx,ngy,ngz,dxv);
                     printf("  plotting [%d]\n",ngy);
                     break;
                 case '[' : /* plot previous x */
@@ -518,6 +538,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     ngy %= total_nbr_x;
                     gy = ngy+2;
                     updateplot=1;
+                    update_plot_options(ngx,ngy,ngz,dxv);
                     printf("  plotting [%d]\n",ngy);
                     break;    
                 case 'i' : /* run with initial conditions */
@@ -799,6 +820,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             }
                             rerun = 1;
                             updateplot = 1;
+                            update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                         }
                         else
                         {
@@ -910,31 +932,19 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                   {
                     fprintf(gnuplot_pipe,"set xlabel 'time'\n");
                   }
-                  else if ( (gx-2) < ode_system_size ) /* xlabel = name of variable  */
+                  else if ( (gx-2) < total_nbr_x ) /* xlabel = name of variable  */
                   {
-                    fprintf(gnuplot_pipe,"set xlabel '%s'\n",ics.name[gx-2]);
+                    fprintf(gnuplot_pipe,"set xlabel '%s'\n",dxv.name[gx-2]);
                   }
-                  else if ( (gx-2) < total_nbr_x ) /* xlabel = name of auxiliary function */ 
+                  if ( (gy-2) < total_nbr_x ) /* variable */
                   {
-                    fprintf(gnuplot_pipe,"set xlabel '%s'\n",fcn.name[gx - ode_system_size - 2]);
-                  }
-                  if ( (gy-2) < ode_system_size ) /* variable */
-                  {
-                    fprintf(gnuplot_pipe,"set ylabel '%s'\n",ics.name[gy-2]);
-                  }
-                  else if ( (gy-2) < total_nbr_x ) /* auxiliary variable */
-                  {
-                    fprintf(gnuplot_pipe,"set ylabel '%s'\n",fcn.name[gy - ode_system_size - 2]);
+                    fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
                   }
                   if ( plot3d == 1 )
                   {
-                    if ( (gz-2) < ode_system_size ) /* variable */
+                    if ( (gz-2) < total_nbr_x ) /* variable */
                     {
-                      fprintf(gnuplot_pipe,"set zlabel '%s'\n",ics.name[gz-2]);
-                    }
-                    else if ( (gz-2) < total_nbr_x ) /* auxiliary variable */
-                    {
-                      fprintf(gnuplot_pipe,"set zlabel '%s'\n",fcn.name[gz - ode_system_size - 2]);
+                      fprintf(gnuplot_pipe,"set zlabel '%s'\n",dxv.name[gz-2]);
                     }
                   }
               }
@@ -977,7 +987,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
             }
             /* update option pl:x, pl:y, pl:z */
-            update_plot_options(ngx,ngy,ngz,ics,fcn);
+            update_plot_options(ngx,ngy,ngz,dxv);
 
             fpurge(stdin);
             replot = 0;
@@ -1266,30 +1276,67 @@ int8_t load_options(const char *filename)
     return success;
 }
 
-int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve ics, nve fcn)
+int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve dxv)
 {
 
     if ( ngx == -1 )
       set_str("plot_x","T");
-    else if ( ngx < ics.nbr_el )
-      set_str("plot_x",ics.name[ngx]);
-    else if ( ngx < ics.nbr_el + fcn.nbr_el )
-      set_str("plot_x",fcn.name[ ngx-ics.nbr_el ] );
+    else if ( ngx < dxv.nbr_el )
+      set_str("plot_x",dxv.name[ngx]);
     if ( ngy == -1 )
       set_str("plot_y","T");
-    else if ( ngy < ics.nbr_el )
-      set_str("plot_y",ics.name[ngy]);
-    else if ( ngy < ics.nbr_el + fcn.nbr_el )
-      set_str("plot_y",fcn.name[ ngy-ics.nbr_el ] );
+    else if ( ngy < dxv.nbr_el )
+      set_str("plot_y",dxv.name[ngy]);
     if ( ngz == -1 )
       set_str("plot_z","T");
-    else if ( ngz < ics.nbr_el )
-      set_str("plot_z",ics.name[ngz]);
-    else if ( ngy < ics.nbr_el + fcn.nbr_el )
-      set_str("plot_z",fcn.name[ ngz-ics.nbr_el ] );
+    else if ( ngz < dxv.nbr_el )
+      set_str("plot_z",dxv.name[ngz]);
 
     return 1;
 
+}
+
+int8_t update_plot_index(int32_t *ngx, int32_t *ngy, int32_t *ngz, int32_t *gx, int32_t *gy, int32_t *gz, nve dxv)
+{
+    name2index(get_str("plot_x"),dxv,ngx);
+    name2index(get_str("plot_y"),dxv,ngy);
+    name2index(get_str("plot_z"),dxv,ngz);
+    *gx = *ngx+2; *gy = *ngy+2; *gz = *ngz+2;
+
+    return 1;
+    
+}
+
+void name2index( const char *name, nve var, int32_t *n) /* get index of var.name == name */
+{
+    int32_t i = 0;
+    if ( strcmp(name,"T") == 0 )
+    {
+        *n = -1;
+    }
+    else
+    {
+        while (  i < var.nbr_el )
+        {
+            if ( strcmp(name, var.name[i]) )
+            {
+                i++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if ( i < var.nbr_el )
+        {
+            *n =  i;
+        }
+        else
+        {
+            fprintf(stderr,"  error: unknown variable name: %s\n",name);
+        }
+        /* else do not change *n */
+    }
 }
 
 int8_t load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len)
@@ -1677,9 +1724,16 @@ int8_t set_dou(const char *name, const double val)
 {
     size_t idx_opt = 0;
     int8_t success = 0;
-    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    while ( idx_opt < NBROPTS)
     {
-      idx_opt++;
+        if ( strcmp(name, gopts[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
     }
     if (idx_opt < NBROPTS)
     {
@@ -1698,9 +1752,16 @@ int8_t set_int(const char *name, const int val)
 {
     size_t idx_opt = 0;
     int8_t success = 0;
-    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    while ( idx_opt < NBROPTS)
     {
-      idx_opt++;
+        if ( strcmp(name, gopts[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
     }
     if (idx_opt < NBROPTS)
     {
@@ -1719,9 +1780,16 @@ int8_t set_str(const char *name, const char * val)
 {
     size_t idx_opt = 0;
     int8_t success = 0;
-    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    while ( idx_opt < NBROPTS)
     {
-      idx_opt++;
+        if ( strcmp(name, gopts[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
     }
     if (idx_opt < NBROPTS)
     {
@@ -1740,9 +1808,16 @@ int8_t set_str(const char *name, const char * val)
 double get_dou(const char *name)
 {
     size_t idx_opt = 0;
-    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    while ( idx_opt < NBROPTS)
     {
-      idx_opt++;
+        if ( strcmp(name, gopts[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
     }
     if (idx_opt < NBROPTS)
     {
@@ -1757,9 +1832,16 @@ double get_dou(const char *name)
 long get_int(const char *name)
 {
     size_t idx_opt = 0;
-    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    while ( idx_opt < NBROPTS)
     {
-      idx_opt++;
+        if ( strcmp(name, gopts[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
     }
     if (idx_opt < NBROPTS)
     {
@@ -1775,9 +1857,16 @@ long get_int(const char *name)
 char * get_str(const char *name)
 {
     size_t idx_opt = 0;
-    while ( strcmp(name, gopts[idx_opt].name) && idx_opt < NBROPTS)
+    while ( idx_opt < NBROPTS)
     {
-      idx_opt++;
+        if ( strcmp(name, gopts[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
     }
     if (idx_opt < NBROPTS)
     {
