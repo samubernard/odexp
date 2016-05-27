@@ -4,3 +4,5 @@
 *.dylib
 
 *.swo
+
+Session.vim
