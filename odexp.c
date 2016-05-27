@@ -78,6 +78,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *system_filename = ".odexp/system.par";
     const char *helpcmd = "less -S .odexp/help.txt";
+    /* const char *postprocess = "awk 'OFS=\", \" { print $1, $32 }' current.tab >todygraph.csv"; */
     const char current_data_buffer[] = "current.tab";
     const char *hline = "----------------";
     char       par_details[32];
@@ -337,7 +338,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     stifle_history( 200 );
 
     status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan);
-    fprintf(gnuplot_pipe,"set xlabel 'time'\n");
+
+    /* fprintf(gnuplot_pipe,"set term canvas\n"); */
+    /* fprintf(gnuplot_pipe,"set output 'current.html'\n"); */
+    /* fprintf(gnuplot_pipe,"set xlabel 'time'\n"); */
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",ics.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
@@ -988,6 +992,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             }
             /* update option pl:x, pl:y, pl:z */
             update_plot_options(ngx,ngy,ngz,dxv);
+            /* system(postprocess); */
 
             fpurge(stdin);
             replot = 0;

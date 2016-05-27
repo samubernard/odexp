@@ -215,7 +215,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
               fprintf (file,"\t%.15e",fcn.value[i]);
           }
           fprintf(file,"\n");  
-          
+
           /* calculating next stop */
           nextstop = tstops[idx_stop];
           idx_stop++;
