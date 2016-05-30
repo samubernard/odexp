@@ -42,9 +42,12 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
             disc_alert = 0,
             abort_odesolver_alert = 0;
     uint32_t nbr_out = (uint32_t)get_int("odesolver_output_resolution");
+    int32_t nbr_cols = ode_system_size + fcn.nbr_el + 1;
     FILE *file;
+    FILE *binaryfile;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
+    const char binary_buffer[] = "current.session";
     int32_t i;
     
     /* sigaction */
@@ -100,21 +103,27 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
     /* open output file */
     file = fopen(current_data_buffer,"w");
+    binaryfile = fopen(binary_buffer,"w");
     
     printf("  running from t=%.2f to t=%.2f... ", t,t1);
     fflush(stdout);
 
     /* fill in the variable/function names */
+    fwrite(&nbr_cols,sizeof(int32_t),1,binaryfile); 
+    fwrite("T",sizeof(char),1,binaryfile);
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
         fprintf(file,"\t%s",ics.name[i]);
+        fwrite(ics.name[i],sizeof(char),NAMELENGTH,binaryfile);
     }
     for (i = 0; i<fcn.nbr_el; i++)
     {
         fprintf(file,"\t%s",fcn.name[i]);
+        fwrite(fcn.name[i],sizeof(char),NAMELENGTH,binaryfile);
     }
     fprintf(file,"\n");
+    
 
     /* fill in the initial conditions */
     fprintf(file,"%.15e ",t);
@@ -129,6 +138,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf (file,"\t%.15e",mu.aux_pointer[i]);
     }
     fprintf(file,"\n");
+    fwrite(&t,sizeof(double),1,binaryfile);
+    fwrite(y,sizeof(double),ode_system_size,binaryfile);
+    fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile);
+
     
     /* discontinuities */
     if ( tspan.length > 2 )
@@ -197,6 +210,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
             fprintf (file,"\t%.15e",fcn.value[i]);
         }
         fprintf(file,"\n");
+
+        fwrite(&t,sizeof(double),1,binaryfile);
+        fwrite(y,sizeof(double),ode_system_size,binaryfile);
+        fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile);
         
         if (disc_alert == 1)
         {
@@ -215,6 +232,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
               fprintf (file,"\t%.15e",fcn.value[i]);
           }
           fprintf(file,"\n");  
+
+          fwrite(&t,sizeof(double),1,binaryfile);
+          fwrite(y,sizeof(double),ode_system_size,binaryfile);
+          fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile);
 
           /* calculating next stop */
           nextstop = tstops[idx_stop];
@@ -249,6 +270,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     } 
 
     fclose(file);
+    fclose(binaryfile);
 
     gsl_odeiv_evolve_free(e);
     gsl_odeiv_control_free(c);
