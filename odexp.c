@@ -39,12 +39,14 @@ static char *cmdline = (char *)NULL;
 int32_t ode_system_size;
 
 /* options */
+
 struct gen_option gopts[NBROPTS] = { 
              {"pl:x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)"},
              {"pl:y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)"},
              {"pl:z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)"},
-             {"pl:freeze","freeze", 'i', 0.0, 0, "", "add (on) or replace (off) curves on plot"},
-             {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "lines | points | dots | linespoints ..."},
+             {"pl:freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot"},
+             {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ..."},
+             {"pl:realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1"},
              {"ode:res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
              {"ode:minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
              {"ode:h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
@@ -53,8 +55,8 @@ struct gen_option gopts[NBROPTS] = {
              {"phsp:maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
              {"phsp:abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
              {"phsp:rel_tol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
-             {"phsp:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v var value]"},  
-             {"phsp:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v var value]"} };
+             {"phsp:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
+             {"phsp:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"} };
 
 /* what kind of initial conditions to take */
 uint8_t *num_ic;
@@ -288,9 +290,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get options */
     printf("\noptions %s\n", hline);
     success = load_options(system_filename); 
-    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-    update_plot_options(ngx,ngy,ngz,dxv);
+    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
+    update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
     printf_options();
+    printf("--plot_x int: %ld; plot_y int: %ld\n",get_int("plot_x"), get_int("plot_y"));
 
     /* set IC to their numerical values */
     num_ic = malloc(ode_system_size*sizeof(uint8_t));
@@ -337,12 +340,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     stifle_history( 200 );
 
-    status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan);
+    status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
 
     /* fprintf(gnuplot_pipe,"set term canvas\n"); */
     /* fprintf(gnuplot_pipe,"set output 'current.html'\n"); */
-    /* fprintf(gnuplot_pipe,"set xlabel 'time'\n"); */
-    fprintf(gnuplot_pipe,"set ylabel '%s'\n",ics.name[gy-2]);
+    fprintf(gnuplot_pipe,"set term aqua font \"sans,14\"\n");
+    fprintf(gnuplot_pipe,"set xlabel 'time'\n"); 
+    fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
@@ -466,6 +470,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     updateplot = 1;
                     plot3d = 0;
                     update_plot_options(ngx,ngy,ngz,dxv);
+                    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
                     break;
                 case '3' : /* set 3D view */
                     sscanf(cmdline+1,"%d %d %d",&ngx,&ngy,&ngz);
@@ -497,6 +502,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     updateplot = 1;
                     plot3d = 1;
                     update_plot_options(ngx,ngy,ngz,dxv);
+                    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     break;
                 case 'x' :
                     nbr_read = sscanf(cmdline+1,"%d",&ngy);
@@ -519,6 +525,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         plot3d = 0;
                         updateplot = 1;
                         update_plot_options(ngx,ngy,ngz,dxv);
+                        update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     }
                     else 
                     {
@@ -534,6 +541,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     gy = ngy+2;
                     updateplot=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
+                    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     printf("  plotting [%d]\n",ngy);
                     break;
                 case '[' : /* plot previous x */
@@ -543,6 +551,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     gy = ngy+2;
                     updateplot=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
+                    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     printf("  plotting [%d]\n",ngy);
                     break;    
                 case 'i' : /* run with initial conditions */
@@ -919,7 +928,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan);
+                status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
             }
             if (replot)    
             {
@@ -992,6 +1001,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             }
             /* update option pl:x, pl:y, pl:z */
             update_plot_options(ngx,ngy,ngz,dxv);
+            update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
             /* system(postprocess); */
 
             fpurge(stdin);
@@ -1297,6 +1307,10 @@ int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve dxv)
     else if ( ngz < dxv.nbr_el )
       set_str("plot_z",dxv.name[ngz]);
 
+    set_int("plot_x",ngx);
+    set_int("plot_y",ngy);
+    set_int("plot_z",ngz);
+
     return 1;
 
 }
@@ -1306,6 +1320,9 @@ int8_t update_plot_index(int32_t *ngx, int32_t *ngy, int32_t *ngz, int32_t *gx, 
     name2index(get_str("plot_x"),dxv,ngx);
     name2index(get_str("plot_y"),dxv,ngy);
     name2index(get_str("plot_z"),dxv,ngz);
+    set_int("plot_x",*ngx);
+    set_int("plot_y",*ngy);
+    set_int("plot_z",*ngz);
     *gx = *ngx+2; *gy = *ngy+2; *gz = *ngz+2;
 
     return 1;

@@ -11,6 +11,7 @@
 #include <gsl/gsl_qrng.h>   
 #include <math.h>                          
 #include <signal.h>                          
+#include <unistd.h>
 
 /* =================================================================
                               Header files
@@ -30,7 +31,7 @@ static void set_abort_odesolver_flag(int sig)
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
- double *lasty, nve ics, nve mu, nve fcn, double_array tspan)    
+ double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe)    
 {
     double *y,
            *f;
@@ -50,6 +51,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     const char binary_buffer[] = "current.session";
     int32_t i;
     
+    struct timespec ts;
+
     /* sigaction */
     struct sigaction abort_act;
 
@@ -157,6 +160,17 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
        idx_stop++;
     }
     
+    ts.tv_sec = 0;
+    ts.tv_nsec = (100 % 1000) * 1000000;
+    if ( get_int("plot_realtime") == 1 && get_int("plot_x") == -1 )
+    {
+        fprintf(gnuplot_pipe,"set xrange [%f:%f]\n",t,t1);
+    }
+    else
+    {
+        fprintf(gnuplot_pipe,"set autoscale x\n");
+    }
+
     /* sigaction */
     abort_odesolver_flag = 0;
     abort_act.sa_handler = &set_abort_odesolver_flag;
@@ -252,6 +266,20 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           }
         }
        
+        /* test - fprintf to gnuplot_pipe after each iteration */
+        if ( get_int("plot_realtime") == 1 )
+        {
+            fflush(file);
+            /* replot */
+            fprintf(gnuplot_pipe,\
+              "plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",
+              current_data_buffer,(int)get_int("plot_x")+2,(int)get_int("plot_y")+2,
+              get_str("plot_with_style"),(int)get_int("plot_y")+2,(int)get_int("plot_x")+2); 
+            fflush(gnuplot_pipe);
+            nanosleep(&ts,NULL);        
+        }
+
+
         hmin_alert = 0;
         disc_alert = 0;
     }

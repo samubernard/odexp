@@ -16,7 +16,8 @@
 #define MAXROOTLENGTH     15 
 #define EXPRLENGTH     1023                            
 
-#define NBROPTS 15
+/* number of global options */
+#define NBROPTS 16
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
