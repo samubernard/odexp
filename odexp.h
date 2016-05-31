@@ -28,8 +28,8 @@
 /* =================================================================
                               EXTERN
 ================================================================= */
-extern int32_t ode_system_size;
-extern uint8_t *num_ic;
+extern long ode_system_size;
+extern int *num_ic;
 
 typedef struct namevalexp
 {
@@ -37,8 +37,8 @@ typedef struct namevalexp
     double *aux_pointer;
     char **name;
     char **expression;
-    uint32_t nbr_el; 
-    uint32_t nbr_expr;
+    long nbr_el; 
+    long nbr_expr;
     int *max_name_length;
 } nve;
 
@@ -75,7 +75,7 @@ typedef struct steady_state
     double *s;
     double *re;
     double *im; 
-    uint32_t size;
+    long size;
     int status;
 } steady_state;
 
@@ -96,41 +96,41 @@ void free_double_array( double_array var );
 
 void free_namevalexp(nve mu );
 
-void init_steady_state(steady_state *stst, uint32_t size);
+void init_steady_state(steady_state *stst, long size);
 
 void free_steady_state(steady_state *stst);
 
 void free_noptions();
 void free_soptions();
 
-int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, uint32_t *nbr_el, uint32_t *nbr_epxr);
+int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, long *nbr_el, long *nbr_epxr);
 
-int8_t load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
+int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
 
-int8_t load_options(const char *filename);
-int8_t update_plot_options(int32_t ngx, int32_t ngy, int32_t ngz, nve dxv);
-int8_t update_plot_index(int32_t *ngx, int32_t *ngy, int32_t *ngz, int32_t *gx, int32_t *gy, int32_t *gz, nve dxv);
-void name2index( const char *name, nve var, int32_t *n);
+int load_options(const char *filename);
+int update_plot_options(long ngx, long ngy, long ngz, nve dxv);
+int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv);
+void name2index( const char *name, nve var, long *n);
 
-int8_t load_double_array(const char *filename, double_array *a,\
+int load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len);
 
-int8_t load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep);
+int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep);
 
-int8_t load_int(const char *filename, int32_t *mypars, size_t len, const char *sym, size_t sym_len);
+int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len);
 
-int8_t fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer);
+int fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer);
 
-int8_t printf_options();
-int8_t set_dou(const char *name, const double val); 
-int8_t set_int(const char *name, const int val); 
-int8_t set_str(const char *name, const char * val); 
+int printf_options();
+int set_dou(const char *name, const double val); 
+int set_int(const char *name, const int val); 
+int set_str(const char *name, const char * val); 
 double get_dou(const char *name);
 long   get_int(const char *name);
 char*  get_str(const char *name);
 
-void printf_list_val(char type, int32_t i, int padding, int max_name_length, char *name, double value, char *descr);
-void printf_list_str(char type, int32_t i, int padding, int max_name_length, char *name, char  *expr);
+void printf_list_val(char type, long i, int padding, int max_name_length, char *name, double value, char *descr);
+void printf_list_str(char type, long i, int padding, int max_name_length, char *name, char  *expr);
 
 /* readline */
 void initialize_readline(void);

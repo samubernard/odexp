@@ -39,17 +39,17 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
            h = get_dou("odesolver_init_h"),
            eps_abs = get_dou("odesolver_eps_abs"),
            eps_rel = get_dou("odesolver_eps_rel");
-    uint8_t hmin_alert = 0,
+    int hmin_alert = 0,
             disc_alert = 0,
             abort_odesolver_alert = 0;
-    uint32_t nbr_out = (uint32_t)get_int("odesolver_output_resolution");
-    int32_t nbr_cols = ode_system_size + fcn.nbr_el + 1;
+    long nbr_out = (long)get_int("odesolver_output_resolution");
+    long nbr_cols = ode_system_size + fcn.nbr_el + 1;
     FILE *file;
     FILE *binaryfile;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
     const char binary_buffer[] = "current.session";
-    int32_t i;
+    long i;
     
     struct timespec ts;
 
@@ -112,7 +112,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fflush(stdout);
 
     /* fill in the variable/function names */
-    fwrite(&nbr_cols,sizeof(int32_t),1,binaryfile); 
+    fwrite(&nbr_cols,sizeof(long),1,binaryfile); 
     fwrite("T",sizeof(char),1,binaryfile);
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)

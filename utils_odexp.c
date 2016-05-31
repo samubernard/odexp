@@ -20,10 +20,10 @@
 
 #include "utils_odexp.h"
 
-double sum(double *array, int32_t len) /* sum the elements of the array */
+double sum(double *array, long len) /* sum the elements of the array */
 {
   double s = 0.0;
-  int32_t i;
+  long i;
 
   for (i=0;i<len;i++)
   {
@@ -35,10 +35,10 @@ double sum(double *array, int32_t len) /* sum the elements of the array */
 
 
 
-double prod(double *array, int32_t len) /* product of the elements of the array */
+double prod(double *array, long len) /* product of the elements of the array */
 {
   double p = 1.0;
-  int32_t i;
+  long i;
 
   for (i=0;i<len;i++)
   {
@@ -50,10 +50,10 @@ double prod(double *array, int32_t len) /* product of the elements of the array 
   return p;
 }
 
-double dotprod(double *x, double *y, int32_t len) /* scalar product of two arrays */
+double dotprod(double *x, double *y, long len) /* scalar product of two arrays */
 {
   double s = 0.0;
-  int32_t i;
+  long i;
 
   for (i=0;i<len;i++)
   {
@@ -63,10 +63,10 @@ double dotprod(double *x, double *y, int32_t len) /* scalar product of two array
   return s;
 }
 
-double conv(double *u, double *v, int32_t len) /* convolution product */ 
+double conv(double *u, double *v, long len) /* convolution product */ 
 {
   double s = 0.0;
-  int32_t i;
+  long i;
 
   for (i=0;i<len;i++)
   {
@@ -86,10 +86,10 @@ double plus(double x, double y)
     return x+y;
 }
 
-double sumxy(int32_t len, double (*f)(double), double (*g)(double, double), const double *x, const double yi)
+double sumxy(long len, double (*f)(double), double (*g)(double, double), const double *x, const double yi)
 {
     double s = 0.0;
-    int32_t j;
+    long j;
     
     for (j=0;j<len;j++)
     {
