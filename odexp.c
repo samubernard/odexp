@@ -63,9 +63,10 @@ int *num_ic;
 
 static char *T_IND = "\033[1;35m";
 static char *T_DET = "\033[3;36m";
-static char *T_VAL = "\033[3;31m";
+static char *T_VAL = "\033[3;32m";
 static char *T_EXPR = "\033[3;36m";
 static char *T_NOR = "\033[0m";
+static char *T_ERR = "\033[0;31m";
 
 
 /* =================================================================
@@ -344,7 +345,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* fprintf(gnuplot_pipe,"set term canvas\n"); */
     /* fprintf(gnuplot_pipe,"set output 'current.html'\n"); */
-    fprintf(gnuplot_pipe,"set term aqua font \"sans,14\"\n");
+    fprintf(gnuplot_pipe,"set term aqua font \"Helvetica Neue Light,16\"\n");
     fprintf(gnuplot_pipe,"set xlabel 'time'\n"); 
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
@@ -529,7 +530,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else 
                     {
-                        fprintf(stderr,"  error: var index out of bound\n");
+                        fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
                         replot = 0;
                         updateplot = 0;
                     }
@@ -673,7 +674,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else
                     {
-                        fprintf(stderr,"  error: unknown option\n");
+                        fprintf(stderr,"  %serror: unknown option%s\n",T_ERR,T_NOR);
                     }
                     break;
                 case 'p' : /* change current parameter */
@@ -698,7 +699,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                       }
                       else
                       {
-                          fprintf(stderr,"  error: parameter index out of bound. Use lp to list parameters\n");
+                          fprintf(stderr,"  %serror: parameter index out of bound. Use lp to list parameters%s\n",T_ERR,T_NOR);
                           printf("  active parameter %s = %lg\n", mu.name[p],mu.value[p]);
                       }
                       
@@ -738,7 +739,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else
                     {
-                        fprintf(stderr,"  error: expected a parameter value (double)\n");
+                        fprintf(stderr,"  %serror: expected a parameter value (double)%s\n",T_ERR,T_NOR);
                     }
                     break;
                case 'c' : /* change parameter/init values */
@@ -757,13 +758,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           }
                           else
                           {
-                            fprintf(stderr,"  error: par index out of bound\n");
+                            fprintf(stderr,"  %serror: par index out of bound%s\n",T_ERR,T_NOR);
                             replot = 0;
                           }
                         }
                         else
                         {
-                          fprintf(stderr,"  error: no parameter/value pair provided\n");
+                          fprintf(stderr,"  %serror: no parameter/value pair provided%s\n",T_ERR,T_NOR);
                         }
                     }
                     else if ( op == 'i' ) 
@@ -781,13 +782,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           }
                           else 
                           {
-                            fprintf(stderr,"  error: var index out of bound\n");
+                            fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
                             replot = 0;
                           }
                         }
                         else
                         {
-                          fprintf(stderr,"  error: no parameter/value pair provided\n");
+                          fprintf(stderr,"  %serror: no parameter/value pair provided%s\n",T_ERR,T_NOR);
                         }
                     }
                     else if (op == 'I') /* revert initial condition i to expression */
@@ -802,7 +803,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else 
                         {
-                            fprintf(stderr,"  error: var index out of bound\n");
+                            fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
                             replot = 0;
                         }
                     }
@@ -827,7 +828,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  error: tspan index out of bound\n");
+                            fprintf(stderr,"  %serror: tspan index out of bound%s\n",T_ERR,T_NOR);
                             replot = 0;
                         }
                     }
@@ -856,7 +857,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  error: option index out of bound\n");
+                            fprintf(stderr,"  %serror: option index out of bound%s\n",T_ERR,T_NOR);
                             replot = 0;
                         }
                     }
@@ -881,7 +882,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     nbr_read = sscanf(cmdline+2,"%s",par_filename);
                     if ( nbr_read < 1 )
                     {
-                        fprintf(stderr,"  error: missing parameter file name.\n");
+                        fprintf(stderr,"  %serror: missing parameter file name.%s\n",T_ERR,T_NOR);
                     }
                     else /* read par_filename for parameters, initial conditions, and tspan */
                     {
@@ -937,6 +938,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     quit = 1;
                 case 's' : /* save file */
                     file_status = fprintf_namevalexp(ics,pex,mu,fcn,eqn,tspan, current_data_buffer);
+                    break;
+                case '!' : /* print ! */
+                    fprintf(stderr,"  %serror: print! not implemented yet.%s\n",T_ERR,T_NOR);
                     break;
                 default :
                     printf("  Unknown command. Type q to quit, h for help\n");
@@ -1139,7 +1143,7 @@ int get_nbr_el(const char *filename, const char *sym,\
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
         exit ( EXIT_FAILURE );
     }
     
@@ -1197,7 +1201,7 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
         exit ( EXIT_FAILURE );
     }
     else
@@ -1261,7 +1265,7 @@ int load_options(const char *filename)
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
         exit ( EXIT_FAILURE );
     }
     else
@@ -1298,7 +1302,7 @@ int load_options(const char *filename)
                 }
                 else
                 {
-                    fprintf(stderr,"  warning: could not assign option %s\n", opt_name);
+                    fprintf(stderr,"  %swarning: could not assign option %s%s\n", T_ERR,opt_name,T_NOR);
 
                 }
             }
@@ -1378,7 +1382,7 @@ int name2index( const char *name, nve var, long *n) /* get index of var.name == 
         }
         else
         {
-            fprintf(stderr,"  error: unknown variable name: %s\n",name);
+            fprintf(stderr,"  %serror: unknown variable name: %s%s\n",T_ERR,name,T_NOR);
         }
         /* else do not change *n */
     }
@@ -1408,7 +1412,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
         exit ( EXIT_FAILURE );
     }
  
@@ -1493,7 +1497,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
         exit ( EXIT_FAILURE );
     }
  
@@ -1616,7 +1620,7 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  File %s not found, exiting...\n",filename);
+        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
         exit ( EXIT_FAILURE );
     }
 
@@ -1698,7 +1702,7 @@ int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  File %s could not be opened. Nothing was written\n",par_buffer);
+        fprintf(stderr,"  %sFile %s could not be opened. Nothing was written%s\n",T_ERR,par_buffer,T_NOR);
     }
     else
     {
@@ -1790,7 +1794,7 @@ int set_dou(const char *name, const double val)
     }
     else
     {
-      fprintf(stderr,"  error: could not assign option %s\n", name);
+      fprintf(stderr,"  %serror: could not assign option %s%s\n", T_ERR,name,T_NOR);
     }
 
     return success;
@@ -1818,7 +1822,7 @@ int set_int(const char *name, const int val)
     }
     else
     {
-      fprintf(stderr,"  error: could not assign option %s\n", name);
+      fprintf(stderr,"  %serror: could not assign option %s%s\n", T_ERR,name,T_NOR);
     }
 
     return success;
@@ -1846,7 +1850,7 @@ int set_str(const char *name, const char * val)
     }
     else
     {
-      fprintf(stderr,"  error: could not assign option %s\n", name);
+      fprintf(stderr,"  %serror: could not assign option %s%s\n", T_ERR,name,T_NOR);
     }
 
     return success;
