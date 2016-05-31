@@ -703,9 +703,26 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                       }
                       
                     }
-                    else if (nbr_read <= 0) /* just show the active parameter and its value */
+                    else if (nbr_read <= 0)  
                     {
+                        nbr_read = sscanf(cmdline+1,"%s %lf", svalue, &nvalue); /* try reading a string and a double */
+                        if ( nbr_read == 1 )
+                        {
+                            name2index(svalue,mu,(long *)&p);
+                            printf("  new active parameter %s with value %lg\n", mu.name[p],mu.value[p]);
+                        }
+                        else if ( nbr_read == 2 )
+                        {
+                            name2index(svalue,mu,(long *)&p);
+                            mu.value[p] = nvalue;
+                            rerun = 1;
+                            replot = 1;
+                            printf("  new active parameter %s set to %lg\n", mu.name[p],mu.value[p]);
+                        }
+                        else
+                        {    
                         printf("  %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
+                        }
                     }
                     break;
                 case 'P' : /* set value of current parameter */
