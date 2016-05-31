@@ -110,7 +110,7 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
 int load_options(const char *filename);
 int update_plot_options(long ngx, long ngy, long ngz, nve dxv);
 int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv);
-void name2index( const char *name, nve var, long *n);
+int name2index( const char *name, nve var, long *n);
 
 int load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len);

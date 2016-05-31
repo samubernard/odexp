@@ -713,11 +713,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else if ( nbr_read == 2 )
                         {
-                            name2index(svalue,mu,(long *)&p);
-                            mu.value[p] = nvalue;
-                            rerun = 1;
-                            replot = 1;
-                            printf("  new active parameter %s set to %lg\n", mu.name[p],mu.value[p]);
+                            if ( name2index(svalue,mu,(long *)&p) )
+                            {
+                                mu.value[p] = nvalue;
+                                rerun = 1;
+                                replot = 1;
+                                printf("  new active parameter %s set to %lg\n", mu.name[p],mu.value[p]);
+                            }
                         }
                         else
                         {    
@@ -1346,12 +1348,15 @@ int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long 
     
 }
 
-void name2index( const char *name, nve var, long *n) /* get index of var.name == name */
+int name2index( const char *name, nve var, long *n) /* get index of var.name == name */
 {
     long i = 0;
+    int s = 0;
+
     if ( strcmp(name,"T") == 0 )
     {
         *n = -1;
+        s = 1;
     }
     else
     {
@@ -1369,6 +1374,7 @@ void name2index( const char *name, nve var, long *n) /* get index of var.name ==
         if ( i < var.nbr_el )
         {
             *n =  i;
+            s = 1;
         }
         else
         {
@@ -1376,6 +1382,9 @@ void name2index( const char *name, nve var, long *n) /* get index of var.name ==
         }
         /* else do not change *n */
     }
+
+    return s;
+
 }
 
 int load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len)
