@@ -43,7 +43,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
             disc_alert = 0,
             abort_odesolver_alert = 0;
     long nbr_out = (long)get_int("odesolver_output_resolution");
-    long nbr_cols = ode_system_size + fcn.nbr_el + 1;
+    long nbr_cols = ode_system_size + fcn.nbr_el + 1; 
     FILE *file;
     FILE *binaryfile;
     /* char buffer[MAXFILENAMELENGTH]; */
@@ -108,22 +108,31 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     file = fopen(current_data_buffer,"w");
     binaryfile = fopen(binary_buffer,"w");
     
+    if( file == NULL )
+    {
+        fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,current_data_buffer,T_NOR);
+    }
+    if( binaryfile == NULL )
+    {
+        fprintf(stderr,"  %swarning: could not open binary file %s%s\n", T_ERR,binary_buffer,T_NOR);
+    }
+
     printf("  running from t=%.2f to t=%.2f... ", t,t1);
     fflush(stdout);
 
     /* fill in the variable/function names */
     fwrite(&nbr_cols,sizeof(long),1,binaryfile); 
-    fwrite("T",sizeof(char),1,binaryfile);
+    /* fwrite("T",sizeof(char),1,binaryfile); */
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
         fprintf(file,"\t%s",ics.name[i]);
-        fwrite(ics.name[i],sizeof(char),NAMELENGTH,binaryfile);
+        /* fwrite(ics.name[i],sizeof(char),NAMELENGTH,binaryfile); */
     }
     for (i = 0; i<fcn.nbr_el; i++)
     {
         fprintf(file,"\t%s",fcn.name[i]);
-        fwrite(fcn.name[i],sizeof(char),NAMELENGTH,binaryfile);
+        /* fwrite(fcn.name[i],sizeof(char),NAMELENGTH,binaryfile); */
     }
     fprintf(file,"\n");
     

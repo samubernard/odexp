@@ -61,12 +61,12 @@ struct gen_option gopts[NBROPTS] = {
 /* what kind of initial conditions to take */
 int *num_ic;
 
-static char *T_IND = "\033[1;35m";
-static char *T_DET = "\033[3;36m";
-static char *T_VAL = "\033[3;32m";
-static char *T_EXPR = "\033[3;36m";
-static char *T_NOR = "\033[0m";
-static char *T_ERR = "\033[0;31m";
+char *T_IND = "\033[1;35m";
+char *T_DET = "\033[3;36m";
+char *T_VAL = "\033[3;32m";
+char *T_EXPR = "\033[3;36m";
+char *T_NOR = "\033[0m";
+char *T_ERR = "\033[0;31m";
 
 
 /* =================================================================
@@ -319,6 +319,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("  RAND_MAX %d\n",RAND_MAX);
     printf("  rand01() = %f\n\n", rand01());
     
+    printf("--%lu",sizeof(long));
+
     /* readline */
     printf("  readline library version: %s\n", rl_library_version);
     
