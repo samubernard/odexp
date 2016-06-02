@@ -22,3 +22,4 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
 
 int eig(gsl_matrix *J, steady_state *stst);
 
+int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, const double t, const double *y, const double *a);

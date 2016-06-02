@@ -46,7 +46,8 @@ struct gen_option gopts[NBROPTS] = {
              {"pl:z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)"},
              {"pl:freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot"},
              {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ..."},
-             {"pl:realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1"},
+             {"pl:realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)"},
+             {"par:step","par_step", 'd', 1.1, 0, "", "par step increment"},
              {"ode:res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
              {"ode:minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
              {"ode:h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
@@ -83,6 +84,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char *helpcmd = "less -S .odexp/help.txt";
     /* const char *postprocess = "awk 'OFS=\", \" { print $1, $32 }' current.tab >todygraph.csv"; */
     const char current_data_buffer[] = "current.tab";
+    /* const char quick_buffer[] = "current.plot"; */
     const char *hline = "----------------";
     char       par_details[32];
     char       par_filename[MAXFILENAMELENGTH];
@@ -132,7 +134,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     char c,
          op,
          op2;
-    long gx,
+    long    gx,
             gy, 
             gz,
             ngx = -1,
@@ -144,10 +146,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         updateplot  = 0,  /* update plot with new parameters/option */
         rerun       = 0, /* run a new simulation */
         plot3d      = 0,
+        addcurve    = 0, /* add binary curve file for freeze option */
         quit        = 0;
     
     unsigned long randseed;
-    
 
     /* begin */
     printf("odexp file: %s\n",odexp_filename);
@@ -286,7 +288,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
         strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
     }
-    printf("--dxv.nbr_el = %ld\n",dxv.nbr_el);
+    /* printf("--dxv.nbr_el = %ld\n",dxv.nbr_el); */
 
     /* get options */
     printf("\noptions %s\n", hline);
@@ -294,7 +296,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
     printf_options();
-    printf("--plot_x int: %ld; plot_y int: %ld\n",get_int("plot_x"), get_int("plot_y"));
+    /* printf("--plot_x int: %ld; plot_y int: %ld\n",get_int("plot_x"), get_int("plot_y")); */
 
     /* set IC to their numerical values */
     num_ic = malloc(ode_system_size*sizeof(int));
@@ -319,7 +321,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("  RAND_MAX %d\n",RAND_MAX);
     printf("  rand01() = %f\n\n", rand01());
     
-    printf("--%lu",sizeof(long));
+    /* printf("--%lu",sizeof(long)); */
 
     /* readline */
     printf("  readline library version: %s\n", rl_library_version);
@@ -366,13 +368,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 case '+' : /* increment the parameter and run */
                 case '=' : /* increment the parameter and run */
-                    mu.value[p] *= 1.1;
+                    mu.value[p] *= get_dou("par_step");
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
                     replot = 1;
                     break;
                 case '-' : /* decrement the parameter and run */
-                    mu.value[p] /= 1.1;
+                    mu.value[p] /= get_dou("par_step");
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
                     replot = 1;
@@ -545,7 +547,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     updateplot=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                    printf("  plotting [%ld]\n",ngy);
+                    printf("  plotting [%ld] %s\n",ngy,dxv.name[ngy]);
                     break;
                 case '[' : /* plot previous x */
                     ngy = gy-2;
@@ -555,7 +557,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     updateplot=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                    printf("  plotting [%ld]\n",ngy);
+                    printf("  plotting [%ld] %s\n",ngy,dxv.name[ngy]);
                     break;    
                 case 'i' : /* run with initial conditions */
                     sscanf(cmdline+1,"%c",&op);
@@ -1300,7 +1302,7 @@ int load_options(const char *filename)
                             break;
                     }
                   success = 1;
-                  printf("--options %s loaded from file %s\n",opt_name, filename);
+                  /* printf("--options %s loaded from file %s\n",opt_name, filename); */
                 }
                 else
                 {
@@ -1342,9 +1344,22 @@ int update_plot_options(long ngx, long ngy, long ngz, nve dxv)
 
 int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv)
 {
-    name2index(get_str("plot_x"),dxv,ngx);
-    name2index(get_str("plot_y"),dxv,ngy);
-    name2index(get_str("plot_z"),dxv,ngz);
+    char sval[NAMELENGTH];
+    strncpy(sval,get_str("plot_x"),NAMELENGTH);
+    if ( strlen(sval) )
+    {
+        name2index(sval,dxv,ngx);
+    }
+    strncpy(sval,get_str("plot_y"),NAMELENGTH);
+    if ( strlen(sval) )
+    {
+        name2index(sval,dxv,ngy);
+    }
+    strncpy(sval,get_str("plot_z"),NAMELENGTH);
+    if ( strlen(sval) )
+    {
+        name2index(sval,dxv,ngz);
+    }
     set_int("plot_x",*ngx);
     set_int("plot_y",*ngy);
     set_int("plot_z",*ngz);
@@ -1363,6 +1378,10 @@ int name2index( const char *name, nve var, long *n) /* get index of var.name == 
     {
         *n = -1;
         s = 1;
+    }
+    else if ( strcmp(name,"") == 0 )
+    {
+        fprintf(stderr,"  %swarning: empty variable%s\n",T_ERR,T_NOR);
     }
     else
     {

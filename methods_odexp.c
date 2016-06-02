@@ -43,16 +43,23 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
             disc_alert = 0,
             abort_odesolver_alert = 0;
     long nbr_out = (long)get_int("odesolver_output_resolution");
-    long nbr_cols = ode_system_size + fcn.nbr_el + 1; 
+    /* long nbr_cols = ode_system_size + fcn.nbr_el + 1;  */
     FILE *file;
-    FILE *binaryfile;
+    /* FILE *binaryfile; */
+    FILE *quickfile;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
-    const char binary_buffer[] = "current.session";
+    /* const char binary_buffer[] = "current.session"; */
+    const char quick_buffer[] = "current.plot"; 
+    char mv_plot_cmd[EXPRLENGTH];
     long i;
-    
-    struct timespec ts;
 
+    long ngx,
+         ngy,
+         ngz;
+
+    static int nbr_freezed = 0;
+    
     /* sigaction */
     struct sigaction abort_act;
 
@@ -104,24 +111,38 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
     }
 
+    if ( get_int("freeze") )
+    {
+       snprintf(mv_plot_cmd,EXPRLENGTH*sizeof(char),"mv current.plot .odexp/curve.%d",nbr_freezed++);
+       system(mv_plot_cmd);
+    }
+
     /* open output file */
     file = fopen(current_data_buffer,"w");
-    binaryfile = fopen(binary_buffer,"w");
+    /* binaryfile = fopen(binary_buffer,"w"); */
+    quickfile = fopen(quick_buffer,"w");
     
     if( file == NULL )
     {
         fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,current_data_buffer,T_NOR);
     }
+    /*
     if( binaryfile == NULL )
     {
         fprintf(stderr,"  %swarning: could not open binary file %s%s\n", T_ERR,binary_buffer,T_NOR);
     }
+    */
+    if( quickfile == NULL )
+    {
+        fprintf(stderr,"  %swarning: could not open binary file %s%s\n", T_ERR,quick_buffer,T_NOR);
+    }
+
 
     printf("  running from t=%.2f to t=%.2f... ", t,t1);
     fflush(stdout);
 
     /* fill in the variable/function names */
-    fwrite(&nbr_cols,sizeof(long),1,binaryfile); 
+    /* fwrite(&nbr_cols,sizeof(long),1,binaryfile);  */
     /* fwrite("T",sizeof(char),1,binaryfile); */
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
@@ -150,11 +171,18 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf (file,"\t%.15e",mu.aux_pointer[i]);
     }
     fprintf(file,"\n");
-    fwrite(&t,sizeof(double),1,binaryfile);
-    fwrite(y,sizeof(double),ode_system_size,binaryfile);
-    fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile);
-
+    /* fwrite(&t,sizeof(double),1,binaryfile); */
+    /* fwrite(y,sizeof(double),ode_system_size,binaryfile); */
+    /* fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile); */
     
+    ngx = get_int("plot_x");
+    ngy = get_int("plot_y");
+    ngz = get_int("plot_z");
+
+    printf("--%ld %ld %ld\n",ngx,ngy,ngz);
+
+    fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
+
     /* discontinuities */
     if ( tspan.length > 2 )
     {
@@ -169,17 +197,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
        idx_stop++;
     }
     
-    ts.tv_sec = 0;
-    ts.tv_nsec = (100 % 1000) * 1000000;
-    if ( get_int("plot_realtime") == 1 && get_int("plot_x") == -1 )
-    {
-        fprintf(gnuplot_pipe,"set xrange [%f:%f]\n",t,t1);
-    }
-    else
-    {
-        fprintf(gnuplot_pipe,"set autoscale x\n");
-    }
-
     /* sigaction */
     abort_odesolver_flag = 0;
     abort_act.sa_handler = &set_abort_odesolver_flag;
@@ -234,10 +251,11 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         }
         fprintf(file,"\n");
 
-        fwrite(&t,sizeof(double),1,binaryfile);
-        fwrite(y,sizeof(double),ode_system_size,binaryfile);
-        fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile);
-        
+        /* fwrite(&t,sizeof(double),1,binaryfile); */
+        /* fwrite(y,sizeof(double),ode_system_size,binaryfile); */
+        /* fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile); */
+        fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
+
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
@@ -256,9 +274,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           }
           fprintf(file,"\n");  
 
-          fwrite(&t,sizeof(double),1,binaryfile);
-          fwrite(y,sizeof(double),ode_system_size,binaryfile);
-          fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile);
+          /* fwrite(&t,sizeof(double),1,binaryfile); */
+          /* fwrite(y,sizeof(double),ode_system_size,binaryfile); */
+          /* fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile); */
+          fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
 
           /* calculating next stop */
           nextstop = tstops[idx_stop];
@@ -275,19 +294,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           }
         }
        
-        /* test - fprintf to gnuplot_pipe after each iteration */
-        if ( get_int("plot_realtime") == 1 )
-        {
-            fflush(file);
-            /* replot */
-            fprintf(gnuplot_pipe,\
-              "plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",
-              current_data_buffer,(int)get_int("plot_x")+2,(int)get_int("plot_y")+2,
-              get_str("plot_with_style"),(int)get_int("plot_y")+2,(int)get_int("plot_x")+2); 
-            fflush(gnuplot_pipe);
-            nanosleep(&ts,NULL);        
-        }
-
 
         hmin_alert = 0;
         disc_alert = 0;
@@ -307,7 +313,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     } 
 
     fclose(file);
-    fclose(binaryfile);
+    /* fclose(binaryfile); */
+    fclose(quickfile);
 
     gsl_odeiv_evolve_free(e);
     gsl_odeiv_control_free(c);
@@ -597,3 +604,48 @@ static int compare (void const *a, void const *b)
     return *pa - *pb;
 }
 
+
+int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, const double t, const double *y, const double *a)
+{
+    if ( ngx == -1 )
+    {
+        fwrite(&t,sizeof(double),1,quickfile);
+    }    
+    else if ( ngx < ode_system_size)
+    {
+        fwrite(y+ngx,sizeof(double),1,quickfile);
+    }
+    else
+    { 
+        fwrite(a+ngx-ode_system_size,sizeof(double),1,quickfile);
+    }
+    if ( ngy == -1 )
+    {
+        fwrite(&t,sizeof(double),1,quickfile);
+    }    
+    else if ( ngy < ode_system_size)
+    {
+        fwrite(y+ngy,sizeof(double),1,quickfile);
+    }
+    else
+    { 
+        fwrite(a+ngy-ode_system_size,sizeof(double),1,quickfile);
+    }
+    if ( ngx == -1 )
+    {
+        fwrite(&t,sizeof(double),1,quickfile);
+    }    
+    else if ( ngz < ode_system_size)
+    {
+        fwrite(y+ngz,sizeof(double),1,quickfile);
+    }
+    else
+    { 
+        fwrite(a+ngz-ode_system_size,sizeof(double),1,quickfile);
+    }
+
+
+
+
+    return 1;
+}
