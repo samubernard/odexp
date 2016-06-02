@@ -48,6 +48,7 @@ struct gen_option gopts[NBROPTS] = {
              {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ..."},
              {"pl:realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)"},
              {"par:step","par_step", 'd', 1.1, 0, "", "par step increment"},
+             {"par:act","act_par", 's', 0.0, 0, "", "active parameter"},
              {"ode:res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
              {"ode:minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
              {"ode:h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
@@ -146,7 +147,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         updateplot  = 0,  /* update plot with new parameters/option */
         rerun       = 0, /* run a new simulation */
         plot3d      = 0,
-        addcurve    = 0, /* add binary curve file for freeze option */
         quit        = 0;
     
     unsigned long randseed;
@@ -295,6 +295,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_options(system_filename); 
     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
+    update_act_par_index(&p, mu);
+    update_act_par_options(p, mu);
     printf_options();
     /* printf("--plot_x int: %ld; plot_y int: %ld\n",get_int("plot_x"), get_int("plot_y")); */
 
@@ -372,12 +374,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
                     replot = 1;
+                    update_act_par_options(p, mu);
                     break;
                 case '-' : /* decrement the parameter and run */
                     mu.value[p] /= get_dou("par_step");
                     printf("%s = %f\n",mu.name[p],mu.value[p]);
                     rerun = 1;
                     replot = 1;
+                    update_act_par_options(p, mu);
                     break;                
                 case '0' : /* just run */
                     rerun = 1;
@@ -731,6 +735,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         printf("  %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                         }
                     }
+                    update_act_par_options(p, mu);
                     break;
                 case 'P' : /* set value of current parameter */
                     nbr_read = sscanf(cmdline+1,"%lf",&nvalue);
@@ -745,6 +750,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         fprintf(stderr,"  %serror: expected a parameter value (double)%s\n",T_ERR,T_NOR);
                     }
+                    update_act_par_options(p, mu);
                     break;
                case 'c' : /* change parameter/init values */
                     sscanf(cmdline+1,"%c",&op);
@@ -770,6 +776,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                           fprintf(stderr,"  %serror: no parameter/value pair provided%s\n",T_ERR,T_NOR);
                         }
+                        update_act_par_options(p, mu);
                     }
                     else if ( op == 'i' ) 
                     {
@@ -858,6 +865,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             rerun = 1;
                             updateplot = 1;
                             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                            update_act_par_index(&p, mu);
                         }
                         else
                         {
@@ -881,6 +889,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     ode_init_conditions(tspan.array[0], ics.value, mu.value);
                     rerun = 1;
                     replot = 1;
+                    update_act_par_options(p, mu);
                     break;
                 case 'o' : /* open a parameter file */
                     nbr_read = sscanf(cmdline+2,"%s",par_filename);
@@ -1030,6 +1039,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             update_plot_options(ngx,ngy,ngz,dxv);
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
             /* system(postprocess); */
+            update_act_par_options(p, mu);
+            update_act_par_index(&p, mu);
 
             fpurge(stdin);
             replot = 0;
@@ -1410,6 +1421,28 @@ int name2index( const char *name, nve var, long *n) /* get index of var.name == 
 
     return s;
 
+}
+
+int update_act_par_index(int *p, const nve mu)
+{
+    char sval[NAMELENGTH];
+    strncpy(sval,get_str("act_par"),NAMELENGTH);
+    if ( strlen(sval) )
+    {
+        name2index(sval,mu,(long *)p);
+    }
+
+    return 1;
+}
+ 
+int update_act_par_options(const int p, const nve mu)
+{   
+    int s = 0;
+    set_dou("act_par",mu.value[p]);
+    set_int("act_par",p);
+    set_str("act_par",mu.name[p]);
+
+    return s;
 }
 
 int load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len)

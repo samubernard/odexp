@@ -17,7 +17,7 @@
 #define EXPRLENGTH     1023                            
 
 /* number of global options */
-#define NBROPTS 17
+#define NBROPTS 18
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
@@ -117,6 +117,8 @@ int load_options(const char *filename);
 int update_plot_options(long ngx, long ngy, long ngz, nve dxv);
 int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv);
 int name2index( const char *name, nve var, long *n);
+int update_act_par_index(int *p, const nve mu);
+int update_act_par_options(const int p, const nve mu);
 
 int load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len);

@@ -20,11 +20,15 @@ echo "" >>.odexp/sub.odexp
 awk '$1 ~ /^#/ { print $0 };
     $1 ~ /^%/ {n++; name[n]=$1; val[n]=$2; print $0};
     $1 !~ /^%/ { 
-    for(i=1;i<=n;i++) {
-        gsub(name[i],val[i],$0);
-        print $0 
+    if(n>0) {
+        for(i=1;i<=n;i++) {
+            gsub(name[i],val[i],$0);
+            print $0 
+        }
     }
-    }' coupled.odexp >>.odexp/sub.odexp
+    else {
+        print $0; }
+    }' $1 >>.odexp/sub.odexp
 file=.odexp/sub.odexp
 
 # if two input files, then second one should contain parameters
@@ -648,7 +652,7 @@ echo "" >>.odexp/system.par
 echo "# initial condition " >>.odexp/system.par
 system_init_conditions
 
-echo "" >>.odexp/sytem.par
+echo "" >>.odexp/system.par
 echo "# options " >>.odexp/system.par
 system_options
 
@@ -686,7 +690,7 @@ echo "		rm -f *.o; rm -f *.out; rm -rf *.out.dSYM" >>.odexp/makefile
 
 cd .odexp
 
-rm sub.odexp
+# rm sub.odexp
 
 make && cp model.out .. && cd .. && ./model.out $file
 
