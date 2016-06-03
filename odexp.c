@@ -538,6 +538,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             set_str("plot_y",svalue);
                             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                            ngx = -1;
+                            gx = ngx + 2;
                             update_plot_options(ngx,ngy,ngz,dxv);
                             plot3d = 0;
                             updateplot = 1;
@@ -969,7 +971,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     file_status = fprintf_namevalexp(ics,pex,mu,fcn,eqn,tspan, current_data_buffer);
                     break;
                 case '!' : /* print ! */
-                    fprintf(stderr,"  %serror: print! not implemented yet.%s\n",T_ERR,T_NOR);
+                    nbr_read = sscanf(cmdline+1,"%s", svalue);
+                    if ( nbr_read == 1 ) /* try saving plot with name given in svalue */
+                    {
+                        fprintf(gnuplot_pipe,"set term postscript eps color\n");
+                        fprintf(gnuplot_pipe,"set output \"%s.eps\"\n",svalue);
+                        fprintf(gnuplot_pipe,"replot\n");
+                        fprintf(gnuplot_pipe,"set term aqua font \"Helvetica Neue Light,16\"\n");
+                        fflush(gnuplot_pipe);
+                        printf("  wrote %s.eps in current directory\n",svalue);
+                    }
+                    else
+                    {
+                        fprintf(stderr,"  %serror: require the name of the file.%s\n",T_ERR,T_NOR);
+                    }
                     break;
                 default :
                     printf("  Unknown command. Type q to quit, h for help\n");
@@ -1750,7 +1765,6 @@ int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array
 
     time_stamp = clock();
     rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_]",rootname);
-    /* printf("rootnamescanned: %ld, rootname: %s", rootnamescanned, rootname); */
 
     if (rootnamescanned > 0)
     {
@@ -1794,7 +1808,22 @@ int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array
         {
             fprintf(fr,"%g ",tspan.array[i]);
         }
-        fprintf(fr,"\n");
+        fprintf(fr,"\n\n");
+
+        for(i=0;i<NBROPTS;i++)
+        {
+            switch (gopts[i].valtype)
+            {
+                case 'd' :
+                    fprintf(fr,"O%zu %-*s %g\n",i,len,gopts[i].name,gopts[i].numval);
+                    break;
+                case 'i' :
+                    fprintf(fr,"O%zu %-*s %ld\n",i,len,gopts[i].name,gopts[i].intval);
+                    break;
+                case 's' :
+                    fprintf(fr,"O%zu %-*s %s\n",i,len,gopts[i].name,gopts[i].strval);
+            }
+        }
 
         fclose(fr);
 
