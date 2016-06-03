@@ -45,7 +45,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     long nbr_out = (long)get_int("odesolver_output_resolution");
     /* long nbr_cols = ode_system_size + fcn.nbr_el + 1;  */
     FILE *file;
-    /* FILE *binaryfile; */
     FILE *quickfile;
     /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
@@ -119,19 +118,12 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
     /* open output file */
     file = fopen(current_data_buffer,"w");
-    /* binaryfile = fopen(binary_buffer,"w"); */
     quickfile = fopen(quick_buffer,"w");
     
     if( file == NULL )
     {
         fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,current_data_buffer,T_NOR);
     }
-    /*
-    if( binaryfile == NULL )
-    {
-        fprintf(stderr,"  %swarning: could not open binary file %s%s\n", T_ERR,binary_buffer,T_NOR);
-    }
-    */
     if( quickfile == NULL )
     {
         fprintf(stderr,"  %swarning: could not open binary file %s%s\n", T_ERR,quick_buffer,T_NOR);
@@ -142,18 +134,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fflush(stdout);
 
     /* fill in the variable/function names */
-    /* fwrite(&nbr_cols,sizeof(long),1,binaryfile);  */
-    /* fwrite("T",sizeof(char),1,binaryfile); */
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
         fprintf(file,"\t%s",ics.name[i]);
-        /* fwrite(ics.name[i],sizeof(char),NAMELENGTH,binaryfile); */
     }
     for (i = 0; i<fcn.nbr_el; i++)
     {
         fprintf(file,"\t%s",fcn.name[i]);
-        /* fwrite(fcn.name[i],sizeof(char),NAMELENGTH,binaryfile); */
     }
     fprintf(file,"\n");
     
@@ -171,9 +159,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf (file,"\t%.15e",mu.aux_pointer[i]);
     }
     fprintf(file,"\n");
-    /* fwrite(&t,sizeof(double),1,binaryfile); */
-    /* fwrite(y,sizeof(double),ode_system_size,binaryfile); */
-    /* fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile); */
     
     ngx = get_int("plot_x");
     ngy = get_int("plot_y");
@@ -251,9 +236,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         }
         fprintf(file,"\n");
 
-        /* fwrite(&t,sizeof(double),1,binaryfile); */
-        /* fwrite(y,sizeof(double),ode_system_size,binaryfile); */
-        /* fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile); */
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
 
         if (disc_alert == 1)
@@ -274,9 +256,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           }
           fprintf(file,"\n");  
 
-          /* fwrite(&t,sizeof(double),1,binaryfile); */
-          /* fwrite(y,sizeof(double),ode_system_size,binaryfile); */
-          /* fwrite(mu.aux_pointer,sizeof(double),fcn.nbr_el,binaryfile); */
           fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
 
           /* calculating next stop */
@@ -313,7 +292,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     } 
 
     fclose(file);
-    /* fclose(binaryfile); */
     fclose(quickfile);
 
     gsl_odeiv_evolve_free(e);
