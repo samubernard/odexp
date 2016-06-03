@@ -56,7 +56,7 @@ struct gen_option gopts[NBROPTS] = {
              {"ode:epsrel","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
              {"phsp:maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
              {"phsp:abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
-             {"phsp:rel_tol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
+             {"phsp:reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
              {"phsp:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
              {"phsp:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"} };
 
@@ -142,7 +142,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             ngy =  0,
             ngz =  1;
     double nvalue;
-    char svalue[NAMELENGTH];
+    char svalue[NAMELENGTH],
+         svalue2[NAMELENGTH],
+         svalue3[NAMELENGTH];
     int replot      = 0, /* replot the same gnuplot command with new data */
         updateplot  = 0,  /* update plot with new parameters/option */
         rerun       = 0, /* run a new simulation */
@@ -349,10 +351,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
 
-    /* fprintf(gnuplot_pipe,"set term canvas\n"); */
-    /* fprintf(gnuplot_pipe,"set output 'current.html'\n"); */
     fprintf(gnuplot_pipe,"set term aqua font \"Helvetica Neue Light,16\"\n");
-    fprintf(gnuplot_pipe,"set xlabel 'time'\n"); 
+    fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
@@ -457,61 +457,77 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     break;
                 case '2' : /* set 2D */
-                case 'v' : /* set view */
-                    sscanf(cmdline+1,"%ld %ld",&ngx,&ngy);
-                    if ( (ngx >= -1) && ngx < total_nbr_x)
+                case '3' : /* set 3D */
+                case 'v' : /* set 2D or 3D view */
+                    nbr_read = sscanf(cmdline+1,"%ld %ld %ld",&ngx,&ngy,&ngz);
+                    if ( nbr_read == 0 ) /* try reading two or three strings */
                     {
-                        gx = ngx + 2;
+                        nbr_read = sscanf(cmdline+1,"%s %s %s", svalue, svalue2, svalue3);
+                        if ( nbr_read >= 2 )
+                        {
+                            updateplot = 1;
+                            plot3d = 0;
+                            set_str("plot_x",svalue);
+                            set_str("plot_y",svalue2);
+                            update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                            update_plot_options(ngx,ngy,ngz,dxv);
+                        }
+                        if ( nbr_read == 3 )
+                        {
+                            set_str("plot_z",svalue3);
+                            plot3d = 1;
+                        }
+                        if ( nbr_read < 2 ) 
+                        {
+                            fprintf(stderr,"  %serror: requires 2 or 3 variable names/indices%s\n",T_ERR,T_NOR);
+                            updateplot = 0;
+                        }
+                        update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                        update_plot_options(ngx,ngy,ngz,dxv);
                     }
-                    else
+                    if ( nbr_read >= 2 )
                     {
-                        printf("  warning: x-axis index out of bound\n");
+                        updateplot = 1;
+                        plot3d = 0;
+                        if (ngx > -1 && ngx < total_nbr_x)
+                        {
+                            gx = ngx + 2;
+                        }
+                        else
+                        {
+                            fprintf(stderr,"  %serror: x-axis index out of bound%s\n",T_ERR,T_NOR);
+                            updateplot = 0;
+                        }
+                        if ( (ngy >= -1) && ngy < total_nbr_x)
+                        {
+                            gy = ngy + 2;
+                        }
+                        else
+                        {
+                            fprintf(stderr,"  %serror: y-axis index out of bound%s\n",T_ERR,T_NOR);
+                            updateplot = 0;
+                        }
+                        update_plot_options(ngx,ngy,ngz,dxv);
+                        update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
                     }
-                    if ( (ngy >= -1) && ngy < total_nbr_x)
+                    if ( nbr_read == 3 )
                     {
-                        gy = ngy + 2;
-                    }
-                    else
+                        if ( (ngz >= -1) && ngz < total_nbr_x)
+                        {
+                            gz = ngz + 2;
+                            plot3d = 1;
+                        }
+                        else
+                        {
+                            fprintf(stderr,"  %swarning: z-axis index out of bound%s\n",T_ERR,T_NOR);
+                            updateplot = 0;
+                        }
+                    } 
+                    if ( nbr_read == 1 || nbr_read > 3 )
                     {
-                        printf("  warning: y-axis index out of bound\n");
+                        fprintf(stderr,"  %serror: requires 2 or 3 variable names/indices%s\n",T_ERR,T_NOR);
+                        updateplot = 0;
                     }
-                    fflush(gnuplot_pipe);
-                    updateplot = 1;
-                    plot3d = 0;
-                    update_plot_options(ngx,ngy,ngz,dxv);
-                    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
-                    break;
-                case '3' : /* set 3D view */
-                    sscanf(cmdline+1,"%ld %ld %ld",&ngx,&ngy,&ngz);
-                    if ( ngx >= -1 && ngx < total_nbr_x)
-                    {
-                        gx = ngx + 2;
-                    }
-                    else
-                    {
-                        printf("  warning: x-axis index out of bound\n");
-                    }
-                    if ( ngy >= -1 && ngy < total_nbr_x)
-                    {
-                        gy = ngy + 2;
-                    }
-                    else
-                    {
-                        printf("  warning: y-axis index out of bound\n");
-                    }
-                    if ( ngz >= -1 && ngz < total_nbr_x)
-                    {
-                        gz = ngz + 2;
-                    }
-                    else
-                    {
-                        printf("  warning: z-axis index out of bound\n");
-                    }
-                    fflush(gnuplot_pipe);
-                    updateplot = 1;
-                    plot3d = 1;
-                    update_plot_options(ngx,ngy,ngz,dxv);
-                    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     break;
                 case 'x' :
                     nbr_read = sscanf(cmdline+1,"%ld",&ngy);
@@ -1313,7 +1329,6 @@ int load_options(const char *filename)
                             break;
                     }
                   success = 1;
-                  /* printf("--options %s loaded from file %s\n",opt_name, filename); */
                 }
                 else
                 {

@@ -35,20 +35,17 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 {
     double *y,
            *f;
-    double hmin = get_dou("odesolver_min_h"),
-           h = get_dou("odesolver_init_h"),
-           eps_abs = get_dou("odesolver_eps_abs"),
-           eps_rel = get_dou("odesolver_eps_rel");
-    int hmin_alert = 0,
-            disc_alert = 0,
-            abort_odesolver_alert = 0;
+    double hmin     = get_dou("odesolver_min_h"),
+           h        = get_dou("odesolver_init_h"),
+           eps_abs  = get_dou("odesolver_eps_abs"),
+           eps_rel  = get_dou("odesolver_eps_rel");
+    int hmin_alert              = 0,
+        disc_alert              = 0,
+        abort_odesolver_alert   = 0;
     long nbr_out = (long)get_int("odesolver_output_resolution");
-    /* long nbr_cols = ode_system_size + fcn.nbr_el + 1;  */
     FILE *file;
     FILE *quickfile;
-    /* char buffer[MAXFILENAMELENGTH]; */
     const char current_data_buffer[] = "current.tab";
-    /* const char binary_buffer[] = "current.session"; */
     const char quick_buffer[] = "current.plot"; 
     char mv_plot_cmd[EXPRLENGTH];
     long i;
@@ -84,17 +81,28 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     s = gsl_odeiv_step_alloc(odeT,ode_system_size);
     c = gsl_odeiv_control_y_new(eps_abs,eps_rel);
     e = gsl_odeiv_evolve_alloc(ode_system_size);
-    
 
-
+    /* discontinuities */
+    if ( tspan.length > 2 )
+    {
+       nbr_stops = tspan.length-2;
+       tstops = malloc( nbr_stops*sizeof(double) );
+       for(i=0;i<nbr_stops;i++)
+       {
+          tstops[i] = tspan.array[i+1];
+       }
+       mergesort(tstops, nbr_stops, sizeof(double),compare);
+       nextstop = tstops[idx_stop];
+       idx_stop++;
+    }
     /* tspan */
-    /* it is assumed that tspan is sorted by increasing values */
+    /* it is assumed that the first and last values of tspan are t0 and t1 */
     t = tspan.array[0];
     t1 = tspan.array[tspan.length-1];
     dt = (t1-t)/(double)(nbr_out-1);
     nextstop = t;
 
-
+    /* initial condition */
     y = malloc(ode_system_size*sizeof(double));
     ode_init_conditions(t, y, mu.value);
     for (i = 0; i < ode_system_size; i++)
@@ -109,7 +117,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         }
         /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
     }
-
+   
     if ( get_int("freeze") )
     {
        snprintf(mv_plot_cmd,EXPRLENGTH*sizeof(char),"mv current.plot .odexp/curve.%d",nbr_freezed++);
@@ -129,11 +137,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf(stderr,"  %swarning: could not open binary file %s%s\n", T_ERR,quick_buffer,T_NOR);
     }
 
-
-    printf("  running from t=%.2f to t=%.2f... ", t,t1);
-    fflush(stdout);
-
-    /* fill in the variable/function names */
+    /* current.tab: fill in the variable/function names */
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
@@ -144,45 +148,28 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf(file,"\t%s",fcn.name[i]);
     }
     fprintf(file,"\n");
-    
 
-    /* fill in the initial conditions */
-    fprintf(file,"%.15e ",t);
+    /* current.tab: fill in the initial conditions */
+    fprintf(file,"%g ",t);
     for (i = 0; i < ode_system_size; i++)
     {
-        fprintf (file,"\t%.15e",y[i]);  
+        fprintf (file,"\t%g",y[i]);  
     }
     f = malloc(ode_system_size*sizeof(double));
     ode_rhs(t, y, f, &mu);
     for (i = 0; i < fcn.nbr_el; i++)
     {
-        fprintf (file,"\t%.15e",mu.aux_pointer[i]);
+        fprintf (file,"\t%g",mu.aux_pointer[i]);
     }
     fprintf(file,"\n");
-    
+
+    /* current.plot binary file with three columns: plot_x, plot_y, plot_z */
     ngx = get_int("plot_x");
     ngy = get_int("plot_y");
     ngz = get_int("plot_z");
-
-    printf("--%ld %ld %ld\n",ngx,ngy,ngz);
-
     fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
 
-    /* discontinuities */
-    if ( tspan.length > 2 )
-    {
-       nbr_stops = tspan.length-2;
-       tstops = malloc( nbr_stops*sizeof(double) );
-       for(i=0;i<nbr_stops;i++)
-       {
-          tstops[i] = tspan.array[i+1];
-       }
-       mergesort(tstops, nbr_stops, sizeof(double),compare);
-       nextstop = tstops[idx_stop];
-       idx_stop++;
-    }
-    
-    /* sigaction */
+    /* sigaction -- detect Ctrl-C during the simulation  */
     abort_odesolver_flag = 0;
     abort_act.sa_handler = &set_abort_odesolver_flag;
     abort_act.sa_flags = 0;
@@ -192,12 +179,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
          return 1;  
     }  
 
+    printf("  running from t=%.2f to t=%.2f... ", t,t1);
+    fflush(stdout);
+
     /* ODE solver - main loop */
     while (t < t1 && !abort_odesolver_flag)
     {
         tnext = fmin(t+dt,t1);
         
-        /* printf("t=%.2f, tnext=%.2f, nextstop=%.2f\n",t,tnext,nextstop); */
         if ( (t<nextstop) && (tnext>=nextstop) )
         {
           tnext = nextstop;
@@ -223,16 +212,15 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
             if (status != GSL_SUCCESS)
                 break;
                 
-            /* printf("\n--> t = %.2f, h = %e",t, h);   */
         }
-        fprintf(file,"%.15e ",t);
+        fprintf(file,"%g ",t);
         for (i = 0; i < ode_system_size; i++)
         {
-            fprintf (file,"\t%.15e",y[i]); 
+            fprintf (file,"\t%g",y[i]); 
         }
         for (i = 0; i < fcn.nbr_el; i++)
         {
-            fprintf (file,"\t%.15e",fcn.value[i]);
+            fprintf (file,"\t%g",fcn.value[i]);
         }
         fprintf(file,"\n");
 
@@ -245,14 +233,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           /* update auxiliary functions */
           ode_rhs(t, y, f, &mu);
           /* write the new state to file */
-          fprintf(file,"%.15e ",t);
+          fprintf(file,"%g ",t);
           for (i = 0; i < ode_system_size; i++)
           {
-              fprintf (file,"\t%.15e",y[i]); 
+              fprintf (file,"\t%g",y[i]); 
           }
           for (i = 0; i < fcn.nbr_el; i++)
           {
-              fprintf (file,"\t%.15e",fcn.value[i]);
+              fprintf (file,"\t%g",fcn.value[i]);
           }
           fprintf(file,"\n");  
 
