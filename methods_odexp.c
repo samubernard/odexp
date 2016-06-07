@@ -10,6 +10,8 @@
 #include <gsl/gsl_eigen.h> 
 #include <gsl/gsl_qrng.h>   
 #include <math.h>                          
+#include <time.h>
+#include <string.h>
 #include <signal.h>                          
 #include <unistd.h>
 
@@ -33,6 +35,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
  int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
  double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe)    
 {
+    clock_t start = clock();
     double *y,
            *f;
     double hmin     = get_dou("odesolver_min_h"),
@@ -77,7 +80,34 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     gsl_odeiv_system sys; 
     int status;
 
-    odeT = gsl_odeiv_step_rk4;
+    if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rk4;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"rk2",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rk2;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"rkf45",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rkf45;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"rkck",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rkck;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"rk8pd",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rk8pd;
+    }
+    else
+    {
+        fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
+                T_ERR,get_str("odesolver_step_method"),T_NOR);
+        fprintf(stderr,"         %swill use 'rk4' as a default step method%s\n",T_ERR,T_NOR);
+        odeT = gsl_odeiv_step_rk4;
+    }
+
     s = gsl_odeiv_step_alloc(odeT,ode_system_size);
     c = gsl_odeiv_control_y_new(eps_abs,eps_rel);
     e = gsl_odeiv_evolve_alloc(ode_system_size);
@@ -267,7 +297,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
     if (status == GSL_SUCCESS)
     {
-        printf("  ...done.\n");
+        printf("  ...done in %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
     }
     else
     {

@@ -47,18 +47,19 @@ struct gen_option gopts[NBROPTS] = {
              {"pl:freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot"},
              {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ..."},
              {"pl:realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)"},
-             {"par:step","par_step", 'd', 1.1, 0, "", "par step increment"},
-             {"par:act","act_par", 's', 0.0, 0, "", "active parameter"},
-             {"ode:res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
-             {"ode:minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
-             {"ode:h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
-             {"ode:epsabs","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
-             {"ode:epsrel","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
-             {"phsp:maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
-             {"phsp:abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
-             {"phsp:reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
-             {"phsp:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
-             {"phsp:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"} };
+             {"pr:step","par_step", 'd', 0.1, 0, "", "par step increment"},
+             {"pr:act","act_par", 's', 0.0, 0, "", "active parameter"},
+             {"os:res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
+             {"os:minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
+             {"os:h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
+             {"os:epsabs","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
+             {"os:epsrel","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
+             {"os:method","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd"},
+             {"ps:maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
+             {"ps:abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
+             {"ps:reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
+             {"ps:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
+             {"ps:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"} };
 
 /* what kind of initial conditions to take */
 int *num_ic;
@@ -1323,7 +1324,7 @@ int load_options(const char *filename)
                 sscanf(line,"%*s %s",opt_name);
 
                 idx_opt = 0;
-                while (    strncmp(opt_name, gopts[idx_opt].name, NAMELENGTH) 
+                while (    strncmp(opt_name, gopts[idx_opt].name,NAMELENGTH) 
                         && strncmp(opt_name, gopts[idx_opt].abbr,NAMELENGTH) 
                         && idx_opt < NBROPTS)
                 {
