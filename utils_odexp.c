@@ -4,13 +4,6 @@
                               Libraries
 ================================================================= */
 
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_odeiv.h>
-#include <gsl/gsl_multiroots.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_eigen.h> 
-#include <gsl/gsl_qrng.h>   
 #include <math.h>                          
 #include <signal.h>                          
 
@@ -98,5 +91,4 @@ double sumxy(long len, double (*f)(double), double (*g)(double, double), const d
     
     return s;
 }
-
 

@@ -17,7 +17,8 @@ echo "# odexp file name: $1" >.odexp/sub.odexp
 echo "" >>.odexp/sub.odexp
 
 # replace all constants (variable starting with '%') by their value
-awk '{gsub(",","\n"$1,$0)};
+# replace all , by \n except those between parentheses
+awk '{gsub(";","\n"$1,$0)};
     $1 ~ /^#/ { print $0 };    
     $1 ~ /^%/ {n++; name[n]=$1; val[n]=$2; print $0};
     $1 !~ /^%/ { 
@@ -427,6 +428,7 @@ echo "================================================================= */" >>.o
 echo "" >>.odexp/model.c
 echo "#include \"odexp.h\"" >>.odexp/model.c
 echo "#include \"utils_odexp.h\"" >>.odexp/model.c
+echo "#include \"rand_gen.h\"" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c

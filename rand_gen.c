@@ -21,7 +21,7 @@
 
 double rand01()
 {
-    return (double)rand()/RAND_MAX; 
+    return (double)rand()/RAND_MAX;
 }
 
 double randN(double mu, double sigma)

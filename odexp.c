@@ -41,25 +41,25 @@ long ode_system_size;
 /* options */
 
 struct gen_option gopts[NBROPTS] = { 
-             {"pl:x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)"},
-             {"pl:y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)"},
-             {"pl:z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)"},
-             {"pl:freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot"},
-             {"pl:style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ..."},
-             {"pl:realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)"},
-             {"pr:step","par_step", 'd', 0.1, 0, "", "par step increment"},
-             {"pr:act","act_par", 's', 0.0, 0, "", "active parameter"},
-             {"os:res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
-             {"os:minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
-             {"os:h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
-             {"os:epsabs","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
-             {"os:epsrel","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
-             {"os:method","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd"},
-             {"ps:maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
-             {"ps:abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
-             {"ps:reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
-             {"ps:searchrange","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
-             {"ps:searchmin","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"} };
+             {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)"},
+             {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)"},
+             {"z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)"},
+             {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot"},
+             {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ..."},
+             {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)"},
+             {"step","par_step", 'd', 0.1, 0, "", "par step increment"},
+             {"act","act_par", 's', 0.0, 0, "", "active parameter"},
+             {"res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
+             {"minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
+             {"h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
+             {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
+             {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
+             {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd"},
+             {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
+             {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
+             {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
+             {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
+             {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"} };
 
 /* what kind of initial conditions to take */
 int *num_ic;
@@ -81,6 +81,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char *odexp_filename )
 {
 
+    /* variable declaration */
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *system_filename = ".odexp/system.par";
     const char *helpcmd = "less -S .odexp/help.txt";
@@ -153,6 +154,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         quit        = 0;
     
     unsigned long randseed;
+    static double random_array[10];
+
+    /* end variable declaration */
 
     /* begin */
     printf("odexp file: %s\n",odexp_filename);
@@ -324,7 +328,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* test rng */
     printf("\nrandom number generator %s\n", hline);
     printf("  RAND_MAX %d\n",RAND_MAX);
-    printf("  rand01() = %f\n\n", rand01());
+    for (i=0;i<10;i++)
+    {
+        random_array[i] = rand01();
+        printf("--random_array[%ld] = %f\n", i, random_array[i]);
+    }
     
     /* printf("--%lu",sizeof(long)); */
 
@@ -1309,6 +1317,7 @@ int load_options(const char *filename)
     int success = 0;
     char opt_name[NAMELENGTH];
     fr = fopen (filename, "rt");
+    static int len2uniq = 4;
 
     if ( fr == NULL )
     {
@@ -1324,8 +1333,8 @@ int load_options(const char *filename)
                 sscanf(line,"%*s %s",opt_name);
 
                 idx_opt = 0;
-                while (    strncmp(opt_name, gopts[idx_opt].name,NAMELENGTH) 
-                        && strncmp(opt_name, gopts[idx_opt].abbr,NAMELENGTH) 
+                while (    strncmp(opt_name, gopts[idx_opt].name,len2uniq) 
+                        && strncmp(opt_name, gopts[idx_opt].abbr,len2uniq) 
                         && idx_opt < NBROPTS)
                 {
                   idx_opt++;
@@ -1838,7 +1847,7 @@ int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array
 int printf_options()
 {
     size_t i; 
-    int p = 32;
+    static int p = 16;
     int s = (int)log(NBROPTS);
     int d = 16;
 
@@ -1848,24 +1857,24 @@ int printf_options()
       {
         case 'd':
           printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-          printf("%-*s = ",p,gopts[i].name);
+          printf("%-*s",p,gopts[i].abbr);
           printf("%s%-*g ",T_VAL,d,gopts[i].numval);
           printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
           break;
         case 'i':
           printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-          printf("%-*s = ",p,gopts[i].name);
+          printf("%-*s",p,gopts[i].abbr);
           printf("%s%-*ld ",T_VAL,d,gopts[i].intval);
           printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
           break;
         case 's':
           printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-          printf("%-*s = ",p,gopts[i].name);
+          printf("%-*s",p,gopts[i].abbr);
           printf("%s%-*s ",T_VAL,d,gopts[i].strval);
           printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
           break;
         default:
-          printf("  O[%-*zu] %-*s = not defined\n",s,i,p,gopts[i].name);
+          printf("  O[%-*zu] %-*s = not defined\n",s,i,p,gopts[i].abbr);
       }
     }
     return 1;
