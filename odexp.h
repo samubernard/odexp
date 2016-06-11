@@ -41,6 +41,7 @@ typedef struct namevalexp
 {
     double *value;
     double *aux_pointer;
+    double *rand_pointer;
     char **name;
     char **expression;
     long nbr_el; 

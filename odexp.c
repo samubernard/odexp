@@ -104,6 +104,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const size_t ts_len = 1;
     double_array  tspan;
 
+    /* array of random numbers */
+    double_array rnd;
+
     /* parametric expressions */
     nve pex;
 
@@ -154,7 +157,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         quit        = 0;
     
     unsigned long randseed;
-    static double random_array[10];
 
     /* end variable declaration */
 
@@ -247,6 +249,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     } 
     mu.aux_pointer = fcn.value; /* pointer to fcn.value */
 
+    /* get random array */
+    printf("\nrandom numbers %s\n", hline);
+    get_nbr_el(system_filename,"U",1,(long *)&rnd.length,NULL);
+    printf("--rnd.length = %ld\n",rnd.length);
+    rnd.array = malloc(rnd.length*sizeof(double));
+    for (i = 0; i < rnd.length; i++)
+    {
+        rnd.array[i] = rand01();
+    }
+    mu.rand_pointer = rnd.array;
+
     /* get equations */
     printf("\nequations %s\n", hline);
     get_nbr_el(system_filename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
@@ -328,11 +341,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* test rng */
     printf("\nrandom number generator %s\n", hline);
     printf("  RAND_MAX %d\n",RAND_MAX);
-    for (i=0;i<10;i++)
-    {
-        random_array[i] = rand01();
-        printf("--random_array[%ld] = %f\n", i, random_array[i]);
-    }
     
     /* printf("--%lu",sizeof(long)); */
 
@@ -649,6 +657,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             printf_list_str('E',i,padding,*pex.max_name_length,pex.name[i],pex.expression[i]);
                         }
                     }
+                    else if (op == 'r') /* list random arrays         */
+                    {
+                        for (i=0; i<rnd.length; i++)
+                        {
+                            padding = (int)log10(rnd.length+0.5)-(int)log10(i+0.5);
+                            printf_list_val('R',i,padding,4,"unif",rnd.array[i],"uniform random number");
+                        }
+                    }
                     else if (op == 'i') /* list initial conditions */
                     {
                         for (i=0; i<ode_system_size; i++)
@@ -671,7 +687,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
                         }
                     }
-                    else if (op == 'a') /* list auxiliairy equation */ 
+                    else if (op == 'a') /* list auxiliary equation */ 
                     {
                         for (i=0; i<fcn.nbr_el; i++)
                         {
@@ -1113,6 +1129,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_steady_state( stst );
     /* printf("--free tspan\n"); */
     free_double_array( tspan );
+    free_double_array( rnd );
     /* printf("--free options\n"); */
     free_noptions();
     free_soptions();
@@ -1142,7 +1159,7 @@ void free_namevalexp(nve var )
 {
     long i;
     
-    /* do not free aux_pointer, it will be freed from fcn */
+    /* do not free aux_pointer, it will be freed from fcn through fcn.value */
     /* printf("--free var.name\n");  */
     for (i = 0; i < var.nbr_el; i++)
     {
@@ -1201,9 +1218,12 @@ int get_nbr_el(const char *filename, const char *sym,\
         fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
         exit ( EXIT_FAILURE );
     }
-    
+   
     *nbr_el = 0;
-    *nbr_expr = 0;
+    if ( nbr_expr ) 
+    {
+        *nbr_expr = 0;
+    }
     while( (linelength = getline(&line,&linecap,fr)) > 0)
     {
         while(line[k] == sym[k] && !isspace(line[k]) && \
@@ -1214,7 +1234,10 @@ int get_nbr_el(const char *filename, const char *sym,\
         if(k == sym_len) /* keyword was found */
         {
             /* printf("--nbr_el = %u, found line = %s\n",*nbr_el,line); */
-            (*nbr_expr)++;
+            if ( nbr_expr )
+            {
+                (*nbr_expr)++;
+            }
             /* scan for two integers, index0, index1 in [iter=i0:i1] */
             nbr_index = sscanf(line,"%*[a-zA-Z0-9_: \[]=%zd:%zd",&index0, &index1);
             /* printf("--nbr_index found = %ld\n",nbr_index); */
@@ -1231,7 +1254,7 @@ int get_nbr_el(const char *filename, const char *sym,\
                 printf("  Error in determining number of elements... exiting\n");
                 exit ( EXIT_FAILURE );
             }
-            /* printf("--new nbr_el = %u\n",*nbr_el); */
+            printf("--new nbr_el = %ld\n",*nbr_el);
 
         }
         k = 0; /* reset k */

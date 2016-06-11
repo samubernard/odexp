@@ -83,6 +83,30 @@ declare_iterators () {
       }' $file >>.odexp/model.c
 }
 
+declare_assign_static_variables () {
+    awk -F ' ' '$1 ~ /^[sS][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+        var=$2;
+        $1="";
+        $2="";
+        ex=$0;
+        printf "    static double %s = %s;\n", var, ex;
+        }' $file >>.odexp/model.c
+}
+
+system_static_variables () {
+    awk -F ' ' -v nv=0 '$1 ~ /^[sS][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+      lhs = $2;
+      split($0,ex," ");
+      printf "S%-3d %-16s", nv, lhs;
+      nv++; 
+      for(k=3;k<=length(ex);k++)
+      {
+        printf "%s ", ex[k]
+      };
+      printf "\n"
+      }' $file >>.odexp/system.par
+}
+
 declare_parametric_expressions () {
     # find parametric expressions and declare them in .odexp/model.c
     # find parametric expression vectors and declare them in .odexp/model.c
@@ -214,6 +238,13 @@ system_options () {
     }' $parfile >>.odexp/system.par
 }
 
+system_uniform_random_array () {
+    awk -F ' ' '$1 ~ /^[uU][0-9]*$/  {
+        print $0
+       }' $file >>.odexp/system.par
+}
+
+
 declare_variables () {
     # find variables and declare them to model.c
     # find vector variables and declare them to model.c
@@ -240,6 +271,20 @@ declare_auxiliary_functions () {
       {printf "    double %s", myvar };
       for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
       {printf ";\n"} }' $file >>.odexp/model.c
+}
+
+declare_uniform_random_array () {
+    awk -F ' ' '$1 ~ /^[uU][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+      printf "    double %s;\n", $2 };
+      $1 ~ /^[uU]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+:.+\])+/);
+      a=substr($2, RSTART, RLENGTH);
+      split(a,b,/[\[\]=:]/);
+      split($2,c,/\[/);
+      myvar=c[1];
+      {printf "    double %s", myvar };
+      for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
+      {printf ";\n"} }' $file >>.odexp/model.c
+
 }
 
 assign_parametric_expressions () {
@@ -378,6 +423,26 @@ assign_aux_pointer () {
       }' $file >>.odexp/model.c
 }
 
+assign_uniform_random_array () {
+    awk -F ' ' -v nv=0 '$1 ~ /^[uU][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+      ex=$2;
+      printf "    %s = rnd_[%d];\n", ex, nv; nv++
+      };
+      
+      $1 ~ /^[uU][0-9]*$/ && $2 ~ /(\[.+:.+\])+/ { match($2,/(\[.+:.+\])+/);
+      a=substr($2, RSTART, RLENGTH);
+      split(a,b,/[\[\]=:]/);
+      myvar="rnd_";
+      split($2,c,/\[/);
+      ex=c[1];
+      printf "%-*sfor(%s=%s;%s<%s;%s++)\n", 5, "", b[2], b[3], b[2], b[4], b[2]; 
+      printf "%-*s%s[%s+%d]", 8, "", ex, b[2], nv;
+      printf " = %s[%s];\n", myvar, b[2];
+      nv+=b[4]-b[3]
+      }' $file >>.odexp/model.c
+}
+
+
 assign_initial_conditions () {
     awk -F ' ' -v nv=0 '$1 ~ /^[xXiI][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       $1="";
@@ -474,6 +539,7 @@ echo "{" >>.odexp/model.c
 echo "    nve mu_ = *(nve *)params_;" >>.odexp/model.c
 echo "    double * pars_ = mu_.value;" >>.odexp/model.c
 echo "    double * aux_  = mu_.aux_pointer;" >>.odexp/model.c
+echo "    double * rnd_  = mu_.rand_pointer;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -516,6 +582,30 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
+# DECLARE AND ASSIGN STATIC VARIABLES 
+echo "    /* static variables */" >>.odexp/model.c
+declare_assign_static_variables
+echo "" >>.odexp/model.c
+
+# find parametric expression parameters and write them in .odexp/system.par
+echo "" >>.odexp/system.par
+echo "# static variables " >>.odexp/system.par
+system_static_variables
+# ====================================================================================
+
+# ====================================================================================
+# DECLARE UNIFORM RANDOM ARRAY
+echo "    /* uniform random array */" >>.odexp/model.c
+declare_uniform_random_array
+echo "" >>.odexp/model.c
+
+# find parametric expression parameters and write them in .odexp/system.par
+echo "" >>.odexp/system.par
+echo "# uniform random array " >>.odexp/system.par
+system_uniform_random_array
+# ====================================================================================
+
+# ====================================================================================
 # DECLARE PARAMETRIC EXPRESSIONS AND ASSIGN NONVECTOR PARAMETRIC EXPRESSIONS
 echo "    /* parametric expressions */" >>.odexp/model.c
 declare_parametric_expressions
@@ -554,6 +644,14 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
 # initialize parametric expression vectors and write them in .odexp/model.c
 assign_parametric_expressions 
+# ====================================================================================
+
+# ====================================================================================
+# ASSIGN UNIFORM RANDOM ARRAY
+echo "" >>.odexp/model.c
+echo "    /* Initialization - uniform random array */" >>.odexp/model.c
+# initialize uniform random array and write them in .odexp/model.c
+assign_uniform_random_array 
 # ====================================================================================
 
 # ====================================================================================
