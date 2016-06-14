@@ -324,16 +324,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 }
 
 int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve ics, nve mu)
+    nve ics, nve mu, steady_state **stst)
 {
     int status, status_res, status_delta, newstst;
-    const size_t ode_system_size = ics.nbr_el;
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
     double *ics_min, /* lower bounds on steady state values */
           *ics_max; /* bounds on steady state values */
     size_t ntry = 0;
     size_t max_fail = get_int("phasespace_max_fail"); /* max number of iteration without finding a new steady state */
-    steady_state *stst; /* new steady state */
     size_t nbr_stst = 0; /* number of steady state found so far */
     size_t i,j;
     double rel_tol = get_dou("phasespace_abs_tol"), 
@@ -356,16 +354,6 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     T = gsl_multiroot_fsolver_hybrids;
     s = gsl_multiroot_fsolver_alloc(T,ode_system_size);
     
-
-    /* initialize stst */
-    stst = malloc(2*sizeof(steady_state));
-    for ( i=0; i<2; i++)
-    {
-        init_steady_state(stst+i, ode_system_size);
-    }
-    status = ststsolver(multiroot_rhs,ics,mu, stst);
-    nbr_stst++;
-    printf("First steady state found, looking for more...\n");
 
     /* ics_min */
     ics_min = malloc(ode_system_size*sizeof(double));
@@ -409,12 +397,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
 
             status_res = gsl_multiroot_test_residual(s->f, 1e-7);
             status_delta = gsl_multiroot_test_delta(s->dx, s->x, 1e-12,1e-7);
-        } while( (status_res == GSL_CONTINUE || status_delta == GSL_CONTINUE ) && iter < 1000);
-
-        for ( i=0; i<ode_system_size; i++)
-        {
-            (stst+nbr_stst)->s[i] = gsl_vector_get(s->x,i);
-        }
+        } while( (status_res == GSL_CONTINUE || status_delta == GSL_CONTINUE ) && iter < max_fail );
 
         /*printf("  Steady State\n");
          *gsl_vector_fprintf(stdout,s->x,"    %+.5e");
@@ -427,8 +410,8 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
             ststn1 = 0.0;
             for ( j=0; j<ode_system_size; j++)
             {
-                err += fabs( (stst[nbr_stst].s[j] - stst[i].s[j]) );
-                ststn1 += fabs(stst[i].s[j]);
+                err += fabs( (gsl_vector_get(s->x, j) - (*stst)[i].s[j]) );
+                ststn1 += fabs((*stst)[i].s[j]);
             }
             
             if (err < abs_tol + ststn1*rel_tol) /* new steady state matches a previous one */
@@ -439,16 +422,19 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
         }
         if ( newstst && (status_res == GSL_SUCCESS) && (status_delta == GSL_SUCCESS) ) /* new steady state is accepted, increase stst size by one */
         {
-            printf("\nNew steady state found, n = %zu\n",nbr_stst+1);
+            nbr_stst++;
+            (*stst) = realloc((*stst), nbr_stst*sizeof(steady_state));
+            init_steady_state((*stst)+nbr_stst-1, nbr_stst-1);
+            for ( i=0; i<ode_system_size; i++)
+            {
+                (*stst)[nbr_stst-1].s[i] = gsl_vector_get(s->x,i);
+                (*stst)[nbr_stst-1].status = status;
+            }
+            printf("\nNew steady state found with index  = %d\n",(*stst)[nbr_stst-1].index);
             printf("  Steady State\n");
             gsl_vector_fprintf(stdout,s->x,"    %+.5e");
             gsl_multiroot_fdjacobian(&f, s->x, s->f, 1e-9, J);
-            eig(J, stst+nbr_stst);
-
-            nbr_stst++;
-            stst = realloc(stst, (nbr_stst+1)*sizeof(steady_state));
-            init_steady_state(stst+nbr_stst,ode_system_size);
-            
+            eig(J, (*stst)+nbr_stst-1);
         }
         else
         {
@@ -458,15 +444,8 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
 
     printf("  done.\n");
 
-    /* generate phase portrait */
-
     /* free memory */
 
-    for ( i=0; i<nbr_stst; i++)
-    {
-        free_steady_state(stst+i);
-    }
-    free(stst);
     free(ics_max);
     free(ics_min);
     gsl_qrng_free (q);
@@ -475,7 +454,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     gsl_vector_free(x);
     gsl_matrix_free(J);
 
-    return 0;
+    return nbr_stst;
 }
 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\

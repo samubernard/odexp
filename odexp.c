@@ -47,7 +47,7 @@ struct gen_option gopts[NBROPTS] = {
              {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot"},
              {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ..."},
              {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)"},
-             {"step","par_step", 'd', 0.1, 0, "", "par step increment"},
+             {"step","par_step", 'd', 1.1, 0, "", "par step increment"},
              {"act","act_par", 's', 0.0, 0, "", "active parameter"},
              {"res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
              {"minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
@@ -91,7 +91,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char *hline = "----------------";
     char       par_details[32];
     char       par_filename[MAXFILENAMELENGTH];
-    long i;
+    long i,j;
     int success;
     
     double *lasty;
@@ -129,7 +129,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     double *lastinit;
 
     /* steady states */
-    steady_state *stst = malloc(sizeof(steady_state));
+    steady_state *stst = NULL;
+    int nbr_stst = 0;
 
     int status, file_status;
     int p=0,
@@ -329,12 +330,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     */
     }
 
-    /* init steady state */
-    stst->s =  malloc(ode_system_size*sizeof(double));
-    stst->re = malloc(ode_system_size*sizeof(double));
-    stst->im = malloc(ode_system_size*sizeof(double));
-    stst->size = ode_system_size;
-    
     /* seed random number generator */
     randseed = 1306;
     srand(randseed);
@@ -611,11 +606,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     } 
                     else if ( op == 's') /* run from steady state */
                     {
-                        for ( i=0; i<ode_system_size; i++ )
+                        if ( nbr_stst > 0 )
                         {
-                            lastinit[i] = ics.value[i];
-                            ics.value[i] = stst->s[i];
-                            num_ic[i] = 1;
+                            for ( i=0; i<ode_system_size; i++ )
+                            {
+                                lastinit[i] = ics.value[i];
+                                ics.value[i] = stst->s[i];
+                                num_ic[i] = 1;
+                            }
                         }
                     }
                     rerun = 1;
@@ -662,7 +660,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<rnd.length; i++)
                         {
                             padding = (int)log10(rnd.length+0.5)-(int)log10(i+0.5);
-                            printf_list_val('R',i,padding,4,"unif",rnd.array[i],"uniform random number");
+                            printf_list_val('U',i,padding,4,"unif",rnd.array[i],"uniform random number");
                         }
                     }
                     else if (op == 'i') /* list initial conditions */
@@ -706,12 +704,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 's') /* list steady states */
                     {
-                        for (i=0; i<ode_system_size; i++)
+                        printf("--there are %d steady states\n",nbr_stst);
+                        for (j=0; j<nbr_stst; j++)
                         {
-                            padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_val('S',i,padding,*ics.max_name_length,ics.name[i],stst->s[i],"*");
+                            for (i=0; i<ode_system_size; i++)
+                            {
+                                padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                                printf_list_val('S',i,padding,*ics.max_name_length,ics.name[i],stst[j].s[i],"*");
+                            }
+                            printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
                         }
-                        printf("  *status: %s%s%s\n",T_DET,gsl_strerror(status),T_NOR);
                     }
                     else if (op == 'n') /* list ode system size */
                     {
@@ -978,13 +980,30 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                 case 'm' :
                     sscanf(cmdline+1,"%c",&op);
+                    /* first clear stst */
+                    if ( nbr_stst > 0 )
+                    {
+                        free_steady_state(stst, nbr_stst);
+                    }
+                    nbr_stst = 0;
+                    stst = NULL;
                     if ( op  == 's') /* compute steady state */
                     {
+                         /* init steady state */
+                        stst = malloc(sizeof(steady_state));
+                        init_steady_state( &(stst[0]), 0 );
+                        nbr_stst = 1;
+                        printf("--stst ok\n");
                         status = ststsolver(multiroot_rhs,ics,mu, stst);
                     } 
                     else if ( op == 'm')
                     {
-                        status = phasespaceanalysis(multiroot_rhs,ics,mu);
+                        nbr_stst = phasespaceanalysis(multiroot_rhs,ics,mu, &stst);
+                        printf("--nbr_stst = %d\n", nbr_stst);
+                        for (j=0; j<nbr_stst; j++)
+                        {
+                            printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
+                        }
                     } 
                     break;
                 case 'Q' :  /* quit without saving */
@@ -1126,7 +1145,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* printf("--free dxv\n"); */
     free_namevalexp( dxv );
     /* printf("--free stst\n"); */
-    free_steady_state( stst );
+    free_steady_state( stst, nbr_stst );
     /* printf("--free tspan\n"); */
     free_double_array( tspan );
     free_double_array( rnd );
@@ -1183,20 +1202,27 @@ void free_soptions()
 {
 }
 
-void init_steady_state(steady_state *stst, long size)
+void init_steady_state(steady_state *mystst, int index)
 {
     /* init steady state */
-    stst->s =  malloc(size*sizeof(double));
-    stst->re = malloc(size*sizeof(double));
-    stst->im = malloc(size*sizeof(double));
-    stst->size = size;
+    mystst->index = index;
+    mystst->size = ode_system_size;
+    mystst->s  = malloc(ode_system_size*sizeof(double));
+    mystst->re = malloc(ode_system_size*sizeof(double));
+    mystst->im = malloc(ode_system_size*sizeof(double));
+    mystst->status = 1;
 }
 
-void free_steady_state( steady_state *stst )
+void free_steady_state( steady_state *stst, int nbr_stst )
 {
-    free(stst->s);
-    free(stst->re);
-    free(stst->im);
+    int j;
+    for (j=0; j<nbr_stst; j++)
+    {
+        free( stst[j].s );
+        free( stst[j].re );
+        free( stst[j].im );
+    }
+    free( stst );
 }
 
 int get_nbr_el(const char *filename, const char *sym,\

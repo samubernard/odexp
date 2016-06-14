@@ -82,6 +82,7 @@ typedef struct steady_state
     double *s;
     double *re;
     double *im; 
+    int index;
     long size;
     int status;
 } steady_state;
@@ -103,9 +104,9 @@ void free_double_array( double_array var );
 
 void free_namevalexp(nve mu );
 
-void init_steady_state(steady_state *stst, long size);
+void init_steady_state(steady_state *stst, int index);
 
-void free_steady_state(steady_state *stst);
+void free_steady_state(steady_state *stst, int nbr_stst);
 
 void free_noptions();
 void free_soptions();
