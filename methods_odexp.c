@@ -568,6 +568,42 @@ int eig(gsl_matrix *J, steady_state *stst)
 
 }
 
+int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+    nve ics, nve mu)
+{
+    /* naive stst continuation method */
+    long p = get_int("act_par"); 
+    long i;
+    long ntry = 0;
+    long max_fail = get_int("phasespace_max_fail");
+    int status;
+    steady_state stst;
+
+    init_steady_state(&stst, 0);
+
+    while ( ntry < max_fail )
+    {
+        /* try to find a stst */
+        printf("--bifurcation parameter: %g\n",mu.value[p]);
+        status = ststsolver(multiroot_rhs,ics,mu, &stst);
+        if ( status == GSL_SUCCESS )
+        {
+            mu.value[p] += 0.01;
+            for (i=0; i<ode_system_size; i++)
+            {
+                ics.value[i] = stst.s[i];
+            }
+        }
+        ntry++;
+    }
+
+    free( stst.s );
+    free( stst.re );
+    free( stst.im );
+
+    return 1;
+}
+
 static int compare (void const *a, void const *b)
 {
     /* definir des pointeurs type's et initialise's

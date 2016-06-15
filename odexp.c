@@ -1005,6 +1005,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
                         }
                     } 
+                    else if ( op == 'c' )
+                    {
+                        status = ststcont(multiroot_rhs,ics,mu);
+                    }
                     break;
                 case 'Q' :  /* quit without saving */
                     quit = 1;

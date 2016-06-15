@@ -20,6 +20,10 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
 int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     nve ics, nve mu, steady_state *stst);
 
+int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+    nve ics, nve mu);
+
+
 int eig(gsl_matrix *J, steady_state *stst);
 
 int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, const double t, const double *y, const double *a);
