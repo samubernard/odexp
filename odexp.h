@@ -17,12 +17,17 @@
 #define EXPRLENGTH     1023                            
 
 /* number of global options */
-#define NBROPTS 19
+#define NBROPTS 20
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
            __typeof__ (b) _b = (b); \
          _a > _b ? _a : _b; })
+
+#define min(a,b) \
+       ({ __typeof__ (a) _a = (a); \
+           __typeof__ (b) _b = (b); \
+         _a < _b ? _a : _b; })
 
 
 /* =================================================================

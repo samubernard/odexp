@@ -21,6 +21,7 @@
 
 #include "odexp.h"
 #include "methods_odexp.h"
+#include "rand_gen.h"
 
 static int compare (void const *a, void const *b);
 
@@ -578,28 +579,111 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     long max_fail = get_int("phasespace_max_fail");
     int status;
     steady_state stst;
+    double h = get_dou("cont_h");
+    FILE *br_file;
+    double *x2, *x1, *x0;
+    double mu2, mu1, mu0;
+    double a,b,c, s=1.0;
+    long nstst = 0;
 
+    x2 =  malloc(ode_system_size*sizeof(double));
+    x1 =  malloc(ode_system_size*sizeof(double));
+    x0 =  malloc(ode_system_size*sizeof(double));
+
+    for (i = 0; i < ode_system_size; i++)
+    {
+        x2[i] = ics.value[i];
+        x1[i] = ics.value[i];
+        x0[i] = ics.value[i];
+    }
+
+    mu2 = mu.value[p];
+    mu1 = mu.value[p];
+    mu0 = mu.value[p];
     init_steady_state(&stst, 0);
+
+    br_file = fopen("stst_branches.tab","a");
 
     while ( ntry < max_fail )
     {
         /* try to find a stst */
         printf("--bifurcation parameter: %g\n",mu.value[p]);
         status = ststsolver(multiroot_rhs,ics,mu, &stst);
-        if ( status == GSL_SUCCESS )
+        if ( status == GSL_SUCCESS ) /* then move to next point */
         {
-            mu.value[p] += 0.01;
+            printf("--nstst %ld\n",nstst++);
+            fprintf(br_file,"%g",mu.value[p]);
             for (i=0; i<ode_system_size; i++)
             {
-                ics.value[i] = stst.s[i];
+                fprintf(br_file,"\t%g",stst.s[i]);
             }
+            fprintf(br_file,"\n");
+            for (i=0; i<ode_system_size; i++)
+            {
+                x2[i] = x1[i];
+                x1[i] = x0[i];
+                x0[i] = stst.s[i];
+            }
+            mu2 = mu1;
+            mu1 = mu0;
+            mu0 = mu.value[p];
+            s = 1.0;
+        }
+        else
+        {
+            s = -1.0;
+        }
+
+        if ( nstst == 1 ) /* just move mu by amount h */
+        {
+            for (i=0; i<ode_system_size; i++)
+            {
+                ics.value[i] = x0[i];   
+            }
+            mu.value[p] += h;
+        } 
+        if ( nstst == 2 )
+        {
+            for (i=0; i<ode_system_size; i++)
+            {
+                b = -x1[i] + x0[i];
+                c = x0[i];
+                ics.value[i] = b+c; /* next initial guess */
+                printf("--x: a,b,c = %g, %g\n",b,c);
+            } 
+            b = -mu1 + mu0;
+            c = mu0;
+            mu.value[p] = b+c;
+            printf("--mu: b,c = %g, %g\n",b,c);
+        }
+        if ( nstst > 2 )
+        {
+            for (i=0; i<ode_system_size; i++)
+            {
+                a = (x2[i] - 2*x1[i] + x0[i])/2;
+                b = (x2[i] - 4*x1[i] + 3*x0[i])/2;
+                c = x0[i];
+                ics.value[i] = a+b+c; /* next initial guess */
+                printf("--x: a,b,c = %g, %g, %g\n",a,b,c);
+            } 
+            a = (mu2 - 2*mu1 + mu0)/2;
+            b = (mu2 - 4*mu1 + 3*mu0)/2;
+            c = mu0;
+            mu.value[p] = a*s*s+b*s+c;
+            printf("--mu: a,b,c = %g, %g, %g\n",a,b,c);
         }
         ntry++;
     }
 
+    fprintf(br_file,"\n");
+
     free( stst.s );
     free( stst.re );
     free( stst.im );
+    free( x2 );
+    free( x1 );
+    free( x0 );
+    fclose( br_file );
 
     return 1;
 }

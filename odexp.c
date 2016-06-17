@@ -59,7 +59,9 @@ struct gen_option gopts[NBROPTS] = {
              {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
              {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
              {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
-             {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"} };
+             {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"},
+             {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step"} };
+
 
 /* what kind of initial conditions to take */
 int *num_ic;
