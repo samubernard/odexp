@@ -486,24 +486,28 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
 
     printf("\n  Finding a steady state\n");
 
+    /*
     printf("    %zu ",iter);
     for ( i=0; i<n; i++)
     {
         printf("%.5e ", gsl_vector_get(s->x,i));
     }
     printf("\n");
-
+    */
+    
     do 
     {
         iter++;
         status = gsl_multiroot_fsolver_iterate(s);
-
+        
+        /*
         printf("    %zu ",iter);
         for ( i=0; i<n; i++)
         {
             printf("%.5e ", gsl_vector_get(s->x,i));
         }
         printf("\n");
+        */ 
 
         if (status)
             break;
@@ -519,10 +523,8 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     }
     stst->status = status;
 
-    printf("\n  Steady State\n");
+    printf("\n  steady state\n");
     gsl_vector_fprintf(stdout,s->x,"    %+.5e");
-
-
 
     gsl_multiroot_fdjacobian(&f, s->x, s->f, 1e-6, J);
 
@@ -553,7 +555,7 @@ int eig(gsl_matrix *J, steady_state *stst)
     re = gsl_vector_complex_real(eval);
     im = gsl_vector_complex_imag(eval);
 
-    printf("\n  Eigenvalues\n");
+    printf("\n  eigenvalues\n");
     gsl_vector_complex_fprintf(stdout,eval,"    %+.5e");
 
     for ( i=0; i<n; i++)
@@ -574,7 +576,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
 {
     /* naive stst continuation method */
     long p = get_int("act_par"); 
-    long i;
+    long i,j;
     long ntry = 0;
     long max_fail = get_int("phasespace_max_fail");
     int status;
@@ -616,6 +618,11 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
             for (i=0; i<ode_system_size; i++)
             {
                 fprintf(br_file,"\t%g",stst.s[i]);
+                for (j=0; j<ode_system_size; j++)
+                {
+                    fprintf(br_file,"\t%g",stst.re[j]);
+                    fprintf(br_file,"\t%g",stst.im[j]);
+                }
             }
             fprintf(br_file,"\n");
             for (i=0; i<ode_system_size; i++)
@@ -649,12 +656,12 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                 b = -x1[i] + x0[i];
                 c = x0[i];
                 ics.value[i] = b+c; /* next initial guess */
-                printf("--x: a,b,c = %g, %g\n",b,c);
+                /* printf("--x: a,b,c = %g, %g\n",b,c); */
             } 
             b = -mu1 + mu0;
             c = mu0;
             mu.value[p] = b+c;
-            printf("--mu: b,c = %g, %g\n",b,c);
+            /* printf("--mu: b,c = %g, %g\n",b,c); */
         }
         if ( nstst > 2 )
         {
@@ -664,13 +671,13 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                 b = (x2[i] - 4*x1[i] + 3*x0[i])/2;
                 c = x0[i];
                 ics.value[i] = a+b+c; /* next initial guess */
-                printf("--x: a,b,c = %g, %g, %g\n",a,b,c);
+                /* printf("--x: a,b,c = %g, %g, %g\n",a,b,c); */
             } 
             a = (mu2 - 2*mu1 + mu0)/2;
             b = (mu2 - 4*mu1 + 3*mu0)/2;
             c = mu0;
             mu.value[p] = a*s*s+b*s+c;
-            printf("--mu: a,b,c = %g, %g, %g\n",a,b,c);
+            /* printf("--mu: a,b,c = %g, %g, %g\n",a,b,c); */
         }
         ntry++;
     }

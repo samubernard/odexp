@@ -255,7 +255,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get random array */
     printf("\nrandom numbers %s\n", hline);
     get_nbr_el(system_filename,"U",1,(long *)&rnd.length,NULL);
-    printf("--rnd.length = %ld\n",rnd.length);
     rnd.array = malloc(rnd.length*sizeof(double));
     for (i = 0; i < rnd.length; i++)
     {
@@ -311,7 +310,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
         strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
     }
-    /* printf("--dxv.nbr_el = %ld\n",dxv.nbr_el); */
 
     /* get options */
     printf("\noptions %s\n", hline);
@@ -321,7 +319,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     update_act_par_index(&p, mu);
     update_act_par_options(p, mu);
     printf_options();
-    /* printf("--plot_x int: %ld; plot_y int: %ld\n",get_int("plot_x"), get_int("plot_y")); */
 
     /* set IC to their numerical values */
     num_ic = malloc(ode_system_size*sizeof(int));
@@ -339,8 +336,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\nrandom number generator %s\n", hline);
     printf("  RAND_MAX %d\n",RAND_MAX);
     
-    /* printf("--%lu",sizeof(long)); */
-
     /* readline */
     printf("  readline library version: %s\n", rl_library_version);
     
@@ -706,7 +701,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 's') /* list steady states */
                     {
-                        printf("--there are %d steady states\n",nbr_stst);
                         for (j=0; j<nbr_stst; j++)
                         {
                             for (i=0; i<ode_system_size; i++)
@@ -995,13 +989,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         stst = malloc(sizeof(steady_state));
                         init_steady_state( &(stst[0]), 0 );
                         nbr_stst = 1;
-                        printf("--stst ok\n");
                         status = ststsolver(multiroot_rhs,ics,mu, stst);
                     } 
                     else if ( op == 'm')
                     {
                         nbr_stst = phasespaceanalysis(multiroot_rhs,ics,mu, &stst);
-                        printf("--nbr_stst = %d\n", nbr_stst);
                         for (j=0; j<nbr_stst; j++)
                         {
                             printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
@@ -1138,31 +1130,19 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     pclose(gnuplot_pipe);
 
-    /* printf("--free pex\n"); */
     free_namevalexp( pex );
-    /* printf("--free mu\n"); */
     free_namevalexp( mu );
-    /* printf("--free ics\n"); */
     free_namevalexp( ics );
-    /* printf("--free eqn\n"); */
     free_namevalexp( eqn );
-    /* printf("--free fcn\n"); */
     free_namevalexp( fcn );
-    /* printf("--free dxv\n"); */
     free_namevalexp( dxv );
-    /* printf("--free stst\n"); */
     free_steady_state( stst, nbr_stst );
-    /* printf("--free tspan\n"); */
     free_double_array( tspan );
     free_double_array( rnd );
-    /* printf("--free options\n"); */
     free_noptions();
     free_soptions();
-    /* printf("--free num_ic\n"); */
     free(num_ic);
-    /* printf("--free lasty\n"); */
     free(lasty);
-    /* printf("--free lastinit\n"); */
     free(lastinit);
 
     /* write history */
@@ -1185,12 +1165,10 @@ void free_namevalexp(nve var )
     long i;
     
     /* do not free aux_pointer, it will be freed from fcn through fcn.value */
-    /* printf("--free var.name\n");  */
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.name[i]);
     }
-    /* printf("--free var.expression\n");  */
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.expression[i]);
@@ -1265,14 +1243,12 @@ int get_nbr_el(const char *filename, const char *sym,\
         }
         if(k == sym_len) /* keyword was found */
         {
-            /* printf("--nbr_el = %u, found line = %s\n",*nbr_el,line); */
             if ( nbr_expr )
             {
                 (*nbr_expr)++;
             }
             /* scan for two integers, index0, index1 in [iter=i0:i1] */
             nbr_index = sscanf(line,"%*[a-zA-Z0-9_: \[]=%zd:%zd",&index0, &index1);
-            /* printf("--nbr_index found = %ld\n",nbr_index); */
             if ( (nbr_index == 0) || (nbr_index == 1) ) /* a match to a scalar was found */
             {
                 (*nbr_el)++;
@@ -1286,7 +1262,6 @@ int get_nbr_el(const char *filename, const char *sym,\
                 printf("  Error in determining number of elements... exiting\n");
                 exit ( EXIT_FAILURE );
             }
-            printf("--new nbr_el = %ld\n",*nbr_el);
 
         }
         k = 0; /* reset k */
@@ -1665,7 +1640,6 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             /* create a search pattern of the type A0:3 X[i=0:3] */
             snprintf(str4size,NAMELENGTH*sizeof(char),"%s%%*[^=]=%%ld:%%ld]",sym);
             nbr_index_found = sscanf(line,str4size, &index0, &index1);
-            /* printf("--load_strings nbr_index_found = %ld, for line = %s",nbr_index_found,line); */
             switch (nbr_index_found)
             {
               case -1: /* scalar expression no prefix */
@@ -1721,14 +1695,10 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
                 }
                 else
                 {
-                  /* printf("-- old_var_name = %s\n",old_var_name); */
                   temploc = stpncpy(temp,old_var_name,bracket0+1);
-                  /* printf("-- 1 temp = %s\n",temp); */
                   snprintf(str_index,15*sizeof(char),"%lu",index0+j);  
                   temploc = stpncpy(temploc,str_index,15);
-                  /* printf("-- 2 temp = %s\n",temp); */
                   strncpy(temploc,old_var_name+bracket1,NAMELENGTH);
-                  /* printf("-- 3 temp = %s\n",temp); */
                   strncpy(var.name[i+j],temp,NAMELENGTH);
                   var.value[i+j] = i+j+0.0;
                 }
