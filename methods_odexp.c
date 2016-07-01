@@ -576,7 +576,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
 {
     /* naive stst continuation method */
     long p = get_int("act_par"); 
-    long i,j;
+    long i;
     long ntry = 0;
     long max_fail = get_int("phasespace_max_fail");
     int status;
@@ -613,16 +613,19 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
         status = ststsolver(multiroot_rhs,ics,mu, &stst);
         if ( status == GSL_SUCCESS ) /* then move to next point */
         {
-            printf("--nstst %ld\n",nstst++);
+            printf("--nstst %ld\n",nstst);
+            nstst++;
             fprintf(br_file,"%g",mu.value[p]);
+            /* print steady states */
             for (i=0; i<ode_system_size; i++)
             {
                 fprintf(br_file,"\t%g",stst.s[i]);
-                for (j=0; j<ode_system_size; j++)
-                {
-                    fprintf(br_file,"\t%g",stst.re[j]);
-                    fprintf(br_file,"\t%g",stst.im[j]);
-                }
+            }
+            /* print eigenvalues */
+            for (i=0; i<ode_system_size; i++)
+            {
+                fprintf(br_file,"\t%g",stst.re[i]);
+                fprintf(br_file,"\t%g",stst.im[i]);
             }
             fprintf(br_file,"\n");
             for (i=0; i<ode_system_size; i++)
@@ -638,7 +641,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
         }
         else
         {
-            s = -1.0;
+            s *= -0.9;
         }
 
         if ( nstst == 1 ) /* just move mu by amount h */
@@ -670,7 +673,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                 a = (x2[i] - 2*x1[i] + x0[i])/2;
                 b = (x2[i] - 4*x1[i] + 3*x0[i])/2;
                 c = x0[i];
-                ics.value[i] = a+b+c; /* next initial guess */
+                ics.value[i] = a*s*s+b*fabs(s)+c; /* next initial guess */
                 /* printf("--x: a,b,c = %g, %g, %g\n",a,b,c); */
             } 
             a = (mu2 - 2*mu1 + mu0)/2;
