@@ -526,8 +526,6 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
 
     eig(J, stst);
 
-
-
     gsl_multiroot_fsolver_free(s);
     gsl_vector_free(x);
     gsl_matrix_free(J);
