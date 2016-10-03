@@ -78,7 +78,7 @@ char *T_ERR = "\033[0;31m";
                              Main Loop 
 ================================================================= */
 int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
-    int (*ode_init_conditions)(const double t, double ic_[], const double par_[]),\
+    int (*ode_init_conditions)(const double t, double ic_[], void *params),\
     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     const char *odexp_filename )
 {
@@ -176,8 +176,18 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     }
     printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
 
+    /* get random array */
+    printf("\nrandom numbers %s\n", hline);
+    get_nbr_el(system_filename,"U",1,(long *)&rnd.length,NULL);
+    rnd.array = malloc(rnd.length*sizeof(double));
+    for (i = 0; i < rnd.length; i++)
+    {
+        rnd.array[i] = rand01();
+    }
+    mu.rand_pointer = rnd.array;
+
     /* get parameters */
-    printf("parameters %s\n", hline);
+    printf("\nparameters %s\n", hline);
     get_nbr_el(system_filename,"P",1, &mu.nbr_el, &mu.nbr_expr);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
@@ -230,7 +240,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  Dynamic variables not found... exiting\n");
         exit ( EXIT_FAILURE );
     } 
-    ode_init_conditions(tspan.array[0],ics.value,mu.value);
+    ode_init_conditions(tspan.array[0],ics.value,&mu);
 
 
     /* get nonlinear functions */
@@ -251,16 +261,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  no auxiliary function found\n");
     } 
     mu.aux_pointer = fcn.value; /* pointer to fcn.value */
-
-    /* get random array */
-    printf("\nrandom numbers %s\n", hline);
-    get_nbr_el(system_filename,"U",1,(long *)&rnd.length,NULL);
-    rnd.array = malloc(rnd.length*sizeof(double));
-    for (i = 0; i < rnd.length; i++)
-    {
-        rnd.array[i] = rand01();
-    }
-    mu.rand_pointer = rnd.array;
 
     /* get equations */
     printf("\nequations %s\n", hline);
@@ -927,7 +927,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     /* reset parameter values */
                     load_namevalexp(system_filename, mu, "P", 1);
                     /* reset initial condtitions */
-                    ode_init_conditions(tspan.array[0], ics.value, mu.value);
+                    ode_init_conditions(tspan.array[0], ics.value, &mu);
                     rerun = 1;
                     replot = 1;
                     update_act_par_options(p, mu);
@@ -1347,7 +1347,7 @@ int load_options(const char *filename)
     int success = 0;
     char opt_name[NAMELENGTH];
     fr = fopen (filename, "rt");
-    static int len2uniq = 4;
+    static int len2uniq = 32;
 
     if ( fr == NULL )
     {

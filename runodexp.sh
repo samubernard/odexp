@@ -16,21 +16,18 @@ mkdir -p .odexp
 echo "# odexp file name: $1" >.odexp/sub.odexp
 echo "" >>.odexp/sub.odexp
 
-# replace all constants (variable starting with '%') by their value
-# replace all , by \n except those between parentheses
+# replace all constants (variable starting with '_') by their value
+# replace all ; by \n 
 awk '{gsub(";","\n"$1,$0)};
-    $1 ~ /^#/ { print $0 };    
-    $1 ~ /^%/ {n++; name[n]=$1; val[n]=$2; print $0};
-    $1 !~ /^%/ { 
+    $1 ~ /^_/ {n++; name[n]=$1; val[n]=$2; };
+    $1 !~ /^_/ { 
     if(n>0) {
         for(i=1;i<=n;i++) {
             gsub(name[i],val[i],$0);
-            print $0 
         }
     }
-    else {
-        print $0; }
-    }' $1 >>.odexp/sub.odexp
+    };
+    {print $0}' $1 >>.odexp/sub.odexp
 file=.odexp/sub.odexp
 
 # if two input files, then second one should contain parameters
@@ -436,8 +433,8 @@ assign_uniform_random_array () {
       split($2,c,/\[/);
       ex=c[1];
       printf "%-*sfor(%s=%s;%s<%s;%s++)\n", 5, "", b[2], b[3], b[2], b[4], b[2]; 
-      printf "%-*s%s[%s+%d]", 8, "", ex, b[2], nv;
-      printf " = %s[%s];\n", myvar, b[2];
+      printf "%-*s%s[%s]", 8, "", ex, b[2];
+      printf " = %s[%s+%d];\n", myvar, b[2], nv;
       nv+=b[4]-b[3]
       }' $file >>.odexp/model.c
 }
@@ -497,7 +494,7 @@ echo "#include \"rand_gen.h\"" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
-echo "int ode_init_conditions(const double t, double y_[], const double pars_[]);" >>.odexp/model.c
+echo "int ode_init_conditions(const double t, double y_[], void *params);" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "int main ( int argc, char *argv[] )" >>.odexp/model.c
 echo "{" >>.odexp/model.c
@@ -639,19 +636,19 @@ system_variables
 # ====================================================================================
 
 # ====================================================================================
-# ASSIGN PARAMETRIC EXPRESSIONS
-echo "" >>.odexp/model.c
-echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
-# initialize parametric expression vectors and write them in .odexp/model.c
-assign_parametric_expressions 
-# ====================================================================================
-
-# ====================================================================================
 # ASSIGN UNIFORM RANDOM ARRAY
 echo "" >>.odexp/model.c
 echo "    /* Initialization - uniform random array */" >>.odexp/model.c
 # initialize uniform random array and write them in .odexp/model.c
 assign_uniform_random_array 
+# ====================================================================================
+
+# ====================================================================================
+# ASSIGN PARAMETRIC EXPRESSIONS
+echo "" >>.odexp/model.c
+echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
+# initialize parametric expression vectors and write them in .odexp/model.c
+assign_parametric_expressions 
 # ====================================================================================
 
 # ====================================================================================
@@ -692,8 +689,11 @@ echo "" >>.odexp/model.c
 # ODE_INIT_CONDITIONS
 # =================================================================================
 # function ode_init_conditions
-echo "int ode_init_conditions(const double t, double y_[], const double pars_[])" >>.odexp/model.c
+echo "int ode_init_conditions(const double t, double y_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
+echo "    nve mu_ = *(nve *)params_;" >>.odexp/model.c
+echo "    double * pars_ = mu_.value;" >>.odexp/model.c
+echo "    double * rnd_  = mu_.rand_pointer;" >>.odexp/model.c
 echo "    int success_ = 0;" >>.odexp/model.c
 # ITERATORS
 # find iterators in the source file and declare them 
@@ -709,6 +709,13 @@ echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
 awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $parfile >>.odexp/model.c
+# ====================================================================================
+
+# ====================================================================================
+# DECLARE UNIFORM RANDOM ARRAY
+echo "    /* uniform random array */" >>.odexp/model.c
+declare_uniform_random_array
+echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
@@ -730,7 +737,15 @@ declare_variables
 # ====================================================================================
 
 # ====================================================================================
-# ASSIGN
+# ASSIGN UNIFORM RANDOM ARRAY
+echo "" >>.odexp/model.c
+echo "    /* Initialization - uniform random array */" >>.odexp/model.c
+# initialize uniform random array and write them in .odexp/model.c
+assign_uniform_random_array 
+# ====================================================================================
+
+# ====================================================================================
+# ASSIGN PARAMETRIC EXPRESSIONS
 echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
 assign_parametric_expressions
@@ -753,6 +768,8 @@ echo "" >>.odexp/system.par
 echo "# initial condition " >>.odexp/system.par
 system_init_conditions
 
+# ====================================================================================
+# SYSTEM OPTIONS
 echo "" >>.odexp/system.par
 echo "# options " >>.odexp/system.par
 system_options
