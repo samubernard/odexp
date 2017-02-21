@@ -14,6 +14,10 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
  int (*ode_init_conditions)(const double t, double ic_[], void *params),\
  double *lasty, nve init, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe);
 
+int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+ int (*ode_init_conditions)(const double t, double ic_[], void *params),\
+ double *lasty, nve init, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe);
+
 int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     nve ics, nve mu, steady_state **stst);
 

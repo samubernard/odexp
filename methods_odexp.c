@@ -324,6 +324,281 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 }
 
+int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+ int (*ode_init_conditions)(const double t, double ic_[], void *params),\
+ double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe)
+{
+    fprintf(stderr,"  %ssorry: mr (ranging over parameters) not implemented yet!%s\n",\
+                T_ERR,T_NOR);
+
+    clock_t start = clock();
+    double *y,
+           *ymin,
+           *ymax,
+           *f;
+    double hmin     = get_dou("odesolver_min_h"),
+           h        = get_dou("odesolver_init_h"),
+           eps_abs  = get_dou("odesolver_eps_abs"),
+           eps_rel  = get_dou("odesolver_eps_rel"),
+           par_step = get_dou("par_step");
+    int hmin_alert              = 0,
+        disc_alert              = 0,
+        abort_odesolver_alert   = 0;
+    long nbr_out = (long)get_int("odesolver_output_resolution");
+    FILE *file;
+    const char current_data_buffer[] = "range.tab";
+    long i,p;
+    
+    /* sigaction */
+    struct sigaction abort_act;
+
+    /* tspan parameters */
+    double  t, 
+            t1, 
+            dt, 
+            tnext,
+            nextstop,
+            nbr_stops,
+           *tstops = NULL;
+    size_t idx_stop = 0;
+
+    /* gsl ode */
+    const gsl_odeiv_step_type * odeT;
+    gsl_odeiv_step * s;
+    gsl_odeiv_control * c;
+    gsl_odeiv_evolve * e;
+    gsl_odeiv_system sys; 
+    int status;
+
+    if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rk4;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"rk2",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rk2;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"rkf45",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rkf45;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"rkck",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rkck;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"rk8pd",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv_step_rk8pd;
+    }
+    else
+    {
+        fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
+                T_ERR,get_str("odesolver_step_method"),T_NOR);
+        fprintf(stderr,"         %swill use 'rk4' as a default step method%s\n",T_ERR,T_NOR);
+        odeT = gsl_odeiv_step_rk4;
+    }
+
+    s = gsl_odeiv_step_alloc(odeT,ode_system_size);
+    c = gsl_odeiv_control_y_new(eps_abs,eps_rel);
+    e = gsl_odeiv_evolve_alloc(ode_system_size);
+
+    /* discontinuities */
+    if ( tspan.length > 2 )
+    {
+       nbr_stops = tspan.length-2;
+       tstops = malloc( nbr_stops*sizeof(double) );
+       for(i=0;i<nbr_stops;i++)
+       {
+          tstops[i] = tspan.array[i+1];
+       }
+       mergesort(tstops, nbr_stops, sizeof(double),compare);
+       nextstop = tstops[idx_stop];
+       idx_stop++;
+    }
+
+    /* parameter range */
+    name2index(get_str("act_par"), mu, &p);
+    mu.value[p] = get_dou("range_min");
+    ymin = malloc(ode_system_size*sizeof(double));
+    ymax = malloc(ode_system_size*sizeof(double));
+
+    /* initial condition */
+    y = malloc(ode_system_size*sizeof(double));
+   
+    /* open output file */
+    file = fopen(current_data_buffer,"w");
+    
+    if( file == NULL )
+    {
+        fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,current_data_buffer,T_NOR);
+    }
+
+    /* current.tab: fill in the variable/function names MIN MAX */
+    fprintf(file,"%s",mu.name[p]);
+    for (i = 0; i<ode_system_size; i++)
+    {
+        fprintf(file,"\t%s_MIN\t%s_MAX",ics.name[i],ics.name[i]);
+    }
+    fprintf(file,"\n");
+
+    f = malloc(ode_system_size*sizeof(double));
+
+    /* sigaction -- detect Ctrl-C during the simulation  */
+    abort_odesolver_flag = 0;
+    abort_act.sa_handler = &set_abort_odesolver_flag;
+    abort_act.sa_flags = 0;
+    if ((sigemptyset(&abort_act.sa_mask) == -1) || (sigaction(SIGINT, &abort_act, NULL) == -1)) 
+    {  
+         perror("Failed to set SIGINT handler");  
+         return 1;  
+    }  
+
+    /* initial condition */
+    ode_init_conditions(tspan.array[0], y, &mu);
+    for (i = 0; i < ode_system_size; i++)
+    {
+        if (num_ic[i]) /* use ics.value as initial condition */
+        {
+            y[i] = ics.value[i];
+        }
+        else /* set ics.value to y as initial condition */
+        {
+            ics.value[i] = y[i];
+        }
+    }
+
+    while ( mu.value[p] < get_dou("range_max") )
+    {
+    /* tspan */
+    /* it is assumed that the first and last values of tspan are t0 and t1 */
+    t = tspan.array[0];
+    t1 = tspan.array[tspan.length-1];
+    dt = (t1-t)/(double)(nbr_out-1);
+    nextstop = t;
+    /* initial condition */
+    for (i = 0; i < ode_system_size; i++)
+    {
+        printf(" %g, ",y[i]);
+        y[i] *= 1.05*y[i];
+        ymin[i] = INFINITY;
+        ymax[i] = -INFINITY;
+        /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
+    }
+    printf("\n  running from t=%.2f to t=%.2f... ", t,t1);
+    fflush(stdout);
+
+    /* ODE solver - main loop */
+    while (t < t1 && !abort_odesolver_flag)
+    {
+        tnext = fmin(t+dt,t1);
+        
+        if ( (t<nextstop) && (tnext>=nextstop) )
+        {
+          tnext = nextstop;
+          disc_alert = 1;
+          printf(" ts =%.2e", nextstop);
+          fflush(stdout);
+        }
+               
+        /* ODE solver - time step */
+        while ( t < tnext)
+        {
+            sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
+            status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+            if ( h < hmin )
+            {
+              h = hmin;
+              if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
+              {
+                printf("\n  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e\n",t, hmin);
+                hmin_alert = 1; 
+              }
+            }
+            if (status != GSL_SUCCESS)
+                break;
+                
+        }
+
+        if (disc_alert == 1)
+        {
+          /* reset dynamical variables */
+          ode_init_conditions(t, y, &mu);
+          /* update auxiliary functions */
+          ode_rhs(t, y, f, &mu);
+          /* calculating next stop */
+          nextstop = tstops[idx_stop];
+          idx_stop++;
+             
+        }
+        /* updating ymin and ymax */
+        if ( t > (t1 - tspan.array[0])/2 )
+        {
+            for(i=0; i<ode_system_size; i++)
+            {
+                if(y[i]>ymax[i])
+                {
+                    ymax[i]=y[i];
+                }
+                if(y[i]<ymin[i])
+                {
+                    ymin[i]=y[i];
+                }
+            }
+        }
+        
+        if (abort_odesolver_flag)
+        {
+          if ( abort_odesolver_alert == 0) /* print only once */
+          {  
+            printf ("\n  simulation aborted at t = %f\n", t);
+            abort_odesolver_alert = 1;
+          }
+        }
+
+        hmin_alert = 0;
+        disc_alert = 0;
+
+
+    } /* END ODE SOLVER */
+        /* write min max to file */
+        fprintf(file,"%g\t",mu.value[p]);
+        for(i=0; i<ode_system_size; i++)
+        {
+           fprintf(file,"\t%g\t%g",ymin[i],ymax[i]);
+        }
+        fprintf(file,"\n");
+        mu.value[p] += par_step;
+    } /* END WHILE PARAMETER RANGE */
+
+    if (status == GSL_SUCCESS)
+    {
+        printf("  ...done in %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
+    }
+    else
+    {
+        printf("GSL Error %d occured.\n", status);
+    }
+
+    for (i = 0; i < ode_system_size; i++)
+    {
+        lasty[i] = y[i]; 
+    } 
+
+    fclose(file);
+
+    gsl_odeiv_evolve_free(e);
+    gsl_odeiv_control_free(c);
+    gsl_odeiv_step_free(s);
+    
+    free(y);
+    free(ymin);
+    free(ymax);
+    free(tstops);
+      
+    return status;
+}
+
+
 int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     nve ics, nve mu, steady_state **stst)
 {

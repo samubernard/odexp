@@ -60,7 +60,9 @@ struct gen_option gopts[NBROPTS] = {
              {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
              {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
              {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"},
-             {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step"} };
+             {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step"},
+             {"r/min","range_min", 'd', 0.0, 0, "", "minimal parameter value for range"},
+             {"r/max","range_max", 'd', 1.0, 0, "", "maximal parameter value for range"} };
 
 
 /* what kind of initial conditions to take */
@@ -87,9 +89,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *system_filename = ".odexp/system.par";
     const char *helpcmd = "less -S .odexp/help.txt";
-    /* const char *postprocess = "awk 'OFS=\", \" { print $1, $32 }' current.tab >todygraph.csv"; */
     const char current_data_buffer[] = "current.tab";
-    /* const char quick_buffer[] = "current.plot"; */
     const char *hline = "----------------";
     char       par_details[32];
     char       par_filename[MAXFILENAMELENGTH];
@@ -926,7 +926,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                     /* reset parameter values */
                     load_namevalexp(system_filename, mu, "P", 1);
-                    /* reset initial condtitions */
+                    /* reset initial conditions */
                     ode_init_conditions(tspan.array[0], ics.value, &mu);
                     rerun = 1;
                     replot = 1;
@@ -1002,6 +1002,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 'c' )
                     {
                         status = ststcont(multiroot_rhs,ics,mu);
+                    }
+                    else if ( op == 'r' )
+                    {
+                        status = parameter_range(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
                     }
                     break;
                 case 'Q' :  /* quit without saving */
@@ -1597,17 +1601,17 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     size_t  i = 0,
             j = 0,
             k = 0,
-            linecap = 0;
+            linecap = 0,
+            index0,
+            index1,
+            expr_size;
     ssize_t linelength;
     int     namelen0,
             namelen1,
-            index0,
-            index1,
             bracket0,
             bracket1,
             nbr_index_found,
             success_brackets;
-    int     expr_size;
     char *line = NULL;
     char *temploc = NULL;
     char str2match[NAMELENGTH],
@@ -1684,11 +1688,13 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             strncpy(old_var_name,var.name[i],NAMELENGTH);
             if ( expr_size > 1 && success_brackets == 0 )
             {
-              for(j=0;j<expr_size;j++)
+              /* for(j=0;j<expr_size;j++) */
+              for(j=index0;j<index1;j++)  
               {
+                /* printf("--i=%zu, j=%zu, nbr_el=%zu, cond=%zu\n",i,j,var.nbr_el, (i+j >= 3) ); */
                 if ( i+j >= var.nbr_el )
                 {
-                  printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", sym);
+                  printf("  Error in assigning names and expression of %s (load_strings)... exiting\n", var.name[i]);
                   printf("  Number of variables is %ld, index of variable is i=%zu, index of expression is %zu\n",\
                       var.nbr_el,i,j);
                   exit ( EXIT_FAILURE );

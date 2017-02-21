@@ -39,7 +39,7 @@ fi
 
 
 declare_iterators () {
-    awk -F ' ' -v i=1 '/(\[.+\])+/ { match($2,/(\[.+\])+/);
+    awk -F ' ' -v i=1 '/(\[.+\])+/ && $1 !~ /#/ { match($2,/(\[.+\])+/);
         a=substr($2, RSTART, RLENGTH);
         split(a,b,/[\[\]=:]/);
         for(k=2;k<=length(b);k+=4) 
