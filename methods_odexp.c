@@ -195,6 +195,9 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fprintf(file,"\n");
 
     /* current.plot binary file with three columns: plot_x, plot_y, plot_z */
+    /* use hexdump to see the file content:
+     * hexdump -e '"%f " "%f " "%f " "\n"' current.plot
+     */
     ngx = get_int("plot_x");
     ngy = get_int("plot_y");
     ngz = get_int("plot_z");
@@ -479,7 +482,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     for (i = 0; i < ode_system_size; i++)
     {
         printf(" %g, ",y[i]);
-        y[i] *= 1.05*y[i];
+        y[i] *= get_dou("range_ic");
         ymin[i] = INFINITY;
         ymax[i] = -INFINITY;
         /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */

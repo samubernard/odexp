@@ -17,7 +17,7 @@
 #define EXPRLENGTH     1023                            
 
 /* number of global options */
-#define NBROPTS 22
+#define NBROPTS 23
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
