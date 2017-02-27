@@ -61,9 +61,12 @@ struct gen_option gopts[NBROPTS] = {
              {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
              {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"},
              {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step"},
-             {"r/min","range_min", 'd', 0.0, 0, "", "minimal parameter value for range"},
-             {"r/max","range_max", 'd', 1.0, 0, "", "maximal parameter value for range"},
-             {"r/ic","range_ic", 'd', 1.05, 0, "", "initial condition multiplicative factor for range"} };
+             {"r/par0","range_par0", 'd', 0.0, 0, "", "initial parameter value for range"},
+             {"r/par1","range_par1", 'd', 1.0, 0, "", "final parameter value for range"},
+             {"r/mstep","range_mult_step", 'd', 1.0, 0, "", "parameter step multiplicative increment"},
+             {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment"},
+             {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range"},
+             {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range"} };
 
 
 

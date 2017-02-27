@@ -342,8 +342,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     double hmin     = get_dou("odesolver_min_h"),
            h        = get_dou("odesolver_init_h"),
            eps_abs  = get_dou("odesolver_eps_abs"),
-           eps_rel  = get_dou("odesolver_eps_rel"),
-           par_step = get_dou("par_step");
+           eps_rel  = get_dou("odesolver_eps_rel");
     int hmin_alert              = 0,
         disc_alert              = 0,
         abort_odesolver_alert   = 0;
@@ -421,7 +420,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
 
     /* parameter range */
     name2index(get_str("act_par"), mu, &p);
-    mu.value[p] = get_dou("range_min");
+    mu.value[p] = get_dou("range_par0");
     ymin = malloc(ode_system_size*sizeof(double));
     ymax = malloc(ode_system_size*sizeof(double));
 
@@ -470,7 +469,9 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
         }
     }
 
-    while ( mu.value[p] < get_dou("range_max") )
+
+    while (  ((get_dou("range_par1") > get_dou("range_par0")) & (mu.value[p] < get_dou("range_par1"))) |
+             ((get_dou("range_par0") > get_dou("range_par1")) & (mu.value[p] > get_dou("range_par1"))) )
     {
     /* tspan */
     /* it is assumed that the first and last values of tspan are t0 and t1 */
@@ -482,7 +483,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     for (i = 0; i < ode_system_size; i++)
     {
         printf(" %g, ",y[i]);
-        y[i] *= get_dou("range_ic");
+        y[i] = get_dou("range_mult_ic")*y[i]+get_dou("range_add_ic");
         ymin[i] = INFINITY;
         ymax[i] = -INFINITY;
         /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
@@ -570,7 +571,8 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
            fprintf(file,"\t%g\t%g",ymin[i],ymax[i]);
         }
         fprintf(file,"\n");
-        mu.value[p] += par_step;
+        mu.value[p] = get_dou("range_mult_step")*mu.value[p]+get_dou("range_add_step");
+
     } /* END WHILE PARAMETER RANGE */
 
     if (status == GSL_SUCCESS)
