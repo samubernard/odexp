@@ -565,7 +565,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
 
     } /* END ODE SOLVER */
         /* write min max to file */
-        fprintf(file,"%g\t",mu.value[p]);
+        fprintf(file,"%g",mu.value[p]);
         for(i=0; i<ode_system_size; i++)
         {
            fprintf(file,"\t%g\t%g",ymin[i],ymax[i]);
