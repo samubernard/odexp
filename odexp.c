@@ -503,7 +503,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         updateplot = 1;
                         plot3d = 0;
-                        if (ngx > -1 && ngx < total_nbr_x)
+                        if ( (ngx >= -1) && ngx < total_nbr_x)
                         {
                             gx = ngx + 2;
                         }
