@@ -63,6 +63,7 @@ typedef struct gen_option
     long    intval;
     char    strval[NAMELENGTH];
     char    descr[EXPRLENGTH];
+    char    optiontype[NAMELENGTH];
 } gopt;
 
 typedef struct numerical_option
@@ -124,6 +125,7 @@ int load_options(const char *filename);
 int update_plot_options(long ngx, long ngy, long ngz, nve dxv);
 int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv);
 int name2index( const char *name, nve var, long *n);
+int option_name2index( const char *name, long *n);
 int update_act_par_index(int *p, const nve mu);
 int update_act_par_options(const int p, const nve mu);
 
@@ -137,6 +139,7 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
 int fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer);
 
 int printf_options();
+int printf_option_line(long i);
 int set_dou(const char *name, const double val); 
 int set_int(const char *name, const int val); 
 int set_str(const char *name, const char * val); 

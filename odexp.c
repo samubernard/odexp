@@ -41,32 +41,32 @@ long ode_system_size;
 /* options */
 
 struct gen_option gopts[NBROPTS] = { 
-             {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)"},
-             {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)"},
-             {"z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)"},
-             {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot"},
-             {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ..."},
-             {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)"},
-             {"step","par_step", 'd', 1.1, 0, "", "par step increment"},
-             {"act","act_par", 's', 0.0, 0, "", "active parameter"},
-             {"res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points"},
-             {"minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step"},
-             {"h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step"},
-             {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance"},
-             {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance"},
-             {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd"},
-             {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states"},  
-             {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states"},  
-             {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states"},  
-             {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]"},  
-             {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]"},
-             {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step"},
-             {"r/par0","range_par0", 'd', 0.0, 0, "", "initial parameter value for range"},
-             {"r/par1","range_par1", 'd', 1.0, 0, "", "final parameter value for range"},
-             {"r/mstep","range_mult_step", 'd', 1.0, 0, "", "parameter step multiplicative increment"},
-             {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment"},
-             {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range"},
-             {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range"} };
+             {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)", "plot"},
+             {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)", "plot"},
+             {"z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)", "plot"},
+             {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot", "plot"},
+             {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ...", "plot"},
+             {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)", "plot"},
+             {"step","par_step", 'd', 1.1, 0, "", "par step increment", "par"},
+             {"act","act_par", 's', 0.0, 0, "", "active parameter", "par"},
+             {"res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points", "ode"},
+             {"minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step", "ode"},
+             {"h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step", "ode"},
+             {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance", "ode"},
+             {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
+             {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
+             {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steady states"},  
+             {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steady states"},  
+             {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steady states"},  
+             {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]", "steady states"},  
+             {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]", "steady states"},
+             {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step", "continuation methods"},
+             {"r/par0","range_par0", 'd', 0.0, 0, "", "initial parameter value for range", "parameter range"},
+             {"r/par1","range_par1", 'd', 1.0, 0, "", "final parameter value for range", "parameter range"},
+             {"r/mstep","range_mult_step", 'd', 1.0, 0, "", "parameter step multiplicative increment", "parameter range"},
+             {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment", "parameter range"},
+             {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameter range"},
+             {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameter range"} };
 
 
 
@@ -798,7 +798,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     update_act_par_options(p, mu);
                     break;
-               case 'c' : /* change parameter/init values */
+               case 'c' : /* change parameter/init values/options */
                     sscanf(cmdline+1,"%c",&op);
                     if( op == 'p' )
                     {
@@ -891,32 +891,76 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if ( op == 'o' ) /* change options */
                     {
-                        sscanf(cmdline+2,"%ld %s",&i,svalue);
-                        if ( i >=0 && i < NBROPTS )
+                        nbr_read = sscanf(cmdline+2,"%ld %s",&i,svalue);
+                        
+                        if ( nbr_read >= 1) /* get option number and value */
                         {
-                            switch (gopts[i].valtype)
+                            sscanf(cmdline+2,"%ld %s",&i,svalue);
+                            if ( i >=0 && i < NBROPTS )
                             {
-                              case 'd':
-                                gopts[i].numval = strtod(svalue,NULL);
-                                break;
-                              case 'i':
-                                gopts[i].intval = strtol(svalue,NULL,10);
-                                break;
-                              case 's':
-                                strncpy(gopts[i].strval,svalue,NAMELENGTH);
-                                break;
-                              default:
-                                printf("  Warning: option not defined\n");
+                                switch (gopts[i].valtype)
+                                {
+                                  case 'd':
+                                    gopts[i].numval = strtod(svalue,NULL);
+                                    break;
+                                  case 'i':
+                                    gopts[i].intval = strtol(svalue,NULL,10);
+                                    break;
+                                  case 's':
+                                    strncpy(gopts[i].strval,svalue,NAMELENGTH);
+                                    break;
+                                  default:
+                                    printf("  Warning: option not defined\n");
+                                }
+                                rerun = 1;
+                                updateplot = 1;
+                                update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                                update_act_par_index(&p, mu);
+                                printf_option_line(i);
                             }
-                            rerun = 1;
-                            updateplot = 1;
-                            update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                            update_act_par_index(&p, mu);
+                            else
+                            {
+                                fprintf(stderr,"  %serror: option index out of bound%s\n",T_ERR,T_NOR);
+                                replot = 0;
+                            }
                         }
-                        else
+                        else /* get option name or abbr and value */
                         {
-                            fprintf(stderr,"  %serror: option index out of bound%s\n",T_ERR,T_NOR);
-                            replot = 0;
+                            nbr_read = sscanf(cmdline+2,"%s %s", svalue, svalue2); /* try reading a string and a double */
+                            if ( nbr_read == 1 )
+                            {
+                                /* printf option line only */
+                                option_name2index(svalue, &i);
+                                printf_option_line(i);
+                            }
+                            else if ( nbr_read == 2 )
+                            {
+                                if ( option_name2index(svalue, &i) )
+                                {
+                                    switch (gopts[i].valtype)
+                                    {
+                                        case 'i':
+                                            gopts[i].intval = strtol(svalue2,NULL,10);
+                                            break;
+                                        case 'd':
+                                            gopts[i].numval = strtod(svalue2,NULL);
+                                            break;
+                                        case 's':
+                                            strncpy(gopts[i].strval,svalue2,NAMELENGTH);
+                                            break;
+                                    }
+                                    rerun = 1;
+                                    updateplot = 1;
+                                    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                                    update_act_par_index(&p, mu);
+                                    printf_option_line(i);
+                                }
+                            }
+                            else
+                            {    
+                                fprintf(stderr,"  %serror: option name or number missing%s\n",T_ERR,T_NOR);
+                                replot = 0;
+                            }
                         }
                     }
                     break;
@@ -1502,6 +1546,45 @@ int name2index( const char *name, nve var, long *n) /* get index of var.name == 
 
 }
 
+int option_name2index( const char *name, long *n) /* get index of option.name == name or option.abbr == name */
+{
+    long i = 0;
+    int s = 0;
+
+    if ( strcmp(name,"") == 0 )
+    {
+        fprintf(stderr,"  %swarning: empty option%s\n",T_ERR,T_NOR);
+    }
+    else
+    {
+        while (  i < NBROPTS )
+        {
+            if ( strcmp(name, gopts[i].name)
+                 && strcmp(name, gopts[i].abbr))
+            {
+                i++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if ( i < NBROPTS )
+        {
+            *n =  i;
+            s = 1;
+        }
+        else
+        {
+            fprintf(stderr,"  %serror: option missing %s\n",T_ERR,T_NOR);
+        }
+        /* else do not change *n */
+    }
+
+    return s;
+}
+
+
 int update_act_par_index(int *p, const nve mu)
 {
     char sval[NAMELENGTH];
@@ -1882,38 +1965,48 @@ int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array
 
 int printf_options()
 {
-    size_t i; 
-    static int p = 16;
-    int s = (int)log(NBROPTS);
-    int d = 16;
-
+    long i; 
     for(i=0;i<NBROPTS;i++)
     {
-      switch (gopts[i].valtype)
-      {
-        case 'd':
-          printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-          printf("%-*s",p,gopts[i].abbr);
-          printf("%s%-*g ",T_VAL,d,gopts[i].numval);
-          printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
-          break;
-        case 'i':
-          printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-          printf("%-*s",p,gopts[i].abbr);
-          printf("%s%-*ld ",T_VAL,d,gopts[i].intval);
-          printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
-          break;
-        case 's':
-          printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-          printf("%-*s",p,gopts[i].abbr);
-          printf("%s%-*s ",T_VAL,d,gopts[i].strval);
-          printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
-          break;
-        default:
-          printf("  O[%-*zu] %-*s = not defined\n",s,i,p,gopts[i].abbr);
-      }
+      printf_option_line(i);
     }
     return 1;
+}
+
+int printf_option_line(long i)
+{
+      static int p = 16;
+      int s = (int)log10(NBROPTS+0.5);
+      /* int d = 16; */
+      int success = 0;
+      if ( (i>=0) && (i<NBROPTS) )
+      { 
+        switch (gopts[i].valtype)
+        {
+          case 'd':
+            printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
+            printf("%-*s",p,gopts[i].abbr);
+            printf("%s%-*g ",T_VAL,p,gopts[i].numval);
+            printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
+            break;
+          case 'i':
+            printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
+            printf("%-*s",p,gopts[i].abbr);
+            printf("%s%-*ld ",T_VAL,p,gopts[i].intval);
+            printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
+            break;
+          case 's':
+            printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
+            printf("%-*s",p,gopts[i].abbr);
+            printf("%s%-*s ",T_VAL,p,gopts[i].strval);
+            printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
+            break;
+          default:
+            printf("  O[%-*zu] %-*s = not defined\n",s,i,p,gopts[i].abbr);
+        }
+        success = 1;
+      }
+      return success;
 }
 
 int set_dou(const char *name, const double val) 
