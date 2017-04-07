@@ -930,8 +930,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             if ( nbr_read == 1 )
                             {
                                 /* printf option line only */
-                                option_name2index(svalue, &i);
-                                printf_option_line(i);
+                                if ( option_name2index(svalue, &i) )
+                                {
+                                  printf_option_line(i);
+                                }
                             }
                             else if ( nbr_read == 2 )
                             {
@@ -1576,7 +1578,7 @@ int option_name2index( const char *name, long *n) /* get index of option.name ==
         }
         else
         {
-            fprintf(stderr,"  %serror: option missing %s\n",T_ERR,T_NOR);
+            fprintf(stderr,"  %serror: unknown option '%s' %s\n",T_ERR,name,T_NOR);
         }
         /* else do not change *n */
     }
@@ -1977,7 +1979,6 @@ int printf_option_line(long i)
 {
       static int p = 16;
       int s = (int)log10(NBROPTS+0.5);
-      /* int d = 16; */
       int success = 0;
       if ( (i>=0) && (i<NBROPTS) )
       { 
