@@ -929,7 +929,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             nbr_read = sscanf(cmdline+2,"%s %s", svalue, svalue2); /* try reading a string and a double */
                             if ( nbr_read == 1 )
                             {
-                                /* printf option line only */
+                                /* only printf option line */
                                 if ( option_name2index(svalue, &i) )
                                 {
                                   printf_option_line(i);
@@ -1978,7 +1978,7 @@ int printf_options()
 int printf_option_line(long i)
 {
       static int p = 16;
-      int s = (int)log10(NBROPTS+0.5);
+      int s = (int)log10(NBROPTS)+1;
       int success = 0;
       if ( (i>=0) && (i<NBROPTS) )
       { 
