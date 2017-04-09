@@ -152,4 +152,7 @@ void printf_list_str(char type, long i, int padding, int max_name_length, char *
 
 /* readline */
 void initialize_readline(void);
+/* readline completion list */
+char **completion_list_completion(const char *, int, int);
+char *completion_list_generator(const char *, int);
 

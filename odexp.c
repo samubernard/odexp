@@ -80,6 +80,37 @@ char *T_EXPR = "\033[3;36m";
 char *T_NOR = "\033[0m";
 char *T_ERR = "\033[0;31m";
 
+/* readline completion list */
+char *completion_list[] = {
+    "plot_x",
+    "plot_y",
+    "plot_z",
+    "freeze",
+    "plot_with_style",
+    "plot_realtime",
+    "par_step",
+    "act_par",
+    "odesolver_output_resolution",
+    "odesolver_min_h",
+    "odesolver_init_h",
+    "odesolver_eps_abs",
+    "odesolver_eps_rel",
+    "odesolver_step_method",
+    "phasespace_max_fail"  
+    "phasespace_abs_tol",
+    "phasespace_rel_tol",
+    "phasespace_search_range",
+    "phasespace_search_min",
+    "cont_h",
+    "range_par0",
+    "range_par1",
+    "range_mult_step",
+    "range_add_step",
+    "range_mult_ic",
+    "range_add_ic",
+    NULL
+};
+
 
 /* =================================================================
                              Main Loop 
@@ -353,6 +384,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
       printf("\n  warning: inputrc file for readline not found\n");
     }
     initialize_readline();
+    rl_attempted_completion_function = completion_list_completion;
 
     /* history - initialize session */
     using_history();
@@ -2189,3 +2221,29 @@ void initialize_readline()
     rl_readline_name = "Odexp";
 }
 
+char **
+completion_list_completion(const char *text, int start, int end)
+{
+    rl_attempted_completion_over = 1;
+    return rl_completion_matches(text, completion_list_generator);
+}
+
+char *
+completion_list_generator(const char *text, int state)
+{
+    static int list_index, len;
+    char *name;
+
+    if (!state) {
+        list_index = 0;
+        len = strlen(text);
+    }
+
+    while ((name = completion_list[list_index++])) {
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+    }
+
+    return NULL;
+}
