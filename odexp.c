@@ -832,31 +832,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     break;
                case 'c' : /* change parameter/init values/options */
                     sscanf(cmdline+1,"%c",&op);
-                    if( op == 'p' )
-                    {
-                        nbr_read = sscanf(cmdline+2,"%d %lf",&np,&nvalue);
-                        if (nbr_read == 2)
-                        {
-                          if ( np > -1 && np < mu.nbr_el )
-                          {
-                            mu.value[np] = nvalue;
-                            printf("  %s = %lg\n",mu.name[np],mu.value[np]);
-                            rerun = 1;
-                            replot = 1;
-                          }
-                          else
-                          {
-                            fprintf(stderr,"  %serror: par index out of bound%s\n",T_ERR,T_NOR);
-                            replot = 0;
-                          }
-                        }
-                        else
-                        {
-                          fprintf(stderr,"  %serror: no parameter/value pair provided%s\n",T_ERR,T_NOR);
-                        }
-                        update_act_par_options(p, mu);
-                    }
-                    else if ( op == 'i' ) 
+                    if ( op == 'i' ) 
                     {
                         nbr_read = sscanf(cmdline+2,"%ld %lf",&i,&nvalue);
                         if (nbr_read == 1)

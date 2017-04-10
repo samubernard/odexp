@@ -6,13 +6,15 @@ list of commands
      a[u][s]        (a)xis          set axis u={x,y} to scale s={l,n} 
          or a[s][u] 
      A              reset (A)xes    reset axes normal scale 
-     >, <           inc, dec        increase, decrease number of time steps 
+     >, <           inc, dec        increase, decrease the number of time steps 
      x[i]           plot(x)         plot variable number i againts t
+     x var          plot(var)       plot variable var against t
      [              plot previous,  plot previous variable (cyclic)
      ]              plot next       plot next variable (cyclic)
-     v [x] [y]      (v)iew          set 2D view, x axis to x and y axis to y (t=-1) 
-     2 [x] [y]      2D view         set 2D view, x axis to x and y axis to y (t=-1) 
-     3 [x] [y] [z]  3D              set 3D view (t=-1) 
+     v [i] [j]      (v)iew          set 2D view, x-axis to i and y axis to j (t=-1) (indices)
+     v [x] [y] {z}  (v)iew          set 2D/3D view, x-axis to x, y-axis to y and z-axis to z (variables)
+     2 [i] [j]      2D view         set 2D view, x axis to i and y axis to j (t=-1) 
+     3 [i] [j] [k]  3D              set 3D view (t=-1) 
      i              (i)init cond    set new initial condition 
        l            (l)ast          set initial conditions to last 
        s            (s)teady state  set initial condition to steady state 
@@ -20,26 +22,30 @@ list of commands
      l              (l)ist          list 
        a            (a)ux           list all auxiliary functions 
        e            (e)xpressions   list all parametric expressions
-       i            (i)nit          list all variables with init conditions 
+       i            (i)nit          list all variables with initial conditions 
        n            (n)br eqs       display system size
-       p            (p)ar           list all parameters and their values 
+       p            (p)ar           list all parameters 
        x            d(x)/dt         list all equations and auxiliary functions 
        s            (s)tst          list steady state 
        o            (o)ptions       list options 
      c              (c)hange        change value of parameter, init cond, or tpsan 
-       p[i] [v]                     set value of parameter i to v (i=0 to P-1) 
-       i[i] [v]                     set value of init cond i to v (i=0 to N-1) 
-       t[i] [v]                     set value of ti to v (i = 0 or 1) 
-       o[i] [v]                     set value of option i to v
+       i[i] [v]     (i)nit          set value of init cond i to v (i=0 to N-1) 
+       I[i]         re-(I)nit       revert variable i to expression
+       l            to (l)ast       change to last initial conditions, see il
+       t[i] [v]     (t)span         set value of ti to v (i = 0 or 1) 
+       o[i] [v]     (o)ption        set value of option i to v
      d              (d)efaults      reload the parameter file 
      f              (f)reeze        toggle plot freeze (on/off) 
      g [cmd]        (g)nuplot       send the command cmd to gnuplot 
-     h              (h)elp          this help 
-     p[i]           (p)ar           set the current parameter to i 
+     h              (h)elp          display this help 
+     p[i] {val}     (p)ar           set the current parameter to i and its value to val
+     p [par] {val}
+     P [value]      (P)ar           set the value of the current parameter
+     o [file]       (o)pen          load parameters and options from file
      m              (m)ethods       run numerical method 
        s            (s)teady state  find a steady state with starting guess init cond 
        m            (m)any stst     try to find all steady states 
-     s [msg]        (s)nap          snapshot of current simulation and parameter values with msg 
-     q [msg]        (q)uit          quit and snap 
-     Q [msg]        (Q)uit          quit without snapshot 
+     s {msg}        (s)nap          snapshot of current simulation and parameter values with msg 
+     q {msg}        (q)uit          quit and snap 
+     Q              (Q)uit          quit without snapshot 
 
