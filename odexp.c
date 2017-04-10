@@ -41,32 +41,32 @@ long ode_system_size;
 /* options */
 
 struct gen_option gopts[NBROPTS] = { 
-             {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)", "plot"},
-             {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)", "plot"},
-             {"z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)", "plot"},
-             {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot", "plot"},
-             {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ...", "plot"},
-             {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)", "plot"},
-             {"step","par_step", 'd', 1.1, 0, "", "par step increment", "par"},
-             {"act","act_par", 's', 0.0, 0, "", "active parameter", "par"},
-             {"res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points", "ode"},
-             {"minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step", "ode"},
-             {"h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step", "ode"},
-             {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance", "ode"},
-             {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
-             {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
-             {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steady states"},  
-             {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steady states"},  
-             {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steady states"},  
-             {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]", "steady states"},  
-             {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]", "steady states"},
-             {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step", "continuation methods"},
-             {"r/par0","range_par0", 'd', 0.0, 0, "", "initial parameter value for range", "parameter range"},
-             {"r/par1","range_par1", 'd', 1.0, 0, "", "final parameter value for range", "parameter range"},
-             {"r/mstep","range_mult_step", 'd', 1.0, 0, "", "parameter step multiplicative increment", "parameter range"},
-             {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment", "parameter range"},
-             {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameter range"},
-             {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameter range"} };
+    {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)", "plot"},
+    {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)", "plot"},
+    {"z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)", "plot"},
+    {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot", "plot"},
+    {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ...", "plot"},
+    {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)", "plot"},
+    {"step","par_step", 'd', 1.1, 0, "", "par step increment", "par"},
+    {"act","act_par", 's', 0.0, 0, "", "active parameter", "par"},
+    {"res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points", "ode"},
+    {"minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step", "ode"},
+    {"h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step", "ode"},
+    {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance", "ode"},
+    {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
+    {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
+    {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steady states"},  
+    {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steady states"},  
+    {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steady states"},  
+    {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]", "steady states"},  
+    {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]", "steady states"},
+    {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step", "continuation methods"},
+    {"r/par0","range_par0", 'd', 0.0, 0, "", "initial parameter value for range", "parameter range"},
+    {"r/par1","range_par1", 'd', 1.0, 0, "", "final parameter value for range", "parameter range"},
+    {"r/mstep","range_mult_step", 'd', 1.0, 0, "", "parameter step multiplicative increment", "parameter range"},
+    {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment", "parameter range"},
+    {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameter range"},
+    {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameter range"} };
 
 
 
@@ -859,7 +859,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 'i' ) 
                     {
                         nbr_read = sscanf(cmdline+2,"%ld %lf",&i,&nvalue);
-                        if (nbr_read == 2)
+                        if (nbr_read == 1)
+                        {
+                            /* just print the initial condition */
+                            if ( i >= 0 && i<ode_system_size)
+                            {
+                                padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                                printf_list_val('I',i,padding,*ics.max_name_length,ics.name[i],ics.value[i],ics.expression[i]);
+                            }
+                        }
+                        else if (nbr_read == 2)
                         {
                           if ( i >= 0 && i<ode_system_size)
                           {
@@ -871,13 +880,38 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           }
                           else 
                           {
-                            fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %serror: variable index ou of bound.%s\n",T_ERR,T_NOR);
                             replot = 0;
                           }
                         }
+                        else if (nbr_read == 0) /* get option name or abbr and value */
+                        {
+                            nbr_read = sscanf(cmdline+2,"%s %lf", svalue, &nvalue); /* try reading a string and a double */
+                            if ( nbr_read == 1 )
+                            {
+                                /* only initial condition line */
+                                if ( name2index(svalue, ics, &i) )
+                                {
+                                    padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                                    printf_list_val('I',i,padding,*ics.max_name_length,ics.name[i],ics.value[i],ics.expression[i]);
+                                }
+                            }
+                            else if ( nbr_read == 2 )
+                            {
+                                if ( name2index(svalue, ics,  &i) )
+                                {
+                                    lastinit[i] = ics.value[i];
+                                    ics.value[i] = nvalue;
+                                    num_ic[i] = 1;
+                                    rerun = 1;
+                                    updateplot = 1;
+                                }
+                            }
+                        }
                         else
                         {
-                          fprintf(stderr,"  %serror: no parameter/value pair provided%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %serror: too many arguments..%s\n",T_ERR,T_NOR);
+                            replot = 0;
                         }
                     }
                     else if (op == 'I') /* revert initial condition i to expression */
