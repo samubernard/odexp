@@ -44,7 +44,8 @@ struct gen_option gopts[NBROPTS] = {
     {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)", "plot"},
     {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)", "plot"},
     {"z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)", "plot"},
-    {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot", "plot"},
+    {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) variable on plot", "plot"},
+    {"curves","add_curves", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot", "plot"},
     {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ...", "plot"},
     {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)", "plot"},
     {"step","par_step", 'd', 1.1, 0, "", "par step increment", "par"},
@@ -73,12 +74,12 @@ struct gen_option gopts[NBROPTS] = {
 /* what kind of initial conditions to take */
 int *num_ic;
 
-char *T_IND = "\033[1;35m";
-char *T_DET = "\033[3;36m";
-char *T_VAL = "\033[3;32m";
-char *T_EXPR = "\033[3;36m";
-char *T_NOR = "\033[0m";
-char *T_ERR = "\033[0;31m";
+char *T_IND = "\033[1;35m";  /* index */
+char *T_DET = "\033[3;36m";  /* description */
+char *T_VAL = "\033[3;32m";  /* values */
+char *T_EXPR = "\033[3;36m"; /* expressions */
+char *T_NOR = "\033[0m";     /* normal */
+char *T_ERR = "\033[0;31m";  /* error */
 
 /* readline completion list */
 char *completion_list[] = {
@@ -86,6 +87,7 @@ char *completion_list[] = {
     "plot_y",
     "plot_z",
     "freeze",
+    "add_curves",
     "plot_with_style",
     "plot_realtime",
     "par_step",
@@ -125,12 +127,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *system_filename = ".odexp/system.par";
     const char *helpcmd = "less -S .odexp/help.txt";
+    char mv_plot_cmd[EXPRLENGTH];
     const char current_data_buffer[] = "current.tab";
     const char *hline = "----------------";
     char       par_details[32];
     char       par_filename[MAXFILENAMELENGTH];
     long i,j;
-    int success;
+    int  success;
     
     double *lasty;
     
@@ -175,7 +178,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         np,
         padding,
         namelength,
-        nbr_read;
+        nbr_read,
+        nbr_hold = 0;
     char c,
          op,
          op2;
@@ -439,12 +443,58 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     break;
                 case 'f' : /* toggle freeze */
+                    /* TODO freeze to freeze the current plot 
+                     * and keep the same simulation
+                     * and add another 'add_curves' option
+                     * to keep track of the last simulations
+                     * with curve.0, curve.1 etc.
+                     *
+                     * freeze and add_curves are mutually exclusive
+                     * freeze is meant not to run the simulation again while
+                     * add_curves is. 
+                     */
                     set_int("freeze",1-get_int("freeze"));
-                    if ( get_int("freeze") == 0 )
-                        printf("  freeze is off (not working as expected)\n");
+                    if ( get_int("freeze") )
+                    {
+                        set_int("add_curves",0); /* unset add_curves */
+                        printf("  %sfreeze is on (not working as expected)%s\n",T_DET,T_NOR);
+                    }
                     else
-                        printf("  freeze is on (not working as expected)\n");
-                    printf("\n");
+                    {
+                        printf("  %sfreeze is off (not working as expected)%s\n",T_DET,T_NOR);
+                        updateplot = 1;
+                    }
+                    break;
+                case 'u' : /* add curves on the plot */ 
+                    nbr_read = sscanf(cmdline+1,"%c",&op);               
+                    if ( (nbr_read == EOF) | (nbr_read == 1 & op == ' ') )
+                    {
+                        set_int("add_curves",1-get_int("add_curves"));
+                        if ( get_int("add_curves") )
+                        {
+                            set_int("freeze",0); /* unset freeze */
+                            printf("  %sadd curves is on (not working so well)%s\n",T_DET,T_NOR);
+                        }
+                        else
+                        {
+                            printf("  %sadd curves is off (not working so well)%s\n",T_DET,T_NOR);
+                            updateplot = 1;
+                        }
+                    }
+                    else if ( nbr_read == 1 )
+                    {
+                        if ( op == 'c' | op == 'r' ) /* tyr to clear or reset curves */
+                        {
+                            system("rm -f .odexp/curve.*");
+                            nbr_hold = 0;
+                            set_int("add_curves",0);
+                            updateplot = 1;
+                        }
+                        else
+                        {
+                            fprintf(stderr,"  %sUnknown command%s\n",T_ERR,T_NOR);
+                        }
+                    }
                     break;
                 case '>' : /* increase resolution */
                     set_int("odesolver_output_resolution",2*get_int("odesolver_output_resolution"));
@@ -1122,7 +1172,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else
                     {
-                        fprintf(stderr,"  %serror: require the name of the file.%s\n",T_ERR,T_NOR);
+                        fprintf(stderr,"  %serror: filename required.%s\n",T_ERR,T_NOR);
                     }
                     break;
                 default :
@@ -1135,8 +1185,26 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             if (rerun)
             {
                 status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
+                if ( get_int("add_curves") ) /* save current.plot */ 
+                {
+                    snprintf(mv_plot_cmd,EXPRLENGTH*sizeof(char),"cp current.plot .odexp/curve.%d",nbr_hold++);
+                    system(mv_plot_cmd);
+                }
             }
-            if (replot)    
+            if ( get_int("add_curves") & ( rerun | updateplot ) )
+            {
+                /* plot curve.0 to curve.nbr_hold-1 */
+                fprintf(gnuplot_pipe,\
+                        "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"0\"\n",get_str("plot_with_style"));
+                for (i = 1; i < nbr_hold; i++)
+                {
+                    fprintf(gnuplot_pipe,\
+                            "replot \".odexp/curve.%ld\" binary format=\"%%3lf\" using 1:2 with %s title \"%ld\"\n",\
+                            i,get_str("plot_with_style"),i);
+                }
+                fflush(gnuplot_pipe);
+            }
+            else if (replot)    
             {
                 fprintf(gnuplot_pipe,"replot\n");
                 fflush(gnuplot_pipe);
@@ -1167,7 +1235,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                   }
               }
-              else /* freeze is off */
+              else if ( get_int("freeze") )  /* freeze is on - unset axis labels */
               {
                   fprintf(gnuplot_pipe,"unset xlabel\n");
                   fprintf(gnuplot_pipe,"unset ylabel\n");
@@ -1181,7 +1249,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                       "plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
                       current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);    
                 }
-                else
+                else if ( get_int("freeze") )
                 {
                   fprintf(gnuplot_pipe,\
                       "replot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
@@ -1205,6 +1273,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 
             }
+
             /* update option pl:x, pl:y, pl:z */
             update_plot_options(ngx,ngy,ngz,dxv);
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
@@ -1247,6 +1316,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
       printf("\n  error: could not write history\n");
     }
+
+    /* remove frozen curves */
+    system("rm .odexp/curve.*");
 
     return status;
 

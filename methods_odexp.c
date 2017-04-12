@@ -51,15 +51,12 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     FILE *quickfile;
     const char current_data_buffer[] = "current.tab";
     const char quick_buffer[] = "current.plot"; 
-    char mv_plot_cmd[EXPRLENGTH];
     long i;
 
     long ngx,
          ngy,
          ngz;
 
-    static int nbr_freezed = 0;
-    
     /* sigaction */
     struct sigaction abort_act;
 
@@ -149,12 +146,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
     }
    
-    if ( get_int("freeze") )
-    {
-       snprintf(mv_plot_cmd,EXPRLENGTH*sizeof(char),"mv current.plot .odexp/curve.%d",nbr_freezed++);
-       system(mv_plot_cmd);
-    }
-
     /* open output file */
     file = fopen(current_data_buffer,"w");
     quickfile = fopen(quick_buffer,"w");
@@ -322,6 +313,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     
     free(y);
     free(tstops);
+
+
       
     return status;
 
@@ -331,8 +324,6 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
  int (*ode_init_conditions)(const double t, double ic_[], void *params),\
  double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe)
 {
-    fprintf(stderr,"  %ssorry: mr (ranging over parameters) not implemented yet!%s\n",\
-                T_ERR,T_NOR);
 
     clock_t start = clock();
     double *y,
@@ -488,7 +479,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
         ymax[i] = -INFINITY;
         /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
     }
-    printf("\n  running from t=%.2f to t=%.2f... ", t,t1);
+    printf("\n  running par %s = %g... ", mu.name[p],mu.value[p]);
     fflush(stdout);
 
     /* ODE solver - main loop */

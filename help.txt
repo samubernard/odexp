@@ -46,6 +46,7 @@ list of commands
        s            (s)teady state  find a steady state with starting guess init cond 
        m            (m)any stst     try to find all steady states 
      s {msg}        (s)nap          snapshot of current simulation and parameter values with msg 
+     ! [filename]   print(!)        try to save the current plot to filename 
      q {msg}        (q)uit          quit and snap 
      Q              (Q)uit          quit without snapshot 
 
