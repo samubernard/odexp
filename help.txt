@@ -7,8 +7,8 @@ list of commands
          or a[s][u] 
      A              reset (A)xes    reset axes normal scale 
      >, <           inc, dec        increase, decrease the number of time steps 
-     x[i]           plot(x)         plot variable number i againts t
-     x var          plot(var)       plot variable var against t
+     y[i]           plot(y)         plot variable number i on the y-axis
+     y var          plot(var)       plot variable var on the y-axis
      [              plot previous,  plot previous variable (cyclic)
      ]              plot next       plot next variable (cyclic)
      v [i] [j]      (v)iew          set 2D view, x-axis to i and y axis to j (t=-1) (indices)

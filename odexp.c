@@ -594,7 +594,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         updateplot = 0;
                     }
                     break;
-                case 'x' :
+                case 'y' :
                     nbr_read = sscanf(cmdline+1,"%ld",&ngy);
                     if ( nbr_read == 0 ) /* try reading a string */
                     {
@@ -634,7 +634,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     updateplot=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                    printf("  plotting [%ld] %s\n",ngy,dxv.name[ngy]);
+                    printf("  y-axis: [%ld] %s\n",ngy,dxv.name[ngy]);
                     break;
                 case '[' : /* plot previous x */
                     ngy = gy-2;
@@ -644,7 +644,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     updateplot=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                    printf("  plotting [%ld] %s\n",ngy,dxv.name[ngy]);
+                    printf("  y-axis: [%ld] %s\n",ngy,dxv.name[ngy]);
                     break;    
                 case 'i' : /* run with initial conditions */
                     sscanf(cmdline+1,"%c",&op);
@@ -2290,16 +2290,13 @@ completion_list_generator(const char *text, int state)
         len = strlen(text);
     }
 
-    /* while ((name = completion_list[list_index++])) 
-     *{
-     *   if (strncmp(name, text, len) == 0) {
-     *       return strdup(name);
-     *   }
-     *}
-     */
     while (list_index++<NBROPTS) 
     {
         name = gopts[list_index].name;
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+        name = gopts[list_index].abbr;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
