@@ -594,6 +594,36 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         updateplot = 0;
                     }
                     break;
+                case 'x' :
+                    nbr_read = sscanf(cmdline+1,"%ld",&ngx);
+                    if ( nbr_read == 0 ) /* try reading a string */
+                    {
+                        nbr_read = sscanf(cmdline+1,"%s", svalue);
+                        if ( nbr_read == 1 )
+                        {
+                            set_str("plot_x",svalue);
+                            update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                            gx = ngx + 2;
+                            plot3d = 0;
+                            updateplot = 1;
+                            update_plot_options(ngx,ngy,ngz,dxv);
+                        }
+                    }
+                    else if (ngx >= -1 && ngx < total_nbr_x)
+                    {
+                        gx = ngx + 2;
+                        plot3d = 0;
+                        updateplot = 1;
+                        update_plot_options(ngx,ngy,ngz,dxv);
+                        update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+                    }
+                    else 
+                    {
+                        fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
+                        replot = 0;
+                        updateplot = 0;
+                    }
+                    break;
                 case 'y' :
                     nbr_read = sscanf(cmdline+1,"%ld",&ngy);
                     if ( nbr_read == 0 ) /* try reading a string */
