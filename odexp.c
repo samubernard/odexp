@@ -714,8 +714,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     break;
                 case 't':
-                    nbr_read = sscanf(cmdline+1,"%lf %lf",&nvalue,&nvalue2); /* try to read t0 and tfinal */
-                    if ( nbr_read == 1 ) /* try to set tfinal to nvalue */
+                    nbr_read = sscanf(cmdline+1,"%lf %lf",&nvalue,&nvalue2); /* try to read t0 and t1 */
+                    if ( nbr_read == 1 ) /* try to set t1 to nvalue */
                     {
                         if ( nvalue > tspan.array[0] )
                         {
@@ -725,10 +725,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %serror: tfinal %g should be greater than t0.%s\n",T_ERR,nvalue,T_NOR);
+                            fprintf(stderr,"  %serror: t1 %g should be greater than t0.%s\n",T_ERR,nvalue,T_NOR);
                         }
                     }
-                    else if ( nbr_read == 2 ) /* try to set t0 to nvalue and tfinal to nvalue2 */
+                    else if ( nbr_read == 2 ) /* try to set t0 to nvalue and t1 to nvalue2 */
                     {
                         if ( nvalue2 > nvalue )
                         {
@@ -739,12 +739,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %serror: tfinal %g should be greater than t0 %g.%s\n",T_ERR,nvalue,nvalue2,T_NOR);
+                            fprintf(stderr,"  %serror: t1 %g should be greater than t0 %g.%s\n",T_ERR,nvalue,nvalue2,T_NOR);
                         }
                     }
                     else /* value missing */
                     {
-                            fprintf(stderr,"  %serror: values for tfinal or t0 tfinal expected.%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %serror: values for t1 or t0 t1 expected.%s\n",T_ERR,T_NOR);
                     }
                     break;
                 case 'l' : /* list name value pairs */

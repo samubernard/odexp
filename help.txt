@@ -10,6 +10,7 @@ list of commands
          or a[s][u] 
      A              reset (A)xes    reset axes normal scale 
      >, <           inc, dec        increase, decrease the number of time steps 
+     t {t0} [t1]    (t)span         set time span from t0 to t1
      x  [i|var]     plot(x)         plot variable i or var on the x-axis
      y  [i|var]     plot(y)         plot variable i or var against T
      [,]            plot previous,  plot previous, next variable on the y-axis (cyclic)
