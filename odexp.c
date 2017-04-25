@@ -678,30 +678,59 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     printf("  y-axis: [%ld] %s\n",ngy,dxv.name[ngy]);
                     break;    
                 case 'i' : /* run with initial conditions */
-                    sscanf(cmdline+1,"%c",&op);
-                    if ( op == 'l' ) /* last simulation value */
+                    nbr_read = sscanf(cmdline+1,"%c",&op);
+                    if ( nbr_read == 1 )
                     {
-                        for ( i=0; i<ode_system_size; i++ )
-                        {
-                            lastinit[i] = ics.value[i];
-                            ics.value[i] = lasty[i];
-                            num_ic[i] = 1;
-                        }
-                    } 
-                    else if ( op == 's') /* run from steady state */
-                    {
-                        if ( nbr_stst > 0 )
+                        if ( op == 'l' ) /* last simulation value */
                         {
                             for ( i=0; i<ode_system_size; i++ )
                             {
                                 lastinit[i] = ics.value[i];
-                                ics.value[i] = stst->s[i];
+                                ics.value[i] = lasty[i];
                                 num_ic[i] = 1;
                             }
+                        } 
+                        else if ( op == 's') /* run from steady state */
+                        {
+                            if ( nbr_stst > 0 )
+                            {
+                                for ( i=0; i<ode_system_size; i++ )
+                                {
+                                    lastinit[i] = ics.value[i];
+                                    ics.value[i] = stst->s[i];
+                                    num_ic[i] = 1;
+                                }
+                            }
                         }
+                        else if ( op == 'n' ) /* loop through initial conditions  */
+                        {
+                            for ( i=0; i<ode_system_size; i++ )
+                            {
+                                printf("  %s (%g): ",ics.name[i],ics.value[i]);
+                                if ( fgets(svalue, 32, stdin) != NULL )
+                                {
+                                    nbr_read = sscanf(svalue,"%lf",&nvalue);
+                                    if ( nbr_read == 1 )
+                                    {
+                                        lastinit[i] = ics.value[i];
+                                        ics.value[i] = nvalue; 
+                                        num_ic[i] = 1;
+                                    }
+                                    else /* try to read a char */
+                                    {
+                                        sscanf(svalue,"%c",&op2);
+                                        if ( op2 == 'd' | op2 == 'I' )
+                                        {
+                                            lastinit[i] = ics.value[i];
+                                            num_ic[i] = 0;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        rerun = 1;
+                        replot = 1;
                     }
-                    rerun = 1;
-                    replot = 1;
                     break;
                 case 'I' : /* set initial condition to previous ones */
                     for ( i=0; i<ode_system_size; i++ )
