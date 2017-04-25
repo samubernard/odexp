@@ -81,37 +81,6 @@ char *T_EXPR = "\033[3;36m"; /* expressions */
 char *T_NOR = "\033[0m";     /* normal */
 char *T_ERR = "\033[0;31m";  /* error */
 
-/* readline completion list */
-char *completion_list[] = {
-    "plot_x",
-    "plot_y",
-    "plot_z",
-    "freeze",
-    "add_curves",
-    "plot_with_style",
-    "plot_realtime",
-    "par_step",
-    "act_par",
-    "odesolver_output_resolution",
-    "odesolver_min_h",
-    "odesolver_init_h",
-    "odesolver_eps_abs",
-    "odesolver_eps_rel",
-    "odesolver_step_method",
-    "phasespace_max_fail"  
-    "phasespace_abs_tol",
-    "phasespace_rel_tol",
-    "phasespace_search_range",
-    "phasespace_search_min",
-    "cont_h",
-    "range_par0",
-    "range_par1",
-    "range_mult_step",
-    "range_add_step",
-    "range_mult_ic",
-    "range_add_ic",
-    NULL
-};
 
 
 /* =================================================================
@@ -2321,7 +2290,16 @@ completion_list_generator(const char *text, int state)
         len = strlen(text);
     }
 
-    while ((name = completion_list[list_index++])) {
+    /* while ((name = completion_list[list_index++])) 
+     *{
+     *   if (strncmp(name, text, len) == 0) {
+     *       return strdup(name);
+     *   }
+     *}
+     */
+    while (list_index++<NBROPTS) 
+    {
+        name = gopts[list_index].name;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
