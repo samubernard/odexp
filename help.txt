@@ -1,20 +1,24 @@
 list of commands 
  N = ODE system size, P = number of parameters 
-     + or =         plus            increment current par by factor 1.1 
-     -              minus           decrement current par by factor 1.1 
+ i integer; var variable name; var value (double)
+ [] mandatory argument
+ {} otpional argument
+     + or =         plus            increment current par by factor par_step 
+     -              minus           decrement current par by factor par_step
      r              (r)eplot        repeat the last gnuplot command 
      a[u][s]        (a)xis          set axis u={x,y} to scale s={l,n} 
          or a[s][u] 
      A              reset (A)xes    reset axes normal scale 
      >, <           inc, dec        increase, decrease the number of time steps 
-     y[i]           plot(y)         plot variable number i on the y-axis
-     y var          plot(var)       plot variable var on the y-axis
-     [              plot previous,  plot previous variable (cyclic)
-     ]              plot next       plot next variable (cyclic)
-     v [i] [j]      (v)iew          set 2D view, x-axis to i and y axis to j (t=-1) (indices)
+     x  [i|var]     plot(x)         plot variable i or var on the x-axis
+     y  [i|var]     plot(y)         plot variable i or var against T
+     [,]            plot previous,  plot previous, next variable on the y-axis (cyclic)
+                         next       
+     v [i] [j]      (v)iew          set 2D view, x-axis to i and y axis to j (T=-1) (indices)
      v [x] [y] {z}  (v)iew          set 2D/3D view, x-axis to x, y-axis to y and z-axis to z (variables)
-     2 [i] [j]      2D view         set 2D view, x axis to i and y axis to j (t=-1) 
-     3 [i] [j] [k]  3D              set 3D view (t=-1) 
+                                        when z is missing, view is set to 2D 
+     2 [i] [j]      2D view         set 2D view, x axis to i and y axis to j (T=-1) 
+     3 [i] [j] [k]  3D              set 3D view (T=-1) 
      i              (i)init cond    set new initial condition 
        l            (l)ast          set initial conditions to last 
        s            (s)teady state  set initial condition to steady state 
@@ -29,24 +33,25 @@ list of commands
        s            (s)tst          list steady state 
        o            (o)ptions       list options 
      c              (c)hange        change value of parameter, init cond, or tpsan 
-       i[i] [v]     (i)nit          set value of init cond i to v (i=0 to N-1) 
+       i[i] [val]   (i)nit          set value of init cond i to v (i=0 to N-1) 
        I[i]         re-(I)nit       revert variable i to expression
        l            to (l)ast       change to last initial conditions, see il
-       t[i] [v]     (t)span         set value of ti to v (i = 0 or 1) 
-       o[i] [v]     (o)ption        set value of option i to v
+       t[i] [val]   (t)span         set value of ti to v (i = 0 or 1) 
+       o[i] [val]   (o)ption        set value of option i to v
      d              (d)efaults      reload the parameter file 
      f              (f)reeze        toggle plot freeze (on/off) 
      g [cmd]        (g)nuplot       send the command cmd to gnuplot 
      h              (h)elp          display this help 
      p[i] {val}     (p)ar           set the current parameter to i and its value to val
-     p [par] {val}
-     P [value]      (P)ar           set the value of the current parameter
+                                        when val is missing, the parameter value is unchanged
+     p [par] {val}  (p)ar           set the current paremeter to var and its value to val
+     P [val]        (P)ar           set the value of the current parameter
      o [file]       (o)pen          load parameters and options from file
      m              (m)ethods       run numerical method 
        s            (s)teady state  find a steady state with starting guess init cond 
        m            (m)any stst     try to find all steady states 
-     s {msg}        (s)nap          snapshot of current simulation and parameter values with msg 
+     s {msg}        (s)nap          snapshot of current simulation and parameter values with optional msg 
      ! [filename]   print(!)        try to save the current plot to filename 
-     q {msg}        (q)uit          quit and snap 
+     q {msg}        (q)uit          quit and snap with optional message 
      Q              (Q)uit          quit without snapshot 
 

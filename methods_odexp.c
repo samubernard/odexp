@@ -204,7 +204,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
          return 1;  
     }  
 
-    printf("  running from t=%.2f to t=%.2f... ", t,t1);
+    printf("  running from T=%.2f to T=%.2f... ", t,t1);
     fflush(stdout);
 
     /* ODE solver - main loop */
