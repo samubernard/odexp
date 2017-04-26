@@ -6,198 +6,153 @@ odexp \- fast ODE solver with gnuplot graphical output
 command line tool for ODE simulation.
 .SH LIST OF COMMANDS 
 .TP
-.BR + ", " = ", " C-+ ", " C-= 
-Greater. 
-Increment current parameter by a multiplicative factor option:par_step 
+.BR + ", " = ", " C^a 
+Increment current parameter by a multiplicative factor \fBpar_step\fR 
 .TP 
-.BR - ", " C--
-Smaller. 
-Decrement current parameter by a multiplicative factor option:par_step
+.BR - ", " C^x
+Decrement current parameter by a multiplicative factor \fBpar_step\fR
 .TP
-.BR ] ", " C-]    
-Plot next. 
+.BR ] ", " C^]    
 Plot next variable on the y-axis (cyclic)
 .TP
-.BR [ ", " C-[ 
-Plot previous. 
+.BR [ ", " C^[ 
 Plot previous variable on the y-axis (cyclic)
 .TP
 .BR >
-Inc. 
 Double the number of time steps 
 .TP
 .BR <
-Dec. 
 Halve the number of time steps 
 .TP
 .BR ! " " \fIfilename\fR   
-print(!). 
-Try to save the current plot to \fIfilename\fR
+Try to save the current plot to \fIfilename\fR. PNG format
 .TP
 .BR A 
-Reset (A)xes. 
 Reset all axes to linear scale 
 .TP
 .BR a\fIu\fR\fIs\fR ", " a\fIs\fR\fIu\fR
-(a)xis. 
-Set axis \fIu\fR={x,y} to scale \fIs\fR={l,n}, n for linear (normal) scale and l for log scale 
+Set axis \fIu\fR={x|y} to scale \fIs\fR={l|n}, n for linear (normal) scale and l for log scale 
 .TP
 .BR ci " " \fI{\fIind\fR|\fIvar\fR} " " \fIval\fR   
-(i)nit. 
 Set value of initial condition of variable with index  \fIi\fR or name \fIvar\fR to \fIval\fR
 .TP
 .BR cI " " \fIind\fR         
-re-(I)nit. 
 Revert variable \fIind\fR to expression
 .TP
 .BR cl            
-to (l)ast. 
 Change to last initial conditions, same as \fBil\fR
 .TP
 .BR co " " \fR{\fIind\fR|\fIvar\fR} " " \fIval\fR   
-(o)ption. 
 Set value of option with index \fIind\fR or name \fIvar\fR to \fIval\fR
 .TP
 .BR ct " " \fIti\fR " " \fIval\fR   
-(t)span. 
 Set value of \fIti\fR to v (\fIti\fR = 0 or 1) 
 .TP
 .BR d              
-(d)efaults. 
 Reload the parameter file 
 .TP
 .BR E
-De-(E)xtend. Decrease the time span by a factor 2
+Decrease the time span by a factor 2
 .TP
 .BR e
-(e)xtend. Increase the time span by a factor 2
+Increase the time span by a factor 2
 .TP
 .BR f              
-(f)reeze. 
 Toggle plot freeze (on/off) 
 .TP
 .BR g " " \fIcmd\fR        
-(g)nuplot. 
-Send the command cmd to gnuplot 
+Send the command \fIcmd\fR to gnuplot 
 .TP
 .BR h              
-(h)elp. 
 Display this help
 .TP
 .BR I              
-reset (I)nit. 
 Set initial conditions to previous 
 .TP
 .BR il            
-(l)ast. 
 Use the state of the system at t1 as initial conditions 
 .TP 
 .BR in            
-(n)ew. 
 Loop through initial conditions. 
 Set to I to revert to expression, enter to keep current initial condition
 .TP
 .BR is            
-(s)teady state. 
 Set initial condition to steady state. 
 Steady state must have been computed with \fBms\fR
 .TP
 .BR la            
-(a)ux. 
 List all auxiliary functions 
 .TP
 .BR le            
-(e)xpressions. 
 List all parametric expressions
 .TP
 .BR li            
-(i)nit. 
 List all variables with initial conditions 
 .TP
 .BR ln            
-(n)br eqs. 
 Display system size
 .TP
 .BR lp            
-(p)ar. 
 List all parameters 
 .TP 
 .BR lx            
-d(x)/dt. 
 List all equations and auxiliary functions 
 .TP
 .BR ls            
-(s)tst. 
 List steady states
 .TP
 .BR lo          
-(o)ptions. 
 List options 
 .TP
 .BR mm            
-(m)any stst. 
 Try to find all steady states 
 .TP
 .BR mr 
-(r)ange. 
 Range over parameters
 .TP
 .BR ms            
-(s)teady state. 
 Find a steady state with starting guess given by initial conditions 
 .TP
 .BR o " " \fIfilename\fR 
-(o)pen. 
 Load parameters and options from file \fIfilename\rR 
 .TP
 .BR P " " \fIval\fR        
-(P)ar. 
 Set current parameter to \fIval\fR
 .TP
 .BR p " " \fR{\fIind\fR|\fIpar\fR} " " \fR[\fIval\fR]     
-(p)ar. 
 Make parameter with index \fIind\fr or name \fipar\fr the current parameter, and set its value to \fIval\fR 
 When val is missing, the parameter value is unchanged
 .TP
 .BR Q              
-(Q)uit. 
 Quit without snapshot 
 .TP
 .BR q " " \fR[\fImsg\fR]        
-(q)uit. 
 Quit and snap with optional message \fImsg\fR 
 .TP
 .BR r
-(r)eplot. 
 Repeat the last gnuplot command (replot)
 .TP
 .BR s " " \fR[\fImsg\fR]        
-(s)nap. 
 Snapshot of current simulation and parameter values with optional \fImsg\fR 
 .TP
 .BR t " " \fR[\fIt0\fR] " " \fIt1\fR
-(t)span. 
 Set time span from \fIt0\fR to \fIt1\fR. 
 By default t0 is not changed. 
 Final time \fIt1\fR must be larger than \fIt0\fR.
 .TP
 .BR u              
-C(u)rves. 
 Toggle add curves to plot (on/off) 
 .TP
 .BR v ", " 2 ", " 3 " " \fR{\fIi\fR|\fIx\fR} " " \fR{\fIj\fR|\fIy\fR} " " \fR[{\fIk\fR|\fIz\fR}]      
-(v)iew. 
 Set 2D/3D view, x-axis to index \fIi\fR (variable \fIx\fR), y-axis to \fIj\fR (variable \fIy\fR), 
 and z-axis to \fIk\fR (variable \fIz\fR). 
 Set variable to T or index -1 for time.
 \fB2\fR takes only the first two arguments, and the \fB3\fR takes the three arguments
 .TP
 .BR x " " \fR{\fIind\fR| \fIvar\fR}
-plot(x). 
 Plot variable with index \fIind\fR or name \fIvar\fR on the x-axis
 .TP
 .BR y " " \fR{\fIind\fR|\fIvar\fR}
-Plot(y). 
 Plot variable with index \fIind\fR or name \fIvar\fR on the y-axis
 
 .SH LIST OF ODEXP TYPES
@@ -253,16 +208,16 @@ String. Name of the variable to plot on the y-axis (default variable of index 0)
 String. Name of the variable to plot on the z-axis (default variable of index 1)
 .TP
 .BR freeze ", " freeze
-Int. Add (1) or replace ({0}) variables on plot
+Integer. Add (1) or replace ({0}) variables on plot
 .TP
 .BR curves ", " add_curves
-Int. Add (1) or replace ({0}) curves on plot
+Integer. Add (1) or replace ({0}) curves on plot
 .TP
 .BR style ", " plot_with_style
 String. One of the gnuplot styles: {lines} | points | dots | linespoints ...
 .TP
 .BR realtime ", " plot_realtime
-Int. Plot in real time, {0} | 1 (not implemented)
+Integer. Plot in real time, {0} | 1 (not implemented)
 .TP
 .BR step ", " par_step
 Double. Parameter step increment (default 1.1)
@@ -271,7 +226,7 @@ Double. Parameter step increment (default 1.1)
 String. Name of current parameter parameter (default parameter of index 0, the parameter first declared)
 .TP
 .BR res ", " odesolver_output_resolution
-Int. Nominal number of output time points (default 201)
+Integer. Nominal number of output time points (default 201)
 .TP
 .BR minh ", " odesolver_min_h
 Double. Minimal ODE solver time step  (default 1e-5)
@@ -289,7 +244,7 @@ Double, ODE solver relative tolerance (default 0.0)
 Double. ODE solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd
 .TP
 .BR m/maxfail ", " phasespace_max_fail
-Int. Max number of starting guesses for steady states (default 10000)
+Integer. Max number of starting guesses for steady states (default 10000)
 .TP
 .BR m/abstol ", " phasespace_abs_tol
 Double. Absolute tolerance for finding steady states (default 1e-2)
