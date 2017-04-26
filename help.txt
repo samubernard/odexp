@@ -200,6 +200,160 @@ Plot variable with index \fIind\fR or name \fIvar\fR on the x-axis
 Plot(y). 
 Plot variable with index \fIind\fR or name \fIvar\fR on the y-axis
 
+.SH LIST OF ODEXP TYPES
+.TP
+.BR P 
+Parameters. 
+Must be numerical (double). 
+Parameters appear in the list of parameters. 
+They can be modified from within odexp and can be ranged over. 
+Parameters are declared in name value pairs, separated with semicolumns (;), or one parameter per line: P a 0.1; b 0.2
+.TP
+.BR E
+Expressions. Expressions are function of the parameters. They cannot be modified. 
+Expression are declared as name expr pairs.
+.TP
+.BR A 
+Auxiliary functions. 
+Auxiliary functions depend on parameters, expressions and variables. 
+Auxiliary functions are declared as name function pairs
+.TP
+.BR D
+Dynamical variables are the dependent variables of the ODE system.
+Dynamical variable x is declared as dx/dt or x' followed by = and the RHS of the equation
+.TP
+.BR I
+Initial conditions. 
+Initial conditions can be numerical, or can be expression that depend on parameters, expressions and auxiliary variables.
+If initial conditions are expressions, their values can be overruled or reset in odexp.
+.TP
+.BR O
+Options. Options can be preset. See below for a list of options.
+.TP
+.BR T
+Time span. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
+Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
+are discontinuous, and variable need to be reset at known timepointpoints.
+.TP 
+.BR U
+Uniform random array. 
+.TP
+.BR S
+Static variable. Must be numerical. Static variables cannot be modified.
+
+.SH LIST OF OPTIONS
+.TP
+.BR x ", " plot_x
+String. Name of the variable to plot on the x-axis (default T)
+.TP
+.BR y ", " plot_y
+String. Name of the variable to plot on the y-axis (default variable of index 0)
+.TP
+.BR z ", " plot_z
+String. Name of the variable to plot on the z-axis (default variable of index 1)
+.TP
+.BR freeze ", " freeze
+Int. Add (1) or replace ({0}) variables on plot
+.TP
+.BR curves ", " add_curves
+Int. Add (1) or replace ({0}) curves on plot
+.TP
+.BR style ", " plot_with_style
+String. One of the gnuplot styles: {lines} | points | dots | linespoints ...
+.TP
+.BR realtime ", " plot_realtime
+Int. Plot in real time, {0} | 1 (not implemented)
+.TP
+.BR step ", " par_step
+Double. Parameter step increment (default 1.1)
+.TP
+.BR act ", " act_par
+String. Name of current parameter parameter (default parameter of index 0, the parameter first declared)
+.TP
+.BR res ", " odesolver_output_resolution
+Int. Nominal number of output time points (default 201)
+.TP
+.BR minh ", " odesolver_min_h
+Double. Minimal ODE solver time step  (default 1e-5)
+.TP
+.BR h ", " odesolver_init_h
+Double. Initial time step (default 0.1)
+.TP
+.BR abstol ", " odesolver_eps_abs
+Double. ODE solver absolute tolerance (default 1e-6)
+.TP
+.BR reltol ", " odesolver_eps_rel
+Double, ODE solver relative tolerance (default 0.0)
+.TP
+.BR meth ", " odesolver_step_method
+Double. ODE solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd
+.TP
+.BR m/maxfail ", " phasespace_max_fail
+Int. Max number of starting guesses for steady states (default 10000)
+.TP
+.BR m/abstol ", " phasespace_abs_tol
+Double. Absolute tolerance for finding steady states (default 1e-2)
+.TP
+.BR m/reltol ", " phasespace_rel_tol
+Double. relative tolerance for finding steady states (default 1e-2)
+.TP
+.BR m/range ", " phasespace_search_range
+Double. Phase-space search range 
+.TP
+.BR m/min ", " phasespace_search_min
+Double. Phase-space search min 
+.TP
+.BR  c/h ", " cont_h
+Double. Initial parameter continuation step (default 0.1)
+.TP
+.BR  r/par0 ", " range_par0
+Double. Initial parameter value for range (default 0.0)
+.TP
+.BR  r/par1 ", " range_par1
+Double. Final parameter value for rangei (default 1.0)
+.TP
+.BR r/mstep ", " range_mult_step
+Double. Parameter step multiplicative increment (default 1.0, no increment)
+.TP
+.BR r/astep ", " range_add_step
+Double. Parameter step additive increment (default 0.1)
+.TP
+.BR r/mic ", " range_mult_ic
+Double. Initial condition multiplicative factor for range (default 1.0)
+.TP
+.BR r/aic ", " range_add_ic 
+Double. Initial condition additive factor for range (default 0.0)
+
+.SH FUNCTIONS ACTING ON ARRAYS
+.TP
+.BR \fIdouble\fR " " sum\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR)
+Sum the elements of the array \fIarrayfR of length \fIlen\fR.
+Return the sum of the array
+.TP
+.BR \fIdouble\fR " " sumstep\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR, " " \fIlong " " \fIstep\fR)
+Sum only the \fIstep\fR'th elements of the array \fIarray\fR of length \fIlen\fR.
+.TP 
+.BR \fIdouble\fR " " prod\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR) 
+Product of the elements of the array \fIarray\fR of length \fIlen\fR.
+.TP
+.BR \fIdouble\fR " " dotprod\fR(\fIdouble " " \fI*x\fR, " " \fIdouble " " \fI*y\fR, " " \fIlong  " " \fIlen\fR)
+Scalar product of two arrays \fIx\fR and \fIy\fR of lengths \fIlen\fR. Returns the scalar product.
+.TP
+.BR \fIdouble\fR " " conv\fR(\fIdouble " " \fI*u\fR, " " \fIdouble " "  \fI*v\fR, " " \fIlong " " \fIlen\fR) 
+convolution product between arrays \fIu\fR and \fIv\fR, each of length \fIlen\fR. Returns the convolution product.
+.TP
+.BR \fIdouble\fR " " minus\fR(\fIdouble " "  \fIx\fR, " "  \fIdouble " "  \fIy\fR)
+Subtraction. 
+Used with \fBsumxy\fR.
+.TP
+.BR \fIdouble\fR " " plus\fR(\fIdouble " "  \fIx\fR, " "  \fIdouble " "  \fIy\fR)
+Addition.
+Used with \fBsumxy\fR.
+.TP
+.BR \fIdouble\fR " " sumxy\fR(\fIlong " " \fIlen, " " \fIdouble " " \fI(*f)(double)\fR, " " \fIdouble " " \fI(*g)(double,double)\fR, " " \fIconst " "  \fIdouble " " \fI*x\fR, " " \fIconst " " \fIdouble " " \fIyi\fR)
+Sum over j of \fIf\fR(\fIg\fR(\fIx_j\fR,\fIyi\fR)) 
+
+
 .SH EXAMPLES
 Here is an example of an odexp file
 

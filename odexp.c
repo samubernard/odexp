@@ -57,8 +57,8 @@ struct gen_option gopts[NBROPTS] = {
     {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
     {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
     {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steady states"},  
-    {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steady states"},  
-    {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steady states"},  
+    {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steady states"},  
+    {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steady states"},  
     {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]", "steady states"},  
     {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]", "steady states"},
     {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step", "continuation methods"},
@@ -1381,7 +1381,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     }
 
     /* remove frozen curves */
-    system("rm .odexp/curve.*");
+    system("rm -f .odexp/curve.*");
 
     return status;
 
