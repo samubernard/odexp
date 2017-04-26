@@ -4,7 +4,7 @@ odexp \- fast ODE solver with gnuplot graphical output
 .SH DESCRIPTION
 .B odexp 
 command line tool for ODE simulation.
-.SH LIST OF COMMANDS 
+.SH COMMANDS 
 .TP
 .BR + ", " = ", " C^a 
 Increment current parameter by a multiplicative factor \fBpar_step\fR 
@@ -114,7 +114,7 @@ Range over parameters
 Find a steady state with starting guess given by initial conditions 
 .TP
 .BR o " " \fIfilename\fR 
-Load parameters and options from file \fIfilename\rR 
+Load parameters values and options from file \fIfilename\rR 
 .TP
 .BR P " " \fIval\fR        
 Set current parameter to \fIval\fR
@@ -155,48 +155,86 @@ Plot variable with index \fIind\fR or name \fIvar\fR on the x-axis
 .BR y " " \fR{\fIind\fR|\fIvar\fR}
 Plot variable with index \fIind\fR or name \fIvar\fR on the y-axis
 
-.SH LIST OF ODEXP TYPES
+.SH ODEXP DECLARATIONS
 .TP
 .BR P 
 Parameters. 
 Must be numerical (double). 
 Parameters appear in the list of parameters. 
 They can be modified from within odexp and can be ranged over. 
-Parameters are declared in name value pairs, separated with semicolumns (;), or one parameter per line: P a 0.1; b 0.2
+Parameters are declared in name value pairs, separated with semicolumns (;), or one parameter per line.
+
+.nf
+P a 0.1; b 0.2
+
+P a 0.1
+P b 0.1
+.fi
 .TP
 .BR E
 Expressions. Expressions are function of the parameters. They cannot be modified. 
 Expression are declared as name expr pairs.
+
+.nf
+E c a*a
+.fi
 .TP
 .BR A 
 Auxiliary functions. 
 Auxiliary functions depend on parameters, expressions and variables. 
 Auxiliary functions are declared as name function pairs
+
+.nf
+A d sqrt(x+c)
+.fi
 .TP
 .BR D
 Dynamical variables are the dependent variables of the ODE system.
 Dynamical variable x is declared as dx/dt or x' followed by = and the RHS of the equation
+
+.nf
+dx/dt = -a*x
+.fi
 .TP
 .BR I
 Initial conditions. 
 Initial conditions can be numerical, or can be expression that depend on parameters, expressions and auxiliary variables.
 If initial conditions are expressions, their values can be overruled or reset in odexp.
+
+.nf
+I x 1.0
+
+I x b
+.fi
 .TP
 .BR O
 Options. Options can be preset. See below for a list of options.
+
+.nf
+O plot_x x
+O reltol 1e-3
+.fi
 .TP
 .BR T
 Time span. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
-are discontinuous, and variable need to be reset at known timepointpoints.
+are discontinuous, and variable need to be reset at known timepoints.
 .TP 
 .BR U
-Uniform random array. 
+Uniform random array. To generate an array of length 5 of pseudo-random numbers uniformly distbuted between -1 and 1 
+
+.nf
+U r[i=0:5] 
+E rand_array[i=0:5] -1 + 2*r[i]
+.fi
 .TP
 .BR S
 Static variable. Must be numerical. Static variables cannot be modified.
 
-.SH LIST OF OPTIONS
+.nf
+S MY_PI 3.14
+.fi
+.SH NUMERICAL AND GRAPHICAL OPTIONS
 .TP
 .BR x ", " plot_x
 String. Name of the variable to plot on the x-axis (default T)
