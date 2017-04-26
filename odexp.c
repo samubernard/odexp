@@ -95,7 +95,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* variable declaration */
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *system_filename = ".odexp/system.par";
-    const char *helpcmd = "less -S .odexp/help.txt";
+    const char *helpcmd = "man .odexp/help.txt";
     char mv_plot_cmd[EXPRLENGTH];
     const char current_data_buffer[] = "current.tab";
     const char *hline = "----------------";
@@ -706,7 +706,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             for ( i=0; i<ode_system_size; i++ )
                             {
-                                printf("  %s (%g): ",ics.name[i],ics.value[i]);
+                                printf("  %s [I|new val|%s%0.2f%s enter]: ",ics.name[i],T_VAL,ics.value[i],T_NOR);
                                 if ( fgets(svalue, 32, stdin) != NULL )
                                 {
                                     nbr_read = sscanf(svalue,"%lf",&nvalue);
@@ -1687,7 +1687,7 @@ int name2index( const char *name, nve var, long *n) /* get index of var.name == 
     long i = 0;
     int s = 0;
 
-    if ( strcmp(name,"T") == 0 )
+    if ( (strcmp(name,"T") == 0) | (strcmp(name,"t") == 0) )
     {
         *n = -1;
         s = 1;
