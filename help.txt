@@ -25,7 +25,7 @@ Double the number of time steps
 Halve the number of time steps 
 .TP
 .BR ! " " \fIfilename\fR   
-Try to save the current plot to \fIfilename\fR. PNG format
+Try to save the current plot to \fIfilename\fR. EPS format
 .TP
 .BR A 
 Reset all axes to linear scale 

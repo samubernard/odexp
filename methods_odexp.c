@@ -9,6 +9,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_eigen.h> 
 #include <gsl/gsl_qrng.h>   
+#include <gsl/gsl_linalg.h>
 #include <math.h>                          
 #include <time.h>
 #include <string.h>
@@ -894,8 +895,19 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     FILE *br_file;
     double *x2, *x1, *x0;
     double mu2, mu1, mu0;
-    double a,b,c, s=1.0;
+    double b, c, s=h;
+    double eig_tol = get_dou("phasespace_abs_tol"); 
     long nstst = 0;
+
+    int turning_point_found = 0;
+    int turning_point_before = 0;
+
+    /* vandermonde 3x3 matrix */
+    gsl_matrix *vanderm = gsl_matrix_alloc(3,3);
+    gsl_permutation *perm = gsl_permutation_alloc(3);
+    gsl_vector *vander_vect = gsl_vector_alloc(3);
+    gsl_vector *abc = gsl_vector_alloc(3);
+    int ss;
 
     x2 =  malloc(ode_system_size*sizeof(double));
     x1 =  malloc(ode_system_size*sizeof(double));
@@ -915,14 +927,19 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
 
     br_file = fopen("stst_branches.tab","a");
 
-    while ( ntry < max_fail )
+    while ( ntry++ < max_fail )
     {
         /* try to find a stst */
-        printf("--bifurcation parameter: %g\n",mu.value[p]);
+        printf("  *------------*\n");
+        for (i = 0; i < ode_system_size; i++)
+        {
+            printf("--initial guess [%ld] = %g\n",i,ics.value[i]);
+        }
+        printf("  iter = %ld, %s = : %g\n",ntry,mu.name[p],mu.value[p]);
         status = ststsolver(multiroot_rhs,ics,mu, &stst);
         if ( status == GSL_SUCCESS ) /* then move to next point */
         {
-            printf("--nstst %ld\n",nstst);
+            /* printf("--nstst %ld\n",nstst); */
             nstst++;
             fprintf(br_file,"%g",mu.value[p]);
             /* print steady states */
@@ -946,52 +963,125 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
             mu2 = mu1;
             mu1 = mu0;
             mu0 = mu.value[p];
-            s = 1.0;
+
+            /* try to detect turning-point */
+            /* mu1 - mu0 small
+             * eigenvalue close to zero
+             * 3 stst or more already computed
+             */
+            if ( (fabs(mu0 - mu1) < fabs(h*get_dou("phasespace_rel_tol"))) & 
+                    (((mu0>mu1) & (mu1>mu2)) | ((mu0<mu1) & (mu1<mu2))) & 
+                    (nstst > 2) )
+            {
+                for (i=0; i<ode_system_size; i++)
+                {
+                    if ( fabs(stst.re[i]) < eig_tol )
+                    {
+                        turning_point_found = 1;
+                        printf("  ** turning point found **\n");
+                    }
+                }
+            }
+
+            if ( turning_point_found )
+            {
+                s *= -1; /* change direction */
+            }
+            else
+            {
+                s *= 1.1;
+                if ( fabs(s)>fabs(h) )
+                {
+                    if ( s > 0 )
+                    {
+                        s = fabs(h);
+                    }
+                    else
+                    {
+                        s = -fabs(h);
+                    }
+                }
+            }
+            /* printf("--s = %g\n",s); */
+            mu.value[p] += s;
+
         }
         else
         {
-            s *= -0.9;
+            s *= 0.5;
+            mu.value[p] = mu0 + s; 
         }
 
-        if ( nstst == 1 ) /* just move mu by amount h */
+
+        if ( nstst == 1 ) /* 1 stst found. next initial guess based on this stst  */
         {
             for (i=0; i<ode_system_size; i++)
             {
                 ics.value[i] = x0[i];   
             }
-            mu.value[p] += h;
         } 
-        if ( nstst == 2 )
+        if ( nstst == 2 ) /* two steady-states found. next initial guess linear extrapolation */
         {
             for (i=0; i<ode_system_size; i++)
             {
-                b = -x1[i] + x0[i];
-                c = x0[i];
-                ics.value[i] = b+c; /* next initial guess */
-                /* printf("--x: a,b,c = %g, %g\n",b,c); */
+                b = (-x1[i] + x0[i])/(-mu1 + mu0);
+                c = x1[i] - b*mu1;
+                ics.value[i] = b*mu.value[p]+c; /* next initial guess */
             } 
-            b = -mu1 + mu0;
-            c = mu0;
-            mu.value[p] = b+c;
-            /* printf("--mu: b,c = %g, %g\n",b,c); */
         }
-        if ( nstst > 2 )
+        if ( (nstst > 2) & turning_point_found) /* Turning point found  */
         {
             for (i=0; i<ode_system_size; i++)
             {
-                a = (x2[i] - 2*x1[i] + x0[i])/2;
-                b = (x2[i] - 4*x1[i] + 3*x0[i])/2;
-                c = x0[i];
-                ics.value[i] = a*s*s+b*fabs(s)+c; /* next initial guess */
-                /* printf("--x: a,b,c = %g, %g, %g\n",a,b,c); */
-            } 
-            a = (mu2 - 2*mu1 + mu0)/2;
-            b = (mu2 - 4*mu1 + 3*mu0)/2;
-            c = mu0;
-            mu.value[p] = a*s*s+b*s+c;
-            /* printf("--mu: a,b,c = %g, %g, %g\n",a,b,c); */
+                ics.value[i] = x0[i] + (x0[i]-x1[i]);
+            }
+            turning_point_found = 0;
+            turning_point_before = 1;
+            
         }
-        ntry++;
+        else if ( (nstst > 2) & turning_point_before )
+        {
+            for (i=0; i<ode_system_size; i++)
+            {
+                /* b = (-x1[i] + x0[i])/(-mu1 + mu0); */
+                /* c = x1[i] - b*mu1; */
+                /* ics.value[i] = b*mu.value[p]+c;  next initial guess  */
+                b = (x1[i]-x0[i])*(x1[i]-x0[i])/fabs(mu1-mu0);
+                c = -((x2[i]-x1[i])>0)+((x2[i]-x1[i])<0);
+                ics.value[i] = x1[i] + c*sqrt(b*fabs(mu1-mu.value[p]));
+                printf("--c=%g,x2=%g,x1=%g,x0=%g\n",c,x2[i],x1[i],x0[i]);
+            }
+            turning_point_before = 0;
+        }
+        else if ( (nstst > 2) & (turning_point_found == 0) )
+        {
+            /* 2nd-order extrapolation; solve 3x3 vandermonde matrix */
+            printf("--mu2=%g, mu1=%g, mu0=%g\n",mu2,mu1,mu0);
+            gsl_matrix_set(vanderm, 0, 0, mu0*mu0);
+            gsl_matrix_set(vanderm, 1, 0, mu1*mu1);
+            gsl_matrix_set(vanderm, 2, 0, mu2*mu2);
+            gsl_matrix_set(vanderm, 0, 1, mu0);
+            gsl_matrix_set(vanderm, 1, 1, mu1);
+            gsl_matrix_set(vanderm, 2, 1, mu2);
+            gsl_matrix_set(vanderm, 0, 2, 1);
+            gsl_matrix_set(vanderm, 1, 2, 1);
+            gsl_matrix_set(vanderm, 2, 2, 1);
+            
+            gsl_linalg_LU_decomp(vanderm, perm, &ss);
+            
+            for ( i=0; i<ode_system_size; i++)
+            {
+                gsl_vector_set(vander_vect, 0, x0[i]); 
+                gsl_vector_set(vander_vect, 1, x1[i]); 
+                gsl_vector_set(vander_vect, 2, x2[i]); 
+                gsl_linalg_LU_solve(vanderm, perm, vander_vect, abc);
+                ics.value[i] = gsl_vector_get(abc,0)*mu.value[p]*mu.value[p]+\
+                               gsl_vector_get(abc,1)*mu.value[p]+\
+                               gsl_vector_get(abc,2);
+                printf("--ics.value=%g\n",ics.value[i]);
+            }
+        }
+
     }
 
     fprintf(br_file,"\n");
@@ -1002,6 +1092,10 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     free( x2 );
     free( x1 );
     free( x0 );
+    gsl_matrix_free( vanderm );
+    gsl_vector_free( vander_vect );
+    gsl_vector_free( abc );
+    gsl_permutation_free( perm );
     fclose( br_file );
 
     return 1;
