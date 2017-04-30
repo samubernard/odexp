@@ -165,7 +165,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
          svalue2[NAMELENGTH],
          svalue3[NAMELENGTH];
     int replot      = 0, /* replot the same gnuplot command with new data */
-        updateplot  = 0,  /* update plot with new parameters/option */
+        plotnormal  = 0,  /* update plot with new parameters/option */
         rerun       = 0, /* run a new simulation */
         plotcont    = 0, /* plot continuation branch */
         plotrange   = 0, /* plot range */
@@ -406,12 +406,24 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     update_act_par_options(p, mu);
                     break;                
-                case '0' : /* rerun and update plot */
-                    rerun = 1;
-                    updateplot = 1;
+                case 'n' :
+                case '0' : /* update/switch to normal plot */
+                    plotnormal = 1;
+                    break;
+                case 'b' :
+                case '9' : /* switch to continuation plot */
+                    plotcont = 1;
+                    break;
+                case 'j' :
+                case '8' : /* switch to range plot */
+                    plotrange = 1;
                     break;
                 case 'r' : /* replot */
                     replot = 1;
+                    break;
+                case 'R' :
+                    rerun = 1;
+                    plotnormal = 1;
                     break;
                 case 'f' : /* toggle freeze */
                     /* TODO freeze to freeze the current plot 
@@ -433,7 +445,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else
                     {
                         printf("  %sfreeze is off (not working as expected)%s\n",T_DET,T_NOR);
-                        updateplot = 1;
+                        plotnormal = 1;
                     }
                     break;
                 case 'u' : /* add curves on the plot */ 
@@ -449,7 +461,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         else
                         {
                             printf("  %sadd curves is off (not working so well)%s\n",T_DET,T_NOR);
-                            updateplot = 1;
+                            plotnormal = 1;
                         }
                     }
                     else if ( nbr_read == 1 )
@@ -459,7 +471,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             system("rm -f .odexp/curve.*");
                             nbr_hold = 0;
                             set_int("add_curves",0);
-                            updateplot = 1;
+                            plotnormal = 1;
                         }
                         else
                         {
@@ -532,7 +544,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         nbr_read = sscanf(cmdline+1,"%s %s %s", svalue, svalue2, svalue3);
                         if ( nbr_read >= 2 )
                         {
-                            updateplot = 1;
+                            plotnormal = 1;
                             plot3d = 0;
                             set_str("plot_x",svalue);
                             set_str("plot_y",svalue2);
@@ -547,14 +559,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         if ( nbr_read < 2 ) 
                         {
                             fprintf(stderr,"  %serror: requires 2 or 3 variable names/indices%s\n",T_ERR,T_NOR);
-                            updateplot = 0;
+                            plotnormal = 0;
                         }
                         update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                         update_plot_options(ngx,ngy,ngz,dxv);
                     }
                     if ( nbr_read >= 2 )
                     {
-                        updateplot = 1;
+                        plotnormal = 1;
                         plot3d = 0;
                         if ( (ngx >= -1) && ngx < total_nbr_x)
                         {
@@ -563,7 +575,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         else
                         {
                             fprintf(stderr,"  %serror: x-axis index out of bound%s\n",T_ERR,T_NOR);
-                            updateplot = 0;
+                            plotnormal = 0;
                         }
                         if ( (ngy >= -1) && ngy < total_nbr_x)
                         {
@@ -572,7 +584,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         else
                         {
                             fprintf(stderr,"  %serror: y-axis index out of bound%s\n",T_ERR,T_NOR);
-                            updateplot = 0;
+                            plotnormal = 0;
                         }
                         update_plot_options(ngx,ngy,ngz,dxv);
                         update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
@@ -587,13 +599,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         else
                         {
                             fprintf(stderr,"  %swarning: z-axis index out of bound%s\n",T_ERR,T_NOR);
-                            updateplot = 0;
+                            plotnormal = 0;
                         }
                     } 
                     if ( nbr_read == 1 || nbr_read > 3 )
                     {
                         fprintf(stderr,"  %serror: requires 2 or 3 variable names/indices%s\n",T_ERR,T_NOR);
-                        updateplot = 0;
+                        plotnormal = 0;
                     }
                     break;
                 case 'x' :
@@ -607,7 +619,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                             gx = ngx + 2;
                             plot3d = 0;
-                            updateplot = 1;
+                            plotnormal = 1;
                             update_plot_options(ngx,ngy,ngz,dxv);
                         }
                     }
@@ -615,7 +627,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         gx = ngx + 2;
                         plot3d = 0;
-                        updateplot = 1;
+                        plotnormal = 1;
                         update_plot_options(ngx,ngy,ngz,dxv);
                         update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     }
@@ -623,7 +635,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
                         replot = 0;
-                        updateplot = 0;
+                        plotnormal = 0;
                     }
                     break;
                 case 'y' :
@@ -639,7 +651,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             gx = ngx + 2;
                             update_plot_options(ngx,ngy,ngz,dxv);
                             plot3d = 0;
-                            updateplot = 1;
+                            plotnormal = 1;
                         }
                     }
                     else if (ngy > -1 && ngy < total_nbr_x)
@@ -647,7 +659,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         gx = 1;
                         gy = ngy + 2;
                         plot3d = 0;
-                        updateplot = 1;
+                        plotnormal = 1;
                         update_plot_options(ngx,ngy,ngz,dxv);
                         update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     }
@@ -655,7 +667,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
                         replot = 0;
-                        updateplot = 0;
+                        plotnormal = 0;
                     }
                     break;
                 case ']' : /* plot next x */
@@ -663,7 +675,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     ngy++;
                     ngy %= total_nbr_x;
                     gy = ngy+2;
-                    updateplot=1;
+                    plotnormal=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     printf("  y-axis: [%ld] %s\n",ngy,dxv.name[ngy]);
@@ -673,7 +685,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     ngy+= total_nbr_x-1;
                     ngy %= total_nbr_x;
                     gy = ngy+2;
-                    updateplot=1;
+                    plotnormal=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     printf("  y-axis: [%ld] %s\n",ngy,dxv.name[ngy]);
@@ -994,7 +1006,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                     ics.value[i] = nvalue;
                                     num_ic[i] = 1;
                                     rerun = 1;
-                                    updateplot = 1;
+                                    plotnormal = 1;
                                 }
                             }
                         }
@@ -1068,8 +1080,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                   default:
                                     printf("  Warning: option not defined\n");
                                 }
-                                rerun = 1;
-                                updateplot = 1;
+                                /* rerun = 1; */
+                                /* plotnormal = 1; */
                                 update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                                 update_act_par_index(&p, mu);
                                 printf_option_line(i);
@@ -1107,8 +1119,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                             strncpy(gopts[i].strval,svalue2,NAMELENGTH);
                                             break;
                                     }
-                                    rerun = 1;
-                                    updateplot = 1;
+                                    /* rerun = 1; */
+                                    /* plotnormal = 1; */
                                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                                     update_act_par_index(&p, mu);
                                     printf_option_line(i);
@@ -1256,7 +1268,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     system(mv_plot_cmd);
                 }
             }
-            if ( get_int("add_curves") & ( rerun | updateplot ) )
+            if ( get_int("add_curves") & ( rerun | plotnormal ) )
             {
                 /* plot curve.0 to curve.nbr_hold-1 */
                 fprintf(gnuplot_pipe,\
@@ -1274,10 +1286,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 fprintf(gnuplot_pipe,"replot\n");
                 fflush(gnuplot_pipe);
             }
-            else if (updateplot)
+            else if (plotnormal)
                 /* This is where the plot is updated */
             {
               /* set axis labels and plot */
+              fprintf(gnuplot_pipe,"unset xrange\n");
+              fprintf(gnuplot_pipe,"unset yrange\n");
+              fprintf(gnuplot_pipe,"unset zrange\n");
               if ( get_int("freeze") == 0 )
               {
                   if (gx == 1) /* time evolution: xlabel = 'time' */
@@ -1340,6 +1355,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             }
             else if ( plotcont ) /* try to plot continuation branch */
             {
+                fprintf(gnuplot_pipe,"set xrange[%lf:%lf]\n",get_dou("range_par0"),get_dou("range_par1"));
                 fprintf(gnuplot_pipe,"plot \"stst_branches.tab\" u 1:%ld w %s \n",gy,get_str("plot_with_style"));
                 fflush(gnuplot_pipe);
             }
@@ -1358,7 +1374,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             fpurge(stdin);
             replot = 0;
             rerun = 0;
-            updateplot = 0;
+            plotnormal = 0;
             plotcont = 0;
             plotrange = 0;
             free(cmdline);

@@ -27,6 +27,15 @@ Halve the number of time steps
 .BR ! " " \fIfilename\fR   
 Try to save the current plot to \fIfilename\fR. EPS format
 .TP
+.BR 0 ", " n 
+Switch to/update normal plot 
+.TP
+.BR 9 ", " b
+Switch to continuation plot
+.TP
+.BR 8 ", " j
+Switch to range plot
+.TP
 .BR A 
 Reset all axes to linear scale 
 .TP
@@ -128,6 +137,9 @@ Quit without snapshot
 .TP
 .BR q " " \fR[\fImsg\fR]        
 Quit and snap with optional message \fImsg\fR 
+.TP
+.BR R
+Rerun the ODE system and update plot
 .TP
 .BR r
 Repeat the last gnuplot command (replot)
@@ -298,6 +310,9 @@ Double. Phase-space search min
 .TP
 .BR  c/h ", " cont_h
 Double. Initial parameter continuation step (default 0.1)
+.TP
+.BR  c/maxh ", " cont_maxh
+Double. Maximal parameter continuation step (default 0.1)
 .TP
 .BR  r/par0 ", " range_par0
 Double. Initial parameter value for range (default 0.0)
