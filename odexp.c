@@ -167,6 +167,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int replot      = 0, /* replot the same gnuplot command with new data */
         updateplot  = 0,  /* update plot with new parameters/option */
         rerun       = 0, /* run a new simulation */
+        plotcont    = 0, /* plot continuation branch */
+        plotrange   = 0, /* plot range */
         plot3d      = 0,
         quit        = 0;
     
@@ -404,13 +406,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     replot = 1;
                     update_act_par_options(p, mu);
                     break;                
-                case '0' : /* just run */
+                case '0' : /* rerun and update plot */
                     rerun = 1;
-                    replot = 1;
+                    updateplot = 1;
                     break;
                 case 'r' : /* replot */
-                    fprintf(gnuplot_pipe,"replot\n");
-                    fflush(gnuplot_pipe);
                     replot = 1;
                     break;
                 case 'f' : /* toggle freeze */
@@ -1209,6 +1209,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if ( op == 'c' )
                     {
                         status = ststcont(multiroot_rhs,ics,mu);
+                        plotcont = 1;
                     }
                     else if ( op == 'r' )
                     {
@@ -1337,6 +1338,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 
             }
+            else if ( plotcont ) /* try to plot continuation branch */
+            {
+                fprintf(gnuplot_pipe,"plot \"stst_branches.tab\" u 1:%ld w %s \n",gy,get_str("plot_with_style"));
+                fflush(gnuplot_pipe);
+            }
+            else if ( plotrange ) /* try to plot range */
+            {
+                /* */
+            }
 
             /* update option pl:x, pl:y, pl:z */
             update_plot_options(ngx,ngy,ngz,dxv);
@@ -1349,6 +1359,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             replot = 0;
             rerun = 0;
             updateplot = 0;
+            plotcont = 0;
+            plotrange = 0;
             free(cmdline);
         }
         
