@@ -891,7 +891,8 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     long max_fail = get_int("phasespace_max_fail");
     int status;
     steady_state stst;
-    double h = get_dou("cont_h");
+    double h = get_dou("cont_h"),
+           maxh = get_dou("cont_maxh");
     FILE *br_file;
     double *x2, *x1, *x0;
     double mu2, mu1, mu0;
@@ -926,20 +927,24 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     init_steady_state(&stst, 0);
 
     br_file = fopen("stst_branches.tab","a");
+    fprintf(br_file,"%s",mu.name[p]);
+    for (i = 0; i < ode_system_size; i++)
+    {
+        fprintf(br_file,"\t%s",ics.name[i]);
+    }
+    for (i = 0; i < ode_system_size; i++)
+    {
+        fprintf(br_file,"\tRe_%ld\tIm_%ld",i,i);
+    }
+    fprintf(br_file,"\n");
 
     while ( ntry++ < max_fail )
     {
         /* try to find a stst */
-        printf("  *------------*\n");
-        for (i = 0; i < ode_system_size; i++)
-        {
-            printf("--initial guess [%ld] = %g\n",i,ics.value[i]);
-        }
-        printf("  iter = %ld, %s = : %g\n",ntry,mu.name[p],mu.value[p]);
+        printf("  *----------------------*\n");
         status = ststsolver(multiroot_rhs,ics,mu, &stst);
         if ( status == GSL_SUCCESS ) /* then move to next point */
         {
-            /* printf("--nstst %ld\n",nstst); */
             nstst++;
             fprintf(br_file,"%g",mu.value[p]);
             /* print steady states */
@@ -969,7 +974,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
              * eigenvalue close to zero
              * 3 stst or more already computed
              */
-            if ( (fabs(mu0 - mu1) < fabs(h*get_dou("phasespace_rel_tol"))) & 
+            if ( (fabs(mu0 - mu1) < fabs(maxh*get_dou("phasespace_rel_tol"))) & 
                     (((mu0>mu1) & (mu1>mu2)) | ((mu0<mu1) & (mu1<mu2))) & 
                     (nstst > 2) )
             {
@@ -990,19 +995,18 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
             else
             {
                 s *= 1.1;
-                if ( fabs(s)>fabs(h) )
+                if ( fabs(s)>fabs(maxh) )
                 {
                     if ( s > 0 )
                     {
-                        s = fabs(h);
+                        s = fabs(maxh);
                     }
                     else
                     {
-                        s = -fabs(h);
+                        s = -fabs(maxh);
                     }
                 }
             }
-            /* printf("--s = %g\n",s); */
             mu.value[p] += s;
 
         }
@@ -1049,14 +1053,14 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                 b = (x1[i]-x0[i])*(x1[i]-x0[i])/fabs(mu1-mu0);
                 c = -((x2[i]-x1[i])>0)+((x2[i]-x1[i])<0);
                 ics.value[i] = x1[i] + c*sqrt(b*fabs(mu1-mu.value[p]));
-                printf("--c=%g,x2=%g,x1=%g,x0=%g\n",c,x2[i],x1[i],x0[i]);
+                /* printf("--c=%g,x2=%g,x1=%g,x0=%g\n",c,x2[i],x1[i],x0[i]); */
             }
             turning_point_before = 0;
         }
         else if ( (nstst > 2) & (turning_point_found == 0) )
         {
             /* 2nd-order extrapolation; solve 3x3 vandermonde matrix */
-            printf("--mu2=%g, mu1=%g, mu0=%g\n",mu2,mu1,mu0);
+            /* printf("--mu2=%g, mu1=%g, mu0=%g\n",mu2,mu1,mu0); */
             gsl_matrix_set(vanderm, 0, 0, mu0*mu0);
             gsl_matrix_set(vanderm, 1, 0, mu1*mu1);
             gsl_matrix_set(vanderm, 2, 0, mu2*mu2);
@@ -1078,13 +1082,16 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                 ics.value[i] = gsl_vector_get(abc,0)*mu.value[p]*mu.value[p]+\
                                gsl_vector_get(abc,1)*mu.value[p]+\
                                gsl_vector_get(abc,2);
-                printf("--ics.value=%g\n",ics.value[i]);
+                /* printf("--ics.value=%g\n",ics.value[i]); */
             }
         }
 
     }
 
     fprintf(br_file,"\n");
+
+    /* set c/h to the sign of the last value of s */
+    set_dou("cont_h",s);
 
     free( stst.s );
     free( stst.re );
