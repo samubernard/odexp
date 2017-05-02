@@ -66,21 +66,6 @@ typedef struct gen_option
     char    optiontype[NAMELENGTH];
 } gopt;
 
-typedef struct numerical_option
-{
-    char    name[NAMELENGTH];
-    double  value;
-    char    descr[EXPRLENGTH];
-} nopt;
-
-typedef struct string_option
-{
-    char    name[NAMELENGTH];
-    char    value[EXPRLENGTH];
-    char    descr[EXPRLENGTH];
-} sopt;
-
-
 extern struct gen_option gopts[NBROPTS];
 
 typedef struct steady_state

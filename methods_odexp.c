@@ -293,7 +293,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
     if (status == GSL_SUCCESS)
     {
-        printf("  ...done in %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
+        printf("  ... %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
     }
     else
     {
@@ -569,7 +569,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
 
     if (status == GSL_SUCCESS)
     {
-        printf("  ...done in %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
+        printf("  ... %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
     }
     else
     {
@@ -885,6 +885,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     nve ics, nve mu)
 {
     /* naive stst continuation method */
+    clock_t start = clock();
     long p = get_int("act_par"); 
     long i;
     long ntry = 0;
@@ -934,7 +935,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     }
     for (i = 0; i < ode_system_size; i++)
     {
-        fprintf(br_file,"\tRe_%ld\tIm_%ld",i,i);
+        fprintf(br_file,"\tRe_%ld\tIm_%ld\tNote",i,i);
     }
     fprintf(br_file,"\n");
 
@@ -942,6 +943,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     {
         /* try to find a stst */
         printf("  *----------------------*\n");
+        printf("  %ld: %s = %g, s=%g\n",ntry,mu.name[p],mu.value[p],s);
         status = ststsolver(multiroot_rhs,ics,mu, &stst);
         if ( status == GSL_SUCCESS ) /* then move to next point */
         {
@@ -958,7 +960,6 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                 fprintf(br_file,"\t%g",stst.re[i]);
                 fprintf(br_file,"\t%g",stst.im[i]);
             }
-            fprintf(br_file,"\n");
             for (i=0; i<ode_system_size; i++)
             {
                 x2[i] = x1[i];
@@ -984,9 +985,15 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                     {
                         turning_point_found = 1;
                         printf("  ** turning point found **\n");
+                        fprintf(br_file,"\tturning point");
                     }
                 }
             }
+            else
+            {
+                fprintf(br_file,"\t");
+            }
+            fprintf(br_file,"\n");
 
             if ( turning_point_found )
             {
@@ -1092,6 +1099,8 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
 
     /* set c/h to the sign of the last value of s */
     set_dou("cont_h",s);
+    
+    printf("\n  ... %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
 
     free( stst.s );
     free( stst.re );

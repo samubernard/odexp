@@ -1397,8 +1397,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_steady_state( stst, nbr_stst );
     free_double_array( tspan );
     free_double_array( rnd );
-    free_noptions();
-    free_soptions();
+    /* free_noptions(); */
+    /* free_soptions(); */
     free(num_ic);
     free(lasty);
     free(lastinit);
@@ -1437,14 +1437,6 @@ void free_namevalexp(nve var )
     free(var.value);
     free(var.name);
     free(var.expression);
-}
-
-void free_noptions()
-{
-}
-
-void free_soptions()
-{
 }
 
 void init_steady_state(steady_state *mystst, int index)
