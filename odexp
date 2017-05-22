@@ -14,6 +14,8 @@ set -eu # makes your program exit on error or unbound variable
 mkdir -p .odexp
 
 echo "# odexp file name: $1" >.odexp/sub.odexp
+echo "# In this file, all constant (variable starting with _n)" >>.odexp/sub.odexp
+echo "# are replaced with their value" >>.odexp/sub.odexp
 echo "" >>.odexp/sub.odexp
 
 # replace all constants (variable starting with '_') by their value
@@ -80,13 +82,13 @@ declare_iterators () {
       }' $file >>.odexp/model.c
 }
 
-declare_assign_static_variables () {
+set_defines () {
     awk -F ' ' '$1 ~ /^[sS][0-9]*$/ && $2 !~ /\[.+:.+\]/ {
         var=$2;
         $1="";
         $2="";
         ex=$0;
-        printf "    static double %s = %s;\n", var, ex;
+        printf "#define %s %s;\n", var, ex;
         }' $file >>.odexp/model.c
 }
 
@@ -304,14 +306,19 @@ assign_parametric_expressions () {
       ex=$0;
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "[%s]", b[k] 
       }; 
-      {printf " = %s;\n", ex} }' $file >>.odexp/model.c
+      {printf " = %s; \n", ex};
+      for (k=length(b)-1; k>=2; k-=4)
+      {
+        printf "%-*s}\n", k, ""    
+      };
+      }' $file >>.odexp/model.c
 }
 
 assign_auxiliary_functions () {
@@ -334,14 +341,14 @@ assign_auxiliary_functions () {
       ex=$0;
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "[%s]", b[k] 
       }; 
-      {printf " = %s;\n", ex}; }' $file >>.odexp/model.c
+      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $file >>.odexp/model.c
 }
 
 assign_variables () {
@@ -360,7 +367,7 @@ assign_variables () {
       myexpr=e[length(e)];
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -373,7 +380,7 @@ assign_variables () {
         printf "%s+%d", b[k], nv-b[k+1];
         nv+=b[k+2]-b[k+1]
       }
-      {  printf "];\n" };  
+      {  printf "];\n %-*s}\n", k-2, "" };  
     }' $file >>.odexp/model.c
 }
 
@@ -390,7 +397,7 @@ assign_equations () {
       myexpr=e[length(e)];
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -398,7 +405,7 @@ assign_equations () {
         printf "[%s+%d]", b[k], nv-b[k+1]
         nv+=b[k+2]-b[k+1] 
       }; 
-      {printf " = %s;\n", myexpr}; }' $file >>.odexp/model.c
+      {printf " = %s;\n%-*s}\n", myexpr, k-2, ""}; }' $file >>.odexp/model.c
 }
 
 assign_aux_pointer () {
@@ -413,9 +420,9 @@ assign_aux_pointer () {
       myvar="aux_";
       split($2,c,/\[/);
       ex=c[1];
-      printf "%-*sfor(%s=%s;%s<%s;%s++)\n", 5, "", b[2], b[3], b[2], b[4], b[2]; 
+      printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", 4, "", b[2], b[3], b[2], b[4], b[2]; 
       printf "%-*s%s[%s+%d]", 7, "", myvar, b[2], nv;
-      printf " = %s[%s];\n", ex, b[2];
+      printf " = %s[%s];\n%-*s}\n", ex, b[2], 4, "";
       nv+=b[4]-b[3]
       }' $file >>.odexp/model.c
 }
@@ -432,9 +439,9 @@ assign_uniform_random_array () {
       myvar="rnd_";
       split($2,c,/\[/);
       ex=c[1];
-      printf "%-*sfor(%s=%s;%s<%s;%s++)\n", 5, "", b[2], b[3], b[2], b[4], b[2]; 
+      printf "%-*sfor(%s=%s;%s<%s;%s++) {\n ", 5, "", b[2], b[3], b[2], b[4], b[2]; 
       printf "%-*s%s[%s]", 8, "", ex, b[2];
-      printf " = %s[%s+%d];\n", myvar, b[2], nv;
+      printf " = %s[%s+%d];\n%-*s}\n", myvar, b[2], nv, 5, "";
       nv+=b[4]-b[3]
       }' $file >>.odexp/model.c
 }
@@ -458,7 +465,7 @@ assign_initial_conditions () {
       ex=$0;
       for (k=2; k<=length(b); k+=4) 
       { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++)\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
       };
       {printf "%-*s%s", k+2, "", myvar};
       for (k=2; k<=length(b); k+=4) 
@@ -466,13 +473,17 @@ assign_initial_conditions () {
         printf "[%s+%d]", b[k], nv 
         nv+=b[k+2]-b[k+1]
       }; 
-      {printf " = %s;\n", ex}; }' $parfile >>.odexp/model.c
+      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $parfile >>.odexp/model.c
 }
 
 # ==========================================================================================
 # Write C file
 # ==========================================================================================
 echo "/* function implementations */" >.odexp/model.c
+echo "" >>.odexp/model.c
+echo "#ifndef __GNUC__ " >>.odexp/model.c
+echo "#  define  __attribute__(x)  /*NOTHING*/" >>.odexp/model.c
+echo "#endif" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/* =================================================================" >>.odexp/model.c
 echo "                              Libraries" >>.odexp/model.c
@@ -491,6 +502,12 @@ echo "" >>.odexp/model.c
 echo "#include \"odexp.h\"" >>.odexp/model.c
 echo "#include \"utils_odexp.h\"" >>.odexp/model.c
 echo "#include \"rand_gen.h\"" >>.odexp/model.c
+echo "" >>.odexp/model.c
+echo "/* =================================================================" >>.odexp/model.c
+echo "                              Defines" >>.odexp/model.c
+echo "================================================================= */" >>.odexp/model.c
+echo "" >>.odexp/model.c
+set_defines
 echo "" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
@@ -534,9 +551,9 @@ echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single 
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    nve mu_ = *(nve *)params_;" >>.odexp/model.c
-echo "    double * pars_ = mu_.value;" >>.odexp/model.c
-echo "    double * aux_  = mu_.aux_pointer;" >>.odexp/model.c
-echo "    double * rnd_  = mu_.rand_pointer;" >>.odexp/model.c
+echo "    double * pars_ __attribute__((unused)) = mu_.value;" >>.odexp/model.c
+echo "    double * aux_  __attribute__((unused)) = mu_.aux_pointer;" >>.odexp/model.c
+echo "    double * rnd_  __attribute__((unused)) = mu_.rand_pointer;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -579,11 +596,7 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE AND ASSIGN STATIC VARIABLES 
-echo "    /* static variables */" >>.odexp/model.c
-declare_assign_static_variables
-echo "" >>.odexp/model.c
-
+# DECLARE AND ASSIGN PARAMETERS 
 # find parametric expression parameters and write them in .odexp/system.par
 echo "" >>.odexp/system.par
 echo "# static variables " >>.odexp/system.par
@@ -692,8 +705,9 @@ echo "" >>.odexp/model.c
 echo "int ode_init_conditions(const double t, double y_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    nve mu_ = *(nve *)params_;" >>.odexp/model.c
-echo "    double * pars_ = mu_.value;" >>.odexp/model.c
-echo "    double * rnd_  = mu_.rand_pointer;" >>.odexp/model.c
+echo "    double * pars_ __attribute__((unused)) = mu_.value;" >>.odexp/model.c
+echo "    double * aux_  __attribute__((unused)) = mu_.aux_pointer;" >>.odexp/model.c
+echo "    double * rnd_  __attribute__((unused)) = mu_.rand_pointer;" >>.odexp/model.c
 echo "    int success_ = 0;" >>.odexp/model.c
 # ITERATORS
 # find iterators in the source file and declare them 
@@ -708,7 +722,7 @@ echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
-awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $parfile >>.odexp/model.c
+awk -F ' ' -v i=0 '$1 ~ /^[pP][0-9]*$/ {printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++}' $parfile >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
@@ -810,7 +824,7 @@ cd .odexp
 
 # rm sub.odexp
 
-make && cp model.out .. && cd .. && ./model.out $file
+make && cp model.out .. && cd .. && ./model.out $1
 
 
 

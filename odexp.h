@@ -35,12 +35,12 @@
 ================================================================= */
 extern long ode_system_size;
 extern int *num_ic;
-extern char *T_IND;
-extern char *T_DET;
-extern char *T_VAL;
-extern char *T_EXPR;
-extern char *T_NOR;
-extern char *T_ERR;
+extern char *T_IND; /* INDEX */
+extern char *T_DET; /* DETAILS */
+extern char *T_VAL; /* VALUE */
+extern char *T_EXPR; /* EXPRESSION */
+extern char *T_NOR;  /* NORMAL */
+extern char *T_ERR;  /* ERROR (non fatal) */
 
 typedef struct namevalexp
 {

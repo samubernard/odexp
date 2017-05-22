@@ -111,7 +111,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     c = gsl_odeiv_control_y_new(eps_abs,eps_rel);
     e = gsl_odeiv_evolve_alloc(ode_system_size);
 
+    /* tspan */
+    /* it is assumed that the first and last values of tspan are t0 and t1 */
+    t = tspan.array[0];
+    t1 = tspan.array[tspan.length-1];
+    dt = (t1-t)/(double)(nbr_out-1);
+
     /* discontinuities */
+    /* printf("--tspan.length=%ld\n",tspan.length); */
     if ( tspan.length > 2 )
     {
        nbr_stops = tspan.length-2;
@@ -119,17 +126,16 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
        for(i=0;i<nbr_stops;i++)
        {
           tstops[i] = tspan.array[i+1];
+          /* printf("--tstop[%ld]=%g\n",i,tstops[i]); */
        }
        mergesort(tstops, nbr_stops, sizeof(double),compare);
        nextstop = tstops[idx_stop];
        idx_stop++;
     }
-    /* tspan */
-    /* it is assumed that the first and last values of tspan are t0 and t1 */
-    t = tspan.array[0];
-    t1 = tspan.array[tspan.length-1];
-    dt = (t1-t)/(double)(nbr_out-1);
-    nextstop = t;
+    else
+    {
+        nextstop = INFINITY; /* set nextstop outside the integration range */
+    }
 
     /* initial condition */
     y = malloc(ode_system_size*sizeof(double));
@@ -205,7 +211,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
          return 1;  
     }  
 
-    printf("  running from T=%.2f to T=%.2f... ", t,t1);
+    printf("  integrating on T=[%.2f, %.2f]... ", t,t1);
     fflush(stdout);
 
     /* ODE solver - main loop */
@@ -213,11 +219,11 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     {
         tnext = fmin(t+dt,t1);
         
-        if ( (t<nextstop) && (tnext>=nextstop) )
+        if ( (t<=nextstop) && (tnext>=nextstop) )
         {
           tnext = nextstop;
           disc_alert = 1;
-          printf(" ts =%.2e", nextstop);
+          printf("\n  t = %g, stopping time = %g", t, nextstop);
           fflush(stdout);
         }
                
@@ -293,7 +299,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
     if (status == GSL_SUCCESS)
     {
-        printf("  ... %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
+        printf("  %s(%lu msec)%s\n", T_DET,(clock()-start)*1000 / CLOCKS_PER_SEC, T_NOR);
     }
     else
     {
@@ -569,7 +575,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
 
     if (status == GSL_SUCCESS)
     {
-        printf("  ... %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
+        printf("  %s(%lu msec)%s\n", T_DET,(clock()-start)*1000 / CLOCKS_PER_SEC, T_NOR);
     }
     else
     {
@@ -1100,7 +1106,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     /* set c/h to the sign of the last value of s */
     set_dou("cont_h",s);
     
-    printf("\n  ... %lu msec.\n", (clock()-start)*1000 / CLOCKS_PER_SEC);
+    printf("  %s(%lu msec)%s\n", T_DET,(clock()-start)*1000 / CLOCKS_PER_SEC, T_NOR);
 
     free( stst.s );
     free( stst.re );

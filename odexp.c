@@ -78,7 +78,7 @@ int *num_ic;
 char *T_IND = "\033[1;35m";  /* index */
 char *T_DET = "\033[3;36m";  /* description */
 char *T_VAL = "\033[3;32m";  /* values */
-char *T_EXPR = "\033[3;36m"; /* expressions */
+char *T_EXPR = "\033[3;34m"; /* expressions */
 char *T_NOR = "\033[0m";     /* normal */
 char *T_ERR = "\033[0;31m";  /* error */
 
@@ -99,7 +99,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char *helpcmd = "man .odexp/help.txt";
     char mv_plot_cmd[EXPRLENGTH];
     const char current_data_buffer[] = "current.tab";
-    const char *hline = "----------------";
+    const char *hline = "--------------------------";
     char       par_details[32];
     char       par_filename[MAXFILENAMELENGTH];
     long i,j;
@@ -177,7 +177,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* end variable declaration */
 
     /* begin */
-    printf("odexp file: %s\n",odexp_filename);
+    printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
 
     /* get tspan */
     printf("\ntime span %s\n",hline);
@@ -214,7 +214,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_namevalexp(system_filename,mu,"P",1);
     if (!success)
     {
-        printf("  no  parameters found\n");
+        printf("  no  parameter found\n");
     } 
     
     /* get parametric expressions */
@@ -290,7 +290,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_strings(system_filename,eqn,"d",1,0,'=');   
     if (!success)
     {
-        printf("equations not found... exiting\n");
+        printf("  Equations not found... exiting\n");
         exit ( EXIT_FAILURE );
     } 
 
@@ -350,7 +350,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("  RAND_MAX %d\n",RAND_MAX);
     
     /* readline */
-    printf("  readline library version: %s\n", rl_library_version);
+    printf("\nreadline library version: %s\n\n", rl_library_version);
     
     if (strcmp("EditLine wrapper",rl_library_version) == 0)
     {
@@ -394,14 +394,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '+' : /* increment the parameter and run */
                 case '=' : /* increment the parameter and run */
                     mu.value[p] *= get_dou("par_step");
-                    printf("%s = %f\n",mu.name[p],mu.value[p]);
+                    printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
                     rerun = 1;
                     replot = 1;
                     update_act_par_options(p, mu);
                     break;
                 case '-' : /* decrement the parameter and run */
                     mu.value[p] /= get_dou("par_step");
-                    printf("%s = %f\n",mu.name[p],mu.value[p]);
+                    printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
                     rerun = 1;
                     replot = 1;
                     update_act_par_options(p, mu);
@@ -678,7 +678,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     plotnormal=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                    printf("  y-axis: [%ld] %s\n",ngy,dxv.name[ngy]);
+                    printf("  y-axis: [%s%ld%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
                     break;
                 case '[' : /* plot previous x */
                     ngy = gy-2;
@@ -688,7 +688,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     plotnormal=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                    printf("  y-axis: [%ld] %s\n",ngy,dxv.name[ngy]);
+                    printf("  y-axis: [%s%ld%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
                     break;    
                 case 'i' : /* run with initial conditions */
                     nbr_read = sscanf(cmdline+1,"%c",&op);
@@ -719,7 +719,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             for ( i=0; i<ode_system_size; i++ )
                             {
-                                printf("  %s [I|new val|%s%0.2f%s enter]: ",ics.name[i],T_VAL,ics.value[i],T_NOR);
+                                printf("  %s [I|new val|%s%0.2f%s: enter]: ",ics.name[i],T_VAL,ics.value[i],T_NOR);
                                 if ( fgets(svalue, 32, stdin) != NULL )
                                 {
                                     nbr_read = sscanf(svalue,"%lf",&nvalue);
@@ -750,7 +750,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             ics.value[i] = lastinit[i];
                             num_ic[i] = 1;
-                            printf("  I[%ld] %-20s = %e\n",i,ics.name[i],ics.value[i]);
+                            printf("  I[%s%ld%s] %-20s = %s%f%s\n",T_IND,i,T_NOR,ics.name[i],T_VAL,ics.value[i],T_NOR);
                         }
                     rerun = 1;
                     replot = 1;
@@ -902,17 +902,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                               mu.value[p] = nvalue;
                               rerun = 1;
                               replot = 1;
-                              printf("  new active parameter %s set to %lg\n", mu.name[p],mu.value[p]);
+                              printf("  new active parameter %s set to %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                           }
                           else /* new active parameter without new value */
                           {
-                              printf("  new active parameter %s with value %lg\n", mu.name[p],mu.value[p]);
+                              printf("  new active parameter %s with value %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                           }
                       }
                       else
                       {
                           fprintf(stderr,"  %serror: parameter index out of bound. Use lp to list parameters%s\n",T_ERR,T_NOR);
-                          printf("  active parameter %s = %lg\n", mu.name[p],mu.value[p]);
+                          printf("  active parameter %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                       }
                       
                     }
@@ -922,7 +922,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         if ( nbr_read == 1 )
                         {
                             name2index(svalue,mu,(long *)&p);
-                            printf("  new active parameter %s with value %lg\n", mu.name[p],mu.value[p]);
+                            printf("  new active parameter %s with value %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                         }
                         else if ( nbr_read == 2 )
                         {
@@ -931,7 +931,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                 mu.value[p] = nvalue;
                                 rerun = 1;
                                 replot = 1;
-                                printf("  new active parameter %s set to %lg\n", mu.name[p],mu.value[p]);
+                                printf("  new active parameter %s set to %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                             }
                         }
                         else
@@ -946,7 +946,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     if (nbr_read == 1)
                     {
                         mu.value[p] = nvalue;
-                        printf("  set to %s = %lg\n", mu.name[p],mu.value[p]);
+                        printf("  set to %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                         rerun = 1;
                         replot = 1;
                     }
@@ -1577,8 +1577,8 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
                     *var.max_name_length = length_name;
                 }
 
-                printf("  [%zu] %-*s=",i,*var.max_name_length+2,var.name[i]);
-                printf(" %f\n",var.value[i]);
+                printf("  %s[%s%zu%s] %-*s=",sym,T_IND,i,T_NOR,*var.max_name_length+2,var.name[i]);
+                printf(" %s%f%s\n",T_VAL,var.value[i],T_NOR);
                 i++;
             }
             k = 0; /* reset k */
@@ -1871,7 +1871,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
             
             for (i=0;i<array_ptr->length;i++)
             {
-              printf("%.2f ", array_ptr->array[i] );
+              printf("%s%.2f%s ", T_VAL,array_ptr->array[i],T_NOR );
             }
             
             success = 1;
@@ -2007,7 +2007,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 
             for (j=0;j<expr_size;j++)
             {
-              printf("  [%zu] %-*s %c %s\n",i+j,*var.max_name_length,var.name[i+j], sep,var.expression[i+j]);
+              printf("  %s[%s%zu%s] %-*s %c %s%s%s\n",sym,T_IND,i+j,T_NOR,*var.max_name_length,var.name[i+j], sep,T_EXPR,var.expression[i+j],T_NOR);
             }
             i += expr_size;
         }
