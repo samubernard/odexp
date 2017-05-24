@@ -211,7 +211,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
          return 1;  
     }  
 
-    printf("  integrating on T=[%.2f, %.2f]... ", t,t1);
+    printf("  %sintegrating%s on T=[%.2f, %.2f]... ", T_BLD,T_NOR, t,t1);
     fflush(stdout);
 
     /* ODE solver - main loop */

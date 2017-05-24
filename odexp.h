@@ -41,6 +41,7 @@ extern char *T_VAL; /* VALUE */
 extern char *T_EXPR; /* EXPRESSION */
 extern char *T_NOR;  /* NORMAL */
 extern char *T_ERR;  /* ERROR (non fatal) */
+extern char *T_BLD;  /* BOLD */
 
 typedef struct namevalexp
 {

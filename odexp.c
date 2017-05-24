@@ -81,6 +81,7 @@ char *T_VAL = "\033[3;32m";  /* values */
 char *T_EXPR = "\033[3;34m"; /* expressions */
 char *T_NOR = "\033[0m";     /* normal */
 char *T_ERR = "\033[0;31m";  /* error */
+char *T_BLD = "\033[2;0m";   /* bold */
 
 
 
@@ -1063,7 +1064,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         
                         if ( nbr_read >= 1) /* get option number and value */
                         {
-                            sscanf(cmdline+2,"%ld %s",&i,svalue);
+                            sscanf(cmdline+2,"%ld %[^\n]",&i,svalue);
                             if ( i >=0 && i < NBROPTS )
                             {
                                 switch (gopts[i].valtype)
@@ -1094,7 +1095,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else /* get option name or abbr and value */
                         {
-                            nbr_read = sscanf(cmdline+2,"%s %s", svalue, svalue2); /* try reading a string and a double */
+                            nbr_read = sscanf(cmdline+2,"%s %[^\n]", svalue, svalue2); /* try reading a string and a double */
                             if ( nbr_read == 1 )
                             {
                                 /* only printf option line */
