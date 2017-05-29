@@ -277,6 +277,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           fprintf(file,"\n");  
 
           fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
+          
 
           /* calculating next stop */
           nextstop = tstops[idx_stop];

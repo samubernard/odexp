@@ -325,6 +325,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
     }
 
+
     /* get options */
     printf("\noptions %s\n", hline);
     success = load_options(system_filename); 
@@ -381,6 +382,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     fprintf(gnuplot_pipe,"plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
+
+
+
 
     while(1)
     {
@@ -1287,8 +1291,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 fprintf(gnuplot_pipe,"replot\n");
                 fflush(gnuplot_pipe);
             }
-            else if (plotnormal)
-                /* This is where the plot is updated */
+            else if (plotnormal) /* normal plot mode */
+                /* This is where the plot is normally updated */
             {
               /* set axis labels and plot */
               fprintf(gnuplot_pipe,"unset xrange\n");
@@ -1324,7 +1328,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
               }
               if ( plot3d == 0 )
               {
-                if ( get_int("freeze") == 0 )
+                if ( get_int("freeze") == 0 ) /* normal plot command: 2D, freeze=0, curves=0 */
                 {
                   fprintf(gnuplot_pipe,\
                       "plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
@@ -1341,12 +1345,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
               {
                 if ( get_int("freeze") == 0 )
                 {
-                  fprintf(gnuplot_pipe,"splot \"%s\" u %ld:%ld:%ld w %s \n",current_data_buffer,gx,gy,gz,\
+                  fprintf(gnuplot_pipe,"splot \"%s\" u %ld:%ld:%ld w %s notitle\n",current_data_buffer,gx,gy,gz,\
                       get_str("plot_with_style"));    
                 }
                 else
                 {
-                  fprintf(gnuplot_pipe,"replot \"%s\" u %ld:%ld:%ld w %s \n",current_data_buffer,gx,gy,gz,\
+                  fprintf(gnuplot_pipe,"replot \"%s\" u %ld:%ld:%ld w %s notitle\n",current_data_buffer,gx,gy,gz,\
                       get_str("plot_with_style"));    
                 }
               }

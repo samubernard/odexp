@@ -20,5 +20,6 @@ double dotprod(double *x, double *y, long len); /* scalar product of two arrays 
 double conv(double *u, double *v, long len); /* convolution product */ 
 double minus(double x, double y); /* subtraction */
 double plus(double x, double y); /* addition */
+double identity(double x);
 double sumxy(long len, double (*f)(double), double (*g)(double, double), const double *x, const double yi); 
 

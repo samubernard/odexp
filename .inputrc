@@ -23,9 +23,9 @@ set completion-query-items 150
 
 # Odexp specific 
 # increment parameter value and run
-"\C-a": "+\C-j"
+"\C-g": "+\C-j"
 # decrement parameter value and run
-"\C-x": "-\C-j"
+"\C-h": "-\C-j"
 # plot next variable
 "\C-]": "]\C-j"
 # plot previous variable

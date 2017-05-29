@@ -6,10 +6,10 @@ odexp \- fast ODE solver with gnuplot graphical output
 command line tool for ODE simulation.
 .SH COMMANDS 
 .TP
-.BR + ", " = ", " C^a 
+.BR + ", " = ", " C^g 
 Increment current parameter by a multiplicative factor \fBpar_step\fR 
 .TP 
-.BR - ", " C^x
+.BR - ", " C^h
 Decrement current parameter by a multiplicative factor \fBpar_step\fR
 .TP
 .BR ] ", " C^]    

@@ -125,6 +125,11 @@ double plus(double x, double y)
     return x+y;
 }
 
+double identity(double x)
+{
+    return x;
+}
+
 /*
  * SUMXY 
  * returns the sum of f( g(x[j], yi) ) for j=1..len
