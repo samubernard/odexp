@@ -223,7 +223,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         {
           tnext = nextstop;
           disc_alert = 1;
-          printf("\n  t = %g, stopping time = %g", t, nextstop);
+          printf("\n  stopping time = %g (t = %g)", nextstop, t);
           fflush(stdout);
         }
                

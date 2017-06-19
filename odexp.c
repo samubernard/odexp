@@ -145,7 +145,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     int nbr_stst = 0;
 
     int status, file_status;
-    int p=0,
+    int exit_if_nofile=1,
+        no_exit=0,
+        p=0,
         np,
         padding,
         namelength,
@@ -182,7 +184,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get tspan */
     printf("\ntime span %s\n",hline);
-    success = load_double_array(system_filename, &tspan, ts_string, ts_len); 
+    success = load_double_array(system_filename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
         printf("  tspan not found, exiting...\n");
@@ -212,7 +214,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.name[i] = malloc(NAMELENGTH*sizeof(char));
         mu.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
-    success = load_namevalexp(system_filename,mu,"P",1);
+    success = load_namevalexp(system_filename,mu,"P",1,exit_if_nofile);
     if (!success)
     {
         printf("  no  parameter found\n");
@@ -230,7 +232,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         pex.name[i] = malloc(NAMELENGTH*sizeof(char));
         pex.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,pex,"E",1,1,' ');
+    success = load_strings(system_filename,pex,"E",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no parametric expression found\n");
@@ -248,7 +250,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         ics.name[i] = malloc(NAMELENGTH*sizeof(char));
         ics.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,ics,"X",1,1,' ');
+    success = load_strings(system_filename,ics,"X",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  Dynamic variables not found... exiting\n");
@@ -269,7 +271,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         fcn.name[i] = malloc(NAMELENGTH*sizeof(char));
         fcn.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,fcn,"A",1,1,' ');
+    success = load_strings(system_filename,fcn,"A",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no auxiliary function found\n");
@@ -288,7 +290,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         eqn.name[i] = malloc(NAMELENGTH*sizeof(char));
         eqn.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,eqn,"d",1,0,'=');   
+    success = load_strings(system_filename,eqn,"d",1,0,'=', exit_if_nofile);   
     if (!success)
     {
         printf("  Equations not found... exiting\n");
@@ -328,7 +330,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("\noptions %s\n", hline);
-    success = load_options(system_filename); 
+    success = load_options(system_filename, exit_if_nofile); 
     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
     update_act_par_index(&p, mu);
@@ -1149,7 +1151,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             num_ic[i] = 0;
                         }
                     /* reset parameter values */
-                    load_namevalexp(system_filename, mu, "P", 1);
+                    load_namevalexp(system_filename, mu, "P", 1,exit_if_nofile);
                     /* reset initial conditions */
                     ode_init_conditions(tspan.array[0], ics.value, &mu);
                     rerun = 1;
@@ -1165,12 +1167,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else /* read par_filename for parameters, initial conditions, and tspan */
                     {
                         /* load parameter values */
-                        success = load_namevalexp(par_filename, mu, "P", 1);
+                        success = load_namevalexp(par_filename, mu, "P", 1,no_exit);
                         if ( success == 0 )
                         {
                             printf("  warning: could not load parameters.\n");
                         }
-                        success = load_namevalexp(par_filename, ics, "X", 1); /* load initial conditions value from file */
+                        success = load_namevalexp(par_filename, ics, "X", 1,no_exit); /* load initial conditions value from file */
                         if ( success == 1)
                         {
                             /* reset initial condtitions */
@@ -1184,12 +1186,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             printf("  warning: could not load initial conditions.\n");
                         }
-                        success = load_double_array(par_filename, &tspan, ts_string, ts_len); 
+                        success = load_double_array(par_filename, &tspan, ts_string, ts_len, no_exit); 
                         if ( success == 0 )
                         {
                             printf("  warning: could not load tspan.\n");
                         }
-
+                        success = load_options(par_filename, no_exit);
+                        if ( success == 0 )
+                        {
+                            printf("  warning: could not load options.\n");
+                        }
                     }
                     rerun = 1;
                     replot = 1;
@@ -1239,7 +1245,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case 's' : /* save file */
-                    file_status = fprintf_namevalexp(ics,pex,mu,fcn,eqn,tspan, current_data_buffer);
+                    file_status = fprintf_snapshot(ics,pex,mu,fcn,eqn,tspan, current_data_buffer,odexp_filename);
                     break;
                 case '!' : /* print ! */
                     nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -1530,7 +1536,7 @@ int get_nbr_el(const char *filename, const char *sym,\
 }
 
 
-int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len)
+int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
 {
     size_t i = 0;
     size_t pos0, pos1, k = 0;
@@ -1544,8 +1550,16 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
-        exit ( EXIT_FAILURE );
+        if ( exit_if_nofile )
+        {
+            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            exit ( EXIT_FAILURE );
+        }
+        else
+        {
+            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            return 0;
+        }
     }
     else
     {
@@ -1595,7 +1609,7 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
     return success;
 }
 
-int load_options(const char *filename)
+int load_options(const char *filename, int exit_if_nofile)
 {
     size_t idx_opt;
     ssize_t linelength;
@@ -1609,8 +1623,16 @@ int load_options(const char *filename)
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
-        exit ( EXIT_FAILURE );
+        if ( exit_if_nofile )
+        {
+            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            exit ( EXIT_FAILURE );
+        }
+        else
+        {
+            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            return 0;
+        }
     }
     else
     {
@@ -1812,7 +1834,7 @@ int update_act_par_options(const int p, const nve mu)
     return s;
 }
 
-int load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len)
+int load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len, int exit_if_nofile)
 {
     /* Find the last line starting with string sym and copy doubles on 
      * that line into *array_ptr. If no line starts with sym, *array_ptr is not assigned.
@@ -1833,8 +1855,16 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
-        exit ( EXIT_FAILURE );
+        if ( exit_if_nofile )
+        {
+            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            exit ( EXIT_FAILURE );
+        }
+        else
+        {
+            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            return 0;
+        }
     }
  
     /* search for keyword sym */
@@ -1889,7 +1919,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     
 }
 
-int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep)
+int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile)
 {
     size_t  i = 0,
             j = 0,
@@ -1918,8 +1948,16 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
-        exit ( EXIT_FAILURE );
+        if ( exit_if_nofile )
+        {
+            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            exit ( EXIT_FAILURE );
+        }
+        else
+        {
+            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            return 0;
+        }
     }
  
     *var.max_name_length = 0;
@@ -2023,7 +2061,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     return success;
 }
 
-int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len)
+int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len, int exit_if_nofile)
 {
     /* tries to find a line starting with string sym and copy integers on that line into mypars. If no line starts with sym, mypars is not assigned. */
     ssize_t linelength;
@@ -2038,8 +2076,16 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
-        exit ( EXIT_FAILURE );
+        if ( exit_if_nofile )
+        {
+            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            exit ( EXIT_FAILURE );
+        }
+        else
+        {
+            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            return 0;
+        }
     }
 
     printf("  %s: ",sym);
@@ -2068,7 +2114,7 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
     return success;
 } 
 
-int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer)
+int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer, const char *odexp_filename)
 {
     int success = 0;
     size_t i;
@@ -2100,10 +2146,12 @@ int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array
     time_stamp = clock();
     rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_]",rootname);
 
+    printf("  rootname = %s\n", rootname);
+
     if (rootnamescanned > 0)
     {
-      snprintf(tab_buffer,sizeof(char)*MAXFILENAMELENGTH,"%s_%ju.tab",rootname,(uintmax_t)time_stamp);
-      snprintf(par_buffer,sizeof(char)*MAXFILENAMELENGTH,"%s_%ju.par",rootname,(uintmax_t)time_stamp);
+      snprintf(tab_buffer,sizeof(char)*MAXFILENAMELENGTH,"%s.%ju.tab",rootname,(uintmax_t)time_stamp);
+      snprintf(par_buffer,sizeof(char)*MAXFILENAMELENGTH,"%s.%ju.par",rootname,(uintmax_t)time_stamp);
     }  
     else
     {  
@@ -2124,6 +2172,13 @@ int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array
     else
     {
         fprintf(fr,"#%s\n",cmdline+1);
+        fprintf(fr,"\n# --------------------------------------------------\n");
+        fprintf(fr,"# Parameter file for the odexp system: '%s'\n", odexp_filename); 
+        fprintf(fr,"\n# To load the parameter file from odexp, use the following command:\n");
+        fprintf(fr,"# odexp> o %s\n", par_buffer);
+        fprintf(fr,"\n# To run %s using parameters in %s,\n# use the following command from the prompt:\n",odexp_filename,par_buffer);
+        fprintf(fr,"# prompt$ odexp %s %s\n",odexp_filename,par_buffer);
+        fprintf(fr,"# --------------------------------------------------\n");
 
         fprintf(fr,"\n# parameters/values\n");
         for(i=0;i<mu.nbr_el;i++)
@@ -2137,13 +2192,14 @@ int fprintf_namevalexp(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array
             fprintf(fr,"X%zu %-*s %g\n",i,len,init.name[i],init.value[i]);
         }    
 
-        fprintf(fr,"\nT ");
+        fprintf(fr,"\n# time span\nT ");
         for(i=0;i<tspan.length;i++)
         {
             fprintf(fr,"%g ",tspan.array[i]);
         }
         fprintf(fr,"\n\n");
 
+        fprintf(fr,"# options\n");
         for(i=0;i<NBROPTS;i++)
         {
             switch (gopts[i].valtype)

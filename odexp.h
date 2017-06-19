@@ -13,7 +13,7 @@
 ================================================================= */
 #define NAMELENGTH  63
 #define MAXFILENAMELENGTH 63
-#define MAXROOTLENGTH     15 
+#define MAXROOTLENGTH     63 
 #define EXPRLENGTH     1023                            
 
 /* number of global options */
@@ -105,9 +105,9 @@ void free_soptions();
 
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, long *nbr_el, long *nbr_epxr);
 
-int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len);
+int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile);
 
-int load_options(const char *filename);
+int load_options(const char *filename, int exit_if_nofile);
 int update_plot_options(long ngx, long ngy, long ngz, nve dxv);
 int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv);
 int name2index( const char *name, nve var, long *n);
@@ -116,13 +116,13 @@ int update_act_par_index(int *p, const nve mu);
 int update_act_par_options(const int p, const nve mu);
 
 int load_double_array(const char *filename, double_array *a,\
-        const char *sym, size_t sym_len);
+        const char *sym, size_t sym_len, int exit_if_nofile);
 
-int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep);
+int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile);
 
-int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len);
+int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len, int exit_if_nofile);
 
-int fprintf_namevalexp(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer);
+int fprintf_snapshot(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer, const char *odexp_filename);
 
 int printf_options();
 int printf_option_line(long i);
