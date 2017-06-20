@@ -2215,6 +2215,25 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array t
             }
         }
 
+        fprintf(fr,"\n# --------------------------------------------------\n");
+        fprintf(fr,"# original equations, auxiliary variables and parametric expressions\n\n");
+        for(i=0;i<ode_system_size;i++)
+        {
+            fprintf(fr,"# %s' = %s\n",init.name[i],eqn.expression[i]);
+        }
+        for(i=0;i<fcn.nbr_el;i++)
+        {
+            fprintf(fr,"# %s = %s\n",fcn.name[i],fcn.expression[i]);
+        }
+        for(i=0;i<pex.nbr_el;i++)
+        {
+            fprintf(fr,"# %s = %s\n",pex.name[i],pex.expression[i]);
+        }
+        for(i=0;i<pex.nbr_el;i++)
+        {
+            fprintf(fr,"# %s = %s\n",pex.name[i],pex.expression[i]);
+        }
+
         fclose(fr);
 
         printf("  wrote %s and %s\n",par_buffer, tab_buffer);
