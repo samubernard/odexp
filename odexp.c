@@ -48,6 +48,9 @@ struct gen_option gopts[NBROPTS] = {
     {"curves","add_curves", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot", "plot"},
     {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ...", "plot"},
     {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)", "plot"},
+    {"xscale","plot_xscale", 's', 0.0, 0, "linear", "x-axis scale {linear} | log", "plot"},
+    {"yscale","plot_yscale", 's', 0.0, 0, "linear", "x-axis scale {linear} | log", "plot"},
+    {"zscale","plot_zscale", 's', 0.0, 0, "linear", "x-axis scale {linear} | log", "plot"},
     {"step","par_step", 'd', 1.1, 0, "", "par step increment", "par"},
     {"act","act_par", 's', 0.0, 0, "", "active parameter", "par"},
     {"res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points", "ode"},
@@ -510,36 +513,40 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     sscanf(cmdline+1,"%c%c",&op,&op2);
                     if ( (op  == 'z' && op2 == 'l') || (op2  == 'z' && op == 'l') )
                     {
-                        fprintf(gnuplot_pipe,"set logscale z\n");  
+                        /* fprintf(gnuplot_pipe,"set logscale z\n");   */
+                        set_str("plot_zscale","log");
                     }
                     if ( (op  == 'z' && op2 == 'n') || (op2  == 'z' && op == 'n') )
                     {
-                        fprintf(gnuplot_pipe,"set nologscale y\n");  
+                        /* fprintf(gnuplot_pipe,"set nologscale y\n");   */
+                        set_str("plot_zscale","linear");
                     }
                     if ( (op  == 'y' && op2 == 'l') || (op2  == 'y' && op == 'l') )
                     {
-                        fprintf(gnuplot_pipe,"set logscale y\n");  
+                        /* fprintf(gnuplot_pipe,"set logscale y\n");   */
+                        set_str("plot_yscale","log");
                     }
                     if ( (op  == 'y' && op2 == 'n') || (op2  == 'y' && op == 'n') )
                     {
-                        fprintf(gnuplot_pipe,"set nologscale y\n");  
+                        /* fprintf(gnuplot_pipe,"set nologscale y\n");   */
+                        set_str("plot_yscale","linear");
                     }
                     if ( (op  == 'x' && op2 == 'l') || (op2  == 'x' && op == 'l') )
                     {
-                        fprintf(gnuplot_pipe,"set logscale x\n");  
+                        /* fprintf(gnuplot_pipe,"set logscale x\n");   */
+                        set_str("plot_xscale","log");
                     }
                     if ( (op  == 'x' && op2 == 'n') || (op2  == 'x' && op == 'n') )
                     {
-                        fprintf(gnuplot_pipe,"set nologscale x\n");  
+                        /* fprintf(gnuplot_pipe,"set nologscale x\n");   */
+                        set_str("plot_xscale","linear");
                     }
-                    fflush(gnuplot_pipe);
                     replot = 1;
                     break;
                 case 'A' : /* reset axis scales to normal */
-                    fprintf(gnuplot_pipe,"set nologscale z\n");
-                    fprintf(gnuplot_pipe,"set nologscale y\n"); 
-                    fprintf(gnuplot_pipe,"set nologscale x\n");
-                    fflush(gnuplot_pipe);
+                    set_str("plot_xscale","linear");
+                    set_str("plot_yscale","linear");
+                    set_str("plot_zscale","linear");
                     replot = 1;
                     break;
                 case '2' : /* set 2D */
@@ -883,9 +890,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 'n') /* list ode system size */
                     {
-                        printf("  ode system size            = %s%ld%s\n",T_VAL,ode_system_size,T_NOR);
-                        printf("  number auxiliary functions = %s%ld%s\n",T_VAL,fcn.nbr_el,T_NOR);
-                        printf("  total number of variables  = %s%ld%s\n",T_VAL,total_nbr_x,T_NOR);
+                        printf("  ODE system size               = %s%ld%s\n",T_VAL,ode_system_size,T_NOR);
+                        printf("  Number of auxiliary functions = %s%ld%s\n",T_VAL,fcn.nbr_el,T_NOR);
+                        printf("  Total number of variables     = %s%ld%s\n",T_VAL,total_nbr_x,T_NOR);
                     }
                     else if (op == 'o') /* list options */
                     {
@@ -1279,6 +1286,36 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     system(mv_plot_cmd);
                 }
             }
+            
+            /* PLOTTING */
+
+            if ( strncmp("log",get_str("plot_xscale"),3)==0 )
+            {
+                fprintf(gnuplot_pipe,"set logscale x\n");   
+            }
+            else
+            {
+                fprintf(gnuplot_pipe,"set nologscale x\n");   
+            }
+            if ( strncmp("log",get_str("plot_yscale"),3)==0 )
+            {
+                fprintf(gnuplot_pipe,"set logscale y\n");   
+            }
+            else
+            {
+                fprintf(gnuplot_pipe,"set nologscale y\n");   
+            }
+            if ( strncmp("log",get_str("plot_zscale"),3)==0 )
+            {
+                fprintf(gnuplot_pipe,"set logscale z\n");   
+            }
+            else
+            {
+                fprintf(gnuplot_pipe,"set nologscale z\n");   
+            }
+            fflush(gnuplot_pipe);
+
+
             if ( get_int("add_curves") & ( rerun | plotnormal ) )
             {
                 /* plot curve.0 to curve.nbr_hold-1 */
