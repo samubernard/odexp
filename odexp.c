@@ -64,7 +64,7 @@ struct gen_option gopts[NBROPTS] = {
     {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steady states"},  
     {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]", "steady states"},  
     {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]", "steady states"},
-    {"c/h","cont_h", 'd', 0.01, 0, "", "inital parameter continuation step", "continuation methods"},
+    {"c/h","cont_h", 'd', 0.01, 0, "", "initial parameter continuation step", "continuation methods"},
     {"c/maxh","cont_maxh", 'd', 0.05, 0, "", "maximal parameter continuation step", "continuation methods"},
     {"r/par0","range_par0", 'd', 0.0, 0, "", "initial parameter value for range", "parameter range"},
     {"r/par1","range_par1", 'd', 1.0, 0, "", "final parameter value for range", "parameter range"},
@@ -78,14 +78,14 @@ struct gen_option gopts[NBROPTS] = {
 /* what kind of initial conditions to take */
 int *num_ic;
 
-char *T_IND = "\033[1;35m";  /* index */
-char *T_DET = "\033[3;36m";  /* description */
-char *T_VAL = "\033[3;32m";  /* values */
-char *T_EXPR = "\033[3;34m"; /* expressions */
-char *T_NOR = "\033[0m";     /* normal */
-char *T_ERR = "\033[0;31m";  /* error */
-char *T_BLD = "\033[2;0m";   /* bold */
-
+const char *T_IND = "\033[1;35m";  /* index */
+const char *T_DET = "\033[3;36m";  /* description */
+const char *T_VAL = "\033[3;32m";  /* values */
+const char *T_EXPR = "\033[3;34m"; /* expressions */
+const char *T_NOR = "\033[0m";     /* normal */
+const char *T_ERR = "\033[0;31m";  /* error */
+const char *T_BLD = "\033[2;0m";   /* bold */
+const char *hline = "--------------------------";
 
 
 /* =================================================================
@@ -99,11 +99,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* variable declaration */
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
-    const char *system_filename = ".odexp/system.par";
+    /* const char *system_filename = ".odexp/system.par"; */
+    const char *system_filename = ".odexp/sub.odexp";
     const char *helpcmd = "man .odexp/help.txt";
     char mv_plot_cmd[EXPRLENGTH];
     const char current_data_buffer[] = "current.tab";
-    const char *hline = "--------------------------";
     char       par_details[32];
     char       par_filename[MAXFILENAMELENGTH];
     long i,j;
@@ -243,7 +243,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get variable names and initial conditions */
     printf("\nvariable names and initial conditions %s\n", hline);
-    get_nbr_el(system_filename,"X",1, &ics.nbr_el, &ics.nbr_expr);
+    get_nbr_el(system_filename,"I",1, &ics.nbr_el, &ics.nbr_expr);
     ics.value = malloc(ics.nbr_el*sizeof(double));
     ics.name = malloc(ics.nbr_el*sizeof(char*));
     ics.expression = malloc(ics.nbr_el*sizeof(char*));
@@ -253,7 +253,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         ics.name[i] = malloc(NAMELENGTH*sizeof(char));
         ics.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,ics,"X",1,1,' ', exit_if_nofile);
+    success = load_strings(system_filename,ics,"I",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  Dynamic variables not found... exiting\n");
@@ -1907,7 +1907,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     /* search for keyword sym */
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
-        while(line[k] == sym[k] && !isspace(line[k]) && \
+        while(toupper(line[k]) == sym[k] && !isspace(line[k]) && \
                 k < sym_len && k < linelength)
         {
             k++;
@@ -2181,9 +2181,9 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array t
     }
 
     time_stamp = clock();
-    rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_]",rootname);
+    rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_-]",rootname);
 
-    printf("  rootname = %s\n", rootname);
+    /* printf("  rootname = %s\n", rootname); */
 
     if (rootnamescanned > 0)
     {
@@ -2283,9 +2283,16 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array t
 int printf_options()
 {
     long i; 
+    char last_option_type[NAMELENGTH]; 
+    snprintf(last_option_type,NAMELENGTH*sizeof(char),""); 
     for(i=0;i<NBROPTS;i++)
     {
+      if ( strcmp(gopts[i].optiontype,last_option_type) )
+      {
+        printf("\n%s%-*s %s%s\n",T_IND,20,gopts[i].optiontype,hline,T_NOR);
+      }
       printf_option_line(i);
+      snprintf(last_option_type,NAMELENGTH*sizeof(char),"%s",gopts[i].optiontype); 
     }
     return 1;
 }
