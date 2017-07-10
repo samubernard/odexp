@@ -55,7 +55,7 @@ fi
 
 
 declare_iterators () {
-    gawk -F ' ' -v i=1 '/(\[.+\])+/ && $1 !~ /#/ { match($2,/(\[.+\])+/);
+    gawk -F ' ' -v i=1 '/(\[.+\])+/ && $1 !~ /#/ && $1 !~ /[cC]/ { match($2,/(\[.+\])+/);
         a=substr($2, RSTART, RLENGTH);
         split(a,b,/[\[\]=:]/);
         for(k=2;k<=length(b);k+=4) 
@@ -106,6 +106,46 @@ set_defines () {
         }' $file >>.odexp/model.c
 }
 
+declare_constant_array () {
+    # declare and initialize constant array
+    gawk -F ' ' '$1 ~ /^[cC][0-9]*$/ {
+        var=$2;
+        $1="";
+        $2="";
+        ex=$0;
+        printf "    static const double %s = %s;\n", var, ex;
+    }' $file >>.odexp/model.c  
+}
+
+declare_array_from_file () {
+    # expecting F my_array nRow nCols filename.dat 
+    gawk -F ' ' '$1 ~ /^[fF][0-9]*$/ {
+        filename=$5;
+        nRow=$3;
+        nCol=$4;
+        var=$2;
+        printf "static const double %s[%d][%d] = \{", var, nRow, nCol;
+        i=0;
+        while(i<(nRow-1))
+        {
+            getline <filename;
+            printf "\{";
+            for(j=0;j<(nCol-1);j++)
+                {
+                    printf "%g, ", $j;
+                }
+            printf "%g\},\\\n        ", $nCol; 
+            i++;
+        }
+        getline <filename
+        printf "\{";
+        for(j=0;j<(nCol-1);j++)
+            {
+                printf "%g, ", $j;
+            }
+        printf "\}\};\n\n";
+    }' $file >>.odexp/model.c  
+}
 
 declare_parametric_expressions () {
     # find parametric expressions and declare them in .odexp/model.c
@@ -387,6 +427,10 @@ echo "================================================================= */" >>.o
 echo "" >>.odexp/model.c
 set_defines
 echo "" >>.odexp/model.c
+echo "/* =================================================================" >>.odexp/model.c
+echo "                              Global variables" >>.odexp/model.c
+echo "================================================================= */" >>.odexp/model.c
+declare_array_from_file
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
 echo "int ode_init_conditions(const double t, double y_[], void *params);" >>.odexp/model.c
@@ -489,6 +533,15 @@ echo "    /* Declaration - variables */" >>.odexp/model.c
 declare_variables
 # ====================================================================================
 
+
+# ====================================================================================
+# DECLARE AND ASSIGN CONSTANT ARRAYS
+echo "" >>.odexp/model.c
+echo "    /* Declaration and initialisation of constant arrays */" >>.odexp/model.c
+declare_constant_array
+echo "" >>.odexp/model.c  
+# ====================================================================================
+
 # ====================================================================================
 # ASSIGN UNIFORM RANDOM ARRAY
 echo "" >>.odexp/model.c
@@ -589,6 +642,14 @@ declare_auxiliary_functions
 echo "" >>.odexp/model.c
 echo "    /* Declaration - variables */" >>.odexp/model.c
 declare_variables
+# ====================================================================================
+
+# ====================================================================================
+# DECLARE AND ASSIGN CONSTANT ARRAYS
+echo "" >>.odexp/model.c
+echo "    /* Declaration and initialisation of constant arrays */" >>.odexp/model.c
+declare_constant_array
+echo "" >>.odexp/model.c  
 # ====================================================================================
 
 # ====================================================================================

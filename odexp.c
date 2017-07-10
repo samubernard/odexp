@@ -217,9 +217,19 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
     success = load_namevalexp(system_filename,mu,"P",1,exit_if_nofile);
-    if (!success)
+    if (!success) /* then create a not_a_parameter parameter */
     {
         printf("  no  parameter found\n");
+        mu.value = realloc(mu.value,sizeof(double));
+        mu.name = realloc(mu.name,sizeof(char*));
+        mu.name[0] = malloc(NAMELENGTH*sizeof(char));
+        mu.expression[0] = malloc(EXPRLENGTH*sizeof(char*));
+        mu.expression = realloc(mu.expression,sizeof(char*));
+        mu.nbr_el = 1;
+        mu.nbr_expr = 1;
+        strncpy(mu.name[0],"not_a_parameter",NAMELENGTH);
+        mu.value[0] = NAN;
+        *mu.max_name_length = 15; 
     } 
     
     /* get parametric expressions */
@@ -1672,6 +1682,7 @@ int load_options(const char *filename, int exit_if_nofile)
     }
     else
     {
+        /* printf("--so far...\n"); */
         while( (linelength = getline(&line, &linecap, fr)) > 0)
         {
             if(line[0] == 'O' || line[0] == 'o') /* keyword was found */
@@ -1710,6 +1721,8 @@ int load_options(const char *filename, int exit_if_nofile)
         }
     }
     
+
+    /* printf("--so good.\n"); */
     fclose(fr);
 
     return success;
@@ -1851,10 +1864,17 @@ int option_name2index( const char *name, long *n) /* get index of option.name ==
 int update_act_par_index(int *p, const nve mu)
 {
     char sval[NAMELENGTH];
-    strncpy(sval,get_str("act_par"),NAMELENGTH);
-    if ( strlen(sval) )
+    if ( mu.nbr_el > 0 )
     {
-        name2index(sval,mu,(long *)p);
+        strncpy(sval,get_str("act_par"),NAMELENGTH);
+        if ( strlen(sval) )
+        {
+            name2index(sval,mu,(long *)p);
+        }
+    }
+    else
+    {
+        /* do nothing */ 
     }
 
     return 1;
@@ -1863,10 +1883,18 @@ int update_act_par_index(int *p, const nve mu)
 int update_act_par_options(const int p, const nve mu)
 {   
     int s = 0;
-    set_dou("act_par",mu.value[p]);
-    set_int("act_par",p);
-    set_str("act_par",mu.name[p]);
-
+    if ( mu.nbr_el > 0)
+    {
+        set_dou("act_par",mu.value[p]);
+        set_int("act_par",p);
+        set_str("act_par",mu.name[p]);
+    }
+    else
+    {
+        set_dou("act_par",NAN);
+        set_int("act_par",p);
+        set_str("act_par","no parameter defined");
+    }
     return s;
 }
 
