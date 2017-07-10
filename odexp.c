@@ -99,8 +99,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* variable declaration */
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
-    /* const char *system_filename = ".odexp/system.par"; */
-    const char *system_filename = ".odexp/sub.odexp";
+    const char *system_filename = ".odexp/system.op";
     const char *helpcmd = "man .odexp/help.txt";
     char mv_plot_cmd[EXPRLENGTH];
     const char current_data_buffer[] = "current.tab";
@@ -1881,6 +1880,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     size_t linecap = 0;
     char *line = NULL;
     char *current_ptr;
+    char key[NAMELENGTH]; 
     int has_read = 0;
     double r;
     FILE *fr;
@@ -1907,12 +1907,9 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     /* search for keyword sym */
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
-        while(toupper(line[k]) == sym[k] && !isspace(line[k]) && \
-                k < sym_len && k < linelength)
-        {
-            k++;
-        }
-        if(line[k] == ' ' && k == sym_len) /* keyword was found */
+
+        has_read = sscanf(line,"%s%n",key,&k);
+        if ( (strncmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
         {
             array_ptr->length = 1;
             array_ptr->array = malloc(array_ptr->length*sizeof(double));

@@ -18,13 +18,14 @@ mkdir -p .odexp
 
 # ---------------------------------------
 # Files created in .odexp
-# sub.odexp: model file where all constants are replaced by their values
+# system.op: model file where all constants are replaced by their values
+# model.c: C file implementation 
 # ---------------------------------------
 
-echo "# odexp file name: $1" >.odexp/sub.odexp
-echo "# In this file, all constant (variable starting with _)" >>.odexp/sub.odexp
-echo "# are replaced with their value" >>.odexp/sub.odexp
-echo "" >>.odexp/sub.odexp
+echo "# odexp file name: $1" >.odexp/system.op
+echo "# In this file, all constant (variable starting with _)" >>.odexp/system.op
+echo "# are replaced with their value" >>.odexp/system.op
+echo "" >>.odexp/system.op
 
 # replace all constants (variable starting with '_') by their value
 # remove all ending ;
@@ -39,11 +40,11 @@ gawk '$1 !~ /#/ {gsub(";( )*$","",$0)};
             }
         }
     };
-    {print $0}' $1 >>.odexp/sub.odexp
+    {print $0}' $1 >>.odexp/system.op
 
 
 
-file=.odexp/sub.odexp
+file=.odexp/system.op
 
 # if two input files, then second one should contain parameters
 if [ "$#" -eq 2 ]; then
@@ -650,7 +651,7 @@ echo "		rm -f *.o; rm -f *.out; rm -rf *.out.dSYM" >>.odexp/makefile
 
 cd .odexp
 
-# rm sub.odexp
+# rm system.op
 
 make && cp model.out .. && cd .. && ./model.out $1
 
