@@ -1,5 +1,7 @@
-CFLAGS=-Wall -g `pkg-config --cflags gsl`  -std=c99
-LDFLAGS=-g `pkg-config --libs gsl` -lreadline -lm 
+CFLAGS=-Wall -I/usr/local/include -std=c99
+#CFLAGS=-Wall -g `pkg-config --cflags gsl`  -std=c99
+LDFLAGS=-L/usr/local/lib -lreadline -lgsl -lgslcblas -lm 
+#LDFLAGS=-g `pkg-config --libs gsl` -lreadline -lm 
 
 current_dir = $(shell pwd)
 

@@ -106,6 +106,12 @@ List all parameters
 .TP 
 .BR lx            
 List all equations and auxiliary functions 
+.TP 
+.BR lc            
+List all constant arrays
+.TP 
+.BR lf            
+List all array files (nrows ncols filename)
 .TP
 .BR ls            
 List steady states
@@ -182,6 +188,7 @@ P a 0.1; b 0.2
 P a 0.1
 P b 0.1
 .fi
+
 .TP
 .BR E
 Expressions. Expressions are function of the parameters. They cannot be modified. 
@@ -190,6 +197,7 @@ Expression are declared as name expr pairs.
 .nf
 E c a*a
 .fi
+
 .TP
 .BR A 
 Auxiliary functions. 
@@ -199,6 +207,7 @@ Auxiliary functions are declared as name function pairs
 .nf
 A d sqrt(x+c)
 .fi
+
 .TP
 .BR D
 Dynamical variables are the dependent variables of the ODE system.
@@ -207,6 +216,7 @@ Dynamical variable x is declared as dx/dt or x' followed by = and the RHS of the
 .nf
 dx/dt = -a*x
 .fi
+
 .TP
 .BR I
 Initial conditions. 
@@ -218,6 +228,7 @@ I x 1.0
 
 I x b
 .fi
+
 .TP
 .BR O
 Options. Options can be preset. See below for a list of options.
@@ -226,11 +237,13 @@ Options. Options can be preset. See below for a list of options.
 O plot_x x
 O reltol 1e-3
 .fi
+
 .TP
 .BR T
 Time span. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
+
 .TP 
 .BR U
 Uniform random array. To generate an array of length 5 of pseudo-random numbers uniformly distbuted between -1 and 1 
@@ -239,6 +252,7 @@ Uniform random array. To generate an array of length 5 of pseudo-random numbers 
 U r[i=0:5] 
 E rand_array[i=0:5] -1 + 2*r[i]
 .fi
+
 .TP
 .BR S
 Static variable. Must be numerical. Static variables cannot be modified.
@@ -246,6 +260,27 @@ Static variable. Must be numerical. Static variables cannot be modified.
 .nf
 S MY_PI 3.14
 .fi
+
+.TP
+.BR C
+Constant array. Must be numerical array. Constant arrays cannot be modified.
+Constant arrays can be of any dimensions. Useful for arrays of small sizes. 
+
+.nf
+C MY_ARRAY[2][3] { {1.1, 1.2, 1.3}, {2.1, 2.2, 2.3} }
+.fi
+
+.TP
+.BR F
+Constant array from file. The declaration has the following syntax 
+
+.nf
+F MY_ARRAY NROWS NCOLS FILENAME                      
+.fi
+
+where NROWS and NCOLS are the number of rows and columns in the file FILENAME.
+FILENAME is a text file containing space delimited array of floats.
+
 .SH NUMERICAL AND GRAPHICAL OPTIONS
 .TP
 .BR x ", " plot_x
@@ -381,6 +416,9 @@ T 0 10
 .RE
 .fi
 
-TODO
-
-
+To print the file current.plot formatted, use
+.nf
+.RS
+hexdump -e '"%f " "%f " "%f " "\\n"' current.plot
+.RE
+.fi

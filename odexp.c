@@ -78,10 +78,10 @@ struct gen_option gopts[NBROPTS] = {
 /* what kind of initial conditions to take */
 int *num_ic;
 
-const char *T_IND = "\033[1;35m";  /* index */
+const char *T_IND = "\033[0;35m";  /* index */
 const char *T_DET = "\033[3;36m";  /* description */
-const char *T_VAL = "\033[3;32m";  /* values */
-const char *T_EXPR = "\033[3;34m"; /* expressions */
+const char *T_VAL = "\033[0;32m";  /* values */
+const char *T_EXPR = "\033[0;34m"; /* expressions */
 const char *T_NOR = "\033[0m";     /* normal */
 const char *T_ERR = "\033[0;31m";  /* error */
 const char *T_BLD = "\033[2;0m";   /* bold */
@@ -130,14 +130,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* initial conditions */
     nve ics;
 
-    /* equations */
+    /* auxiliary functions */
     nve fcn;
 
-    /* equations */
+    /* dynamical equations */
     nve eqn;
 
     /* list of all Dynamical  + auXiliary Variables */
     nve dxv;
+
+    /* constant arrays */
+    nve cst;
+
+    /* data files */
+    nve dfl;
 
     /* last initial conditions */
     double *lastinit;
@@ -204,6 +210,34 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     }
     mu.rand_pointer = rnd.array;
 
+    /* get constant arrays */
+    printf("\nconstant arrays%s\n", hline);
+    get_nbr_el(system_filename,"C",1, &cst.nbr_el, NULL);
+    cst.value = malloc(cst.nbr_el*sizeof(double));
+    cst.name = malloc(cst.nbr_el*sizeof(char*));
+    cst.expression = malloc(cst.nbr_el*sizeof(char*));
+    cst.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < cst.nbr_el; i++)
+    {
+        cst.name[i] = malloc(NAMELENGTH*sizeof(char));
+        cst.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
+    }
+    success = load_strings(system_filename,cst,"C",1,1,' ', exit_if_nofile);
+
+    /* get data files */
+    printf("\ndata files %s\n", hline);
+    get_nbr_el(system_filename,"F",1, &dfl.nbr_el, NULL);
+    dfl.value = malloc(dfl.nbr_el*sizeof(double));
+    dfl.name = malloc(dfl.nbr_el*sizeof(char*));
+    dfl.expression = malloc(dfl.nbr_el*sizeof(char*));
+    dfl.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < dfl.nbr_el; i++)
+    {
+        dfl.name[i] = malloc(NAMELENGTH*sizeof(char));
+        dfl.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
+    }
+    success = load_strings(system_filename,dfl,"F",1,1,' ', exit_if_nofile);
+
     /* get parameters */
     printf("\nparameters %s\n", hline);
     get_nbr_el(system_filename,"P",1, &mu.nbr_el, &mu.nbr_expr);
@@ -219,7 +253,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_namevalexp(system_filename,mu,"P",1,exit_if_nofile);
     if (!success) /* then create a not_a_parameter parameter */
     {
-        printf("  no  parameter found\n");
+        printf("  no parameter found\n");
         mu.value = realloc(mu.value,sizeof(double));
         mu.name = realloc(mu.name,sizeof(char*));
         mu.name[0] = malloc(NAMELENGTH*sizeof(char));
@@ -370,7 +404,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     if (strcmp("EditLine wrapper",rl_library_version) == 0)
     {
-        printf("  warning: inputrc will not work\n");
+        printf("warning: You are using the EditLine wrapper of the readline library.\n");    
+        printf("         inputrc will not work and you will not be able to use the keyboard shortcuts\n\n");
     }
     else if ( rl_read_init_file (".odexp/.inputrc") ) /* readline init file */
     {
@@ -873,7 +908,23 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
+                            printf_list_str('a',i+eqn.nbr_el,padding,*fcn.max_name_length,fcn.name[i],fcn.expression[i]);
+                        }
+                    }
+                    else if (op == 'c') /* list constant arrays*/ 
+                    {
+                        for (i=0; i<cst.nbr_el; i++)
+                        {
+                            padding = (int)log10(cst.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf_list_str('C',i,padding,*cst.max_name_length,cst.name[i],cst.expression[i]);
+                        }
+                    }
+                    else if (op == 'f') /* list data files */ 
+                    {
+                        for (i=0; i<dfl.nbr_el; i++)
+                        {
+                            padding = (int)log10(dfl.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf_list_str('F',i,padding,*dfl.max_name_length,dfl.name[i],dfl.expression[i]);
                         }
                     }
                     else if (op == 't') /* list tspan */
@@ -1255,6 +1306,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         status = parameter_range(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
                     }
                     break;
+                case '@' : /* add data from file to plot */
+                    printf("  not implemented...\n");
+                    break;
                 case 'Q' :  /* quit without saving */
                     quit = 1;
                     break;
@@ -1441,7 +1495,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     }
     
-    printf("bye...\n");
+    printf("exiting...\n");
 
     pclose(gnuplot_pipe);
 
@@ -1451,11 +1505,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_namevalexp( eqn );
     free_namevalexp( fcn );
     free_namevalexp( dxv );
+    free_namevalexp( cst );
+    free_namevalexp( dfl );
     free_steady_state( stst, nbr_stst );
     free_double_array( tspan );
     free_double_array( rnd );
-    /* free_noptions(); */
-    /* free_soptions(); */
     free(num_ic);
     free(lasty);
     free(lastinit);
@@ -2314,7 +2368,7 @@ int printf_options()
     {
       if ( strcmp(gopts[i].optiontype,last_option_type) )
       {
-        printf("\n%s%-*s %s%s\n",T_IND,20,gopts[i].optiontype,hline,T_NOR);
+        printf("\n%-*s %s\n",20,gopts[i].optiontype,hline);
       }
       printf_option_line(i);
       snprintf(last_option_type,NAMELENGTH*sizeof(char),"%s",gopts[i].optiontype); 
