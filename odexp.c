@@ -169,18 +169,22 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             gz,
             ngx = -1,
             ngy =  0,
-            ngz =  1;
+            ngz =  1,
+            colx = 1,
+            coly = 2;
     double nvalue,
            nvalue2;
     char svalue[NAMELENGTH],
          svalue2[NAMELENGTH],
-         svalue3[NAMELENGTH];
+         svalue3[NAMELENGTH],
+         datafile_plotted[NAMELENGTH];
     int replot      = 0, /* replot the same gnuplot command with new data */
         plotnormal  = 0,  /* update plot with new parameters/option */
         rerun       = 0, /* run a new simulation */
         plotcont    = 0, /* plot continuation branch */
         plotrange   = 0, /* plot range */
         plot3d      = 0,
+        data_plotted= 0,
         quit        = 0;
     
     unsigned long randseed;
@@ -1307,7 +1311,29 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     break;
                 case '@' : /* add data from file to plot */
-                    printf("  not implemented...\n");
+                    nbr_read = sscanf(cmdline+1,"%s %ld %ld",svalue,&colx,&coly);
+                    if ( nbr_read == 3 )
+                    {
+                        i = 0;
+                        while ( strcmp(svalue,dfl.name[i]) & (i<dfl.nbr_el))
+                        {
+                            i++;
+                        }
+                        if (i<dfl.nbr_el) /* found the dataset to plot */
+                        {
+                            printf("--%s %ld %ld\n", svalue, colx, coly);
+                            sscanf(dfl.expression[i],"%*ld %*ld %s",datafile_plotted);
+                            printf("--datafile_plotted=%s\n", datafile_plotted);
+                            data_plotted = 1;
+                            replot = 1;
+                        }
+                    }
+                    else 
+                    {
+                        printf("  plotting data off\n");
+                        data_plotted = 0;
+                        replot = 1;
+                    }
                     break;
                 case 'Q' :  /* quit without saving */
                     quit = 1;
@@ -1474,6 +1500,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 /* */
             }
+
+
+            if ( data_plotted ) 
+            {
+                /* plot data */
+                plot_data(colx, coly, datafile_plotted, gnuplot_pipe);
+            }    
 
             /* update option pl:x, pl:y, pl:z */
             update_plot_options(ngx,ngy,ngz,dxv);
@@ -2583,7 +2616,15 @@ void printf_list_str(char type, long i, int padding, int max_name_length, char *
  
 }
 
-
+/* plot data from file specified by dataset, with column colx as x-axis and so on */
+int plot_data(const long colx, const long coly, const char *datafile_plotted, FILE *gnuplot_pipe)
+{
+    int success = 0;
+    printf("--plot_data\n");
+    fprintf(gnuplot_pipe,"replot \"%s\" u %ld:%ld w p title \"data\"\n",datafile_plotted,colx,coly);
+    fflush(gnuplot_pipe);
+    return success;
+}
 
 void initialize_readline()
 {
