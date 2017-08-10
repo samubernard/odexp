@@ -114,7 +114,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     long total_nbr_x;
 
     /* tspan parameters */
-    const char ts_string[] = "T"; 
+    const char ts_string[] = "TIMESPAN"; 
     const size_t ts_len = 1;
     double_array  tspan;
 
@@ -288,7 +288,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  no parametric expression found\n");
     } 
 
-    /* get variable names and initial conditions */
+    /* get initial conditions */
     printf("\nvariable names and initial conditions %s\n", hline);
     get_nbr_el(system_filename,"I",1, &ics.nbr_el, &ics.nbr_expr);
     ics.value = malloc(ics.nbr_el*sizeof(double));
@@ -401,10 +401,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     srand(randseed);
     /* test rng */
     printf("\nrandom number generator %s\n", hline);
-    printf("  RAND_MAX %d\n",RAND_MAX);
+    printf("  RAND_MAX %s%d%s\n",T_VAL,RAND_MAX,T_NOR);
     
     /* readline */
-    printf("\nreadline library version: %s\n\n", rl_library_version);
+    /* printf("\nreadline library version: %s\n\n", rl_library_version); */
     
     if (strcmp("EditLine wrapper",rl_library_version) == 0)
     {
@@ -1609,13 +1609,15 @@ void free_steady_state( steady_state *stst, int nbr_stst )
 int get_nbr_el(const char *filename, const char *sym,\
                const size_t sym_len, long *nbr_el, long *nbr_expr)
 {
-    size_t k = 0;
+    int k = 0;
     ssize_t linelength;
     size_t linecap = 0;
     char *line = NULL;
+    char key[NAMELENGTH]; 
     size_t index0,
            index1;
     int    nbr_index,
+           has_read,
            success = 0; 
     FILE *fr;
     fr = fopen (filename, "rt");
@@ -1633,12 +1635,8 @@ int get_nbr_el(const char *filename, const char *sym,\
     }
     while( (linelength = getline(&line,&linecap,fr)) > 0)
     {
-        while(line[k] == sym[k] && !isspace(line[k]) && \
-                k < sym_len && k < linelength)
-        {
-            k++;
-        }
-        if(k == sym_len) /* keyword was found */
+        has_read = sscanf(line,"%s%n",key,&k);
+        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
         {
             if ( nbr_expr )
             {
@@ -1672,12 +1670,14 @@ int get_nbr_el(const char *filename, const char *sym,\
 int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
 {
     size_t i = 0;
-    size_t pos0, pos1, k = 0;
+    size_t pos0, pos1;
     size_t length_name;
     ssize_t linelength;
     size_t linecap = 0;
     char *line = NULL;
+    char key[NAMELENGTH]; 
     FILE *fr;
+    int k = 0, has_read;
     int success = 0;
     fr = fopen (filename, "rt");
 
@@ -1699,12 +1699,8 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
         *var.max_name_length = 0;
         while( (linelength = getline(&line, &linecap, fr)) > 0)
         {
-            while(line[k] == sym[k] && !isspace(line[k]) && \
-                    k < sym_len && k < linelength)
-            {
-                k++;
-            }
-            if(k == sym_len) /* keyword was found */
+            has_read = sscanf(line,"%s%n",key,&k);
+            if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
             {
                 success = 1;
                 pos0 = k;
@@ -1748,7 +1744,9 @@ int load_options(const char *filename, int exit_if_nofile)
     ssize_t linelength;
     size_t linecap = 0;
     char *line = NULL;
+    char key[NAMELENGTH]; 
     FILE *fr;
+    int k = 0, has_read;
     int success = 0;
     char opt_name[NAMELENGTH];
     fr = fopen (filename, "rt");
@@ -1772,7 +1770,8 @@ int load_options(const char *filename, int exit_if_nofile)
         /* printf("--so far...\n"); */
         while( (linelength = getline(&line, &linecap, fr)) > 0)
         {
-            if(line[0] == 'O' || line[0] == 'o') /* keyword was found */
+            has_read = sscanf(line,"%s%n",key,&k);
+            if ( (strncasecmp(key,"OPTIONS",1) == 0) & (has_read == 1) ) /* keyword was found */
             {
                 sscanf(line,"%*s %s",opt_name);
 
@@ -2024,7 +2023,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     {
 
         has_read = sscanf(line,"%s%n",key,&k);
-        if ( (strncmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
+        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
         {
             array_ptr->length = 1;
             array_ptr->array = malloc(array_ptr->length*sizeof(double));
@@ -2072,7 +2071,6 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 {
     size_t  i = 0,
             j = 0,
-            k = 0,
             linecap = 0,
             index0,
             index1,
@@ -2091,7 +2089,9 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
          temp[NAMELENGTH],
          old_var_name[NAMELENGTH],
          str_index[16];
+    char key[NAMELENGTH]; 
     FILE *fr;
+    int k = 0, has_read;
     int success = 0;
     fr = fopen (filename, "rt");
 
@@ -2112,12 +2112,8 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     *var.max_name_length = 0;
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
-        while(line[k] == sym[k] && !isspace(line[k]) && \
-                k < sym_len && k < linelength)
-        {
-            k++;
-        }
-        if(k == sym_len) /* keyword was found */
+        has_read = sscanf(line,"%s%n",key,&k);
+        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
         {
             success = 1;
             /* get the size of the expression */
@@ -2241,7 +2237,7 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
     /* search for keyword sym */
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
-        while(line[k] == sym[k] && !isspace(line[k]) && \
+        while(line[k] == toupper(sym[k]) && !isspace(line[k]) && \
                 k < sym_len && k < linelength)
         {
             k++;
