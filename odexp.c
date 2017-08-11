@@ -71,7 +71,8 @@ struct gen_option gopts[NBROPTS] = {
     {"r/mstep","range_mult_step", 'd', 1.0, 0, "", "parameter step multiplicative increment", "parameter range"},
     {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment", "parameter range"},
     {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameter range"},
-    {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameter range"} };
+    {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameter range"},
+    {"g/font","gnuplot_font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot font", "gnuplot settings"} };
 
 
 
@@ -81,7 +82,7 @@ int *num_ic;
 const char *T_IND = "\033[0;35m";  /* index */
 const char *T_DET = "\033[3;36m";  /* description */
 const char *T_VAL = "\033[0;32m";  /* values */
-const char *T_EXPR = "\033[0;34m"; /* expressions */
+const char *T_EXPR = "\033[0;33m"; /* expressions */
 const char *T_NOR = "\033[0m";     /* normal */
 const char *T_ERR = "\033[0;31m";  /* error */
 const char *T_BLD = "\033[2;0m";   /* bold */
@@ -429,7 +430,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
 
-    fprintf(gnuplot_pipe,"set term aqua font \"Helvetica Neue Light,16\"\n");
+    fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
     fprintf(gnuplot_pipe,"plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\

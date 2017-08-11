@@ -240,7 +240,7 @@ O reltol 1e-3
 
 .TP
 .BR T
-Time span. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
+Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
 
