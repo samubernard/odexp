@@ -769,7 +769,7 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     s = gsl_multiroot_fsolver_alloc(T,n);
     gsl_multiroot_fsolver_set (s, &f, x);
 
-    printf("\n  Finding a steady state\n");
+    printf("  Finding a steady state... ");
 
     do 
     {
@@ -790,7 +790,7 @@ int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vect
     }
     stst->status = status;
 
-    printf("\n  steady state\n");
+    printf("  steady state\n");
     gsl_vector_fprintf(stdout,s->x,"    %+.5e");
 
     /*
@@ -831,7 +831,7 @@ int eig(gsl_matrix *J, steady_state *stst)
     im = gsl_vector_complex_imag(eval);
 
 
-    printf("\n  eigenvalues\n");
+    printf("  eigenvalues\n");
     gsl_vector_complex_fprintf(stdout,eval,"    %+.5e");
 
     for ( i=0; i<n; i++)
