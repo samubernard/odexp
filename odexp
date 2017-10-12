@@ -118,7 +118,7 @@ declare_constant_array () {
 }
 
 declare_array_from_file () {
-    # expecting F my_array nRow nCols filename.dat 
+    # expecting: F my_array_name nRow nCols filename.dat 
     gawk -F ' ' '$1 ~ /^[fF][a-zA-Z0-9]*$/ {
         filename=$5;
         nRow=$3;

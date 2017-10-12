@@ -300,7 +300,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
     if (status == GSL_SUCCESS)
     {
-        printf("  %s(%lu msec)%s\n", T_DET,(clock()-start)*1000 / CLOCKS_PER_SEC, T_NOR);
+        printf("  %s(%g msec)%s\n", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
     }
     else
     {
@@ -576,7 +576,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
 
     if (status == GSL_SUCCESS)
     {
-        printf("  %s(%lu msec)%s\n", T_DET,(clock()-start)*1000 / CLOCKS_PER_SEC, T_NOR);
+        printf("  %s(%g msec)%s\n", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
     }
     else
     {
@@ -1107,7 +1107,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     /* set c/h to the sign of the last value of s */
     set_dou("cont_h",s);
     
-    printf("  %s(%lu msec)%s\n", T_DET,(clock()-start)*1000 / CLOCKS_PER_SEC, T_NOR);
+    printf("  %s(%g msec)%s\n", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
 
     free( stst.s );
     free( stst.re );

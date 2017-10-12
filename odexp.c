@@ -200,7 +200,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_double_array(system_filename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
-        printf("  tspan not found, exiting...\n");
+        printf("  %serror: TIMESPAN not found, exiting...%s\n",T_ERR,T_NOR);
         exit ( EXIT_FAILURE );
     }
     printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
