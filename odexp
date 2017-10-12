@@ -513,7 +513,15 @@ echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
-gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {printf "    double %s = pars_[%d];\n", $2, i++}' $parfile >>.odexp/model.c
+gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {
+        if($4 == "initial") {
+            printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++
+        }
+        else
+        {
+            printf "    double %s = pars_[%d];\n", $2, i++
+        }
+    }' $parfile >>.odexp/model.c
 echo "" >>.odexp/model.c
 # ====================================================================================
 
