@@ -124,26 +124,27 @@ declare_array_from_file () {
         nRow=$3;
         nCol=$4;
         var=$2;
-        printf "static const double %s[%d][%d] = \{", var, nRow, nCol;
+        printf "/* array from file: %s */\n", filename;
+        printf "static const double %s[%d][%d] = {", var, nRow, nCol;
         i=0;
         while(i<(nRow-1))
         {
             getline <filename;
-            printf "\{";
+            printf "{";
             for(j=1;j<nCol;j++)
                 {
                     printf "%g, ", $j;
                 }
-            printf "%g\},\\\n        ", $nCol; 
+            printf "%g},\\\n        ", $nCol; 
             i++;
         }
         getline <filename
-        printf "\{";
+        printf "{";
         for(j=1;j<nCol;j++)
             {
                 printf "%g, ", $j;
             }
-        printf "%g\}\};\n\n", $nCol;
+        printf "%g}};\n\n", $nCol;
     }' $file >>.odexp/model.c  
 }
 
@@ -514,14 +515,14 @@ echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
 gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {
-        if($4 == "initial") {
-            printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++
-        }
-        else
-        {
-            printf "    double %s = pars_[%d];\n", $2, i++
-        }
-    }' $parfile >>.odexp/model.c
+    switch (toupper($4)) {
+        case "INITIAL" :
+            printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++;
+            break;
+        default :
+            printf "    double %s = pars_[%d];\n", $2, i++;
+    }
+}' $parfile >>.odexp/model.c
 echo "" >>.odexp/model.c
 # ====================================================================================
 
