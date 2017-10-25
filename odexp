@@ -55,7 +55,7 @@ fi
 
 
 declare_iterators () {
-    gawk -F ' ' -v i=1 '/(\[.+\])+/ && $1 !~ /#/ && $1 !~ /[cC]/ { match($2,/(\[.+\])+/);
+    gawk -F ' ' -v i=1 '/(\[.+\])+/ && $1 !~ /#/ && $1 !~ /^[cC]/ { match($2,/(\[.+\])+/);
         a=substr($2, RSTART, RLENGTH);
         split(a,b,/[\[\]=:]/);
         for(k=2;k<=length(b);k+=4) 

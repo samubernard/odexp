@@ -1683,14 +1683,14 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
     int success = 0;
     fr = fopen (filename, "rt");
 
-    if ( fr == NULL )
+    if ( fr == NULL ) /* if no file to load from */
     {
-        if ( exit_if_nofile )
+        if ( exit_if_nofile ) /* file needed - exit with error */
         {
             fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
             exit ( EXIT_FAILURE );
         }
-        else
+        else /* load nothing and return */
         {
             fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
             return 0;
@@ -1699,30 +1699,30 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
     else
     {
         *var.max_name_length = 0;
-        while( (linelength = getline(&line, &linecap, fr)) > 0)
+        while( (linelength = getline(&line, &linecap, fr)) > 0) /* get current line in string line */
         {
-            has_read = sscanf(line,"%s%n",key,&k);
+            has_read = sscanf(line,"%s%n",key,&k); /* try to read keyword string key and get its length k */ 
             if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
             {
                 success = 1;
                 pos0 = k;
-                while(line[pos0] != ' ' && line[pos0] != '\t')
+                while(line[pos0] != ' ' && line[pos0] != '\t') /* move until a space is found, necessary?  */
                     pos0++;
-                while(line[pos0] == ' ' || line[pos0] == '\t')
+                while(line[pos0] == ' ' || line[pos0] == '\t') /* move to next non-space char */
                     pos0++;
 
-                pos1 = pos0;
-                while(line[pos1] != ' ' && line[pos1] != '\t')
+                pos1 = pos0;  
+                while(line[pos1] != ' ' && line[pos1] != '\t') /* go to the end of second word */
                     pos1++;
 
-                length_name = pos1-pos0;
+                length_name = pos1-pos0;                       /* length of second word */
                 if (length_name > NAMELENGTH)
                 {
                     length_name = NAMELENGTH;
                 }
 
-                sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]);
-                if(length_name > *var.max_name_length)
+                sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]); /* get second work in var.name and 3rd word in var.value */
+                if(length_name > *var.max_name_length) /* update max_name_length */
                 {
                     *var.max_name_length = length_name;
                 }
