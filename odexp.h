@@ -106,8 +106,6 @@ void free_soptions();
 
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, long *nbr_el, long *nbr_epxr);
 
-int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile);
-
 int load_options(const char *filename, int exit_if_nofile);
 int update_plot_options(long ngx, long ngy, long ngz, nve dxv);
 int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv);
@@ -116,11 +114,10 @@ int option_name2index( const char *name, long *n);
 int update_act_par_index(int *p, const nve mu);
 int update_act_par_options(const int p, const nve mu);
 
+int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile);
 int load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len, int exit_if_nofile);
-
 int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile);
-
 int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len, int exit_if_nofile);
 
 int fprintf_snapshot(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer, const char *odexp_filename);

@@ -1721,7 +1721,7 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
                     length_name = NAMELENGTH;
                 }
 
-                sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]); /* get second work in var.name and 3rd word in var.value */
+                sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]); /* get second word in var.name and 3rd word in var.value */
                 if(length_name > *var.max_name_length) /* update max_name_length */
                 {
                     *var.max_name_length = length_name;

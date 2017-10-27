@@ -148,6 +148,20 @@ declare_array_from_file () {
     }' $file >>.odexp/model.c  
 }
 
+declare_parameters () {
+# find variable parameters and declare them in model.c 
+    gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {
+        switch (toupper($4)) {
+            case ":INITIAL" :
+            case ":UNUSED"  :
+                printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++;
+                break;
+            default :
+                printf "    double %s = pars_[%d];\n", $2, i++;
+        }
+    }' $parfile >>.odexp/model.c
+}
+
 declare_parametric_expressions () {
     # find parametric expressions and declare them in .odexp/model.c
     # find parametric expression vectors and declare them in .odexp/model.c
@@ -179,7 +193,7 @@ declare_variables () {
 
 declare_auxiliary_functions () {
     # find auxiliary variables and declare them to model.c
-    # find vector auxiliary functiond and declare them to model.c
+    # find vector auxiliary function and declare them to model.c
     gawk -F ' ' '$1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {printf "    double %s;\n", $2};
       $1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
       a=substr($2, RSTART, RLENGTH);
@@ -513,16 +527,7 @@ echo "" >>.odexp/model.c
 
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
-# find variable parameters and declare them in model.c 
-gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {
-    switch (toupper($4)) {
-        case "INITIAL" :
-            printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++;
-            break;
-        default :
-            printf "    double %s = pars_[%d];\n", $2, i++;
-    }
-}' $parfile >>.odexp/model.c
+declare_parameters
 echo "" >>.odexp/model.c
 # ====================================================================================
 
