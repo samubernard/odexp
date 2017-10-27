@@ -255,7 +255,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.name[i] = malloc(NAMELENGTH*sizeof(char));
         mu.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
-    success = load_namevalexp(system_filename,mu,"P",1,exit_if_nofile);
+    success = load_nameval(system_filename,mu,"P",1,exit_if_nofile);
     if (!success) /* then create a not_a_parameter parameter */
     {
         printf("  no parameter found\n");
@@ -1223,7 +1223,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             num_ic[i] = 0;
                         }
                     /* reset parameter values */
-                    load_namevalexp(system_filename, mu, "P", 1,exit_if_nofile);
+                    load_nameval(system_filename, mu, "P", 1,exit_if_nofile);
                     /* reset initial conditions */
                     ode_init_conditions(tspan.array[0], ics.value, &mu);
                     rerun = 1;
@@ -1239,12 +1239,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else /* read par_filename for parameters, initial conditions, and tspan */
                     {
                         /* load parameter values */
-                        success = load_namevalexp(par_filename, mu, "P", 1,no_exit);
+                        success = load_nameval(par_filename, mu, "P", 1,no_exit);
                         if ( success == 0 )
                         {
                             printf("  warning: could not load parameters.\n");
                         }
-                        success = load_namevalexp(par_filename, ics, "X", 1,no_exit); /* load initial conditions value from file */
+                        success = load_nameval(par_filename, ics, "X", 1,no_exit); /* load initial conditions value from file */
                         if ( success == 1)
                         {
                             /* reset initial condtitions */
@@ -1669,15 +1669,15 @@ int get_nbr_el(const char *filename, const char *sym,\
 }
 
 
-int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
+int load_nameval(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
 {
     size_t i = 0;
-    size_t pos0, pos1;
     size_t length_name;
     ssize_t linelength;
     size_t linecap = 0;
     char *line = NULL;
     char key[NAMELENGTH]; 
+    char var_option[NAMELENGTH];
     FILE *fr;
     int k = 0, has_read;
     int success = 0;
@@ -1705,30 +1705,22 @@ int load_namevalexp(const char *filename, nve var, const char *sym, const size_t
             if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
             {
                 success = 1;
-                pos0 = k;
-                while(line[pos0] != ' ' && line[pos0] != '\t') /* move until a space is found, necessary?  */
-                    pos0++;
-                while(line[pos0] == ' ' || line[pos0] == '\t') /* move to next non-space char */
-                    pos0++;
+                /* try to read SYM0:N VAR VALUE :OPTION */
+                has_read = sscanf(line,"%*s %s %lf :%s",var.name[i],&var.value[i],var_option);
 
-                pos1 = pos0;  
-                while(line[pos1] != ' ' && line[pos1] != '\t') /* go to the end of second word */
-                    pos1++;
-
-                length_name = pos1-pos0;                       /* length of second word */
+                length_name = strlen(var.name[i]);                       /* length of second word */
                 if (length_name > NAMELENGTH)
                 {
                     length_name = NAMELENGTH;
                 }
 
-                sscanf(line+pos0,"%s %lf",var.name[i],&var.value[i]); /* get second word in var.name and 3rd word in var.value */
                 if(length_name > *var.max_name_length) /* update max_name_length */
                 {
                     *var.max_name_length = length_name;
                 }
 
                 printf("  %s[%s%zu%s] %-*s=",sym,T_IND,i,T_NOR,*var.max_name_length+2,var.name[i]);
-                printf(" %s%f%s\n",T_VAL,var.value[i],T_NOR);
+                printf(" %s%f   %s%s%s\n",T_VAL,var.value[i],T_DET,var_option,T_NOR);
                 i++;
             }
             k = 0; /* reset k */

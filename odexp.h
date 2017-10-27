@@ -114,7 +114,7 @@ int option_name2index( const char *name, long *n);
 int update_act_par_index(int *p, const nve mu);
 int update_act_par_options(const int p, const nve mu);
 
-int load_namevalexp(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile);
+int load_nameval(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile);
 int load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len, int exit_if_nofile);
 int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile);
