@@ -2167,7 +2167,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             if ( expr_size > 1 && success_brackets == 0 )
             {
               /* for(j=0;j<expr_size;j++) */
-              for(j=index0;j<index1;j++)  
+              for(j=0;j<expr_size;j++)  
               {
                 /* printf("--i=%zu, j=%zu, nbr_el=%zu, cond=%zu\n",i,j,var.nbr_el, (i+j >= 3) ); */
                 if ( i+j >= var.nbr_el )
