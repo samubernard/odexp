@@ -53,6 +53,7 @@ typedef struct namevalexp
     char **expression;
     long nbr_el; 
     long nbr_expr;
+    long *expr_index;
     int *max_name_length;
 } nve;
 

@@ -221,6 +221,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     cst.value = malloc(cst.nbr_el*sizeof(double));
     cst.name = malloc(cst.nbr_el*sizeof(char*));
     cst.expression = malloc(cst.nbr_el*sizeof(char*));
+    cst.expr_index = malloc(cst.nbr_el*sizeof(long));
     cst.max_name_length = malloc(sizeof(int));
     for (i = 0; i < cst.nbr_el; i++)
     {
@@ -235,6 +236,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     dfl.value = malloc(dfl.nbr_el*sizeof(double));
     dfl.name = malloc(dfl.nbr_el*sizeof(char*));
     dfl.expression = malloc(dfl.nbr_el*sizeof(char*));
+    dfl.expr_index = malloc(dfl.nbr_el*sizeof(long));
     dfl.max_name_length = malloc(sizeof(int));
     for (i = 0; i < dfl.nbr_el; i++)
     {
@@ -249,6 +251,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
     mu.expression = malloc(mu.nbr_el*sizeof(char*));
+    mu.expr_index = malloc(mu.nbr_el*sizeof(long));
     mu.max_name_length = malloc(sizeof(int));
     for (i = 0; i < mu.nbr_el; i++)
     {
@@ -277,6 +280,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     pex.value = malloc(pex.nbr_el*sizeof(double));
     pex.name = malloc(pex.nbr_el*sizeof(char*));
     pex.expression = malloc(pex.nbr_el*sizeof(char*));
+    pex.expr_index = malloc(pex.nbr_el*sizeof(long));
     pex.max_name_length = malloc(sizeof(int));
     for (i = 0; i < pex.nbr_el; i++)
     {
@@ -295,6 +299,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     ics.value = malloc(ics.nbr_el*sizeof(double));
     ics.name = malloc(ics.nbr_el*sizeof(char*));
     ics.expression = malloc(ics.nbr_el*sizeof(char*));
+    ics.expr_index = malloc(ics.nbr_el*sizeof(long));
     ics.max_name_length = malloc(sizeof(int));
     for (i = 0; i < ics.nbr_el; i++)
     {
@@ -316,6 +321,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     fcn.value = malloc(fcn.nbr_el*sizeof(double));
     fcn.name = malloc(fcn.nbr_el*sizeof(char*));
     fcn.expression = malloc(fcn.nbr_el*sizeof(char*));
+    fcn.expr_index = malloc(fcn.nbr_el*sizeof(long));
     fcn.max_name_length = malloc(sizeof(int));
     for (i = 0; i < fcn.nbr_el; i++)
     {
@@ -335,6 +341,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     eqn.value = malloc(eqn.nbr_el*sizeof(double));
     eqn.name = malloc(eqn.nbr_el*sizeof(char*));
     eqn.expression = malloc(eqn.nbr_el*sizeof(char*));
+    eqn.expr_index = malloc(eqn.nbr_el*sizeof(long));
     eqn.max_name_length = malloc(sizeof(int));
     for (i = 0; i < eqn.nbr_el; i++)
     {
@@ -358,6 +365,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     dxv.value = malloc(total_nbr_x*sizeof(double));
     dxv.name = malloc(total_nbr_x*sizeof(char*));
     dxv.expression = malloc(total_nbr_x*sizeof(char*));
+    dxv.expr_index = malloc(total_nbr_x*sizeof(long));
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr;
     dxv.nbr_el = total_nbr_x;
     dxv.max_name_length = malloc(sizeof(int));
@@ -875,7 +883,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<pex.nbr_el; i++)
                         {
                             padding = (int)log10(pex.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_str('E',i,padding,*pex.max_name_length,pex.name[i],pex.expression[i]);
+                            if ( i == 0 || pex.expr_index[i] > pex.expr_index[i-1] )
+                            {
+                                printf_list_str('E',i,padding,*pex.max_name_length,pex.name[i],pex.expression[i]);
+                            }
                         }
                     }
                     else if (op == 'r') /* list random arrays         */
@@ -900,12 +911,18 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<eqn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                            printf_list_str('D',i,padding,namelength,eqn.name[i],eqn.expression[i]);
+                            if ( i == 0 || eqn.expr_index[i] > eqn.expr_index[i-1] )
+                            {
+                                printf_list_str('D',i,padding,namelength,eqn.name[i],eqn.expression[i]);
+                            }
                         }
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
+                            if ( i == 0 || fcn.expr_index[i] > fcn.expr_index[i-1] )
+                            {
+                                printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
+                            }
                         }
                     }
                     else if (op == 'a') /* list auxiliary equation */ 
@@ -913,7 +930,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            printf_list_str('a',i+eqn.nbr_el,padding,*fcn.max_name_length,fcn.name[i],fcn.expression[i]);
+                            if ( i == 0 || fcn.expr_index[i] > fcn.expr_index[i-1] )
+                            {
+                                printf_list_str('a',i+eqn.nbr_el,padding,*fcn.max_name_length,fcn.name[i],fcn.expression[i]);
+                            }
                         }
                     }
                     else if (op == 'c') /* list constant arrays*/ 
@@ -1583,6 +1603,7 @@ void free_namevalexp(nve var )
     free(var.value);
     free(var.name);
     free(var.expression);
+    free(var.expr_index);
 }
 
 void init_steady_state(steady_state *mystst, int index)
@@ -1708,7 +1729,7 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
 
 int load_nameval(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
 {
-    size_t i = 0;
+    size_t var_index = 0;
     size_t length_name;
     ssize_t linelength;
     size_t linecap = 0;
@@ -1743,9 +1764,10 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
             {
                 success = 1;
                 /* try to read SYM0:N VAR VALUE :OPTION */
-                has_read = sscanf(line,"%*s %s %lf :%s",var.name[i],&var.value[i],var_option);
+                has_read = sscanf(line,"%*s %s %lf :%s",var.name[var_index],&var.value[var_index],var_option);
+                var.expr_index[var_index] = var_index;
 
-                length_name = strlen(var.name[i]);                       /* length of second word */
+                length_name = strlen(var.name[var_index]);                       /* length of second word */
                 if (length_name > NAMELENGTH)
                 {
                     length_name = NAMELENGTH;
@@ -1756,9 +1778,9 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
                     *var.max_name_length = length_name;
                 }
 
-                printf("  %s[%s%zu%s] %-*s=",sym,T_IND,i,T_NOR,*var.max_name_length+2,var.name[i]);
-                printf(" %s%f   %s%s%s\n",T_VAL,var.value[i],T_DET,var_option,T_NOR);
-                i++;
+                printf("  %s[%s%zu%s] %-*s=",sym,T_IND,var_index,T_NOR,*var.max_name_length+2,var.name[var_index]);
+                printf(" %s%f   %s%s%s\n",T_VAL,var.value[var_index],T_DET,var_option,T_NOR);
+                var_index++;
             }
             k = 0; /* reset k */
         }
@@ -2150,19 +2172,19 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             /* find the name root and expression */
             if ( prefix && expr_size == 1 )
             {
-                snprintf(str2match,63*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
+                snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
             }
             else if ( prefix && expr_size > 1 )
             {
-                snprintf(str2match,63*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
+                snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
             }
             else if ( prefix == 0 && expr_size == 1)
             {
-                snprintf(str2match,63*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep);
+                snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep);
             }
             else /* prefix == 0 && expr_size > 1 */
             {
-                snprintf(str2match,63*sizeof(char),"%%n %%s%%n  %c %%[^\n]", sep);
+                snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep);
             }
             sscanf(line,str2match, &namelen0, var.name[var_index], &namelen1, var.expression[var_index]);
             if( (namelen1-namelen0) > *var.max_name_length)
@@ -2177,6 +2199,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             }
             for (j=0;j<expr_size;j++)
             {
+                var.expr_index[var_index+j] = var_index;
                 printf("  %s[%s%zu%s] %-*s %c %s%s%s\n",\
                         sym,T_IND,var_index+j,T_NOR,*var.max_name_length,var.name[var_index+j],\
                         sep,T_EXPR,var.expression[var_index+j],T_NOR);
