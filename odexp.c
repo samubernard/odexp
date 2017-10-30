@@ -292,6 +292,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         printf("  no parametric expression found\n");
     } 
+    mu.expr_pointer = pex.value; /* pointer to parametric expression values */
 
     /* get initial conditions */
     printf("\nvariable names and initial conditions %s\n", hline);
@@ -883,10 +884,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<pex.nbr_el; i++)
                         {
                             padding = (int)log10(pex.nbr_el+0.5)-(int)log10(i+0.5);
-                            if ( i == 0 || pex.expr_index[i] > pex.expr_index[i-1] )
-                            {
-                                printf_list_str('E',i,padding,*pex.max_name_length,pex.name[i],pex.expression[i]);
-                            }
+                            printf_list_str('E',i,padding,*pex.max_name_length,pex.name[i],pex.expression[i]);
                         }
                     }
                     else if (op == 'r') /* list random arrays         */

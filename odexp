@@ -360,6 +360,29 @@ assign_aux_pointer () {
       }' $file >>.odexp/model.c
 }
 
+assign_parametric_expression_pointer () {
+    gawk -F ' ' -v nv=0 '$1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+      split($0,ex,/=/); printf "    f_[%d] = %s;\n", nv, ex[2]; nv++};
+      
+      $1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 ~ /(\[.+:.+\])+/ { match($2,/(\[.+:.+\])+/);
+      match($1,/(\[.+\])+/);
+      a=substr($1, RSTART, RLENGTH);
+      split(a,b,/[\[\]=:]/);
+      myvar="f_";
+      split($0,e,/=/);
+      myexpr=e[length(e)];
+      for (k=2; k<=length(b); k+=4) 
+      { 
+        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+      };
+      {printf "%-*s%s", k+2, "", myvar};
+      for (k=2; k<=length(b); k+=4) 
+      { 
+        printf "[%s+%d]", b[k], nv-b[k+1]
+        nv+=b[k+2]-b[k+1] 
+      }; 
+      {printf " = %s;\n%-*s}\n", myexpr, k-2, ""}; }' $file >>.odexp/model.c
+}
 assign_uniform_random_array () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[uU][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       ex=$2;
