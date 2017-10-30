@@ -2100,7 +2100,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
 
 int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile)
 {
-    size_t  i = 0,
+    size_t  var_index = 0,
             j = 0,
             linecap = 0,
             expr_size;
@@ -2164,23 +2164,24 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             {
                 snprintf(str2match,63*sizeof(char),"%%n %%s%%n  %c %%[^\n]", sep);
             }
-            sscanf(line,str2match, &namelen0, var.name[i], &namelen1, var.expression[i]);
+            sscanf(line,str2match, &namelen0, var.name[var_index], &namelen1, var.expression[var_index]);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
                 *var.max_name_length = (namelen1-namelen0);
             }
-            /* printf("max_name_length = %ld", *var.max_name_length); */
 
             for (j=1;j<expr_size;j++)
             {
-                strncpy(var.name[i+j], var.name[i],NAMELENGTH);
-                strncpy(var.expression[i+j],var.expression[i],EXPRLENGTH);
+                strncpy(var.name[var_index+j], var.name[var_index],NAMELENGTH);
+                strncpy(var.expression[var_index+j],var.expression[var_index],EXPRLENGTH);
             }
             for (j=0;j<expr_size;j++)
             {
-                printf("  %s[%s%zu%s] %-*s %c %s%s%s\n",sym,T_IND,i+j,T_NOR,*var.max_name_length,var.name[i+j], sep,T_EXPR,var.expression[i+j],T_NOR);
+                printf("  %s[%s%zu%s] %-*s %c %s%s%s\n",\
+                        sym,T_IND,var_index+j,T_NOR,*var.max_name_length,var.name[var_index+j],\
+                        sep,T_EXPR,var.expression[var_index+j],T_NOR);
             }
-            i += expr_size;
+            var_index += expr_size;
         }
         k = 0; /* reset k */
     }
