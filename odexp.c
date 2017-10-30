@@ -1693,7 +1693,7 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
     }
     else if ( nbr_index == EOF )
     {
-        printf("--scalar found\n");
+        /* printf("--scalar found\n"); */
         **size_dim = 1;
     }
     else
