@@ -105,6 +105,7 @@ void free_noptions();
 void free_soptions();
 
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, long *nbr_el, long *nbr_epxr);
+int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim);
 
 int load_options(const char *filename, int exit_if_nofile);
 int update_plot_options(long ngx, long ngy, long ngz, nve dxv);

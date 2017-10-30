@@ -1616,11 +1616,11 @@ int get_nbr_el(const char *filename, const char *sym,\
     size_t linecap = 0;
     char *line = NULL;
     char key[NAMELENGTH]; 
-    size_t index0,
-           index1;
-    int    nbr_index,
-           has_read,
+    size_t i, nbr_dim = 0;
+    int    has_read,
            success = 0; 
+    long   *size_dim = malloc(sizeof(long));
+    long   multi_dim = 1;
     FILE *fr;
     fr = fopen (filename, "rt");
 
@@ -1644,30 +1644,67 @@ int get_nbr_el(const char *filename, const char *sym,\
             {
                 (*nbr_expr)++;
             }
-            /* scan for two integers, index0, index1 in [iter=i0:i1] */
-            nbr_index = sscanf(line,"%*[a-zA-Z0-9_: \[]=%zd:%zd",&index0, &index1);
-            if ( (nbr_index == 0) || (nbr_index == 1) ) /* a match to a scalar was found */
+            /* printf("--%s",line); */
+            get_multiindex(line, &nbr_dim, &size_dim);
+            /* printf("--nbr_dim %zu\n",nbr_dim); */
+            for(i=0;i<nbr_dim;i++)
             {
-                (*nbr_el)++;
+                multi_dim *= size_dim[i];
             }
-            else if ( nbr_index == 2 )
-            {
-                *nbr_el += index1-index0;
-            }
-            else
-            {
-                printf("  Error in determining number of elements... exiting\n");
-                exit ( EXIT_FAILURE );
-            }
+            *nbr_el += multi_dim;
+            /* printf("--nbr_el %ld\n",*nbr_el); */
 
         }
         k = 0; /* reset k */
+        multi_dim = 1; /* reset multi_dim */
     }
     fclose(fr);
+    free(size_dim);
     success = 1;  
     return success;
 }
 
+int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
+{
+
+    int     bracket1;
+    size_t  index0,
+            index1;
+    int     nbr_index;
+    /* scan for two integers, index0, index1 in [iter=i0:i1] */
+    nbr_index = sscanf(line,"%*[^[] [ %*[^=]= %zu : %zu ]%n",&index0,&index1,&bracket1);
+    *nbr_dim = 0;
+    if ( nbr_index == 2 )
+    {
+        do 
+        {
+            /* printf("--%s",line); */
+            *size_dim = realloc(*size_dim, ((*nbr_dim)+1)*sizeof(long));
+            /* printf("--after realloc %zu %zu %zu\n", *nbr_dim,index0,index1); */
+            (*size_dim)[*nbr_dim] = index1 - index0; 
+            /* printf("--after assign\n"); */
+            (*nbr_dim)++;
+            line+=bracket1;
+            /* scan for two integers, index0, index1 in [iter=i0:i1] */
+            nbr_index = sscanf(line," [ %*[^=]= %zu : %zu ]%n",&index0,&index1,&bracket1);
+            /* printf("--nbr_dim %zu, size_dim %ld\n",*nbr_dim,(*size_dim)[*nbr_dim-1]); */
+            /* printf("--nbr_index %d\n",nbr_index); */
+        } while ( nbr_index == 2 );
+    }
+    else if ( nbr_index == EOF )
+    {
+        printf("--scalar found\n");
+        **size_dim = 1;
+    }
+    else
+    {
+        printf("  Error in determining number of elements... exiting\n");
+        exit ( EXIT_FAILURE );
+    }
+
+    return *nbr_dim;
+
+}
 
 int load_nameval(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
 {
