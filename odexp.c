@@ -1691,7 +1691,7 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
             index1;
     int     nbr_index;
     /* scan for two integers, index0, index1 in [iter=i0:i1] */
-    nbr_index = sscanf(line,"%*[^[] [ %*[^=]= %zu : %zu ]%n",&index0,&index1,&bracket1);
+    nbr_index = sscanf(line,"%*[^[] [ %*[^=] = %zu : %zu ]%n",&index0,&index1,&bracket1);
     *nbr_dim = 0;
     if ( nbr_index == 2 )
     {
@@ -1705,19 +1705,19 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
             (*nbr_dim)++;
             line+=bracket1;
             /* scan for two integers, index0, index1 in [iter=i0:i1] */
-            nbr_index = sscanf(line," [ %*[^=]= %zu : %zu ]%n",&index0,&index1,&bracket1);
+            nbr_index = sscanf(line," [ %*[^=] = %zu : %zu ]%n",&index0,&index1,&bracket1);
             /* printf("--nbr_dim %zu, size_dim %ld\n",*nbr_dim,(*size_dim)[*nbr_dim-1]); */
             /* printf("--nbr_index %d\n",nbr_index); */
         } while ( nbr_index == 2 );
     }
-    else if ( nbr_index == EOF )
+    else if ( nbr_index == EOF || nbr_index == 0 )
     {
         /* printf("--scalar found\n"); */
         **size_dim = 1;
     }
     else
     {
-        printf("  Error in determining number of elements... exiting\n");
+        printf("  Error in determining number of elements in %s (nbr index found = %d)... exiting\n",line,nbr_index);
         exit ( EXIT_FAILURE );
     }
 
