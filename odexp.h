@@ -136,6 +136,7 @@ char*  get_str(const char *name);
 
 void printf_list_val(char type, long i, int padding, int max_name_length, char *name, double value, char *descr);
 void printf_list_str(char type, long i, int padding, int max_name_length, char *name, char  *expr);
+void printf_list_str_val(char type, long i, int padding, int max_name_length, char *name, char  *expr, double val);
 
 int plot_data(const long colx, const long coly, const char *datafile_plotted, FILE *gnuplot_pipe);
 

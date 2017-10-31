@@ -884,7 +884,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<pex.nbr_el; i++)
                         {
                             padding = (int)log10(pex.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_str('E',i,padding,*pex.max_name_length,pex.name[i],pex.expression[i]);
+                            printf_list_str_val('E',i,padding,*pex.max_name_length,pex.name[i],pex.expression[i],pex.value[i]);
                         }
                     }
                     else if (op == 'r') /* list random arrays         */
@@ -2614,6 +2614,13 @@ void printf_list_str(char type, long i, int padding, int max_name_length, char *
 {
     printf("  %c[%s%ld%s]%-*s %-*s = %s%s%s\n",\
             type,T_IND,i,T_NOR, padding, "", max_name_length,name,T_EXPR,expr,T_NOR);
+ 
+}
+
+void printf_list_str_val(char type, long i, int padding, int max_name_length, char *name, char  *expr, double val)
+{
+    printf("  %c[%s%ld%s]%-*s %-*s = %s%14g%s  %s%s%s\n",\
+            type,T_IND,i,T_NOR, padding, "", max_name_length,name,T_VAL,val,T_NOR,T_EXPR,expr,T_NOR);
  
 }
 
