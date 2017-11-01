@@ -981,6 +981,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         printf_options();
                     }
+                    else if (op == 'l') /* list fiLe and various information */
+                    {
+                        printf("  File name: %s%s%s\n",T_EXPR,odexp_filename,T_NOR);
+                        printf("  ODE system size               = %s%ld%s\n",T_VAL,ode_system_size,T_NOR);
+                        printf("  Number of auxiliary functions = %s%ld%s\n",T_VAL,fcn.nbr_el,T_NOR);
+                        printf("  Total number of variables     = %s%ld%s\n",T_VAL,total_nbr_x,T_NOR);
+                        printf("  Number of parameters          = %s%ld%s\n",T_VAL,mu.nbr_el,T_NOR);
+                        printf("  Number of parametric expr     = %s%ld%s\n",T_VAL,pex.nbr_expr,T_NOR);
+                        printf("  Number of constants           = %s%ld%s\n",T_VAL,cst.nbr_el,T_NOR);
+                        printf("  Number of data files          = %s%ld%s\n",T_VAL,dfl.nbr_el,T_NOR);
+                    }
                     else
                     {
                         fprintf(stderr,"  %serror: unknown option%s\n",T_ERR,T_NOR);

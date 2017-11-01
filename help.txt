@@ -119,6 +119,9 @@ List steady states
 .BR lo          
 List options 
 .TP
+.BR ll          
+List file name and various information 
+.TP
 .BR mm            
 Try to find all steady states 
 .TP
