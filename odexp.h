@@ -123,7 +123,8 @@ int load_double_array(const char *filename, double_array *a,\
 int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile);
 int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len, int exit_if_nofile);
 
-int fprintf_snapshot(nve init, nve cst, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer, const char *odexp_filename);
+int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
+        nve cst, nve dfl, double_array tspan, const char *curr_buffer, const char *odexp_filename);
 
 int printf_options();
 int printf_option_line(long i);

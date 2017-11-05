@@ -1371,7 +1371,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case 's' : /* save file */
-                    file_status = fprintf_snapshot(ics,pex,mu,fcn,eqn,tspan, current_data_buffer,odexp_filename);
+                    file_status = fprintf_snapshot(ics,pex,mu,fcn,eqn,cst,dfl,tspan, current_data_buffer,odexp_filename);
                     break;
                 case '!' : /* print ! */
                     nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -1792,6 +1792,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
                 var_index++;
             }
             k = 0; /* reset k */
+            snprintf(var_option,1,"");
         }
     }
     
@@ -2275,7 +2276,8 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
     return success;
 } 
 
-int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array tspan, const char *curr_buffer, const char *odexp_filename)
+int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
+        nve cst, nve dfl, double_array tspan, const char *curr_buffer, const char *odexp_filename)
 {
     int success = 0;
     size_t i;
@@ -2350,7 +2352,7 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array t
         fprintf(fr,"\n# dynamical variables/initial conditions\n");
         for(i=0;i<init.nbr_el;i++)
         {
-            fprintf(fr,"X%zu %-*s %g\n",i,len,init.name[i],init.value[i]);
+            fprintf(fr,"I%zu %-*s %g\n",i,len,init.name[i],init.value[i]);
         }    
 
         fprintf(fr,"\n# time span\nT ");
@@ -2380,19 +2382,23 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn, double_array t
         fprintf(fr,"# original equations, auxiliary variables and parametric expressions\n\n");
         for(i=0;i<ode_system_size;i++)
         {
-            fprintf(fr,"# %s' = %s\n",init.name[i],eqn.expression[i]);
+            fprintf(fr,"# d%s/dt = %s\n",init.name[i],eqn.expression[i]);
         }
         for(i=0;i<fcn.nbr_el;i++)
         {
-            fprintf(fr,"# %s = %s\n",fcn.name[i],fcn.expression[i]);
+            fprintf(fr,"# A %s = %s\n",fcn.name[i],fcn.expression[i]);
         }
         for(i=0;i<pex.nbr_el;i++)
         {
-            fprintf(fr,"# %s = %s\n",pex.name[i],pex.expression[i]);
+            fprintf(fr,"# E %s = %s\n",pex.name[i],pex.expression[i]);
         }
-        for(i=0;i<pex.nbr_el;i++)
+        for(i=0;i<cst.nbr_el;i++)
         {
-            fprintf(fr,"# %s = %s\n",pex.name[i],pex.expression[i]);
+            fprintf(fr,"# C %s = %s\n",cst.name[i],cst.expression[i]);
+        }
+        for(i=0;i<dfl.nbr_el;i++)
+        {
+            fprintf(fr,"# F %s = %s\n",dfl.name[i],dfl.expression[i]);
         }
 
         fclose(fr);
