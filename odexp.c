@@ -72,6 +72,7 @@ struct gen_option gopts[NBROPTS] = {
     {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment", "parameter range"},
     {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameter range"},
     {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameter range"},
+    {"r/ric","range_reset_ic", 'i', 0.0, 0, "", "reset initial conditions at each for range", "parameter range"},
     {"g/font","gnuplot_font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot font", "gnuplot settings"} };
 
 

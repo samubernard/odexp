@@ -469,8 +469,12 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     }
 
 
-    while (  ((get_dou("range_par1") > get_dou("range_par0")) & (mu.value[p] < get_dou("range_par1"))) |
-             ((get_dou("range_par0") > get_dou("range_par1")) & (mu.value[p] > get_dou("range_par1"))) )
+    while (  ((get_dou("range_par1") > get_dou("range_par0")) &  /* range with increasing values */
+              (mu.value[p] <= get_dou("range_par1")) & 
+              (mu.value[p] >= get_dou("range_par0"))) |
+             ((get_dou("range_par0") > get_dou("range_par1")) &  /* range with decreasing values */
+              (mu.value[p] >= get_dou("range_par1")) &
+              (mu.value[p] <= get_dou("range_par0"))) )
     {
     /* tspan */
     /* it is assumed that the first and last values of tspan are t0 and t1 */
@@ -478,14 +482,30 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     t1 = tspan.array[tspan.length-1];
     dt = (t1-t)/(double)(nbr_out-1);
     nextstop = t;
-    /* initial condition */
+    /* initial conditions */
+    if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_init_conditions */
+    {
+        ode_init_conditions(tspan.array[0], y, &mu); /* evaluate initial conditions in y */
+    }
     for (i = 0; i < ode_system_size; i++)
     {
-        printf(" %g, ",y[i]);
-        y[i] = get_dou("range_mult_ic")*y[i]+get_dou("range_add_ic");
+        if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_init_conditions */
+        {
+            if (num_ic[i]) /* use ics.value as initial condition */
+            {
+                y[i] = ics.value[i];
+            }
+            else /* set ics.value to y as initial condition */
+            {
+                ics.value[i] = y[i];
+            }
+        }
+        else /* keep state of previous run as initial conditions and perturb them */
+        {
+            y[i] = get_dou("range_mult_ic")*y[i]+get_dou("range_add_ic");
+        }
         ymin[i] = INFINITY;
         ymax[i] = -INFINITY;
-        /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
     }
     printf("\n  running par %s = %g... ", mu.name[p],mu.value[p]);
     fflush(stdout);
