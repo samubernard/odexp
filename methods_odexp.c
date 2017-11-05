@@ -935,7 +935,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
     init_steady_state(&stst, 0);
 
     br_file = fopen("stst_branches.tab","a");
-    fprintf(br_file,"%s",mu.name[p]);
+    fprintf(br_file,"n\t%s",mu.name[p]);
     for (i = 0; i < ode_system_size; i++)
     {
         fprintf(br_file,"\t%s",ics.name[i]);
@@ -955,7 +955,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
         if ( status == GSL_SUCCESS ) /* then move to next point */
         {
             nstst++;
-            fprintf(br_file,"%g",mu.value[p]);
+            fprintf(br_file,"%ld\t%g",nstst,mu.value[p]);
             /* print steady states */
             for (i=0; i<ode_system_size; i++)
             {

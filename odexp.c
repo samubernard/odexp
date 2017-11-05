@@ -1524,7 +1524,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 fprintf(gnuplot_pipe,"set xlabel '%s'\n",mu.name[p]);
                 fprintf(gnuplot_pipe,"set xrange[%lf:%lf]\n",get_dou("range_par0"),get_dou("range_par1"));
-                fprintf(gnuplot_pipe,"plot \"stst_branches.tab\" u 1:%ld w %s \n",gy,get_str("plot_with_style"));
+                fprintf(gnuplot_pipe,"plot \"stst_branches.tab\" u 2:%ld w %s\n",gy+1,get_str("plot_with_style"));
                 fflush(gnuplot_pipe);
             }
             else if ( plotmode_range ) /* try to plot range */
