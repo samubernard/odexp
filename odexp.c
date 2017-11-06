@@ -72,7 +72,7 @@ struct gen_option gopts[NBROPTS] = {
     {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment", "parameter range"},
     {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameter range"},
     {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameter range"},
-    {"r/ric","range_reset_ic", 'i', 0.0, 0, "", "reset initial conditions at each for range", "parameter range"},
+    {"r/ric","range_reset_ic", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameter range"},
     {"g/font","gnuplot_font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot font", "gnuplot settings"} };
 
 
@@ -107,6 +107,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     const char current_data_buffer[] = "current.tab";
     char       par_details[32];
     char       par_filename[MAXFILENAMELENGTH];
+    char       list_msg[EXPRLENGTH];
     long i,j;
     int  success;
     
@@ -403,7 +404,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     for(i=0; i<ode_system_size; i++)
     {
       num_ic[i]=0; /* 0 if using expression as init cond; 
-                    * 1 if using runtime numrical values 
+                    * 1 if using runtime numerical values 
                     */
     }
 
@@ -901,7 +902,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<ode_system_size; i++)
                         {
                             padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_val('I',i,padding,*ics.max_name_length,ics.name[i],ics.value[i],ics.expression[i]);
+                            if (num_ic[i] == 0)
+                            {
+                                printf_list_val('I',i,padding,*ics.max_name_length,ics.name[i],ics.value[i],ics.expression[i]);
+                            }
+                            else
+                            {
+                                snprintf(list_msg,EXPRLENGTH,"numerically set (cI %ld to revert to %s)",i,ics.expression[i]);
+                                printf_list_val('I',i,padding,*ics.max_name_length,ics.name[i],ics.value[i],list_msg);
+
+                            }
+
                         }
                     }
                     else if (op == 'x') /* list equations */

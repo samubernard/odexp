@@ -126,7 +126,11 @@ List file name and various information
 Try to find all steady states 
 .TP
 .BR mr 
-Range over parameters
+Range over parameters. The active parameter takes values between r/par0 and r/par1 with 
+multiplicative step r/mstep and additive stesp r/astep. For each value, the system is
+integrated over tspan and the min and the max of each variable is stored in the file range.tab. 
+If r/ric is 0, the initial conditions are set to the last state of the previous integration, 
+otherwise, the initial conditions are set as usual. 
 .TP
 .BR ms            
 Find a steady state with starting guess given by initial conditions 
