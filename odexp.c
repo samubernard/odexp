@@ -175,6 +175,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             ngz =  1,
             colx = 1,
             coly = 2;
+    int     rep_command = 1;
     double nvalue,
            nvalue2;
     char svalue[NAMELENGTH],
@@ -463,6 +464,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 case '+' : /* increment the parameter and run */
                 case '=' : /* increment the parameter and run */
+                    nbr_read = sscanf(cmdline+1,"%d",&rep_command);
                     mu.value[p] *= get_dou("par_step");
                     printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
                     rerun = 1;
