@@ -925,18 +925,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<eqn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                            if ( i == 0 || eqn.expr_index[i] > eqn.expr_index[i-1] )
-                            {
-                                printf_list_str('D',i,padding,namelength,eqn.name[i],eqn.expression[i]);
-                            }
+                            printf_list_str('D',i,padding,namelength,eqn.name[i],eqn.expression[i]);
                         }
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            if ( i == 0 || fcn.expr_index[i] > fcn.expr_index[i-1] )
-                            {
-                                printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
-                            }
+                            printf_list_str('A',i+eqn.nbr_el,padding,namelength,fcn.name[i],fcn.expression[i]);
                         }
                     }
                     else if (op == 'a') /* list auxiliary equation */ 
@@ -2226,7 +2220,6 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */
             snprintf(index_str,sizeof(char),""); /* reset index_str. index_str format _2_3 */  
 
-            printf("--rootvarname: %s\n",rootvarname);
             for(j=0;j<expr_size;j++)
             {
                 strncpy(var.name[var_index+j],rootvarname,NAMELENGTH); 
@@ -2234,15 +2227,12 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             index_factor = 1;
             do
             {
-                printf("--basevarname after strip: %s\n",basevarname+namelen0);
                 nbr_read = sscanf(basevarname+namelen0, " [ %zu ]%n", &index0, &namelen1); /* get index var[a] -> a */
-                printf("--1 nbr_read %d\n",nbr_read);
                 if (nbr_read == 1) /* single expresssion */
                 {
                     index1 = index0;
                 }
                 nbr_read = sscanf(basevarname+namelen0, " [%*[^=] =  %zu : %zu ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
-                printf("--2 nbr_read %d\n",nbr_read);
                 if (nbr_read > 0)
                 {
                     index_factor *= index1;
@@ -2250,7 +2240,6 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
                     {
                         snprintf(new_index,NAMELENGTH*sizeof(char),"[%zu]", index0 + (j/(expr_size/index_factor)) % index1 );
                         strcat(var.name[var_index+j],new_index);
-                        printf("--var.name[j]: %s\n",var.name[var_index+j]);
                     }
                 }
                 namelen0 += namelen1;
