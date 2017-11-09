@@ -2152,8 +2152,9 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     size_t  var_index = 0,
             j = 0,
             linecap = 0,
-           *index0,
-           *index1,
+            index0,
+            index1,
+            index_factor = 1,
             expr_size;
     ssize_t linelength;
     int     namelen0,
@@ -2166,8 +2167,9 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     char key[NAMELENGTH]; 
     char basevarname[NAMELENGTH];
     char rootvarname[NAMELENGTH];
-    char indexedvarname[NAMELENGTH];
+    /* char **indexedvarname; */
     char index_str[NAMELENGTH];
+    char new_index[NAMELENGTH];
     char baseexpression[EXPRLENGTH];
     FILE *fr;
     int k = 0, has_read;
@@ -2222,38 +2224,44 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 
             /* convert basevarname var[i=a:b] to var_j for j=a;j<b */
             sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */
-            printf("--basevarname after strip: %s\n",basevarname+namelen0);
-            if ( expr_size == 1 )
-            {
-                do 
-                {
-                    nbr_read = sscanf(basevarname+namelen0, " [ %zu ]%n", &index0, &namelen1); /* get root name  and index var[a] -> var a */
-                    namelen0 += namelen1;
-                }
-                while (nbr_read > 0);
-            }
-            else
-            {
-                nbr_read = sscanf(basevarname, "%[^[] [%*[^=] =  %zu : %zu ]", rootvarname, &index0, &index1); /* get root name  and index var[a] -> var a */
-            }
+            snprintf(index_str,sizeof(char),""); /* reset index_str. index_str format _2_3 */  
 
-
-            for (j=0;j<expr_size;j++)
+            printf("--rootvarname: %s\n",rootvarname);
+            for(j=0;j<expr_size;j++)
             {
-                snprintf(indexedvarname,NAMELENGTH*sizeof(char),"%s",rootvarname);
-                if ( expr_size == 1 && nbr_read == 2 )
+                strncpy(var.name[var_index+j],rootvarname,NAMELENGTH); 
+            }
+            index_factor = 1;
+            do
+            {
+                printf("--basevarname after strip: %s\n",basevarname+namelen0);
+                nbr_read = sscanf(basevarname+namelen0, " [ %zu ]%n", &index0, &namelen1); /* get index var[a] -> a */
+                printf("--1 nbr_read %d\n",nbr_read);
+                if (nbr_read == 1) /* single expresssion */
                 {
-                    snprintf(index_str,NAMELENGTH*sizeof(char),"_%zu",index0);
-                    strcat(indexedvarname, index_str);
+                    index1 = index0;
                 }
-                else if ( expr_size > 1 && nbr_read == 3)
+                nbr_read = sscanf(basevarname+namelen0, " [%*[^=] =  %zu : %zu ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
+                printf("--2 nbr_read %d\n",nbr_read);
+                if (nbr_read > 0)
                 {
-                    snprintf(index_str,NAMELENGTH*sizeof(char),"_%zu",index0+j);
-                    strcat(indexedvarname, index_str);
+                    index_factor *= index1;
+                    for(j=0;j<expr_size;j++)
+                    {
+                        snprintf(new_index,NAMELENGTH*sizeof(char),"[%zu]", index0 + (j/(expr_size/index_factor)) % index1 );
+                        strcat(var.name[var_index+j],new_index);
+                        printf("--var.name[j]: %s\n",var.name[var_index+j]);
+                    }
                 }
-                strncpy(var.name[var_index+j], indexedvarname,NAMELENGTH);
+                namelen0 += namelen1;
+            }
+            while (nbr_read > 0);
+            
+            for(j=0;j<expr_size;j++)
+            {
                 strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH);
             }
+
             for (j=0;j<expr_size;j++)
             {
                 var.expr_index[var_index+j] = var_index;
