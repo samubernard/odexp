@@ -465,14 +465,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '+' : /* increment the parameter and run */
                 case '=' : /* increment the parameter and run */
                     nbr_read = sscanf(cmdline+1,"%d",&rep_command);
-                    mu.value[p] *= get_dou("par_step");
+                    mu.value[p] *= pow( get_dou("par_step"), rep_command );
                     printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
                     rerun = 1;
                     replot = 1;
                     update_act_par_options(p, mu);
                     break;
                 case '-' : /* decrement the parameter and run */
-                    mu.value[p] /= get_dou("par_step");
+                    nbr_read = sscanf(cmdline+1,"%d",&rep_command);
+                    mu.value[p] /= pow( get_dou("par_step"), rep_command );
                     printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
                     rerun = 1;
                     replot = 1;
@@ -751,6 +752,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     ngy++;
                     ngy %= total_nbr_x;
                     gy = ngy+2;
+                    printf("--ngy=%ld total_nbr_x=%ld\n",ngy,total_nbr_x);
                     plotmode_normal=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
@@ -1566,6 +1568,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             plotmode_normal = 0;
             plotmode_continuation = 0;
             plotmode_range = 0;
+            rep_command = 1; /* reset to default = 1 */
             free(cmdline);
         }
         
@@ -2149,15 +2152,23 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     size_t  var_index = 0,
             j = 0,
             linecap = 0,
+           *index0,
+           *index1,
             expr_size;
     ssize_t linelength;
     int     namelen0,
-            namelen1;
+            namelen1,
+            nbr_read;
     size_t  nbr_dim = 0;
     long   *size_dim = malloc(sizeof(long));
     char *line = NULL;
     char str2match[NAMELENGTH];
     char key[NAMELENGTH]; 
+    char basevarname[NAMELENGTH];
+    char rootvarname[NAMELENGTH];
+    char indexedvarname[NAMELENGTH];
+    char index_str[NAMELENGTH];
+    char baseexpression[EXPRLENGTH];
     FILE *fr;
     int k = 0, has_read;
     int success = 0;
@@ -2194,32 +2205,54 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             }
 
             /* find the name root and expression */
-            if ( prefix && expr_size == 1 )
+            if ( prefix )
             {
                 snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
             }
-            else if ( prefix && expr_size > 1 )
-            {
-                snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
-            }
-            else if ( prefix == 0 && expr_size == 1)
+            else /* prefix ==  1 */
             {
                 snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep);
             }
-            else /* prefix == 0 && expr_size > 1 */
-            {
-                snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep);
-            }
-            sscanf(line,str2match, &namelen0, var.name[var_index], &namelen1, var.expression[var_index]);
+            sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression);
+            printf("--load_strings basevarname %s var_index %ld\n",basevarname, var_index);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
                 *var.max_name_length = (namelen1-namelen0);
             }
 
-            for (j=1;j<expr_size;j++)
+            /* convert basevarname var[i=a:b] to var_j for j=a;j<b */
+            sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */
+            printf("--basevarname after strip: %s\n",basevarname+namelen0);
+            if ( expr_size == 1 )
             {
-                strncpy(var.name[var_index+j], var.name[var_index],NAMELENGTH);
-                strncpy(var.expression[var_index+j],var.expression[var_index],EXPRLENGTH);
+                do 
+                {
+                    nbr_read = sscanf(basevarname+namelen0, " [ %zu ]%n", &index0, &namelen1); /* get root name  and index var[a] -> var a */
+                    namelen0 += namelen1;
+                }
+                while (nbr_read > 0);
+            }
+            else
+            {
+                nbr_read = sscanf(basevarname, "%[^[] [%*[^=] =  %zu : %zu ]", rootvarname, &index0, &index1); /* get root name  and index var[a] -> var a */
+            }
+
+
+            for (j=0;j<expr_size;j++)
+            {
+                snprintf(indexedvarname,NAMELENGTH*sizeof(char),"%s",rootvarname);
+                if ( expr_size == 1 && nbr_read == 2 )
+                {
+                    snprintf(index_str,NAMELENGTH*sizeof(char),"_%zu",index0);
+                    strcat(indexedvarname, index_str);
+                }
+                else if ( expr_size > 1 && nbr_read == 3)
+                {
+                    snprintf(index_str,NAMELENGTH*sizeof(char),"_%zu",index0+j);
+                    strcat(indexedvarname, index_str);
+                }
+                strncpy(var.name[var_index+j], indexedvarname,NAMELENGTH);
+                strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH);
             }
             for (j=0;j<expr_size;j++)
             {
@@ -2233,6 +2266,8 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
         k = 0; /* reset k */
     }
     fclose(fr);
+
+    free(size_dim);
 
     return success;
 }
