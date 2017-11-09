@@ -199,7 +199,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
 
     /* get tspan */
-    printf("\ntime span %s\n",hline);
+    printf("\ntime span %40s\n",hline);
     success = load_double_array(system_filename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
@@ -209,7 +209,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
 
     /* get random array */
-    printf("\nrandom numbers %s\n", hline);
+    printf("\nrandom numbers %40s\n", hline);
     get_nbr_el(system_filename,"U",1,(long *)&rnd.length,NULL);
     rnd.array = malloc(rnd.length*sizeof(double));
     for (i = 0; i < rnd.length; i++)
@@ -219,7 +219,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.rand_pointer = rnd.array;
 
     /* get constant arrays */
-    printf("\nconstant arrays%s\n", hline);
+    printf("\nconstant arrays %40s\n", hline);
     get_nbr_el(system_filename,"C",1, &cst.nbr_el, NULL);
     cst.value = malloc(cst.nbr_el*sizeof(double));
     cst.name = malloc(cst.nbr_el*sizeof(char*));
@@ -234,7 +234,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_strings(system_filename,cst,"C",1,1,' ', exit_if_nofile);
 
     /* get data files */
-    printf("\ndata files %s\n", hline);
+    printf("\ndata files %40s\n", hline);
     get_nbr_el(system_filename,"F",1, &dfl.nbr_el, NULL);
     dfl.value = malloc(dfl.nbr_el*sizeof(double));
     dfl.name = malloc(dfl.nbr_el*sizeof(char*));
@@ -938,10 +938,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            if ( i == 0 || fcn.expr_index[i] > fcn.expr_index[i-1] )
-                            {
-                                printf_list_str('a',i+eqn.nbr_el,padding,*fcn.max_name_length,fcn.name[i],fcn.expression[i]);
-                            }
+                            printf_list_str('a',i+eqn.nbr_el,padding,*fcn.max_name_length,fcn.name[i],fcn.expression[i]);
                         }
                     }
                     else if (op == 'c') /* list constant arrays*/ 
@@ -2153,7 +2150,8 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     ssize_t linelength;
     int     namelen0,
             namelen1,
-            nbr_read;
+            nbr_read_1,
+            nbr_read_2;
     size_t  nbr_dim = 0;
     long   *size_dim = malloc(sizeof(long));
     char *line = NULL;
@@ -2161,6 +2159,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     char key[NAMELENGTH]; 
     char basevarname[NAMELENGTH];
     char rootvarname[NAMELENGTH];
+    char iterator_str[NAMELENGTH];
     /* char **indexedvarname; */
     char index_str[NAMELENGTH];
     char new_index[NAMELENGTH];
@@ -2210,7 +2209,6 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
                 snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep);
             }
             sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression);
-            printf("--load_strings basevarname %s var_index %ld\n",basevarname, var_index);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
                 *var.max_name_length = (namelen1-namelen0);
@@ -2227,24 +2225,37 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             index_factor = 1;
             do
             {
-                nbr_read = sscanf(basevarname+namelen0, " [ %zu ]%n", &index0, &namelen1); /* get index var[a] -> a */
-                if (nbr_read == 1) /* single expresssion */
+                /* printf("--stripped basevarname: %s\n", basevarname+namelen0); */
+                nbr_read_1 = sscanf(basevarname+namelen0, " [ %zu ]%n", &index0, &namelen1); /* get index var[a] -> a */
+                if (nbr_read_1 == 1) /* single expresssion */
                 {
-                    index1 = index0;
+                    index1 = index0+1;
+                    snprintf(iterator_str,sizeof(char),"");
                 }
-                nbr_read = sscanf(basevarname+namelen0, " [%*[^=] =  %zu : %zu ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
-                if (nbr_read > 0)
+                nbr_read_2 = sscanf(basevarname+namelen0, " [%*[^=] =  %zu : %zu ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
+                if (nbr_read_2 == 2) /* array expresssion */
                 {
-                    index_factor *= index1;
+                    sscanf(basevarname+namelen0, " [%[^=]", iterator_str); /* get name of iterator */
+                    strcat(iterator_str,"=");
+                }
+                if (nbr_read_1 == 1 || nbr_read_2 == 2)
+                {
+                    index_factor *= (index1-index0);
+                    /* printf("--index0: %zu\n", index0); */
+                    /* printf("--index1: %zu\n", index1);  */
+                    /* printf("--index_factor: %zu\n", index_factor);  */
+                    /* printf("--expr_size: %zu\n", expr_size);  */
                     for(j=0;j<expr_size;j++)
                     {
-                        snprintf(new_index,NAMELENGTH*sizeof(char),"[%zu]", index0 + (j/(expr_size/index_factor)) % index1 );
+                        /* printf("--[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
+                        snprintf(new_index,NAMELENGTH*sizeof(char),"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 );
                         strcat(var.name[var_index+j],new_index);
+                        /* printf("-- %s\n",var.name[var_index+j]); */
                     }
                 }
                 namelen0 += namelen1;
             }
-            while (nbr_read > 0);
+            while (nbr_read_1 > 0 || nbr_read_2 > 0);
             
             for(j=0;j<expr_size;j++)
             {
