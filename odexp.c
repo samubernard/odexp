@@ -272,7 +272,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.expression = realloc(mu.expression,sizeof(char*));
         mu.nbr_el = 1;
         mu.nbr_expr = 1;
-        strncpy(mu.name[0],"not_a_parameter",NAMELENGTH);
+        strncpy(mu.name[0],"not_a_parameter",NAMELENGTH-1);
         mu.value[0] = NAN;
         *mu.max_name_length = 15; 
     } 
@@ -1206,7 +1206,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                     gopts[i].intval = strtol(svalue,NULL,10);
                                     break;
                                   case 's':
-                                    strncpy(gopts[i].strval,svalue,NAMELENGTH);
+                                    strncpy(gopts[i].strval,svalue,NAMELENGTH-1);
                                     break;
                                   default:
                                     printf("  Warning: option not defined\n");
@@ -1247,7 +1247,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                             gopts[i].numval = strtod(svalue2,NULL);
                                             break;
                                         case 's':
-                                            strncpy(gopts[i].strval,svalue2,NAMELENGTH);
+                                            strncpy(gopts[i].strval,svalue2,NAMELENGTH-1);
                                             break;
                                     }
                                     /* rerun = 1; */
@@ -1928,17 +1928,17 @@ int update_plot_options(long ngx, long ngy, long ngz, nve dxv)
 int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv)
 {
     char sval[NAMELENGTH];
-    strncpy(sval,get_str("plot_x"),NAMELENGTH);
+    strncpy(sval,get_str("plot_x"),NAMELENGTH-1);
     if ( strlen(sval) )
     {
         name2index(sval,dxv,ngx);
     }
-    strncpy(sval,get_str("plot_y"),NAMELENGTH);
+    strncpy(sval,get_str("plot_y"),NAMELENGTH-1);
     if ( strlen(sval) )
     {
         name2index(sval,dxv,ngy);
     }
-    strncpy(sval,get_str("plot_z"),NAMELENGTH);
+    strncpy(sval,get_str("plot_z"),NAMELENGTH-1);
     if ( strlen(sval) )
     {
         name2index(sval,dxv,ngz);
@@ -2039,7 +2039,7 @@ int update_act_par_index(int *p, const nve mu)
     char sval[NAMELENGTH];
     if ( mu.nbr_el > 0 )
     {
-        strncpy(sval,get_str("act_par"),NAMELENGTH);
+        strncpy(sval,get_str("act_par"),NAMELENGTH-1);
         if ( strlen(sval) )
         {
             name2index(sval,mu,(long *)p);
@@ -2236,7 +2236,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 
             for(j=0;j<expr_size;j++)
             {
-                strncpy(var.name[var_index+j],rootvarname,NAMELENGTH); 
+                strncpy(var.name[var_index+j],rootvarname,NAMELENGTH-1); 
             }
             index_factor = 1;
             do
@@ -2275,7 +2275,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             
             for(j=0;j<expr_size;j++)
             {
-                strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH);
+                strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH-1);
             }
 
             for (j=0;j<expr_size;j++)
@@ -2611,7 +2611,7 @@ int set_str(const char *name, const char * val)
     }
     if (idx_opt < NBROPTS)
     {
-      strncpy(gopts[idx_opt].strval,val,NAMELENGTH);
+      strncpy(gopts[idx_opt].strval,val,NAMELENGTH-1);
       success = 1;
     }
     else

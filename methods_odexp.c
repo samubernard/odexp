@@ -469,11 +469,11 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     }
 
 
-    while (  ((get_dou("range_par1") > get_dou("range_par0")) &  /* range with increasing values */
-              (mu.value[p] <= get_dou("range_par1")) & 
-              (mu.value[p] >= get_dou("range_par0"))) |
-             ((get_dou("range_par0") > get_dou("range_par1")) &  /* range with decreasing values */
-              (mu.value[p] >= get_dou("range_par1")) &
+    while (  ((get_dou("range_par1") > get_dou("range_par0")) &&  /* range with increasing values */
+              (mu.value[p] <= get_dou("range_par1")) && 
+              (mu.value[p] >= get_dou("range_par0"))) ||
+             ((get_dou("range_par0") > get_dou("range_par1")) &&  /* range with decreasing values */
+              (mu.value[p] >= get_dou("range_par1")) && 
               (mu.value[p] <= get_dou("range_par0"))) )
     {
     /* tspan */
@@ -998,12 +998,15 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
             mu0 = mu.value[p];
 
             /* try to detect turning-point */
-            /* mu1 - mu0 small
-             * eigenvalue close to zero
-             * 3 stst or more already computed
+            /* 1. mu1 - mu0 small
+             * 2. eigenvalue close to zero
+             * 3. 3 stst or more already computed
              */
-            if ( (fabs(mu0 - mu1) < fabs(maxh*get_dou("phasespace_rel_tol"))) & 
-                    (((mu0>mu1) & (mu1>mu2)) | ((mu0<mu1) & (mu1<mu2))) & 
+            /* printf("--fabs(maxh*get_dou(phasespace_rel_tol))=%g, mu0-mu1=%g\n",fabs(maxh*get_dou("phasespace_rel_tol")),fabs(mu0-mu1)); */
+            /* printf("--cond on mu:%d\n", (((mu0>mu1) && (mu1>mu2)) || ((mu0<mu1) && (mu1<mu2)))); */
+            /* printf("--nstst=%d\n",nstst); */
+            if ( (fabs(mu0 - mu1) < fabs(maxh*get_dou("phasespace_rel_tol"))) && 
+                    (((mu0>mu1) && (mu1>mu2)) || ((mu0<mu1) && (mu1<mu2))) && 
                     (nstst > 2) )
             {
                 for (i=0; i<ode_system_size; i++)
@@ -1067,7 +1070,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                 ics.value[i] = b*mu.value[p]+c; /* next initial guess */
             } 
         }
-        if ( (nstst > 2) & turning_point_found) /* Turning point found  */
+        if ( (nstst > 2) && turning_point_found) /* Turning point found  */
         {
             for (i=0; i<ode_system_size; i++)
             {
@@ -1077,7 +1080,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
             turning_point_before = 1;
             
         }
-        else if ( (nstst > 2) & turning_point_before )
+        else if ( (nstst > 2) && turning_point_before )
         {
             for (i=0; i<ode_system_size; i++)
             {
@@ -1091,7 +1094,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
             }
             turning_point_before = 0;
         }
-        else if ( (nstst > 2) & (turning_point_found == 0) )
+        else if ( (nstst > 2) && (turning_point_found == 0) )
         {
             /* 2nd-order extrapolation; solve 3x3 vandermonde matrix */
             /* printf("--mu2=%g, mu1=%g, mu0=%g\n",mu2,mu1,mu0); */
