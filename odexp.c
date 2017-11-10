@@ -464,7 +464,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 case '+' : /* increment the parameter and run */
                 case '=' : /* increment the parameter and run */
-                    nbr_read = sscanf(cmdline+1,"%d",&rep_command);
+                    while ( cmdline[rep_command] == '+' || cmdline[rep_command] == '=')
+                    {
+                        rep_command++;
+                    }
+                    nbr_read = sscanf(cmdline+1,"%d",&rep_command); /* rep_command default value 1 */
                     mu.value[p] *= pow( get_dou("par_step"), rep_command );
                     printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
                     rerun = 1;
@@ -472,6 +476,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     update_act_par_options(p, mu);
                     break;
                 case '-' : /* decrement the parameter and run */
+                    while ( cmdline[rep_command] == '-' )
+                    {
+                        rep_command++;
+                    }
                     nbr_read = sscanf(cmdline+1,"%d",&rep_command);
                     mu.value[p] /= pow( get_dou("par_step"), rep_command );
                     printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
