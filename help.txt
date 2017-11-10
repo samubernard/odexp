@@ -210,9 +210,14 @@ E c a*a
 Auxiliary functions. 
 Auxiliary functions depend on parameters, expressions and variables. 
 Auxiliary functions are declared as name function pairs
+Auxiliary functions must be scalars or one-dimensional arrays
 
 .nf
 A d sqrt(x+c)
+
+A a[i=0:5] X[i]*X[i]
+A norm_x sqrt(sum(a,5))
+A norm_x2 dotprod(X,X,5)
 .fi
 
 .TP
