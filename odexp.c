@@ -59,21 +59,21 @@ struct gen_option gopts[NBROPTS] = {
     {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance", "ode"},
     {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
     {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
-    {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steady states"},  
-    {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steady states"},  
-    {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steady states"},  
-    {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]", "steady states"},  
-    {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]", "steady states"},
-    {"c/h","cont_h", 'd', 0.01, 0, "", "initial parameter continuation step", "continuation methods"},
-    {"c/maxh","cont_maxh", 'd', 0.05, 0, "", "maximal parameter continuation step", "continuation methods"},
-    {"r/par0","range_par0", 'd', 0.0, 0, "", "initial parameter value for range", "parameter range"},
-    {"r/par1","range_par1", 'd', 1.0, 0, "", "final parameter value for range", "parameter range"},
-    {"r/mstep","range_mult_step", 'd', 1.0, 0, "", "parameter step multiplicative increment", "parameter range"},
-    {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment", "parameter range"},
-    {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameter range"},
-    {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameter range"},
-    {"r/ric","range_reset_ic", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameter range"},
-    {"g/font","gnuplot_font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot font", "gnuplot settings"} };
+    {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steadyStates"},  
+    {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steadyStates"},  
+    {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steadyStates"},  
+    {"m/range","phasespace_search_range", 'd', 1000.0, 0, "", "search range [0, v*var value]", "steadyStates"},  
+    {"m/min","phasespace_search_min", 'd', 0.0, 0, "", "search range [0, v*var value]", "steadyStates"},
+    {"c/h","cont_h", 'd', 0.01, 0, "", "initial parameter continuation step", "continuationMethods"},
+    {"c/maxh","cont_maxh", 'd', 0.05, 0, "", "maximal parameter continuation step", "continuationMethods"},
+    {"r/par0","range_par0", 'd', 0.0, 0, "", "initial parameter value for range", "parameterRange"},
+    {"r/par1","range_par1", 'd', 1.0, 0, "", "final parameter value for range", "parameterRange"},
+    {"r/mstep","range_mult_step", 'd', 1.0, 0, "", "parameter step multiplicative increment", "parameterRange"},
+    {"r/astep","range_add_step", 'd', 0.1, 0, "", "parameter step additive increment", "parameterRange"},
+    {"r/mic","range_mult_ic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameterRange"},
+    {"r/aic","range_add_ic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
+    {"r/ric","range_reset_ic", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
+    {"g/font","gnuplot_font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot font", "gnuplotSettings"} };
 
 
 
@@ -398,7 +398,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
     update_act_par_index(&p, mu);
     update_act_par_options(p, mu);
-    printf_options();
+    printf_options("");
 
     /* set IC to their numerical values */
     num_ic = malloc(ode_system_size*sizeof(int));
@@ -986,7 +986,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 'o') /* list options */
                     {
-                        printf_options();
+                        nbr_read = sscanf(cmdline+2,"%s",svalue);
+                        if (nbr_read > 0)
+                        {
+                            printf_options(svalue);
+                        }
+                        else
+                        {
+                            printf_options("");         
+                        }
                     }
                     else if (op == 'l') /* list fiLe and various information */
                     {
@@ -2467,18 +2475,21 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
     return success;
 }
 
-int printf_options()
+int printf_options(const char *optiontype)
 {
     long i; 
     char last_option_type[NAMELENGTH]; 
     snprintf(last_option_type,NAMELENGTH*sizeof(char),""); 
     for(i=0;i<NBROPTS;i++)
     {
-      if ( strcmp(gopts[i].optiontype,last_option_type) )
+      if ( strcmp(gopts[i].optiontype,optiontype) == 0 || strlen(optiontype) == 0 )
       {
-        printf("\n%-*s %s\n",20,gopts[i].optiontype,hline);
+        if ( strcmp(gopts[i].optiontype,last_option_type) )
+        {
+            printf("\n%-*s %s\n",20,gopts[i].optiontype,hline);
+        }
+        printf_option_line(i);
       }
-      printf_option_line(i);
       snprintf(last_option_type,NAMELENGTH*sizeof(char),"%s",gopts[i].optiontype); 
     }
     return 1;
@@ -2738,6 +2749,10 @@ completion_list_generator(const char *text, int state)
             return strdup(name);
         }
         name = gopts[list_index].abbr;
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+        name = gopts[list_index].optiontype;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }

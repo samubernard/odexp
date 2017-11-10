@@ -116,8 +116,8 @@ List all array files (nrows ncols filename)
 .BR ls            
 List steady states
 .TP
-.BR lo          
-List options 
+.BR lo " " [\fIoptiontype\fR]         
+List options that match \fIoptiontype\fR, or all options if \fIoptiontype\fR is missing
 .TP
 .BR ll          
 List file name and various information 
@@ -130,13 +130,13 @@ Range over parameters. The active parameter takes values between r/par0 and r/pa
 multiplicative step r/mstep and additive stesp r/astep. For each value, the system is
 integrated over tspan and the min and the max of each variable is stored in the file range.tab. 
 If r/ric is 0, the initial conditions are set to the last state of the previous integration, 
-otherwise, the initial conditions are set as usual. 
+otherwise, the initial conditions are set as usual
 .TP
 .BR ms            
 Find a steady state with starting guess given by initial conditions 
 .TP
-.BR o " " \fIfilename\fR 
-Load parameters values and options from file \fIfilename\rR 
+.BR o " " \fIfilename\fR  
+Load parameters values and options from file \fIfilename\fR 
 .TP
 .BR P " " \fIval\fR        
 Set current parameter to \fIval\fR

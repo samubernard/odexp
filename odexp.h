@@ -126,7 +126,7 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
 int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         nve cst, nve dfl, double_array tspan, const char *curr_buffer, const char *odexp_filename);
 
-int printf_options();
+int printf_options(const char *optiontype);
 int printf_option_line(long i);
 int set_dou(const char *name, const double val); 
 int set_int(const char *name, const int val); 
