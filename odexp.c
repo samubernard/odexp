@@ -203,7 +203,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_double_array(system_filename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
-        printf("  %serror: TIMESPAN not found, exiting...%s\n",T_ERR,T_NOR);
+        fprintf(stderr,"\n  Error: time span not found.\n"
+                "  One line in file %s should be of the form\n"
+                "  TIMESPAN 0 100\n  Exiting...\n\n", odexp_filename);
         exit ( EXIT_FAILURE );
     }
     printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
@@ -313,7 +315,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_strings(system_filename,ics,"I",1,1,' ', exit_if_nofile);
     if (!success)
     {
-        printf("  Dynamic variables not found... exiting\n");
+        fprintf(stderr,"\n  Error: Initial conditions not found.\n"
+                "  File %s should contain initial condition for all dynamical variables "
+                "with lines of the form\n"
+                "  INITIAL X X0\nExiting...\n\n", odexp_filename);
         exit ( EXIT_FAILURE );
     } 
     ode_init_conditions(tspan.array[0],ics.value,&mu);
@@ -355,7 +360,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_strings(system_filename,eqn,"d",1,0,'=', exit_if_nofile);   
     if (!success)
     {
-        printf("  Equations not found... exiting\n");
+        fprintf(stderr,"\n  Error: Equations not found.\n"
+                "  File %s should contain equations for all dynamical variables "
+                "with lines of the form\n"
+                "  dX/dt = RHS\n  Exiting...\n\n", odexp_filename);
         exit ( EXIT_FAILURE );
     } 
 
@@ -643,7 +651,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         if ( nbr_read < 2 ) 
                         {
-                            fprintf(stderr,"  %serror: requires 2 or 3 variable names/indices%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sError: Requires 2 or 3 variable names/indices%s\n",T_ERR,T_NOR);
                             plotmode_normal = 0;
                         }
                         update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
@@ -659,7 +667,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %serror: x-axis index out of bound%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sError: x-axis index out of bound%s\n",T_ERR,T_NOR);
                             plotmode_normal = 0;
                         }
                         if ( (ngy >= -1) && ngy < total_nbr_x)
@@ -668,7 +676,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %serror: y-axis index out of bound%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sError: y-axis index out of bound%s\n",T_ERR,T_NOR);
                             plotmode_normal = 0;
                         }
                         update_plot_options(ngx,ngy,ngz,dxv);
@@ -683,13 +691,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %swarning: z-axis index out of bound%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %serror: z-axis index out of bound%s\n",T_ERR,T_NOR);
                             plotmode_normal = 0;
                         }
                     } 
                     if ( nbr_read == 1 || nbr_read > 3 )
                     {
-                        fprintf(stderr,"  %serror: requires 2 or 3 variable names/indices%s\n",T_ERR,T_NOR);
+                        fprintf(stderr,"  %sError: Requires 2 or 3 variable names/indices%s\n",T_ERR,T_NOR);
                         plotmode_normal = 0;
                     }
                     break;
@@ -718,7 +726,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else 
                     {
-                        fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
+                        fprintf(stderr,"  %sError: Variable index out of bound%s\n",T_ERR,T_NOR);
                         replot = 0;
                         plotmode_normal = 0;
                     }
@@ -750,7 +758,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else 
                     {
-                        fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
+                        fprintf(stderr,"  %sError: Variable index out of bound%s\n",T_ERR,T_NOR);
                         replot = 0;
                         plotmode_normal = 0;
                     }
@@ -853,7 +861,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %serror: t1 %g should be greater than t0.%s\n",T_ERR,nvalue,T_NOR);
+                            fprintf(stderr,"  %sError: End time point t1 %g should be greater than t0.%s\n",T_ERR,nvalue,T_NOR);
                         }
                     }
                     else if ( nbr_read == 2 ) /* try to set t0 to nvalue and t1 to nvalue2 */
@@ -867,12 +875,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %serror: t1 %g should be greater than t0 %g.%s\n",T_ERR,nvalue,nvalue2,T_NOR);
+                            fprintf(stderr,"  %sError: End time point t1 %g should be greater than t0 %g.%s\n",T_ERR,nvalue,nvalue2,T_NOR);
                         }
                     }
                     else /* value missing */
                     {
-                            fprintf(stderr,"  %serror: values for t1 or t0 t1 expected.%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sError: Numerical values for t1 or t0 t1 expected.%s\n",T_ERR,T_NOR);
                     }
                     break;
                 case 'l' : /* list name value pairs */
@@ -1017,7 +1025,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else
                     {
-                        fprintf(stderr,"  %serror: unknown option%s\n",T_ERR,T_NOR);
+                        fprintf(stderr,"  %sError: Unknown option. Cannot list '%c' %s\n",T_ERR,op,T_NOR);
                     }
                     break;
                 case 'p' : /* change current parameter */
@@ -1042,7 +1050,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                       }
                       else
                       {
-                          fprintf(stderr,"  %serror: parameter index out of bound. Use lp to list parameters%s\n",T_ERR,T_NOR);
+                          fprintf(stderr,"  %sError: Parameter index out of bound. Use lp to list parameters%s\n",T_ERR,T_NOR);
                           printf("  active parameter %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                       }
                       
@@ -1083,7 +1091,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else
                     {
-                        fprintf(stderr,"  %serror: expected a parameter value (double)%s\n",T_ERR,T_NOR);
+                        fprintf(stderr,"  %sError: Expected a numerical parameter value (double)%s\n",T_ERR,T_NOR);
                     }
                     update_act_par_options(p, mu);
                     break;
@@ -1113,7 +1121,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           }
                           else 
                           {
-                            fprintf(stderr,"  %serror: variable index ou of bound.%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sError: Variable index out of bound.%s\n",T_ERR,T_NOR);
                             replot = 0;
                           }
                         }
@@ -1143,7 +1151,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %serror: too many arguments..%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sError: Too many arguments..%s\n",T_ERR,T_NOR);
                             replot = 0;
                         }
                     }
@@ -1159,7 +1167,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else 
                         {
-                            fprintf(stderr,"  %serror: var index out of bound%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sError: Variable index out of bound%s\n",T_ERR,T_NOR);
                             replot = 0;
                         }
                     }
@@ -1184,7 +1192,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else
                         {
-                            fprintf(stderr,"  %serror: tspan index out of bound%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sError: Time span index out of bound%s\n",T_ERR,T_NOR);
                             replot = 0;
                         }
                     }
@@ -1219,7 +1227,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             }
                             else
                             {
-                                fprintf(stderr,"  %serror: option index out of bound%s\n",T_ERR,T_NOR);
+                                fprintf(stderr,"  %sError: Option index out of bound%s\n",T_ERR,T_NOR);
                                 replot = 0;
                             }
                         }
@@ -1259,7 +1267,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             }
                             else
                             {    
-                                fprintf(stderr,"  %serror: option name or number missing%s\n",T_ERR,T_NOR);
+                                fprintf(stderr,"  %sError: Option name or number missing%s\n",T_ERR,T_NOR);
                                 replot = 0;
                             }
                         }
@@ -1286,7 +1294,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     nbr_read = sscanf(cmdline+2,"%s",par_filename);
                     if ( nbr_read < 1 )
                     {
-                        fprintf(stderr,"  %serror: missing parameter file name.%s\n",T_ERR,T_NOR);
+                        fprintf(stderr,"  %sError: Name of parameter file missing.%s\n",T_ERR,T_NOR);
                     }
                     else /* read par_filename for parameters, initial conditions, and tspan */
                     {
@@ -1409,11 +1417,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else
                     {
-                        fprintf(stderr,"  %serror: filename required.%s\n",T_ERR,T_NOR);
+                        fprintf(stderr,"  %sError: Name of file required .%s\n",T_ERR,T_NOR);
                     }
                     break;
                 default :
-                    printf("  Unknown command. Type q to quit, h for help\n");
+                    printf("  Unknown command '%c'. Type q to quit, h for help\n", c);
             }  
             if (quit)
             {
@@ -1605,7 +1613,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* write history */
     if ( write_history(".history") )
     {
-      printf("\n  error: could not write history\n");
+      fprintf(stderr, "\n  Error: could not write history\n");
     }
 
     /* remove frozen curves */
@@ -1680,7 +1688,7 @@ int get_nbr_el(const char *filename, const char *sym,\
 
     if ( fr == NULL )
     {
-        fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+        fprintf(stderr,"  Error: %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
         exit ( EXIT_FAILURE );
     }
    
@@ -1752,7 +1760,7 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
     }
     else
     {
-        printf("  Error in determining number of elements in %s (nbr index found = %d)... exiting\n",line,nbr_index);
+        fprintf(stderr,"  Error: Could not determine number of elements in %s (nbr index found = %d)... exiting\n",line,nbr_index);
         exit ( EXIT_FAILURE );
     }
 
@@ -1778,12 +1786,12 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
     {
         if ( exit_if_nofile ) /* file needed - exit with error */
         {
-            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            fprintf(stderr,"  Error: %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
             exit ( EXIT_FAILURE );
         }
         else /* load nothing and return */
         {
-            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            fprintf(stderr,"  %serror: Could not open file %s%s\n", T_ERR,filename,T_NOR);
             return 0;
         }
     }
@@ -1843,12 +1851,12 @@ int load_options(const char *filename, int exit_if_nofile)
     {
         if ( exit_if_nofile )
         {
-            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            fprintf(stderr,"  Error: %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
             exit ( EXIT_FAILURE );
         }
         else
         {
-            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            fprintf(stderr,"  %sError: Could not open file %s%s\n", T_ERR,filename,T_NOR);
             return 0;
         }
     }
@@ -1986,7 +1994,7 @@ int name2index( const char *name, nve var, long *n) /* get index of var.name == 
         }
         else
         {
-            fprintf(stderr,"  %serror: unknown variable name: %s%s\n",T_ERR,name,T_NOR);
+            fprintf(stderr,"  %sError: Unknown variable name: %s. List variables with 'lx'.%s\n",T_ERR,name,T_NOR);
         }
         /* else do not change *n */
     }
@@ -2025,7 +2033,7 @@ int option_name2index( const char *name, long *n) /* get index of option.name ==
         }
         else
         {
-            fprintf(stderr,"  %serror: unknown option '%s' %s\n",T_ERR,name,T_NOR);
+            fprintf(stderr,"  %sError: Unknown option '%s' %s\n",T_ERR,name,T_NOR);
         }
         /* else do not change *n */
     }
@@ -2095,12 +2103,12 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     {
         if ( exit_if_nofile )
         {
-            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            fprintf(stderr,"  Error: %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
             exit ( EXIT_FAILURE );
         }
         else
         {
-            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            fprintf(stderr,"  %sError: Could not open file %s%s\n", T_ERR,filename,T_NOR);
             return 0;
         }
     }
@@ -2194,7 +2202,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
         }
         else
         {
-            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            fprintf(stderr,"  %sError: Could not open file %s%s\n", T_ERR,filename,T_NOR);
             return 0;
         }
     }
@@ -2313,12 +2321,12 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
     {
         if ( exit_if_nofile )
         {
-            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            fprintf(stderr,"  Error: %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
             exit ( EXIT_FAILURE );
         }
         else
         {
-            fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,filename,T_NOR);
+            fprintf(stderr,"  %sError: Could not open file %s%s\n", T_ERR,filename,T_NOR);
             return 0;
         }
     }
@@ -2560,7 +2568,7 @@ int set_dou(const char *name, const double val)
     }
     else
     {
-      fprintf(stderr,"  %serror: could not assign option %s%s\n", T_ERR,name,T_NOR);
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
     }
 
     return success;
@@ -2588,7 +2596,7 @@ int set_int(const char *name, const int val)
     }
     else
     {
-      fprintf(stderr,"  %serror: could not assign option %s%s\n", T_ERR,name,T_NOR);
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
     }
 
     return success;
@@ -2616,7 +2624,7 @@ int set_str(const char *name, const char * val)
     }
     else
     {
-      fprintf(stderr,"  %serror: could not assign option %s%s\n", T_ERR,name,T_NOR);
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
     }
 
     return success;

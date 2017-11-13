@@ -501,15 +501,23 @@ echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
 echo "int ode_init_conditions(const double t, double y_[], void *params);" >>.odexp/model.c
 echo "" >>.odexp/model.c
+
+# ====================================================================================
+# BEGIN MAIN 
 echo "int main ( int argc, char *argv[] )" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    int status;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    status = odexp(ode_rhs,ode_init_conditions,multiroot_rhs,argv[1]);" >>.odexp/model.c
 echo "" >>.odexp/model.c
-echo "    return status;" >>.odexp/model.c
+echo "    exit(EXIT_SUCCESS);" >>.odexp/model.c
 echo "}" >>.odexp/model.c
 echo "" >>.odexp/model.c
+# END MAIN
+# ====================================================================================
+
+# ====================================================================================
+# BEGIN MULTIROOT_RHS
 echo "/* Wrapper function for ode_rhs. Modify at your own risks */" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
@@ -535,6 +543,9 @@ echo "" >>.odexp/model.c
 echo "    return GSL_SUCCESS;" >>.odexp/model.c
 echo "}" >>.odexp/model.c
 echo "" >>.odexp/model.c
+# END MULTIROOT_RHS
+# ====================================================================================
+
 echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single node */" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c

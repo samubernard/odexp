@@ -911,7 +911,7 @@ int jac(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),
 int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
     nve ics, nve mu)
 {
-    /* naive stst continuation method */
+    /* naive steady state continuation method */
     clock_t start = clock();
     long p = get_int("act_par"); 
     long i;
@@ -968,7 +968,10 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
 
     while ( ntry++ < max_fail )
     {
-        /* try to find a stst */
+        /* ============================= 
+         * try to find a steady state 
+         * for fixed parameter values mu
+         * =============================*/
         printf("  *----------------------*\n");
         printf("  %ld: %s = %g, s=%g\n",ntry,mu.name[p],mu.value[p],s);
         status = ststsolver(multiroot_rhs,ics,mu, &stst);
@@ -997,39 +1000,37 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
             mu1 = mu0;
             mu0 = mu.value[p];
 
-            /* try to detect turning-point */
-            /* 1. mu1 - mu0 small
-             * 2. eigenvalue close to zero
-             * 3. 3 stst or more already computed
-             */
-            /* printf("--fabs(maxh*get_dou(phasespace_rel_tol))=%g, mu0-mu1=%g\n",fabs(maxh*get_dou("phasespace_rel_tol")),fabs(mu0-mu1)); */
-            /* printf("--cond on mu:%d\n", (((mu0>mu1) && (mu1>mu2)) || ((mu0<mu1) && (mu1<mu2)))); */
-            /* printf("--nstst=%d\n",nstst); */
+            /* ============================================
+             * try to detect turning-point 
+             * 1. |mu1 - mu0| small
+             * 2. One (pair) eigenvalue close to zero
+             * 3. 3 steady states or more already computed
+             * ============================================*/
             if ( (fabs(mu0 - mu1) < fabs(maxh*get_dou("phasespace_rel_tol"))) && 
                     (((mu0>mu1) && (mu1>mu2)) || ((mu0<mu1) && (mu1<mu2))) && 
-                    (nstst > 2) )
+                    (nstst > 2) )  /* we are close to a turning point */
             {
-                for (i=0; i<ode_system_size; i++)
+                for (i=0; i<ode_system_size; i++) 
                 {
-                    if ( fabs(stst.re[i]) < eig_tol )
+                    if ( fabs(stst.re[i]) < eig_tol ) /* test 3 */
                     {
                         turning_point_found = 1;
                         printf("  ** turning point found **\n");
-                        fprintf(br_file,"\tturning point");
+                        fprintf(br_file,"\tturning point"); /* write note: turning point */
                     }
                 }
             }
-            else
+            else /* not a turning point, do not write note in file */
             {
                 fprintf(br_file,"\t");
             }
             fprintf(br_file,"\n");
 
-            if ( turning_point_found )
+            if ( turning_point_found ) /* turning point found: change parameter direction */
             {
-                s *= -1; /* change direction */
+                s *= -1; 
             }
-            else
+            else /* try to increase the parameter step s */ 
             {
                 s *= 1.1;
                 if ( fabs(s)>fabs(maxh) )
@@ -1044,10 +1045,10 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                     }
                 }
             }
-            mu.value[p] += s;
+            mu.value[p] += s; /* increment parameter */
 
         }
-        else
+        else /* a new steady state could not be found, reduce the parameter step */
         {
             s *= 0.5;
             mu.value[p] = mu0 + s; 
@@ -1070,7 +1071,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
                 ics.value[i] = b*mu.value[p]+c; /* next initial guess */
             } 
         }
-        if ( (nstst > 2) && turning_point_found) /* Turning point found  */
+        if ( (nstst > 2) && turning_point_found) /* Turning point found: take initial guess symmetrical  */
         {
             for (i=0; i<ode_system_size; i++)
             {
@@ -1094,9 +1095,8 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
             }
             turning_point_before = 0;
         }
-        else if ( (nstst > 2) && (turning_point_found == 0) )
+        else if ( (nstst > 2) && (turning_point_found == 0) ) /* 2nd-order extrapolation; solve 3x3 vandermonde matrix */
         {
-            /* 2nd-order extrapolation; solve 3x3 vandermonde matrix */
             /* printf("--mu2=%g, mu1=%g, mu0=%g\n",mu2,mu1,mu0); */
             gsl_matrix_set(vanderm, 0, 0, mu0*mu0);
             gsl_matrix_set(vanderm, 1, 0, mu1*mu1);
