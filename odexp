@@ -219,9 +219,32 @@ declare_uniform_random_array () {
 
 }
 
-assign_parametric_expressions () {
-    # assign parametric expressions and declare them in .odexp/model.c
-    # assign vector parametric expressions and declare them in .odexp/model.c
+define_functions () {
+    # declare and define functions
+    gawk -F '=' '$1 ~ /^@/ {
+        expr=$2;
+        gsub(/^[ ]*/,expr);
+        gsub(/[ ]*$/,expr);
+        split($1,myfunc,/[@=]/);
+        split(myfunc[2],funcargs,/[()]/);
+        funcname=funcargs[1];
+        myargs=funcargs[2];
+        nargs=split(myargs,myargs_list,/,/);
+        gsub(/^[ ]*/,"",funcname);
+        gsub(/[ ]*$/,"",funcname);
+        printf "double %s(", funcname;
+        for(i=1;i<nargs;i++) {
+            gsub(/^[ ]*/,"",mayargs_list[i]);
+            printf "double %s, ", myargs_list[i]; 
+        }
+        printf "double %s", myargs_list[nargs];
+        printf  ") { return %s; }\n", expr;
+    }' $file >>.odexp/model.c  
+}
+
+define_parametric_expressions () {
+    # define parametric expressions and declare them in .odexp/model.c
+    # define vector parametric expressions and declare them in .odexp/model.c
     gawk -F ' ' '$1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       lhs=$2;
       $1="";
@@ -254,8 +277,8 @@ assign_parametric_expressions () {
       }' $file >>.odexp/model.c
 }
 
-assign_auxiliary_functions () {
-    # assign auxiliary function to model.c
+define_auxiliary_functions () {
+    # define auxiliary function to model.c
     gawk -F ' ' '$1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       lhs=$2;
       $1="";
@@ -284,7 +307,7 @@ assign_auxiliary_functions () {
       {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $file >>.odexp/model.c
 }
 
-assign_variables () {
+define_variables () {
   gawk -F ' ' -v nv=0 '$1 ~ /^[dD][a-zA-Z0-9_]+(\[[^:]\])*\/[dD]{1}[tT]{1}/ {
       match($1,/^[dD][a-zA-Z0-9_\[\]]+/);
       lhs=substr($1, RSTART+1,RLENGTH-1);
@@ -317,7 +340,7 @@ assign_variables () {
     }' $file >>.odexp/model.c
 }
 
-assign_equations () {
+define_equations () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[dD][a-zA-Z0-9_]+(\[[^:]\])*\/[dD]{1}[tT]{1}/ {
       split($0,ex,/=/); printf "    f_[%d] = %s;\n", nv, ex[2]; nv++};
       
@@ -341,7 +364,7 @@ assign_equations () {
       {printf " = %s;\n%-*s}\n", myexpr, k-2, ""}; }' $file >>.odexp/model.c
 }
 
-assign_aux_pointer () {
+define_aux_pointer () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       ex=$2;
       printf "    aux_[%d] = %s;\n", nv, ex; nv++
@@ -360,7 +383,7 @@ assign_aux_pointer () {
       }' $file >>.odexp/model.c
 }
 
-assign_parametric_expression_pointer () {
+define_parametric_expression_pointer () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       lhs=$2;
       printf "    expr_[%d] = %s;\n", nv, lhs; nv++
@@ -395,7 +418,7 @@ assign_parametric_expression_pointer () {
       }' $file >>.odexp/model.c
 }
 
-assign_uniform_random_array () {
+define_uniform_random_array () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[uU][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       ex=$2;
       printf "    %s = rnd_[%d];\n", ex, nv; nv++
@@ -415,7 +438,7 @@ assign_uniform_random_array () {
 }
 
 
-assign_initial_conditions () {
+define_initial_conditions () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[iI][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       $1="";
       $2="";
@@ -481,16 +504,22 @@ echo "/* =================================================================" >>.o
 echo "                              Global variables" >>.odexp/model.c
 echo "================================================================= */" >>.odexp/model.c
 # ====================================================================================
-# DECLARE AND ASSIGN CONSTANT ARRAYS
+# DECLARE AND DEFINE CONSTANT ARRAYS
 echo "" >>.odexp/model.c
-echo "/* Declaration and initialisation of constant arrays from files */" >>.odexp/model.c
+echo "/* Declaration and definition of constant arrays from files */" >>.odexp/model.c
 declare_array_from_file
 echo "" >>.odexp/model.c  
 # ====================================================================================
 # ====================================================================================
-# DECLARE AND ASSIGN CONSTANT ARRAYS
-echo "/* Declaration and initialisation of constant arrays */" >>.odexp/model.c
+# DECLARE AND DEFINE CONSTANT ARRAYS
+echo "/* Declaration and definition of constant arrays */" >>.odexp/model.c
 declare_constant_array
+echo "" >>.odexp/model.c  
+# ====================================================================================
+# ====================================================================================
+# DECLARE AND DEFINE FUNCTIONS
+echo "/* Declaration and definition of functions */" >>.odexp/model.c
+define_functions
 echo "" >>.odexp/model.c  
 # ====================================================================================
 
@@ -570,7 +599,7 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE AND ASSIGN PARAMETERS
+# DECLARE AND DEFINE PARAMETERS
 # Parameters cannot be vectors
 
 echo "" >>.odexp/model.c
@@ -580,7 +609,7 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE AND ASSIGN PARAMETERS 
+# DECLARE AND DEFINE PARAMETERS 
 # system_defines
 # ====================================================================================
 
@@ -592,7 +621,7 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE PARAMETRIC EXPRESSIONS AND ASSIGN NONVECTOR PARAMETRIC EXPRESSIONS
+# DECLARE PARAMETRIC EXPRESSIONS AND DEFINE NONVECTOR PARAMETRIC EXPRESSIONS
 echo "    /* parametric expressions */" >>.odexp/model.c
 declare_parametric_expressions
 
@@ -614,47 +643,47 @@ declare_variables
 
 
 # ====================================================================================
-# ASSIGN UNIFORM RANDOM ARRAY
+# DEFINE UNIFORM RANDOM ARRAY
 echo "" >>.odexp/model.c
 echo "    /* Initialization - uniform random array */" >>.odexp/model.c
 # initialize uniform random array and write them in .odexp/model.c
-assign_uniform_random_array 
+define_uniform_random_array 
 # ====================================================================================
 
 # ====================================================================================
-# ASSIGN PARAMETRIC EXPRESSIONS
+# DEFINE PARAMETRIC EXPRESSIONS
 echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
 # initialize parametric expression vectors and write them in .odexp/model.c
-assign_parametric_expressions 
+define_parametric_expressions 
 # ====================================================================================
 
 # ====================================================================================
-# ASSIGN DYNAMICAL VARIABLES
+# DEFINE DYNAMICAL VARIABLES
 echo "" >>.odexp/model.c
 echo "    /* Initialization - variables */" >>.odexp/model.c
-assign_variables
+define_variables
 
-# ASSIGN AUXILIARY FUNCTIONS
+# DEFINE AUXILIARY FUNCTIONS
 echo "" >>.odexp/model.c
 echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
 # initialize auxiliary function 
-assign_auxiliary_functions
+define_auxiliary_functions
 
-# ASSIGN EQUATIONS 
+# DEFINE EQUATIONS 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - equations */" >>.odexp/model.c
-assign_equations
+define_equations
 
-# assign aux_pointer 
+# DEFINE aux_pointer 
 echo "" >>.odexp/model.c
 echo "    /* initialization - aux_pointer */" >>.odexp/model.c
-assign_aux_pointer
+define_aux_pointer
 
-# assign parametric_expression_pointer 
+# DEFINE parametric_expression_pointer 
 echo "" >>.odexp/model.c
 echo "    /* initialization - expr_pointer */" >>.odexp/model.c
-assign_parametric_expression_pointer
+define_parametric_expression_pointer
 
 # $1 ~ /^[a-zA-Z0-9_]\'/ && $1 !~ /[\[\]]/ {split($1,a,/\'/); print a[1]}; 
 
@@ -687,7 +716,7 @@ declare_iterators
 echo "" >>.odexp/model.c
 
 # ====================================================================================
-# DECLARE AND ASSIGN PARAMETERS
+# DECLARE AND DEFINE PARAMETERS
 # Parameters cannot be vectors
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
@@ -703,7 +732,7 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE PARAMETRIC EXPRESSIONS AND ASSIGN NONVECTOR PARAMETRIC EXPRESSIONS
+# DECLARE PARAMETRIC EXPRESSIONS AND DEFINE NONVECTOR PARAMETRIC EXPRESSIONS
 echo "    /* parametric expressions */" >>.odexp/model.c
 declare_parametric_expressions
 # ====================================================================================
@@ -721,32 +750,32 @@ declare_variables
 # ====================================================================================
 
 # ====================================================================================
-# ASSIGN UNIFORM RANDOM ARRAY
+# DEFINE UNIFORM RANDOM ARRAY
 echo "" >>.odexp/model.c
 echo "    /* Initialization - uniform random array */" >>.odexp/model.c
 # initialize uniform random array and write them in .odexp/model.c
-assign_uniform_random_array 
+define_uniform_random_array 
 # ====================================================================================
 
 # ====================================================================================
-# ASSIGN PARAMETRIC EXPRESSIONS
+# DEFINE PARAMETRIC EXPRESSIONS
 echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
-assign_parametric_expressions
+define_parametric_expressions
 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - variables */" >>.odexp/model.c
-assign_variables
+define_variables
 
-# ASSIGN AUXILIARY FUNCTIONS
+# DEFINE AUXILIARY FUNCTIONS
 echo "" >>.odexp/model.c
 echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
 # initialize auxiliary function 
-assign_auxiliary_functions
+define_auxiliary_functions
 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - initial condition */" >>.odexp/model.c
-assign_initial_conditions
+define_initial_conditions
 
 echo "    " >>.odexp/model.c
 echo "    success_ = 1;" >>.odexp/model.c
