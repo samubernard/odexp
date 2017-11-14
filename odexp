@@ -223,8 +223,8 @@ define_functions () {
     # declare and define functions
     gawk -F '=' '$1 ~ /^@/ {
         expr=$2;
-        gsub(/^[ ]*/,expr);
-        gsub(/[ ]*$/,expr);
+        gsub(/^[ ]*/,"",expr);
+        gsub(/[ ]*$/,"",expr);
         split($1,myfunc,/[@=]/);
         split(myfunc[2],funcargs,/[()]/);
         funcname=funcargs[1];
@@ -234,9 +234,12 @@ define_functions () {
         gsub(/[ ]*$/,"",funcname);
         printf "double %s(", funcname;
         for(i=1;i<nargs;i++) {
-            gsub(/^[ ]*/,"",mayargs_list[i]);
+            gsub(/^[ ]*/,"",myargs_list[i]);
+            gsub(/[ ]*$/,"",myargs_list[i]);
             printf "double %s, ", myargs_list[i]; 
         }
+        gsub(/^[ ]*/,"",myargs_list[nargs]);
+        gsub(/[ ]*$/,"",myargs_list[nargs]);
         printf "double %s", myargs_list[nargs];
         printf  ") { return %s; }\n", expr;
     }' $file >>.odexp/model.c  

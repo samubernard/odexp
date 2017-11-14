@@ -127,6 +127,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* parametric expressions */
     nve pex;
 
+    /* user-defined functions */
+    nve func;
+
     /* parameters */
     nve mu;
 
@@ -199,7 +202,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
 
     /* get tspan */
-    printf("\ntime span %40s\n",hline);
+    printf("\n%-40s%s\n","time span",hline);
     success = load_double_array(system_filename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
@@ -249,6 +252,21 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         dfl.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
     success = load_strings(system_filename,dfl,"F",1,1,' ', exit_if_nofile);
+
+    /* get user-defined functions */
+    printf("\nuser-defined function %40s\n", hline);
+    get_nbr_el(system_filename,"@",1, &func.nbr_el, NULL);
+    func.value = malloc(func.nbr_el*sizeof(double));
+    func.name = malloc(func.nbr_el*sizeof(char*));
+    func.expression = malloc(func.nbr_el*sizeof(char*));
+    func.expr_index = malloc(func.nbr_el*sizeof(long));
+    func.max_name_length = malloc(sizeof(int));
+    for (i = 0; i < func.nbr_el; i++)
+    {
+        func.name[i] = malloc(NAMELENGTH*sizeof(char));
+        func.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
+    }
+    success = load_strings(system_filename,func,"@",1,1,'=', exit_if_nofile);
 
     /* get parameters */
     printf("\nparameters %s\n", hline);
@@ -971,6 +989,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             padding = (int)log10(dfl.nbr_el+0.5)-(int)log10(i+0.5);
                             printf_list_str('F',i,padding,*dfl.max_name_length,dfl.name[i],dfl.expression[i]);
+                        }
+                    }
+                    else if (op == '@') /* list user-defined functions */ 
+                    {
+                        for (i=0; i<func.nbr_el; i++)
+                        {
+                            padding = (int)log10(func.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf_list_str('@',i,padding,*func.max_name_length,func.name[i],func.expression[i]);
                         }
                     }
                     else if (op == 't') /* list tspan */
@@ -2183,6 +2209,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     char key[NAMELENGTH]; 
     char basevarname[NAMELENGTH];
     char rootvarname[NAMELENGTH];
+    char extensionvarname[NAMELENGTH];
     char iterator_str[NAMELENGTH];
     /* char **indexedvarname; */
     char index_str[NAMELENGTH];
@@ -2226,11 +2253,13 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             /* find the name root and expression */
             if ( prefix )
             {
-                snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep);
+                /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep); */
+                snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%[^%c]%%n %c %%[^\n]", sep, sep);
             }
-            else /* prefix ==  1 */
+            else /* prefix ==  0 */
             {
-                snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep);
+                snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep); 
+                /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%[^%c]%%n %c %%[^\n]", sep, sep); */
             }
             sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression);
             if( (namelen1-namelen0) > *var.max_name_length)
@@ -2240,6 +2269,8 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 
             /* convert basevarname var[i=a:b] to var_j for j=a;j<b */
             sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */
+            snprintf(extensionvarname,sizeof(char),"");
+            sscanf(basevarname, "%*[^/]%s", extensionvarname); /* get the dt if it there is */
             snprintf(index_str,sizeof(char),""); /* reset index_str. index_str format _2_3 */  
 
             for(j=0;j<expr_size;j++)
@@ -2274,6 +2305,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
                         /* printf("--[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
                         snprintf(new_index,NAMELENGTH*sizeof(char),"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 );
                         strcat(var.name[var_index+j],new_index);
+                        strcat(var.name[var_index+j],extensionvarname);
                         /* printf("-- %s\n",var.name[var_index+j]); */
                     }
                 }
