@@ -100,6 +100,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 {
 
     /* variable declaration */
+    char *extracmd = (char *)NULL;
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
     const char *system_filename = ".odexp/system.op";
     const char *helpcmd = "man .odexp/help.txt";
@@ -166,6 +167,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         padding,
         namelength,
         nbr_read,
+        extracmdpos,
         nbr_hold = 0;
     char c,
          op,
@@ -481,11 +483,24 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     while(1)
     {
         printf("%s",T_NOR);
-        cmdline = readline("odexp> ");
+        if ( extracmd != NULL )
+        {
+            /* cmdline = (char *)NULL; */
+            cmdline = malloc((strlen(extracmd)+1)*sizeof(char));
+            strncpy(cmdline,extracmd,strlen(extracmd)+1);
+        }
+        else
+        {
+            cmdline = readline("odexp> ");
+        }
         if (cmdline && *cmdline) /* check if cmdline is not empty */
         {
-            add_history (cmdline);
-            sscanf(cmdline,"%c",&c);
+            /* printf("--cmdline = '%s'\n",cmdline);  */
+            if ( extracmd == NULL ) 
+            {
+                add_history (cmdline);
+            }
+            sscanf(cmdline," %c",&c);
             switch(c)
             {
                 case '+' : /* increment the parameter and run */
@@ -910,11 +925,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             padding = (int)log10(mu.nbr_el+0.5)-(int)log10(i+0.5);
                             if ( i == p ) /* listing active parameter */
                             {
-                                snprintf(par_details,17*sizeof(char),"active parameter");  
+                                snprintf(par_details,17,"active parameter");  
                             }
                             else
                             {
-                                snprintf(par_details,3*sizeof(char),"--");  
+                                snprintf(par_details,3,"--");  
                             }
                             printf_list_val('P',i,padding,*mu.max_name_length,mu.name[i],mu.value[i],par_details);
                         }
@@ -1458,7 +1473,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
-                    snprintf(mv_plot_cmd,EXPRLENGTH*sizeof(char),"cp current.plot .odexp/curve.%d",nbr_hold++);
+                    snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
                     system(mv_plot_cmd);
                 }
             }
@@ -1610,11 +1625,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             plotmode_continuation = 0;
             plotmode_range = 0;
             rep_command = 1; /* reset to default = 1 */
+
+            free(extracmd);
+            extracmd = (char *)NULL; 
+            nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos);
+            /* printf("--extracmd nbr_read=%d, extracmd=%d, cmdline+extracmd='%s'\n",nbr_read,extracmdpos,cmdline+extracmdpos); */
+            if ( (nbr_read == 1) && strncmp(svalue,"&&",2) == 0 )
+            {
+                /* printf("--strlen(cmdline+extracmdpos)=%lu\n",strlen(cmdline+extracmdpos)); */
+                extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
+                strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
+                /* printf("--extracmd = '%s'\n", extracmd); */
+            }
             free(cmdline);
         }
-        
-
-
     }
     
     printf("exiting...\n");
@@ -2254,11 +2278,11 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             if ( prefix )
             {
                 /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep); */
-                snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%[^%c]%%n %c %%[^\n]", sep, sep);
+                snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^\n]", sep, sep);
             }
             else /* prefix ==  0 */
             {
-                snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%s%%n %c %%[^\n]", sep); 
+                snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^\n]", sep); 
                 /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%[^%c]%%n %c %%[^\n]", sep, sep); */
             }
             sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression);
@@ -2269,9 +2293,9 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 
             /* convert basevarname var[i=a:b] to var_j for j=a;j<b */
             sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */
-            snprintf(extensionvarname,sizeof(char),"");
+            snprintf(extensionvarname,1,"");
             sscanf(basevarname, "%*[^/]%s", extensionvarname); /* get the dt if it there is */
-            snprintf(index_str,sizeof(char),""); /* reset index_str. index_str format _2_3 */  
+            snprintf(index_str,1,""); /* reset index_str. index_str format _2_3 */  
 
             for(j=0;j<expr_size;j++)
             {
@@ -2285,7 +2309,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
                 if (nbr_read_1 == 1) /* single expresssion */
                 {
                     index1 = index0+1;
-                    snprintf(iterator_str,sizeof(char),"");
+                    snprintf(iterator_str,1,"");
                 }
                 nbr_read_2 = sscanf(basevarname+namelen0, " [%*[^=] =  %zu : %zu ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
                 if (nbr_read_2 == 2) /* array expresssion */
@@ -2303,7 +2327,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
                     for(j=0;j<expr_size;j++)
                     {
                         /* printf("--[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
-                        snprintf(new_index,NAMELENGTH*sizeof(char),"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 );
+                        snprintf(new_index,NAMELENGTH,"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 );
                         strcat(var.name[var_index+j],new_index);
                         strcat(var.name[var_index+j],extensionvarname);
                         /* printf("-- %s\n",var.name[var_index+j]); */
@@ -2426,13 +2450,13 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
 
     if (rootnamescanned > 0)
     {
-      snprintf(tab_buffer,sizeof(char)*MAXFILENAMELENGTH,"%s.%ju.tab",rootname,(uintmax_t)time_stamp);
-      snprintf(par_buffer,sizeof(char)*MAXFILENAMELENGTH,"%s.%ju.par",rootname,(uintmax_t)time_stamp);
+      snprintf(tab_buffer,MAXFILENAMELENGTH,"%s.%ju.tab",rootname,(uintmax_t)time_stamp);
+      snprintf(par_buffer,MAXFILENAMELENGTH,"%s.%ju.par",rootname,(uintmax_t)time_stamp);
     }  
     else
     {  
-      snprintf(tab_buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
-      snprintf(par_buffer,sizeof(char)*MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
+      snprintf(tab_buffer,MAXFILENAMELENGTH,"%ju.tab",(uintmax_t)time_stamp);
+      snprintf(par_buffer,MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
     }
 
     /* rename "current.tab" to tab_buffer */
@@ -2527,7 +2551,7 @@ int printf_options(const char *optiontype)
 {
     long i; 
     char last_option_type[NAMELENGTH]; 
-    snprintf(last_option_type,NAMELENGTH*sizeof(char),""); 
+    snprintf(last_option_type,NAMELENGTH,""); 
     for(i=0;i<NBROPTS;i++)
     {
       if ( strcmp(gopts[i].optiontype,optiontype) == 0 || strlen(optiontype) == 0 )
@@ -2538,7 +2562,7 @@ int printf_options(const char *optiontype)
         }
         printf_option_line(i);
       }
-      snprintf(last_option_type,NAMELENGTH*sizeof(char),"%s",gopts[i].optiontype); 
+      snprintf(last_option_type,NAMELENGTH,"%s",gopts[i].optiontype); 
     }
     return 1;
 }

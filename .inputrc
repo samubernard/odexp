@@ -32,4 +32,5 @@ set completion-query-items 150
 "\C-[": "[\C-j"
 # extend 
 "\C-e": "e\C-j"
-
+# repeat last command (\e[A history-search-backward arrow up)
+"\C-r": "\e[A\C-j"

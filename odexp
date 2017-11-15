@@ -49,10 +49,10 @@ file=.odexp/system.op
 # if two input files, then second one should contain parameters
 if [ "$#" -eq 2 ]; then
     parfile=$2    
+    echo "using parameter file: $parfile"
 else
     parfile=$file
 fi
-
 
 declare_iterators () {
     gawk -F ' ' -v i=1 '/(\[.+\])+/ && $1 !~ /#/ && $1 !~ /^[cC]/ { match($2,/(\[.+\])+/);
