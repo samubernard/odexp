@@ -102,7 +102,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* variable declaration */
     char *extracmd = (char *)NULL;
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
-    const char *system_filename = ".odexp/system.op";    /* */
+    const char *odefilename = ".odexp/model.op";    /* */
+    const char *parfilename = ".odexp/model.par";    /* */
     const char *helpcmd = "man .odexp/help.txt";
     char mv_plot_cmd[EXPRLENGTH];
     const char current_data_buffer[] = "current.tab";
@@ -205,7 +206,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get tspan */
     printf("\n%-25s%s\n","time span",hline);
-    success = load_double_array(system_filename, &tspan, ts_string, ts_len, exit_if_nofile); 
+    success = load_double_array(parfilename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
         fprintf(stderr,"\n  Error: time span not found.\n"
@@ -217,7 +218,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get random array */
     printf("\n%-25s%s\n", "random numbers", hline);
-    get_nbr_el(system_filename,"U",1,(long *)&rnd.length,NULL);
+    get_nbr_el(odefilename,"U",1,(long *)&rnd.length,NULL);
     rnd.array = malloc(rnd.length*sizeof(double));
     for (i = 0; i < rnd.length; i++)
     {
@@ -227,7 +228,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get constant arrays */
     printf("\n%-25s%s\n", "constant arrays", hline);
-    get_nbr_el(system_filename,"C",1, &cst.nbr_el, NULL);
+    get_nbr_el(odefilename,"C",1, &cst.nbr_el, NULL);
     cst.value = malloc(cst.nbr_el*sizeof(double));
     cst.name = malloc(cst.nbr_el*sizeof(char*));
     cst.expression = malloc(cst.nbr_el*sizeof(char*));
@@ -238,11 +239,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         cst.name[i] = malloc(NAMELENGTH*sizeof(char));
         cst.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
-    success = load_strings(system_filename,cst,"C",1,1,' ', exit_if_nofile);
+    success = load_strings(odefilename,cst,"C",1,1,' ', exit_if_nofile);
 
     /* get data files */
     printf("\n%-25s%s\n", "data files", hline);
-    get_nbr_el(system_filename,"F",1, &dfl.nbr_el, NULL);
+    get_nbr_el(odefilename,"F",1, &dfl.nbr_el, NULL);
     dfl.value = malloc(dfl.nbr_el*sizeof(double));
     dfl.name = malloc(dfl.nbr_el*sizeof(char*));
     dfl.expression = malloc(dfl.nbr_el*sizeof(char*));
@@ -253,11 +254,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         dfl.name[i] = malloc(NAMELENGTH*sizeof(char));
         dfl.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
-    success = load_strings(system_filename,dfl,"F",1,1,' ', exit_if_nofile);
+    success = load_strings(odefilename,dfl,"F",1,1,' ', exit_if_nofile);
 
     /* get user-defined functions */
     printf("\n%-25s%s\n", "user-defined functions", hline);
-    get_nbr_el(system_filename,"@",1, &func.nbr_el, NULL);
+    get_nbr_el(odefilename,"@",1, &func.nbr_el, NULL);
     func.value = malloc(func.nbr_el*sizeof(double));
     func.name = malloc(func.nbr_el*sizeof(char*));
     func.expression = malloc(func.nbr_el*sizeof(char*));
@@ -268,11 +269,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         func.name[i] = malloc(NAMELENGTH*sizeof(char));
         func.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
-    success = load_strings(system_filename,func,"@",1,1,'=', exit_if_nofile);
+    success = load_strings(odefilename,func,"@",1,1,'=', exit_if_nofile);
 
     /* get parameters */
     printf("\n%-25s%s\n", "parameters", hline);
-    get_nbr_el(system_filename,"P",1, &mu.nbr_el, &mu.nbr_expr);
+    get_nbr_el(parfilename,"P",1, &mu.nbr_el, &mu.nbr_expr);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
     mu.expression = malloc(mu.nbr_el*sizeof(char*));
@@ -283,7 +284,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.name[i] = malloc(NAMELENGTH*sizeof(char));
         mu.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
     }
-    success = load_nameval(system_filename,mu,"P",1,exit_if_nofile);
+    success = load_nameval(parfilename,mu,"P",1,exit_if_nofile);
     if (!success) /* then create a not_a_parameter parameter */
     {
         printf("  no parameter found\n");
@@ -301,7 +302,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     /* get parametric expressions */
     printf("\n%-25s%s\n", "parametric expressions", hline);
-    get_nbr_el(system_filename,"E",1, &pex.nbr_el, &pex.nbr_expr);
+    get_nbr_el(odefilename,"E",1, &pex.nbr_el, &pex.nbr_expr);
     pex.value = malloc(pex.nbr_el*sizeof(double));
     pex.name = malloc(pex.nbr_el*sizeof(char*));
     pex.expression = malloc(pex.nbr_el*sizeof(char*));
@@ -312,7 +313,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         pex.name[i] = malloc(NAMELENGTH*sizeof(char));
         pex.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,pex,"E",1,1,' ', exit_if_nofile);
+    success = load_strings(odefilename,pex,"E",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no parametric expression found\n");
@@ -321,7 +322,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get initial conditions */
     printf("\n%-25s%s\n", "variable names and initial conditions", hline);
-    get_nbr_el(system_filename,"I",1, &ics.nbr_el, &ics.nbr_expr);
+    get_nbr_el(parfilename,"I",1, &ics.nbr_el, &ics.nbr_expr);
     ics.value = malloc(ics.nbr_el*sizeof(double));
     ics.name = malloc(ics.nbr_el*sizeof(char*));
     ics.expression = malloc(ics.nbr_el*sizeof(char*));
@@ -332,7 +333,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         ics.name[i] = malloc(NAMELENGTH*sizeof(char));
         ics.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,ics,"I",1,1,' ', exit_if_nofile);
+    success = load_strings(parfilename,ics,"I",1,1,' ', exit_if_nofile);
     if (!success)
     {
         fprintf(stderr,"\n  Error: Initial conditions not found.\n"
@@ -346,7 +347,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get nonlinear functions */
     printf("\n%-25s%s\n", "auxiliary functions", hline);
-    get_nbr_el(system_filename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
+    get_nbr_el(odefilename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
     fcn.value = malloc(fcn.nbr_el*sizeof(double));
     fcn.name = malloc(fcn.nbr_el*sizeof(char*));
     fcn.expression = malloc(fcn.nbr_el*sizeof(char*));
@@ -357,7 +358,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         fcn.name[i] = malloc(NAMELENGTH*sizeof(char));
         fcn.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,fcn,"A",1,1,' ', exit_if_nofile);
+    success = load_strings(odefilename,fcn,"A",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no auxiliary function found\n");
@@ -366,7 +367,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get equations */
     printf("\n%-25s%s\n", "equations", hline);
-    get_nbr_el(system_filename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
+    get_nbr_el(odefilename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
     eqn.value = malloc(eqn.nbr_el*sizeof(double));
     eqn.name = malloc(eqn.nbr_el*sizeof(char*));
     eqn.expression = malloc(eqn.nbr_el*sizeof(char*));
@@ -377,7 +378,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         eqn.name[i] = malloc(NAMELENGTH*sizeof(char));
         eqn.expression[i] = malloc(EXPRLENGTH*sizeof(char));
     }
-    success = load_strings(system_filename,eqn,"d",1,0,'=', exit_if_nofile);   
+    success = load_strings(odefilename,eqn,"d",1,0,'=', exit_if_nofile);   
     if (!success)
     {
         fprintf(stderr,"\n  Error: Equations not found.\n"
@@ -421,7 +422,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get options */
     printf("\n%-25s%s\n", "options", hline);
-    success = load_options(system_filename, exit_if_nofile); 
+    success = load_options(parfilename, exit_if_nofile); 
     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
     update_act_par_index(&p, mu);
@@ -588,7 +589,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if ( nbr_read == 1 )
                     {
-                        if ( op == 'c' | op == 'r' ) /* tyr to clear or reset curves */
+                        if ( op == 'c' | op == 'r' ) /* try to clear or reset curves */
                         {
                             system("rm -f .odexp/curve.*");
                             nbr_hold = 0;
@@ -1318,7 +1319,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             num_ic[i] = 0;
                         }
                     /* reset parameter values */
-                    load_nameval(system_filename, mu, "P", 1,exit_if_nofile);
+                    load_nameval(parfilename, mu, "P", 1,exit_if_nofile);
                     /* reset initial conditions */
                     ode_init_conditions(tspan.array[0], ics.value, &mu);
                     rerun = 1;
@@ -1437,7 +1438,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case 's' : /* save file */
-                    file_status = fprintf_snapshot(ics,pex,mu,fcn,eqn,cst,dfl,tspan, current_data_buffer,odexp_filename);
+                    file_status = fprintf_snapshot(ics,pex,mu,fcn,eqn,cst,dfl,func,tspan, current_data_buffer,odexp_filename);
                     break;
                 case '!' : /* print ! */
                     nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -1804,6 +1805,11 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
     {
         /* printf("--scalar found\n"); */
         **size_dim = 1;
+    }
+    else if ( nbr_index == 1 )
+    {
+        /* var[iter=0] found; equivalent to var[iter=0:1], size = 1 */ 
+        **size_dim = 1; 
     }
     else
     {
@@ -2411,7 +2417,7 @@ int load_int(const char *filename, long *mypars, size_t len, const char *sym, si
 } 
 
 int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
-        nve cst, nve dfl, double_array tspan, const char *curr_buffer, const char *odexp_filename)
+        nve cst, nve dfl, nve func, double_array tspan, const char *curr_buffer, const char *odexp_filename)
 {
     int success = 0;
     size_t i;
@@ -2514,6 +2520,10 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
 
         fprintf(fr,"\n# --------------------------------------------------\n");
         fprintf(fr,"# original equations, auxiliary variables and parametric expressions\n\n");
+        for(i=0;i<func.nbr_el;i++)
+        {
+            fprintf(fr,"# @ %s = %s\n",func.name[i],func.expression[i]);
+        }
         for(i=0;i<ode_system_size;i++)
         {
             fprintf(fr,"# d%s/dt = %s\n",init.name[i],eqn.expression[i]);

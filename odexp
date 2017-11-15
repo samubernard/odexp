@@ -18,14 +18,14 @@ mkdir -p .odexp
 
 # ---------------------------------------
 # Files created in .odexp
-# system.op: model file where all constants are replaced by their values
+# model.op: model file where all constants are replaced by their values
 # model.c: C file implementation 
 # ---------------------------------------
 
-echo "# odexp file name: $1" >.odexp/system.op
-echo "# In this file, all constant (variable starting with _)" >>.odexp/system.op
-echo "# are replaced with their value" >>.odexp/system.op
-echo "" >>.odexp/system.op
+echo "# odexp file name: $1" >.odexp/model.op
+echo "# In this file, all constant (variable starting with _)" >>.odexp/model.op
+echo "# are replaced with their value" >>.odexp/model.op
+echo "" >>.odexp/model.op
 
 # replace all constants (variable starting with '_') by their value
 # remove all ending ;
@@ -40,19 +40,23 @@ gawk '$1 !~ /#/ {gsub(";( )*$","",$0)};
             }
         }
     };
-    {print $0}' $1 >>.odexp/system.op
+    {print $0}' $1 >>.odexp/model.op
 
 
 
-file=.odexp/system.op
+file=.odexp/model.op
 
 # if two input files, then second one should contain parameters
 if [ "$#" -eq 2 ]; then
     parfile=$2    
-    echo "warning: parameter file $parfile will not be taken into account"
-else
-    parfile=$file   #.odexp/system.op
+    #echo "warning: parameter file $parfile will not be taken into account"
+    cp $2 .odexp/model.par
+else # .odexp/model.op and /odexp.par are the same
+    parfile=$file   
+    cp $parfile .odexp/model.par
 fi
+
+
 
 declare_iterators () {
     gawk -F ' ' -v i=1 '/(\[.+\])+/ && $1 !~ /#/ && $1 !~ /^[cC]/ { match($2,/(\[.+\])+/);
@@ -467,7 +471,7 @@ define_initial_conditions () {
         printf "[%s+%d]", b[k], nv 
         nv+=b[k+2]-b[k+1]
       }; 
-      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $file >>.odexp/model.c
+      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $parfile >>.odexp/model.c
 }
 
 # ==========================================================================================
@@ -812,7 +816,7 @@ echo "		rm -f *.o; rm -f *.out; rm -rf *.out.dSYM" >>.odexp/makefile
 
 cd .odexp
 
-# rm system.op
+# rm model.op
 
 make && cp model.out .. && cd .. && ./model.out $1
 
