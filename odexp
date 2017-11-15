@@ -49,9 +49,9 @@ file=.odexp/system.op
 # if two input files, then second one should contain parameters
 if [ "$#" -eq 2 ]; then
     parfile=$2    
-    echo "using parameter file: $parfile"
+    echo "warning: parameter file $parfile will not be taken into account"
 else
-    parfile=$file
+    parfile=$file   #.odexp/system.op
 fi
 
 declare_iterators () {
@@ -159,7 +159,7 @@ declare_parameters () {
             default :
                 printf "    double %s = pars_[%d];\n", $2, i++;
         }
-    }' $parfile >>.odexp/model.c
+    }' $file >>.odexp/model.c
 }
 
 declare_parametric_expressions () {
@@ -467,7 +467,7 @@ define_initial_conditions () {
         printf "[%s+%d]", b[k], nv 
         nv+=b[k+2]-b[k+1]
       }; 
-      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $parfile >>.odexp/model.c
+      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $file >>.odexp/model.c
 }
 
 # ==========================================================================================
@@ -724,7 +724,7 @@ echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
-gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++}' $parfile >>.odexp/model.c
+gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++}' $file >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================

@@ -102,7 +102,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* variable declaration */
     char *extracmd = (char *)NULL;
     FILE *gnuplot_pipe = popen("gnuplot -persist","w");
-    const char *system_filename = ".odexp/system.op";
+    const char *system_filename = ".odexp/system.op";    /* */
     const char *helpcmd = "man .odexp/help.txt";
     char mv_plot_cmd[EXPRLENGTH];
     const char current_data_buffer[] = "current.tab";
@@ -485,7 +485,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("%s",T_NOR);
         if ( extracmd != NULL )
         {
-            /* cmdline = (char *)NULL; */
+            /* cmdline has been freed */
             cmdline = malloc((strlen(extracmd)+1)*sizeof(char));
             strncpy(cmdline,extracmd,strlen(extracmd)+1);
         }
@@ -1157,8 +1157,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             lastinit[i] = ics.value[i];
                             ics.value[i] = nvalue;
                             num_ic[i] = 1;
-                            rerun = 1;
-                            replot = 1;
                           }
                           else 
                           {
@@ -1218,8 +1216,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             lastinit[i] = ics.value[i];
                             ics.value[i] = lasty[i];
-                            rerun = 1;
-                            replot = 1;
                         }
                     }
                     else if ( op == 't' )
@@ -1228,8 +1224,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         if ( i >=0 && i < tspan.length )
                         {
                             tspan.array[i] = nvalue;
-                            rerun = 1;
-                            replot = 1;
                         }
                         else
                         {
@@ -1626,16 +1620,19 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             plotmode_range = 0;
             rep_command = 1; /* reset to default = 1 */
 
-            free(extracmd);
-            extracmd = (char *)NULL; 
             nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos);
-            /* printf("--extracmd nbr_read=%d, extracmd=%d, cmdline+extracmd='%s'\n",nbr_read,extracmdpos,cmdline+extracmdpos); */
+            /* printf("--extracmd nbr_read=%d, extracmd=%d, cmdline+extracmd='%s'\n",nbr_read,extracmdpos,cmdline+extracmdpos);  */
+            free(extracmd);
             if ( (nbr_read == 1) && strncmp(svalue,"&&",2) == 0 )
             {
-                /* printf("--strlen(cmdline+extracmdpos)=%lu\n",strlen(cmdline+extracmdpos)); */
+                /* printf("--strlen(cmdline+extracmdpos)=%lu\n",strlen(cmdline+extracmdpos));  */
                 extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
                 strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
                 /* printf("--extracmd = '%s'\n", extracmd); */
+            }
+            else
+            {
+                extracmd = (char *)NULL; 
             }
             free(cmdline);
         }
