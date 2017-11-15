@@ -82,7 +82,7 @@ P b 0.1
 Expression are declared as Name Expression pairs.
 
 ```
-`E c a*a`
+E c a*a
 ```
 
 * A Auxiliary variables. Auxiliary variables depend on parameters, expressions and dynamical variables. 
