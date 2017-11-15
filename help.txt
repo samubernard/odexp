@@ -210,10 +210,10 @@ E c a*a
 
 .TP
 .BR A 
-Auxiliary variables. 
-Auxiliary variables depend on parameters, expressions and dynamical variables. 
-Auxiliary variables are declared as Name Expression pairs.
-Auxiliary variables must be scalars or one-dimensional arrays
+Auxiliary variables. Auxiliary variables depend on parameters, expressions and dynamical variables. 
+They are declared as Name Expression pairs, and must be scalars or one-dimensional arrays.
+Auxiliary variables are useful to monitor quantities that depend on the dynamical variables. They can be 
+plotted, and their values are recorded in the output file current.tab. 
 
 .nf
 A d sqrt(x+c)
