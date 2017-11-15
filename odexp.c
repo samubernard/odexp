@@ -33,7 +33,8 @@
 
 
 /* static variable for holding the command line string */
-static char *cmdline = (char *)NULL;
+static char *rawcmdline = (char *)NULL;
+static char *cmdline  = (char *)NULL;
 
 /* system size */
 long ode_system_size;
@@ -167,6 +168,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         np,
         padding,
         namelength,
+        charpos,
         nbr_read,
         extracmdpos,
         nbr_hold = 0;
@@ -486,14 +488,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("%s",T_NOR);
         if ( extracmd != NULL )
         {
-            /* cmdline has been freed */
-            cmdline = malloc((strlen(extracmd)+1)*sizeof(char));
-            strncpy(cmdline,extracmd,strlen(extracmd)+1);
+            /* rawcmdline has been freed */
+            rawcmdline = malloc((strlen(extracmd)+1)*sizeof(char));
+            strncpy(rawcmdline,extracmd,strlen(extracmd)+1);
         }
         else
         {
-            cmdline = readline("odexp> ");
+            rawcmdline = readline("odexp> ");
         }
+        sscanf(rawcmdline," %c%n",&c,&charpos);
+        cmdline = rawcmdline+charpos-1;
+        /* printf("--cmdline = '%s'\n",cmdline); */
         if (cmdline && *cmdline) /* check if cmdline is not empty */
         {
             /* printf("--cmdline = '%s'\n",cmdline);  */
@@ -1635,7 +1640,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 extracmd = (char *)NULL; 
             }
-            free(cmdline);
+            free(rawcmdline);
         }
     }
     
