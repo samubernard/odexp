@@ -202,7 +202,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
 
     /* get tspan */
-    printf("\n%-40s%s\n","time span",hline);
+    printf("\n%-25s%s\n","time span",hline);
     success = load_double_array(system_filename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
@@ -214,7 +214,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
 
     /* get random array */
-    printf("\nrandom numbers %40s\n", hline);
+    printf("\n%-25s%s\n", "random numbers", hline);
     get_nbr_el(system_filename,"U",1,(long *)&rnd.length,NULL);
     rnd.array = malloc(rnd.length*sizeof(double));
     for (i = 0; i < rnd.length; i++)
@@ -224,7 +224,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.rand_pointer = rnd.array;
 
     /* get constant arrays */
-    printf("\nconstant arrays %40s\n", hline);
+    printf("\n%-25s%s\n", "constant arrays", hline);
     get_nbr_el(system_filename,"C",1, &cst.nbr_el, NULL);
     cst.value = malloc(cst.nbr_el*sizeof(double));
     cst.name = malloc(cst.nbr_el*sizeof(char*));
@@ -239,7 +239,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_strings(system_filename,cst,"C",1,1,' ', exit_if_nofile);
 
     /* get data files */
-    printf("\ndata files %40s\n", hline);
+    printf("\n%-25s%s\n", "data files", hline);
     get_nbr_el(system_filename,"F",1, &dfl.nbr_el, NULL);
     dfl.value = malloc(dfl.nbr_el*sizeof(double));
     dfl.name = malloc(dfl.nbr_el*sizeof(char*));
@@ -254,7 +254,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_strings(system_filename,dfl,"F",1,1,' ', exit_if_nofile);
 
     /* get user-defined functions */
-    printf("\nuser-defined function %40s\n", hline);
+    printf("\n%-25s%s\n", "user-defined functions", hline);
     get_nbr_el(system_filename,"@",1, &func.nbr_el, NULL);
     func.value = malloc(func.nbr_el*sizeof(double));
     func.name = malloc(func.nbr_el*sizeof(char*));
@@ -269,7 +269,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     success = load_strings(system_filename,func,"@",1,1,'=', exit_if_nofile);
 
     /* get parameters */
-    printf("\nparameters %s\n", hline);
+    printf("\n%-25s%s\n", "parameters", hline);
     get_nbr_el(system_filename,"P",1, &mu.nbr_el, &mu.nbr_expr);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
@@ -298,7 +298,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     } 
     
     /* get parametric expressions */
-    printf("\nparametric expressions %s\n", hline);
+    printf("\n%-25s%s\n", "parametric expressions", hline);
     get_nbr_el(system_filename,"E",1, &pex.nbr_el, &pex.nbr_expr);
     pex.value = malloc(pex.nbr_el*sizeof(double));
     pex.name = malloc(pex.nbr_el*sizeof(char*));
@@ -318,7 +318,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.expr_pointer = pex.value; /* pointer to parametric expression values */
 
     /* get initial conditions */
-    printf("\nvariable names and initial conditions %s\n", hline);
+    printf("\n%-25s%s\n", "variable names and initial conditions", hline);
     get_nbr_el(system_filename,"I",1, &ics.nbr_el, &ics.nbr_expr);
     ics.value = malloc(ics.nbr_el*sizeof(double));
     ics.name = malloc(ics.nbr_el*sizeof(char*));
@@ -343,7 +343,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 
     /* get nonlinear functions */
-    printf("\nauxiliary functions %s\n", hline);
+    printf("\n%-25s%s\n", "auxiliary functions", hline);
     get_nbr_el(system_filename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
     fcn.value = malloc(fcn.nbr_el*sizeof(double));
     fcn.name = malloc(fcn.nbr_el*sizeof(char*));
@@ -363,7 +363,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.aux_pointer = fcn.value; /* pointer to fcn.value */
 
     /* get equations */
-    printf("\nequations %s\n", hline);
+    printf("\n%-25s%s\n", "equations", hline);
     get_nbr_el(system_filename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
     eqn.value = malloc(eqn.nbr_el*sizeof(double));
     eqn.name = malloc(eqn.nbr_el*sizeof(char*));
@@ -418,7 +418,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 
     /* get options */
-    printf("\noptions %s\n", hline);
+    printf("\n%-25s%s\n", "options", hline);
     success = load_options(system_filename, exit_if_nofile); 
     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */

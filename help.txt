@@ -89,38 +89,41 @@ Set to I to revert to expression, enter to keep current initial condition
 Set initial condition to steady state. 
 Steady state must have been computed with \fBms\fR
 .TP
+.BR l@            
+List all user-defined functions 
+.TP
 .BR la            
-List all auxiliary functions 
-.TP
-.BR le            
-List all parametric expressions
-.TP
-.BR li            
-List all variables with initial conditions 
-.TP
-.BR ln            
-Display system size
-.TP
-.BR lp            
-List all parameters 
-.TP 
-.BR lx            
-List all equations and auxiliary functions 
+List all auxiliary variables (can be plotted)
 .TP 
 .BR lc            
 List all constant arrays
+.TP
+.BR le            
+List all parametric expressions
 .TP 
 .BR lf            
 List all array files (nrows ncols filename)
 .TP
-.BR ls            
-List steady states
+.BR li            
+List all variables with initial conditions 
+.TP
+.BR ll          
+List file name and various information 
+.TP
+.BR ln            
+Display system size
 .TP
 .BR lo " " [\fIoptiontype\fR]         
 List options that match \fIoptiontype\fR, or all options if \fIoptiontype\fR is missing
 .TP
-.BR ll          
-List file name and various information 
+.BR lp            
+List all parameters 
+.TP
+.BR ls            
+List steady states
+.TP 
+.BR lx            
+List all equations and auxiliary variables 
 .TP
 .BR mm            
 Try to find all steady states 
@@ -199,7 +202,7 @@ P b 0.1
 .TP
 .BR E
 Expressions. Expressions are function of the parameters. They cannot be modified. 
-Expression are declared as name expr pairs.
+Expression are declared as Name Expression pairs.
 
 .nf
 E c a*a
@@ -207,10 +210,10 @@ E c a*a
 
 .TP
 .BR A 
-Auxiliary functions. 
-Auxiliary functions depend on parameters, expressions and variables. 
-Auxiliary functions are declared as name function pairs
-Auxiliary functions must be scalars or one-dimensional arrays
+Auxiliary variables. 
+Auxiliary variables depend on parameters, expressions and dynamical variables. 
+Auxiliary variables are declared as Name Expression pairs.
+Auxiliary variables must be scalars or one-dimensional arrays
 
 .nf
 A d sqrt(x+c)
@@ -222,8 +225,8 @@ A norm_x2 dotprod(X,X,5)
 
 .TP
 .BR D
-Dynamical variables are the dependent variables of the ODE system.
-Dynamical variable x is declared as dx/dt or x' followed by = and the RHS of the equation
+Dynamical variables. Dynamical variables are the dependent variables of the ODE system.
+Dynamical variable x is declared as dx/dt followed by = and the RHS of the equation
 
 .nf
 dx/dt = -a*x
@@ -292,6 +295,22 @@ F MY_ARRAY NROWS NCOLS FILENAME
 
 where NROWS and NCOLS are the number of rows and columns in the file FILENAME.
 FILENAME is a text file containing space delimited array of floats.
+
+.TP
+.BR @
+User-defined function.
+
+.nf
+@ my_fun_name (x, y, z) = x*x+y+z 
+is interpreted as
+/* double my_fun_name(double x,double y, double z) = { return x*x+y+z; }  */
+
+@ mean(*x) = sum(x,LENTGH_X)/LENTGH_X 
+is interpreted as
+/* double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X } */
+.fi
+
+The function \fIsum\fR is a helper function (see below for a list of helper functions). 
 
 .SH NUMERICAL AND GRAPHICAL OPTIONS
 .TP
@@ -407,7 +426,6 @@ Used with \fBsumxy\fR.
 .TP
 .BR \fIdouble\fR " " sumxy\fR(\fIlong " " \fIlen, " " \fIdouble " " \fI(*f)(double)\fR, " " \fIdouble " " \fI(*g)(double,double)\fR, " " \fIconst " "  \fIdouble " " \fI*x\fR, " " \fIconst " " \fIdouble " " \fIyi\fR)
 Sum over j of \fIf\fR(\fIg\fR(\fIx_j\fR,\fIyi\fR)) 
-
 
 .SH EXAMPLES
 Here is an example of an odexp file
