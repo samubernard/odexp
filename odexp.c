@@ -36,6 +36,10 @@
 static char *rawcmdline = (char *)NULL;
 static char *cmdline  = (char *)NULL;
 
+/* log file */
+const char *logfilename = ".odexp/model.log";
+static FILE *logfr = (FILE *)NULL;
+
 /* system size */
 long ode_system_size;
 
@@ -189,7 +193,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     char svalue[NAMELENGTH],
          svalue2[NAMELENGTH],
          svalue3[NAMELENGTH],
-         datafile_plotted[NAMELENGTH];
+         data_fn[NAMELENGTH];
     int replot                = 0, /* gnuplot replot */
         rerun                 = 0, /* run a new ODE simulation */
         plot3d                = 0,
@@ -202,6 +206,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     unsigned long randseed;
 
     /* end variable declaration */
+    logfr = fopen(logfilename, "w");
+    if ( logfr != NULL ) 
+    { 
+        fprintf(logfr,"Log file for %s\n", odexp_filename); 
+        fflush(logfr);
+    }
 
     /* begin */
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
@@ -304,7 +314,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     /* get parametric expressions */
     printf("\n%-25s%s\n", "parametric expressions", hline);
+    fprintf(logfr,"\n%-25s%s\n", "parametric expressions", hline);
+    fflush(logfr);
     get_nbr_el(odefilename,"E",1, &pex.nbr_el, &pex.nbr_expr);
+    fprintf(logfr,"found %ld parametric expressions\n",pex.nbr_el);
+    fflush(logfr);
     pex.value = malloc(pex.nbr_el*sizeof(double));
     pex.name = malloc(pex.nbr_el*sizeof(char*));
     pex.expression = malloc(pex.nbr_el*sizeof(char*));
@@ -497,7 +511,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             rawcmdline = readline("odexp> ");
         }
         sscanf(rawcmdline," %c%n",&c,&charpos);
-        cmdline = rawcmdline+charpos-1;
+        cmdline = rawcmdline+charpos-1; /* eat white spaces */
         /* printf("--cmdline = '%s'\n",cmdline); */
         if (cmdline && *cmdline) /* check if cmdline is not empty */
         {
@@ -1412,7 +1426,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         status = parameter_range(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
                     }
                     break;
-                case '@' : /* add data from file to plot */
+                case '#' : /* add data from file to plot */
                     nbr_read = sscanf(cmdline+1,"%s %ld %ld",svalue,&colx,&coly);
                     if ( nbr_read == 3 )
                     {
@@ -1424,10 +1438,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         if (i<dfl.nbr_el) /* found the dataset to plot */
                         {
                             printf("--%s %ld %ld\n", svalue, colx, coly);
-                            sscanf(dfl.expression[i],"%*ld %*ld %s",datafile_plotted);
-                            printf("--datafile_plotted=%s\n", datafile_plotted);
-                            data_plotted = 1;
-                            replot = 1;
+                            if ( sscanf(dfl.expression[i]," %*lu %*lu %s ",data_fn) )
+                            {
+                                printf("--data_fn=%s\n", data_fn);
+                                data_plotted = 1;
+                            }
                         }
                     }
                     else 
@@ -1605,10 +1620,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             }
 
 
+            /* plot data */
             if ( data_plotted ) 
             {
-                /* plot data */
-                plot_data(colx, coly, datafile_plotted, gnuplot_pipe);
+                plot_data(colx, coly, data_fn, gnuplot_pipe);
             }    
 
             /* update option pl:x, pl:y, pl:z */
@@ -1671,6 +1686,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* remove frozen curves */
     system("rm -f .odexp/curve.*");
+
+    fclose(logfr);
 
     return status;
 
@@ -1739,6 +1756,8 @@ int get_nbr_el(const char *filename, const char *sym,\
     FILE *fr;
     fr = fopen (filename, "rt");
 
+    fprintf(logfr,"get_nbr_el: at %s, line %d\n",__FILE__,__LINE__);
+    fflush(logfr);
     if ( fr == NULL )
     {
         fprintf(stderr,"  Error: %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
@@ -1759,9 +1778,9 @@ int get_nbr_el(const char *filename, const char *sym,\
             {
                 (*nbr_expr)++;
             }
-            /* printf("--%s",line); */
+            printf("--%s",line); 
             get_multiindex(line, &nbr_dim, &size_dim);
-            /* printf("--nbr_dim %zu\n",nbr_dim); */
+            printf("--nbr_dim %zu\n",nbr_dim);
             for(i=0;i<nbr_dim;i++)
             {
                 multi_dim *= size_dim[i];
@@ -1783,21 +1802,24 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
 {
 
     int     bracket1;
-    size_t  index0,
+    size_t  i,
+            index0,
             index1;
     int     nbr_index;
     /* scan for two integers, index0, index1 in [iter=i0:i1] */
+    fprintf(logfr, "get_multiindex: parsing line '%s' at %s, line %d\n",line,__FILE__,__LINE__); 
+    fflush(logfr);
     nbr_index = sscanf(line,"%*[^[] [ %*[^=] = %zu : %zu ]%n",&index0,&index1,&bracket1);
     *nbr_dim = 0;
     if ( nbr_index == 2 )
     {
         do 
         {
-            /* printf("--%s",line); */
             *size_dim = realloc(*size_dim, ((*nbr_dim)+1)*sizeof(long));
-            /* printf("--after realloc %zu %zu %zu\n", *nbr_dim,index0,index1); */
+            fprintf(logfr, "get_multiindex: after realloc nbr_dim=%zu (%zu %zu)\n", *nbr_dim,index0,index1);
             (*size_dim)[*nbr_dim] = index1 - index0; 
-            /* printf("--after assign\n"); */
+            fprintf(logfr, "get_multiindex: after assign\n"); 
+            fflush(logfr);
             (*nbr_dim)++;
             line+=bracket1;
             /* scan for two integers, index0, index1 in [iter=i0:i1] */
@@ -1808,12 +1830,12 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
     }
     else if ( nbr_index == EOF || nbr_index == 0 )
     {
-        /* printf("--scalar found\n"); */
         **size_dim = 1;
     }
     else if ( nbr_index == 1 )
     {
         /* var[iter=0] found; equivalent to var[iter=0:1], size = 1 */ 
+        fprintf(logfr, "get_multiindex: found index [iter=0:1], in %s, line %d\n",__FILE__,__LINE__);
         **size_dim = 1; 
     }
     else
@@ -1821,6 +1843,15 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
         fprintf(stderr,"  Error: Could not determine number of elements in %s (nbr index found = %d)... exiting\n",line,nbr_index);
         exit ( EXIT_FAILURE );
     }
+    
+    fprintf(logfr, "get_multiindex: expression has dim=%zu, with size ",*nbr_dim);
+    fflush(logfr);
+    for(i=0;i<*nbr_dim;i++)
+    {
+        fprintf(logfr,"%zu ",(*size_dim)[i]);
+    }
+    fprintf(logfr," in %s, line %d\n",__FILE__,__LINE__);
+    fflush(logfr);
 
     return *nbr_dim;
 
@@ -2243,7 +2274,6 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     char rootvarname[NAMELENGTH];
     char extensionvarname[NAMELENGTH];
     char iterator_str[NAMELENGTH];
-    /* char **indexedvarname; */
     char index_str[NAMELENGTH];
     char new_index[NAMELENGTH];
     char baseexpression[EXPRLENGTH];
@@ -2269,13 +2299,15 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     *var.max_name_length = 0;
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
-        has_read = sscanf(line,"%s%n",key,&k);
+        has_read = sscanf(line,"%s%n",key,&k);                       /* read the first word */
         if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
         {
             success = 1;
             /* get the size of the expression */
             /* create a search pattern of the type A0:3 X[i=0:3] */
             get_multiindex(line, &nbr_dim, &size_dim);    
+            fprintf(logfr,"load_strings: found %s of dim %zu, at %s, line %d\n",sym,nbr_dim,__FILE__,__LINE__);
+            fflush(logfr);
             expr_size = 1;
             for ( j=0; j<nbr_dim; j++ )
             {
@@ -2283,7 +2315,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             }
 
             /* find the name root and expression */
-            if ( prefix )
+            if ( prefix ) /* prefix is something like A0, E10, expression, ... */
             {
                 /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep); */
                 snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^\n]", sep, sep);
@@ -2302,8 +2334,8 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             /* convert basevarname var[i=a:b] to var_j for j=a;j<b */
             sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */
             snprintf(extensionvarname,1,"");
-            sscanf(basevarname, "%*[^/]%s", extensionvarname); /* get the dt if it there is */
-            snprintf(index_str,1,""); /* reset index_str. index_str format _2_3 */  
+            sscanf(basevarname, "%*[^/]%s", extensionvarname); /* get the dt if there is one */
+            snprintf(index_str,1,""); /* reset index_str. */  
 
             for(j=0;j<expr_size;j++)
             {
@@ -2793,12 +2825,10 @@ void printf_list_str_val(char type, long i, int padding, int max_name_length, ch
  
 }
 
-/* plot data from file specified by dataset, with column colx as x-axis and so on */
-int plot_data(const long colx, const long coly, const char *datafile_plotted, FILE *gnuplot_pipe)
+/* plot data from file 'data_fn', with column x as x-axis and column y as y-axis */
+int plot_data(const long x, const long y, const char *data_fn, FILE *gnuplot_pipe)
 {
-    int success = 0;
-    printf("--plot_data\n");
-    fprintf(gnuplot_pipe,"replot \"%s\" u %ld:%ld w p title \"data\"\n",datafile_plotted,colx,coly);
+    int success = fprintf(gnuplot_pipe,"replot \"%s\" u %ld:%ld w p title \"data\"\n",data_fn,x,y);
     fflush(gnuplot_pipe);
     return success;
 }
