@@ -231,6 +231,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get random array */
     printf("\n%-25s%s\n", "random numbers", hline);
     get_nbr_el(odefilename,"U",1,(long *)&rnd.length,NULL);
+    LOGPRINT("found %ld random numbers",rnd.length);
     rnd.array = malloc(rnd.length*sizeof(double));
     for (i = 0; i < rnd.length; i++)
     {
@@ -241,6 +242,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get constant arrays */
     printf("\n%-25s%s\n", "constant arrays", hline);
     get_nbr_el(odefilename,"C",1, &cst.nbr_el, NULL);
+    LOGPRINT("found %ld constants",cst.nbr_el);
     cst.value = malloc(cst.nbr_el*sizeof(double));
     cst.name = malloc(cst.nbr_el*sizeof(char*));
     cst.expression = malloc(cst.nbr_el*sizeof(char*));
@@ -256,6 +258,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get data files */
     printf("\n%-25s%s\n", "data files", hline);
     get_nbr_el(odefilename,"F",1, &dfl.nbr_el, NULL);
+    LOGPRINT("found %ld data files",dfl.nbr_el);
     dfl.value = malloc(dfl.nbr_el*sizeof(double));
     dfl.name = malloc(dfl.nbr_el*sizeof(char*));
     dfl.expression = malloc(dfl.nbr_el*sizeof(char*));
@@ -271,6 +274,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get user-defined functions */
     printf("\n%-25s%s\n", "user-defined functions", hline);
     get_nbr_el(odefilename,"@",1, &func.nbr_el, NULL);
+    LOGPRINT("found %ld user-defined function",func.nbr_el);
     func.value = malloc(func.nbr_el*sizeof(double));
     func.name = malloc(func.nbr_el*sizeof(char*));
     func.expression = malloc(func.nbr_el*sizeof(char*));
@@ -286,6 +290,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get parameters */
     printf("\n%-25s%s\n", "parameters", hline);
     get_nbr_el(parfilename,"P",1, &mu.nbr_el, &mu.nbr_expr);
+    LOGPRINT("found %ld parameters",mu.nbr_el);
     mu.value = malloc(mu.nbr_el*sizeof(double));
     mu.name = malloc(mu.nbr_el*sizeof(char*));
     mu.expression = malloc(mu.nbr_el*sizeof(char*));
@@ -314,11 +319,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     /* get parametric expressions */
     printf("\n%-25s%s\n", "parametric expressions", hline);
-    fprintf(logfr,"\n%-25s%s\n", "parametric expressions", hline);
-    fflush(logfr);
     get_nbr_el(odefilename,"E",1, &pex.nbr_el, &pex.nbr_expr);
-    fprintf(logfr,"found %ld parametric expressions\n",pex.nbr_el);
-    fflush(logfr);
+    LOGPRINT("found %ld parametric expressions",pex.nbr_el);
     pex.value = malloc(pex.nbr_el*sizeof(double));
     pex.name = malloc(pex.nbr_el*sizeof(char*));
     pex.expression = malloc(pex.nbr_el*sizeof(char*));
@@ -337,8 +339,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     mu.expr_pointer = pex.value; /* pointer to parametric expression values */
 
     /* get initial conditions */
-    printf("\n%-25s%s\n", "variable names and initial conditions", hline);
+    printf("\n%-25s%s\n", "initial conditions", hline);
     get_nbr_el(parfilename,"I",1, &ics.nbr_el, &ics.nbr_expr);
+    LOGPRINT("found %ld variables",ics.nbr_el);
     ics.value = malloc(ics.nbr_el*sizeof(double));
     ics.name = malloc(ics.nbr_el*sizeof(char*));
     ics.expression = malloc(ics.nbr_el*sizeof(char*));
@@ -362,8 +365,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 
     /* get nonlinear functions */
-    printf("\n%-25s%s\n", "auxiliary functions", hline);
+    printf("\n%-25s%s\n", "auxiliary variables", hline);
     get_nbr_el(odefilename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
+    LOGPRINT("found %ld auxiliary variables",fcn.nbr_el);
     fcn.value = malloc(fcn.nbr_el*sizeof(double));
     fcn.name = malloc(fcn.nbr_el*sizeof(char*));
     fcn.expression = malloc(fcn.nbr_el*sizeof(char*));
@@ -384,6 +388,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* get equations */
     printf("\n%-25s%s\n", "equations", hline);
     get_nbr_el(odefilename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
+    LOGPRINT("found %ld equations",eqn.nbr_el);
     eqn.value = malloc(eqn.nbr_el*sizeof(double));
     eqn.name = malloc(eqn.nbr_el*sizeof(char*));
     eqn.expression = malloc(eqn.nbr_el*sizeof(char*));
@@ -1756,8 +1761,6 @@ int get_nbr_el(const char *filename, const char *sym,\
     FILE *fr;
     fr = fopen (filename, "rt");
 
-    fprintf(logfr,"get_nbr_el: at %s, line %d\n",__FILE__,__LINE__);
-    fflush(logfr);
     if ( fr == NULL )
     {
         fprintf(stderr,"  Error: %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
@@ -1778,9 +1781,9 @@ int get_nbr_el(const char *filename, const char *sym,\
             {
                 (*nbr_expr)++;
             }
-            printf("--%s",line); 
+            /* printf("--%s",line);  */
             get_multiindex(line, &nbr_dim, &size_dim);
-            printf("--nbr_dim %zu\n",nbr_dim);
+            /* printf("--nbr_dim %zu\n",nbr_dim); */
             for(i=0;i<nbr_dim;i++)
             {
                 multi_dim *= size_dim[i];
@@ -1807,8 +1810,7 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
             index1;
     int     nbr_index;
     /* scan for two integers, index0, index1 in [iter=i0:i1] */
-    fprintf(logfr, "get_multiindex: parsing line '%s' at %s, line %d\n",line,__FILE__,__LINE__); 
-    fflush(logfr);
+    LOGPRINT("parsing line '%s'",line); 
     nbr_index = sscanf(line,"%*[^[] [ %*[^=] = %zu : %zu ]%n",&index0,&index1,&bracket1);
     *nbr_dim = 0;
     if ( nbr_index == 2 )
@@ -1816,10 +1818,8 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
         do 
         {
             *size_dim = realloc(*size_dim, ((*nbr_dim)+1)*sizeof(long));
-            fprintf(logfr, "get_multiindex: after realloc nbr_dim=%zu (%zu %zu)\n", *nbr_dim,index0,index1);
+            LOGPRINT("realloc: nbr_dim=%zu (from %zu to %zu)", *nbr_dim,index0,index1);
             (*size_dim)[*nbr_dim] = index1 - index0; 
-            fprintf(logfr, "get_multiindex: after assign\n"); 
-            fflush(logfr);
             (*nbr_dim)++;
             line+=bracket1;
             /* scan for two integers, index0, index1 in [iter=i0:i1] */
@@ -1835,7 +1835,7 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
     else if ( nbr_index == 1 )
     {
         /* var[iter=0] found; equivalent to var[iter=0:1], size = 1 */ 
-        fprintf(logfr, "get_multiindex: found index [iter=0:1], in %s, line %d\n",__FILE__,__LINE__);
+        LOGPRINT("found index of type [iter=0:1]");
         **size_dim = 1; 
     }
     else
@@ -1844,14 +1844,15 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
         exit ( EXIT_FAILURE );
     }
     
-    fprintf(logfr, "get_multiindex: expression has dim=%zu, with size ",*nbr_dim);
-    fflush(logfr);
-    for(i=0;i<*nbr_dim;i++)
+    LOGPRINT("expression has dim=%zu",*nbr_dim);
+    if ( *nbr_dim > 0 )
     {
-        fprintf(logfr,"%zu ",(*size_dim)[i]);
+        fprintf(logfr,"    with size ");
+        for(i=0;i<*nbr_dim;i++)
+        {
+            fprintf(logfr,"%zu ",(*size_dim)[i]);
+        }
     }
-    fprintf(logfr," in %s, line %d\n",__FILE__,__LINE__);
-    fflush(logfr);
 
     return *nbr_dim;
 
@@ -2299,15 +2300,14 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     *var.max_name_length = 0;
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
-        has_read = sscanf(line,"%s%n",key,&k);                       /* read the first word */
-        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
+        has_read = sscanf(line,"%s%n",key,&k);                       /* read the first word of the line */
+        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found based on the sym_len first characters */
         {
             success = 1;
             /* get the size of the expression */
             /* create a search pattern of the type A0:3 X[i=0:3] */
             get_multiindex(line, &nbr_dim, &size_dim);    
-            fprintf(logfr,"load_strings: found %s of dim %zu, at %s, line %d\n",sym,nbr_dim,__FILE__,__LINE__);
-            fflush(logfr);
+            LOGPRINT("found %s of dim %zu",sym,nbr_dim);
             expr_size = 1;
             for ( j=0; j<nbr_dim; j++ )
             {
@@ -2331,7 +2331,10 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
                 *var.max_name_length = (namelen1-namelen0);
             }
 
-            /* convert basevarname var[i=a:b] to var_j for j=a;j<b */
+            /* parse basevarname var[i=a:b] to var[i=a], ... var[i=b-1]
+             * parse basevarname var[i=a]   to var[i=a]
+             * parse basevarname var[a]     to var[a]
+             */
             sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */
             snprintf(extensionvarname,1,"");
             sscanf(basevarname, "%*[^/]%s", extensionvarname); /* get the dt if there is one */
@@ -2344,20 +2347,25 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             index_factor = 1;
             do
             {
-                /* printf("--stripped basevarname: %s\n", basevarname+namelen0); */
+                /* try to read var[0] */
                 nbr_read_1 = sscanf(basevarname+namelen0, " [ %zu ]%n", &index0, &namelen1); /* get index var[a] -> a */
-                if (nbr_read_1 == 1) /* single expresssion */
+                if (nbr_read_1 == 1) /* single expresssion with brackets var[0] */
                 {
                     index1 = index0+1;
                     snprintf(iterator_str,1,"");
                 }
-                nbr_read_2 = sscanf(basevarname+namelen0, " [%*[^=] =  %zu : %zu ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
-                if (nbr_read_2 == 2) /* array expresssion */
+                /* try to read var[i=0:5] */
+                nbr_read_2 = sscanf(basevarname+namelen0, " [ %*[^=] =  %zu : %zu ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
+                if (nbr_read_2 > 0) /* array expresssion var[i=0:5] or single expression var[i=0] */
                 {
-                    sscanf(basevarname+namelen0, " [%[^=]", iterator_str); /* get name of iterator */
+                    sscanf(basevarname+namelen0, " [ %[^=]", iterator_str); /* get name of iterator */
                     strcat(iterator_str,"=");
                 }
-                if (nbr_read_1 == 1 || nbr_read_2 == 2)
+                if (nbr_read_2 == 1) /* if var[i=0], do as if var[i=0:1] */
+                {
+                    index1 = index0+1;
+                }
+                if (nbr_read_1 == 1 || nbr_read_2 > 0)
                 {
                     index_factor *= (index1-index0);
                     /* printf("--index0: %zu\n", index0); */
@@ -2874,3 +2882,4 @@ completion_list_generator(const char *text, int state)
 
     return NULL;
 }
+

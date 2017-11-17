@@ -29,6 +29,12 @@
            __typeof__ (b) _b = (b); \
          _a < _b ? _a : _b; })
 
+/* log file */
+#define LOGPRINT(...) \
+    ({ fprintf(logfr,"%s: ",__FUNCTION__); \
+       fprintf(logfr, __VA_ARGS__); \
+       fprintf(logfr,", in %s, line %d\n",__FILE__,__LINE__); \
+       fflush(logfr); })
 
 /* =================================================================
                               EXTERN

@@ -19,6 +19,7 @@ mkdir -p .odexp
 # ---------------------------------------
 # Files created in .odexp
 # model.op: model file where all constants are replaced by their values
+# model.par contains parameter, initial condition, tspan and options
 # model.c: C file implementation 
 # ---------------------------------------
 
@@ -471,7 +472,7 @@ define_initial_conditions () {
         printf "[%s+%d]", b[k], nv 
         nv+=b[k+2]-b[k+1]
       }; 
-      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $parfile >>.odexp/model.c
+      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $file >>.odexp/model.c
 }
 
 # ==========================================================================================
