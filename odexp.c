@@ -448,7 +448,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
     update_act_par_index(&p, mu);
     update_act_par_options(p, mu);
-    printf_options("");
+    /* printf_options(""); */
+    printf("  options loaded. Type 'lo' to see options\n");
 
     /* set IC to their numerical values */
     num_ic = malloc(ode_system_size*sizeof(int));
@@ -464,7 +465,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     srand(randseed);
     /* test rng */
     printf("\nrandom number generator %s\n", hline);
-    printf("  RAND_MAX %s%d%s\n",T_VAL,RAND_MAX,T_NOR);
+    printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR);
     
     /* readline */
     /* printf("\nreadline library version: %s\n\n", rl_library_version); */
@@ -490,6 +491,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     
     stifle_history( 200 );
 
+    /* first run after system init */
     status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
 
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
@@ -498,9 +500,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     fprintf(gnuplot_pipe,"plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
-
-
-
 
     while(1)
     {

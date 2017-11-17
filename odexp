@@ -720,7 +720,6 @@ echo "    int success_ = 0;" >>.odexp/model.c
 # find iterators in the source file and declare them 
 echo "    /* iterators */" >>.odexp/model.c
 declare_iterators
-#declare_iterators_init_conditions
 echo "" >>.odexp/model.c
 
 # ====================================================================================
@@ -747,14 +746,14 @@ declare_parametric_expressions
 
 # ====================================================================================
 # DECLARE VARIABLES and AUXILIARY VARIABLES
-echo "" >>.odexp/model.c
-echo "    /* Declaration - auxiliary functions */" >>.odexp/model.c
-# find vector variables and declare them to model.c
-declare_auxiliary_functions
-
-echo "" >>.odexp/model.c
-echo "    /* Declaration - variables */" >>.odexp/model.c
-declare_variables
+# echo "" >>.odexp/model.c
+# echo "    /* Declaration - auxiliary functions */" >>.odexp/model.c
+# # find vector variables and declare them to model.c
+# declare_auxiliary_functions
+# 
+# echo "" >>.odexp/model.c
+# echo "    /* Declaration - variables */" >>.odexp/model.c
+# declare_variables
 # ====================================================================================
 
 # ====================================================================================
@@ -771,15 +770,15 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
 define_parametric_expressions
 
-echo "" >>.odexp/model.c
-echo "    /* Initialization - variables */" >>.odexp/model.c
-define_variables
-
-# DEFINE AUXILIARY FUNCTIONS
-echo "" >>.odexp/model.c
-echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
-# initialize auxiliary function 
-define_auxiliary_functions
+# echo "" >>.odexp/model.c
+# echo "    /* Initialization - variables */" >>.odexp/model.c
+# define_variables
+# 
+# # DEFINE AUXILIARY FUNCTIONS
+# echo "" >>.odexp/model.c
+# echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
+# # initialize auxiliary function 
+# define_auxiliary_functions
 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - initial condition */" >>.odexp/model.c
