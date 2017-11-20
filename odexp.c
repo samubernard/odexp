@@ -1636,7 +1636,9 @@ void free_namevalexp(nve var )
     free(var.value);
     free(var.name);
     free(var.expression);
+    free(var.attribute);
     free(var.expr_index);
+    free(var.max_name_length);
 }
 
 void alloc_namevalexp( nve *var )
@@ -2321,17 +2323,24 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             }
             while (nbr_read_1 > 0 || nbr_read_2 > 0);
             
+            /* copy expressions into var.expression */
             for(j=0;j<expr_size;j++)
             {
                 strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH-1);
             }
 
+            /* copy attribute into var.attribute */
+            for(j=0;j<expr_size;j++)
+            {
+                strncpy(var.attribute[var_index+j], attribute,NAMELENGTH-1);
+            }
+
             for (j=0;j<expr_size;j++)
             {
                 var.expr_index[var_index+j] = var_index;
-                printf("  %s[%s%zu%s] %-*s %c %s%s%s\n",\
+                printf("  %s[%s%zu%s] %-*s %c %s%s%s %s%s%s\n",\
                         sym,T_IND,var_index+j,T_NOR,*var.max_name_length,var.name[var_index+j],\
-                        sep,T_EXPR,var.expression[var_index+j],T_NOR);
+                        sep,T_EXPR,var.expression[var_index+j],T_NOR,T_DET,var.attribute[var_index+j],T_NOR);
             }
             var_index += expr_size;
         }
