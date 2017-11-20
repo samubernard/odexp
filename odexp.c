@@ -1865,7 +1865,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
     size_t linecap = 0;
     char *line = NULL;
     char key[NAMELENGTH]; 
-    char var_option[NAMELENGTH];
+    char var_option[NAMELENGTH] = "";
     FILE *fr;
     int k = 0, has_read;
     int success = 0;
@@ -1893,8 +1893,8 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
             if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
             {
                 success = 1;
-                /* try to read SYM0:N VAR VALUE :OPTION */
-                has_read = sscanf(line,"%*s %s %lf :%s",var.name[var_index],&var.value[var_index],var_option);
+                /* try to read SYM0:N VAR VALUE ! OPTION */
+                has_read = sscanf(line,"%*s %s %lf ! %s ",var.name[var_index],&var.value[var_index],var_option);
                 var.expr_index[var_index] = var_index;
 
                 length_name = strlen(var.name[var_index]);                       /* length of second word */

@@ -156,9 +156,10 @@ declare_array_from_file () {
 declare_parameters () {
 # find variable parameters and declare them in model.c 
     gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {
-        switch (toupper($4)) {
-            case ":INITIAL" :
-            case ":UNUSED"  :
+        split($0,a,/!/);
+        switch (toupper(a[2])) {
+            case /INITIAL/ :
+            case /UNUSED/  :
                 printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++;
                 break;
             default :
@@ -450,7 +451,8 @@ define_initial_conditions () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[iI][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       $1="";
       $2="";
-      ex=$0;
+      split($0,exa,/!/);
+      ex=exa[1];
       printf "    y_[%d] = %s;\n", nv, ex;
       nv++
       };
@@ -461,7 +463,8 @@ define_initial_conditions () {
       myvar="y_";
       $1="";
       $2="";
-      ex=$0;
+      split($0,exa,/!/);
+      ex=exa[1];
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 

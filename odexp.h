@@ -52,16 +52,16 @@ extern const char *hline;  /* horizontal line */
 
 typedef struct namevalexp
 {
-    double *value;
-    double *aux_pointer;
-    double *rand_pointer;
-    double *expr_pointer;
-    char **name;
-    char **expression;
-    long nbr_el; 
-    long nbr_expr;
-    long *expr_index;
-    int *max_name_length;
+    double *value;         /* numerical values */
+    double *aux_pointer;   /* pointer to pass to rhs to retrieve auxiliary variable values */
+    double *rand_pointer;  /* pointer to array of random numbers to pass to rhs */
+    double *expr_pointer;  /* pointer to pass to rhs to retrieve parametric expression values */
+    char **name;           /* names */
+    char **expression;     /* expressions (only string, not evaluated) */
+    long nbr_el;           /* nbr of elements */
+    long nbr_expr;         /* nbr of expression <= nbr_el */
+    long *expr_index;      /* index of expression */
+    int *max_name_length;  /* length of longest name */
 } nve;
 
 typedef struct gen_option
