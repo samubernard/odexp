@@ -243,64 +243,28 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\n%-25s%s\n", "constant arrays", hline);
     get_nbr_el(odefilename,"C",1, &cst.nbr_el, NULL);
     LOGPRINT("found %ld constants",cst.nbr_el);
-    cst.value = malloc(cst.nbr_el*sizeof(double));
-    cst.name = malloc(cst.nbr_el*sizeof(char*));
-    cst.expression = malloc(cst.nbr_el*sizeof(char*));
-    cst.expr_index = malloc(cst.nbr_el*sizeof(long));
-    cst.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < cst.nbr_el; i++)
-    {
-        cst.name[i] = malloc(NAMELENGTH*sizeof(char));
-        cst.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
-    }
+    alloc_namevalexp(&cst);
     success = load_strings(odefilename,cst,"C",1,1,' ', exit_if_nofile);
 
     /* get data files */
     printf("\n%-25s%s\n", "data files", hline);
     get_nbr_el(odefilename,"F",1, &dfl.nbr_el, NULL);
     LOGPRINT("found %ld data files",dfl.nbr_el);
-    dfl.value = malloc(dfl.nbr_el*sizeof(double));
-    dfl.name = malloc(dfl.nbr_el*sizeof(char*));
-    dfl.expression = malloc(dfl.nbr_el*sizeof(char*));
-    dfl.expr_index = malloc(dfl.nbr_el*sizeof(long));
-    dfl.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < dfl.nbr_el; i++)
-    {
-        dfl.name[i] = malloc(NAMELENGTH*sizeof(char));
-        dfl.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
-    }
+    alloc_namevalexp(&dfl);
     success = load_strings(odefilename,dfl,"F",1,1,' ', exit_if_nofile);
 
     /* get user-defined functions */
     printf("\n%-25s%s\n", "user-defined functions", hline);
     get_nbr_el(odefilename,"@",1, &func.nbr_el, NULL);
     LOGPRINT("found %ld user-defined function",func.nbr_el);
-    func.value = malloc(func.nbr_el*sizeof(double));
-    func.name = malloc(func.nbr_el*sizeof(char*));
-    func.expression = malloc(func.nbr_el*sizeof(char*));
-    func.expr_index = malloc(func.nbr_el*sizeof(long));
-    func.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < func.nbr_el; i++)
-    {
-        func.name[i] = malloc(NAMELENGTH*sizeof(char));
-        func.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
-    }
+    alloc_namevalexp(&func);
     success = load_strings(odefilename,func,"@",1,1,'=', exit_if_nofile);
 
     /* get parameters */
     printf("\n%-25s%s\n", "parameters", hline);
     get_nbr_el(parfilename,"P",1, &mu.nbr_el, &mu.nbr_expr);
     LOGPRINT("found %ld parameters",mu.nbr_el);
-    mu.value = malloc(mu.nbr_el*sizeof(double));
-    mu.name = malloc(mu.nbr_el*sizeof(char*));
-    mu.expression = malloc(mu.nbr_el*sizeof(char*));
-    mu.expr_index = malloc(mu.nbr_el*sizeof(long));
-    mu.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < mu.nbr_el; i++)
-    {
-        mu.name[i] = malloc(NAMELENGTH*sizeof(char));
-        mu.expression[i] = malloc(EXPRLENGTH*sizeof(char*));
-    }
+    alloc_namevalexp(&mu);
     success = load_nameval(parfilename,mu,"P",1,exit_if_nofile);
     if (!success) /* then create a not_a_parameter parameter */
     {
@@ -321,16 +285,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\n%-25s%s\n", "parametric expressions", hline);
     get_nbr_el(odefilename,"E",1, &pex.nbr_el, &pex.nbr_expr);
     LOGPRINT("found %ld parametric expressions",pex.nbr_el);
-    pex.value = malloc(pex.nbr_el*sizeof(double));
-    pex.name = malloc(pex.nbr_el*sizeof(char*));
-    pex.expression = malloc(pex.nbr_el*sizeof(char*));
-    pex.expr_index = malloc(pex.nbr_el*sizeof(long));
-    pex.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < pex.nbr_el; i++)
-    {
-        pex.name[i] = malloc(NAMELENGTH*sizeof(char));
-        pex.expression[i] = malloc(EXPRLENGTH*sizeof(char));
-    }
+    alloc_namevalexp(&pex);
+    /* DBPRINT("after alloc_namevalexp(pex)"); */
     success = load_strings(odefilename,pex,"E",1,1,' ', exit_if_nofile);
     if (!success)
     {
@@ -342,16 +298,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\n%-25s%s\n", "initial conditions", hline);
     get_nbr_el(parfilename,"I",1, &ics.nbr_el, &ics.nbr_expr);
     LOGPRINT("found %ld variables",ics.nbr_el);
-    ics.value = malloc(ics.nbr_el*sizeof(double));
-    ics.name = malloc(ics.nbr_el*sizeof(char*));
-    ics.expression = malloc(ics.nbr_el*sizeof(char*));
-    ics.expr_index = malloc(ics.nbr_el*sizeof(long));
-    ics.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < ics.nbr_el; i++)
-    {
-        ics.name[i] = malloc(NAMELENGTH*sizeof(char));
-        ics.expression[i] = malloc(EXPRLENGTH*sizeof(char));
-    }
+    alloc_namevalexp(&ics);
     success = load_strings(parfilename,ics,"I",1,1,' ', exit_if_nofile);
     if (!success)
     {
@@ -368,16 +315,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\n%-25s%s\n", "auxiliary variables", hline);
     get_nbr_el(odefilename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
     LOGPRINT("found %ld auxiliary variables",fcn.nbr_el);
-    fcn.value = malloc(fcn.nbr_el*sizeof(double));
-    fcn.name = malloc(fcn.nbr_el*sizeof(char*));
-    fcn.expression = malloc(fcn.nbr_el*sizeof(char*));
-    fcn.expr_index = malloc(fcn.nbr_el*sizeof(long));
-    fcn.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < fcn.nbr_el; i++)
-    {
-        fcn.name[i] = malloc(NAMELENGTH*sizeof(char));
-        fcn.expression[i] = malloc(EXPRLENGTH*sizeof(char));
-    }
+    alloc_namevalexp(&fcn);
     success = load_strings(odefilename,fcn,"A",1,1,' ', exit_if_nofile);
     if (!success)
     {
@@ -389,16 +327,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\n%-25s%s\n", "equations", hline);
     get_nbr_el(odefilename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
     LOGPRINT("found %ld equations",eqn.nbr_el);
-    eqn.value = malloc(eqn.nbr_el*sizeof(double));
-    eqn.name = malloc(eqn.nbr_el*sizeof(char*));
-    eqn.expression = malloc(eqn.nbr_el*sizeof(char*));
-    eqn.expr_index = malloc(eqn.nbr_el*sizeof(long));
-    eqn.max_name_length = malloc(sizeof(int));
-    for (i = 0; i < eqn.nbr_el; i++)
-    {
-        eqn.name[i] = malloc(NAMELENGTH*sizeof(char));
-        eqn.expression[i] = malloc(EXPRLENGTH*sizeof(char));
-    }
+    alloc_namevalexp(&eqn);
     success = load_strings(odefilename,eqn,"d",1,0,'=', exit_if_nofile);   
     if (!success)
     {
@@ -416,19 +345,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* define dxv */
     
-    dxv.value = malloc(total_nbr_x*sizeof(double));
-    dxv.name = malloc(total_nbr_x*sizeof(char*));
-    dxv.expression = malloc(total_nbr_x*sizeof(char*));
-    dxv.expr_index = malloc(total_nbr_x*sizeof(long));
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr;
     dxv.nbr_el = total_nbr_x;
-    dxv.max_name_length = malloc(sizeof(int));
+    alloc_namevalexp(&dxv);
     *dxv.max_name_length = max(*ics.max_name_length, *fcn.max_name_length);
-    for (i = 0; i < dxv.nbr_el; i++)
-    {
-        dxv.name[i] = malloc(NAMELENGTH*sizeof(char));
-        dxv.expression[i] = malloc(EXPRLENGTH*sizeof(char));
-    }
     for (i = 0; i < ode_system_size; i++)
     {
         strcpy(dxv.name[i],ics.name[i]);
@@ -1721,6 +1641,23 @@ void free_namevalexp(nve var )
     free(var.expr_index);
 }
 
+void alloc_namevalexp( nve *var )
+{
+    size_t i;
+    var->value = malloc(var->nbr_el*sizeof(double));
+    var->name = malloc(var->nbr_el*sizeof(char*));
+    var->expression = malloc(var->nbr_el*sizeof(char*));
+    var->attribute = malloc(var->nbr_el*sizeof(char*));
+    var->expr_index = malloc(var->nbr_el*sizeof(long));
+    var->max_name_length = malloc(sizeof(int));
+    for (i = 0; i < var->nbr_el; i++)
+    {
+        var->name[i] = malloc(NAMELENGTH*sizeof(char));
+        var->expression[i] = malloc(EXPRLENGTH*sizeof(char));
+        var->attribute[i] = malloc(EXPRLENGTH*sizeof(char));
+    }
+}
+
 void init_steady_state(steady_state *mystst, int index)
 {
     /* init steady state */
@@ -2273,6 +2210,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     char basevarname[NAMELENGTH];
     char rootvarname[NAMELENGTH];
     char extensionvarname[NAMELENGTH];
+    char attribute[NAMELENGTH];
     char iterator_str[NAMELENGTH];
     char index_str[NAMELENGTH];
     char new_index[NAMELENGTH];
@@ -2317,14 +2255,15 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             if ( prefix ) /* prefix is something like A0, E10, expression, ... */
             {
                 /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep); */
-                snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^\n]", sep, sep);
+                snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^!\n] %%[^\n]", sep, sep);
             }
             else /* prefix ==  0 */
             {
-                snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^\n]", sep); 
+                snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^!\n] %%[^\n]", sep); 
                 /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%[^%c]%%n %c %%[^\n]", sep, sep); */
             }
-            sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression);
+            snprintf(attribute,1,"");
+            sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression, attribute);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
                 *var.max_name_length = (namelen1-namelen0);

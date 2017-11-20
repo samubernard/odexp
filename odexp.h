@@ -36,6 +36,12 @@
        fprintf(logfr,", in %s, line %d\n",__FILE__,__LINE__); \
        fflush(logfr); })
 
+/* debug printf */
+#define DBPRINT(...) \
+    ({ printf("--%s: ",__FUNCTION__); \
+       printf( __VA_ARGS__); \
+       printf(", in %s, line %d\n",__FILE__,__LINE__); })
+
 /* =================================================================
                               EXTERN
 ================================================================= */
@@ -58,6 +64,7 @@ typedef struct namevalexp
     double *expr_pointer;  /* pointer to pass to rhs to retrieve parametric expression values */
     char **name;           /* names */
     char **expression;     /* expressions (only string, not evaluated) */
+    char **attribute;      /* attributes: to be better defined */
     long nbr_el;           /* nbr of elements */
     long nbr_expr;         /* nbr of expression <= nbr_el */
     long *expr_index;      /* index of expression */
@@ -103,7 +110,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
 void free_double_array( double_array var );
 
-void free_namevalexp(nve mu );
+void alloc_namevalexp( nve *mu );
+void free_namevalexp( nve mu );
 
 void init_steady_state(steady_state *stst, int index);
 
