@@ -292,7 +292,8 @@ define_auxiliary_functions () {
       lhs=$2;
       $1="";
       $2="";
-      ex=$0;
+      split($0,exa,/!/);
+      ex=exa[1];
       printf "    %s = %s;\n", lhs, ex
       };
       
@@ -303,7 +304,8 @@ define_auxiliary_functions () {
       myvar=c[1];
       $1="";
       $2="";
-      ex=$0;
+      split($0,exa,/!/);
+      ex=exa[1];
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
