@@ -1626,14 +1626,12 @@ void free_namevalexp(nve var )
 {
     long i;
     
-    /* do not free aux_pointer, it will be freed from fcn through fcn.value */
+    /* do not free _pointeris, they will be freed in time */
     for (i = 0; i < var.nbr_el; i++)
     {
         free(var.name[i]);
-    }
-    for (i = 0; i < var.nbr_el; i++)
-    {
         free(var.expression[i]);
+        free(var.attribute[i]);
     }
     free(var.value);
     free(var.name);
