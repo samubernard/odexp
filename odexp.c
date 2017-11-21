@@ -224,46 +224,47 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         fprintf(stderr,"\n  Error: time span not found.\n"
                 "  One line in file %s should be of the form\n"
                 "  TIMESPAN 0 100\n  Exiting...\n\n", odexp_filename);
+        LOGPRINT("Error: time span not found.");
         exit ( EXIT_FAILURE );
     }
     printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
+    LOGPRINT("Found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
 
     /* get random array */
     printf("\n%-25s%s\n", "random numbers", hline);
     get_nbr_el(odefilename,"U",1,(long *)&rnd.length,NULL);
-    LOGPRINT("found %ld random numbers",rnd.length);
     rnd.array = malloc(rnd.length*sizeof(double));
     for (i = 0; i < rnd.length; i++)
     {
         rnd.array[i] = rand01();
     }
     mu.rand_pointer = rnd.array;
+    LOGPRINT("found %ld random numbers",rnd.length);
 
     /* get constant arrays */
     printf("\n%-25s%s\n", "constant arrays", hline);
     get_nbr_el(odefilename,"C",1, &cst.nbr_el, NULL);
-    LOGPRINT("found %ld constants",cst.nbr_el);
     alloc_namevalexp(&cst);
     success = load_strings(odefilename,cst,"C",1,1,' ', exit_if_nofile);
+    LOGPRINT("found %ld constants",cst.nbr_el);
 
     /* get data files */
     printf("\n%-25s%s\n", "data files", hline);
     get_nbr_el(odefilename,"F",1, &dfl.nbr_el, NULL);
-    LOGPRINT("found %ld data files",dfl.nbr_el);
     alloc_namevalexp(&dfl);
     success = load_strings(odefilename,dfl,"F",1,1,' ', exit_if_nofile);
+    LOGPRINT("found %ld data files",dfl.nbr_el);
 
     /* get user-defined functions */
     printf("\n%-25s%s\n", "user-defined functions", hline);
     get_nbr_el(odefilename,"@",1, &func.nbr_el, NULL);
-    LOGPRINT("found %ld user-defined function",func.nbr_el);
     alloc_namevalexp(&func);
     success = load_strings(odefilename,func,"@",1,1,'=', exit_if_nofile);
+    LOGPRINT("found %ld user-defined function",func.nbr_el);
 
     /* get parameters */
     printf("\n%-25s%s\n", "parameters", hline);
     get_nbr_el(parfilename,"P",1, &mu.nbr_el, &mu.nbr_expr);
-    LOGPRINT("found %ld parameters",mu.nbr_el);
     alloc_namevalexp(&mu);
     success = load_nameval(parfilename,mu,"P",1,exit_if_nofile);
     if (!success) /* then create a not_a_parameter parameter */
@@ -280,24 +281,23 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.value[0] = NAN;
         *mu.max_name_length = 15; 
     } 
+    LOGPRINT("found %ld parameters",mu.nbr_el);
     
     /* get parametric expressions */
     printf("\n%-25s%s\n", "parametric expressions", hline);
     get_nbr_el(odefilename,"E",1, &pex.nbr_el, &pex.nbr_expr);
-    LOGPRINT("found %ld parametric expressions",pex.nbr_el);
     alloc_namevalexp(&pex);
-    /* DBPRINT("after alloc_namevalexp(pex)"); */
     success = load_strings(odefilename,pex,"E",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no parametric expression found\n");
     } 
     mu.expr_pointer = pex.value; /* pointer to parametric expression values */
+    LOGPRINT("found %ld parametric expressions",pex.nbr_el);
 
     /* get initial conditions */
     printf("\n%-25s%s\n", "initial conditions", hline);
     get_nbr_el(parfilename,"I",1, &ics.nbr_el, &ics.nbr_expr);
-    LOGPRINT("found %ld variables",ics.nbr_el);
     alloc_namevalexp(&ics);
     success = load_strings(parfilename,ics,"I",1,1,' ', exit_if_nofile);
     if (!success)
@@ -305,16 +305,17 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         fprintf(stderr,"\n  Error: Initial conditions not found.\n"
                 "  File %s should contain initial condition for all dynamical variables "
                 "with lines of the form\n"
-                "  INITIAL X X0\nExiting...\n\n", odexp_filename);
+                "  INITIAL I I0\nExiting...\n\n", odexp_filename);
+        LOGPRINT("Error: Initial conditions not found.");
         exit ( EXIT_FAILURE );
     } 
     ode_init_conditions(tspan.array[0],ics.value,&mu);
+    LOGPRINT("found %ld variables",ics.nbr_el);
 
 
     /* get nonlinear functions */
     printf("\n%-25s%s\n", "auxiliary variables", hline);
     get_nbr_el(odefilename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
-    LOGPRINT("found %ld auxiliary variables",fcn.nbr_el);
     alloc_namevalexp(&fcn);
     success = load_strings(odefilename,fcn,"A",1,1,' ', exit_if_nofile);
     if (!success)
@@ -322,11 +323,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  no auxiliary function found\n");
     } 
     mu.aux_pointer = fcn.value; /* pointer to fcn.value */
+    LOGPRINT("found %ld auxiliary variables",fcn.nbr_el);
 
     /* get equations */
     printf("\n%-25s%s\n", "equations", hline);
     get_nbr_el(odefilename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
-    LOGPRINT("found %ld equations",eqn.nbr_el);
     alloc_namevalexp(&eqn);
     success = load_strings(odefilename,eqn,"d",1,0,'=', exit_if_nofile);   
     if (!success)
@@ -335,8 +336,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 "  File %s should contain equations for all dynamical variables "
                 "with lines of the form\n"
                 "  dX/dt = RHS\n  Exiting...\n\n", odexp_filename);
+        LOGPRINT("Error: Equations not found.");
         exit ( EXIT_FAILURE );
     } 
+    LOGPRINT("found %ld equations",eqn.nbr_el);
 
     ode_system_size = ics.nbr_el;
     total_nbr_x = ode_system_size + fcn.nbr_el;
@@ -370,6 +373,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     update_act_par_options(p, mu);
     /* printf_options(""); */
     printf("  options loaded. Type 'lo' to see options\n");
+    LOGPRINT("Options loaded");
 
     /* set IC to their numerical values */
     num_ic = malloc(ode_system_size*sizeof(int));
@@ -386,6 +390,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* test rng */
     printf("\nrandom number generator %s\n", hline);
     printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR);
+    LOGPRINT("RAND_MAX %d",RAND_MAX);
     
     /* readline */
     /* printf("\nreadline library version: %s\n\n", rl_library_version); */
@@ -394,10 +399,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     {
         printf("warning: You are using the EditLine wrapper of the readline library.\n");    
         printf("         inputrc will not work and you will not be able to use the keyboard shortcuts\n\n");
+        LOGPRINT("warning: You are using the EditLine wrapper of the readline library.");    
     }
     else if ( rl_read_init_file (".odexp/.inputrc") ) /* readline init file */
     {
       printf("\n  warning: inputrc file for readline not found\n");
+      LOGPRINT("warning: inputrc file for readline not found");
     }
     initialize_readline();
     rl_attempted_completion_function = completion_list_completion;
@@ -407,11 +414,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     if ( read_history(".history") )
     {
       printf("\n  warning: history file .history not found\n");
+      LOGPRINT("warning: history file .history not found");
     }
     
     stifle_history( 200 );
 
     /* first run after system init */
+    LOGPRINT("System init done. Running first simulation");
     status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
 
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
@@ -546,12 +555,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     break;
                 case '>' : /* increase resolution */
-                    set_int("odesolver_output_resolution",2*get_int("odesolver_output_resolution"));
+                    set_int("odesolver_output_resolution",2*get_int("odesolver_output_resolution")-1);
                     rerun = 1;
                     replot = 1;
                     break;
                 case '<' : /* decrease resolution */
-                    set_int("odesolver_output_resolution",get_int("odesolver_output_resolution")/2);
+                    set_int("odesolver_output_resolution",(get_int("odesolver_output_resolution")+1)/2);
                     rerun = 1;
                     replot = 1;
                     break;
