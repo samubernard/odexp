@@ -353,7 +353,8 @@ define_variables () {
 
 define_equations () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[dD][a-zA-Z0-9_]+(\[[^:]\])*\/[dD]{1}[tT]{1}/ {
-      split($0,ex,/=/); printf "    f_[%d] = %s;\n", nv, ex[2]; nv++};
+      split($0,ex,/[=!]/); 
+      printf "    f_[%d] = %s;\n", nv, ex[2]; nv++ };
       
       $1 ~ /^[dD][a-zA-Z0-9_]+(\[.+=.+:.+\])+\/[dD][tT]/ {
       match($1,/(\[.+\])+/);
@@ -361,7 +362,9 @@ define_equations () {
       split(a,b,/[\[\]=:]/);
       myvar="f_";
       split($0,e,/=/);
-      myexpr=e[length(e)];
+      myrhs=e[length(e)];
+      split(myrhs,e2,/!/);
+      myexpr=e2[1];
       for (k=2; k<=length(b); k+=4) 
       { 
         printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 

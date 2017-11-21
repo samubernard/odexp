@@ -745,7 +745,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     ngy++;
                     ngy %= total_nbr_x;
                     gy = ngy+2;
-                    printf("--ngy=%ld total_nbr_x=%ld\n",ngy,total_nbr_x);
                     plotmode_normal=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
@@ -1365,10 +1364,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         if (i<dfl.nbr_el) /* found the dataset to plot */
                         {
-                            printf("--%s %ld %ld\n", svalue, colx, coly);
+                            DBPRINT("%s %ld %ld\n", svalue, colx, coly);
                             if ( sscanf(dfl.expression[i]," %*lu %*lu %s ",data_fn) )
                             {
-                                printf("--data_fn=%s\n", data_fn);
+                                DBPRINT("data_fn=%s\n", data_fn);
                                 data_plotted = 1;
                             }
                         }
@@ -1893,7 +1892,6 @@ int load_options(const char *filename, int exit_if_nofile)
     }
     else
     {
-        /* printf("--so far...\n"); */
         while( (linelength = getline(&line, &linecap, fr)) > 0)
         {
             has_read = sscanf(line,"%s%n",key,&k);
@@ -1934,7 +1932,6 @@ int load_options(const char *filename, int exit_if_nofile)
     }
     
 
-    /* printf("--so good.\n"); */
     fclose(fr);
 
     return success;
@@ -2267,7 +2264,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
                 snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^!\n] ! %%[^\n]", sep); 
                 /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%[^%c]%%n %c %%[^\n]", sep, sep); */
             }
-            snprintf(attribute,3,"na");
+            snprintf(attribute,1,"");
             sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression, attribute);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
@@ -2782,7 +2779,8 @@ void printf_list_str_val(char type, long print_index, long nve_index, int paddin
 {
     printf("  %c[%s%ld%s]%-*s %-*s = %s%14g%s  %s%s%s %s%s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,\
-            var->name[nve_index],T_VAL,var->value[nve_index],T_NOR,T_EXPR,var->expression[nve_index],T_NOR,\
+            var->name[nve_index],T_VAL,var->value[nve_index],\
+            T_NOR,T_EXPR,var->expression[nve_index],T_NOR,\
             T_DET,var->attribute[nve_index],T_NOR);
  
 }
