@@ -170,11 +170,11 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
-        fprintf(file,"\t%s",ics.name[i]);
+        if (strncmp(ics.attribute[i],"hidden",3) ) fprintf(file,"\t%s",ics.name[i]);
     }
     for (i = 0; i<fcn.nbr_el; i++)
     {
-        fprintf(file,"\t%s",fcn.name[i]);
+        if (strncmp(fcn.attribute[i],"hidden",3) ) fprintf(file,"\t%s",fcn.name[i]);
     }
     fprintf(file,"\n");
 
@@ -182,13 +182,13 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fprintf(file,"%g ",t);
     for (i = 0; i < ode_system_size; i++)
     {
-        fprintf (file,"\t%g",y[i]);  
+        if (strncmp(ics.attribute[i],"hidden",3) ) fprintf (file,"\t%g",y[i]);  
     }
     f = malloc(ode_system_size*sizeof(double));
     ode_rhs(t, y, f, &mu);
     for (i = 0; i < fcn.nbr_el; i++)
     {
-        fprintf (file,"\t%g",mu.aux_pointer[i]);
+        if (strncmp(fcn.attribute[i],"hidden",3) ) fprintf (file,"\t%g",mu.aux_pointer[i]);
     }
     fprintf(file,"\n");
 
@@ -248,11 +248,11 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf(file,"%g ",t);
         for (i = 0; i < ode_system_size; i++)
         {
-            fprintf (file,"\t%g",y[i]); 
+            if (strncmp(ics.attribute[i],"hidden",3) ) fprintf (file,"\t%g",y[i]); 
         }
         for (i = 0; i < fcn.nbr_el; i++)
         {
-            fprintf (file,"\t%g",fcn.value[i]);
+            if (strncmp(fcn.attribute[i],"hidden",3) ) fprintf (file,"\t%g",fcn.value[i]);
         }
         fprintf(file,"\n");
 
@@ -268,11 +268,11 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
           fprintf(file,"%g ",t);
           for (i = 0; i < ode_system_size; i++)
           {
-              fprintf (file,"\t%g",y[i]); 
+              if (strncmp(ics.attribute[i],"hidden",3) ) fprintf (file,"\t%g",y[i]); 
           }
           for (i = 0; i < fcn.nbr_el; i++)
           {
-              fprintf (file,"\t%g",fcn.value[i]);
+              if (strncmp(fcn.attribute[i],"hidden",3) ) fprintf (file,"\t%g",fcn.value[i]);
           }
           fprintf(file,"\n");  
 

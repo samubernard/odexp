@@ -149,9 +149,9 @@ double get_dou(const char *name);
 long   get_int(const char *name);
 char*  get_str(const char *name);
 
-void printf_list_val(char type, long i, int padding, const nve *var, char *descr);
-void printf_list_str(char type, long i, int padding, const nve *var);
-void printf_list_str_val(char type, long i, int padding, const nve *var);
+void printf_list_val(char type, long print_index, long nve_index, int padding, const nve *var, char *descr);
+void printf_list_str(char type, long print_index, long nve_index, int padding, const nve *var);
+void printf_list_str_val(char type, long print_index, long nve_index, int padding, const nve *var);
 
 int plot_data(const long colx, const long coly, const char *datafile_plotted, FILE *gnuplot_pipe);
 

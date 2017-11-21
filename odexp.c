@@ -875,7 +875,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             {
                                 snprintf(par_details,1,"");  
                             }
-                            printf_list_val('P',i,padding,&mu,par_details);
+                            printf_list_val('P',i,i,padding,&mu,par_details);
                         }
                     }
                     else if (op == 'e') /* list parametric expression */
@@ -883,7 +883,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<pex.nbr_el; i++)
                         {
                             padding = (int)log10(pex.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_str_val('E',i,padding, &pex);
+                            printf_list_str_val('E',i,i,padding, &pex);
                         }
                     }
                     else if (op == 'r') /* list random arrays         */
@@ -891,7 +891,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<rnd.length; i++)
                         {
                             padding = (int)log10(rnd.length+0.5)-(int)log10(i+0.5);
-                            DBPRINT("TODO: print random array");
+                            printf("  U[%s%ld%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
+                                    T_IND,i,T_NOR, padding, "", 4,"unif",\
+                                    T_VAL,rnd.array[i],T_NOR,T_DET,"uniform [0,1] pseudo-random number",T_NOR);
                             /* printf_list_val('U',i,padding,4,"unif",rnd.array[i],"uniform random number"); */
                         }
                     }
@@ -902,12 +904,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
                             if (num_ic[i] == 0)
                             {
-                                printf_list_val('I',i,padding,&ics,"");
+                                printf_list_val('I',i,i,padding,&ics,"");
                             }
                             else
                             {
                                 snprintf(list_msg,EXPRLENGTH,"numerically set (cI %ld to revert to %s)",i,ics.expression[i]);
-                                printf_list_val('I',i,padding,&ics,list_msg);
+                                printf_list_val('I',i,i,padding,&ics,list_msg);
 
                             }
 
@@ -919,13 +921,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<eqn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                            printf_list_str('D',i,padding,&eqn);
+                            printf_list_str('D',i,i,padding,&eqn);
                         }
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            DBPRINT("TODO fix aux index");
-                            printf_list_str('A',i,padding,&fcn);
+                            printf_list_str('A',i+eqn.nbr_el,i,padding,&fcn);
                         }
                     }
                     else if (op == 'a') /* list auxiliary equation */ 
@@ -933,8 +934,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<fcn.nbr_el; i++)
                         {
                             padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            DBPRINT("TODO fix aux index");
-                            printf_list_str('A',i,padding,&fcn);
+                            printf_list_str('A',i+eqn.nbr_el,i,padding,&fcn);
                         }
                     }
                     else if (op == 'c') /* list constant arrays*/ 
@@ -942,7 +942,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<cst.nbr_el; i++)
                         {
                             padding = (int)log10(cst.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_str('C',i,padding,&cst);
+                            printf_list_str('C',i,i,padding,&cst);
                         }
                     }
                     else if (op == 'f') /* list data files */ 
@@ -950,7 +950,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<dfl.nbr_el; i++)
                         {
                             padding = (int)log10(dfl.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_str('F',i,padding,&dfl);
+                            printf_list_str('F',i,i,padding,&dfl);
                         }
                     }
                     else if (op == '@') /* list user-defined functions */ 
@@ -958,7 +958,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<func.nbr_el; i++)
                         {
                             padding = (int)log10(func.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_str('@',i,padding,&func);
+                            printf_list_str('@',i,i,padding,&func);
                         }
                     }
                     else if (op == 't') /* list tspan */
@@ -1095,7 +1095,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             if ( i >= 0 && i<ode_system_size)
                             {
                                 padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                                printf_list_val('I',i,padding,&ics,"");
+                                printf_list_val('I',i,i,padding,&ics,"");
                             }
                         }
                         else if (nbr_read == 2)
@@ -1121,7 +1121,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                 if ( name2index(svalue, ics, &i) )
                                 {
                                     padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                                    printf_list_val('I',i,padding,&ics,"");
+                                    printf_list_val('I',i,i,padding,&ics,"");
                                 }
                             }
                             else if ( nbr_read == 2 )
@@ -2762,28 +2762,28 @@ char * get_str(const char *name)
     }
 }
 
-void printf_list_val(char type, long i, int padding, const nve *var, char *descr)
+void printf_list_val(char type, long print_index, long nve_index, int padding, const nve *var, char *descr)
 {
     printf("  %c[%s%ld%s]%-*s %-*s = %s%14g%s   %s%s %s%s\n",\
-            type,T_IND,i,T_NOR, padding, "", *var->max_name_length,var->name[i],\
-            T_VAL,var->value[i],T_NOR,T_DET,var->attribute[i],descr,T_NOR);
+            type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,var->name[nve_index],\
+            T_VAL,var->value[nve_index],T_NOR,T_DET,var->attribute[nve_index],descr,T_NOR);
  
 }
 
-void printf_list_str(char type, long i, int padding, const nve *var)
+void printf_list_str(char type, long print_index, long nve_index, int padding, const nve *var)
 {
     printf("  %c[%s%ld%s]%-*s %-*s = %s%s%s %s%s%s\n",\
-            type,T_IND,i,T_NOR, padding, "", *var->max_name_length,var->name[i],\
-            T_EXPR,var->expression[i],T_NOR,T_DET,var->attribute[i],T_NOR);
+            type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,var->name[nve_index],\
+            T_EXPR,var->expression[nve_index],T_NOR,T_DET,var->attribute[nve_index],T_NOR);
  
 }
 
-void printf_list_str_val(char type, long i, int padding, const nve *var)
+void printf_list_str_val(char type, long print_index, long nve_index, int padding, const nve *var)
 {
     printf("  %c[%s%ld%s]%-*s %-*s = %s%14g%s  %s%s%s %s%s%s\n",\
-            type,T_IND,i,T_NOR, padding, "", *var->max_name_length,\
-            var->name[i],T_VAL,var->value[i],T_NOR,T_EXPR,var->expression[i],T_NOR,\
-            T_DET,var->attribute[i],T_NOR);
+            type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,\
+            var->name[nve_index],T_VAL,var->value[nve_index],T_NOR,T_EXPR,var->expression[nve_index],T_NOR,\
+            T_DET,var->attribute[nve_index],T_NOR);
  
 }
 
