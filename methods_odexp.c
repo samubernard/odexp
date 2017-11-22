@@ -4,7 +4,7 @@
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
-#include <gsl/gsl_odeiv.h>
+#include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_eigen.h> 
@@ -72,44 +72,44 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     size_t idx_stop = 0;
 
     /* gsl ode */
-    const gsl_odeiv_step_type * odeT;
-    gsl_odeiv_step * s;
-    gsl_odeiv_control * c;
-    gsl_odeiv_evolve * e;
-    gsl_odeiv_system sys; 
+    const gsl_odeiv2_step_type * odeT;
+    gsl_odeiv2_step * s;
+    gsl_odeiv2_control * c;
+    gsl_odeiv2_evolve * e;
+    gsl_odeiv2_system sys; 
     int status;
 
     if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rk4;
+        odeT = gsl_odeiv2_step_rk4;
     }
     else if ( strncmp(get_str("odesolver_step_method"),"rk2",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rk2;
+        odeT = gsl_odeiv2_step_rk2;
     }
     else if ( strncmp(get_str("odesolver_step_method"),"rkf45",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rkf45;
+        odeT = gsl_odeiv2_step_rkf45;
     }
     else if ( strncmp(get_str("odesolver_step_method"),"rkck",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rkck;
+        odeT = gsl_odeiv2_step_rkck;
     }
     else if ( strncmp(get_str("odesolver_step_method"),"rk8pd",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rk8pd;
+        odeT = gsl_odeiv2_step_rk8pd;
     }
     else
     {
         fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
                 T_ERR,get_str("odesolver_step_method"),T_NOR);
         fprintf(stderr,"         %swill use 'rk4' as a default step method%s\n",T_ERR,T_NOR);
-        odeT = gsl_odeiv_step_rk4;
+        odeT = gsl_odeiv2_step_rk4;
     }
 
-    s = gsl_odeiv_step_alloc(odeT,ode_system_size);
-    c = gsl_odeiv_control_y_new(eps_abs,eps_rel);
-    e = gsl_odeiv_evolve_alloc(ode_system_size);
+    s = gsl_odeiv2_step_alloc(odeT,ode_system_size);
+    c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
+    e = gsl_odeiv2_evolve_alloc(ode_system_size);
 
     /* tspan */
     /* it is assumed that the first and last values of tspan are t0 and t1 */
@@ -234,8 +234,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         /* ODE solver - time step */
         while ( t < tnext)
         {
-            sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
-            status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+            sys = (gsl_odeiv2_system) {ode_rhs, NULL, ode_system_size, &mu};
+            status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
             if ( h < hmin )
             {
               h = hmin;
@@ -323,9 +323,9 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fclose(file);
     fclose(quickfile);
 
-    gsl_odeiv_evolve_free(e);
-    gsl_odeiv_control_free(c);
-    gsl_odeiv_step_free(s);
+    gsl_odeiv2_evolve_free(e);
+    gsl_odeiv2_control_free(c);
+    gsl_odeiv2_step_free(s);
     
     free(y);
     free(tstops);
@@ -372,44 +372,44 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     size_t idx_stop = 0;
 
     /* gsl ode */
-    const gsl_odeiv_step_type * odeT;
-    gsl_odeiv_step * s;
-    gsl_odeiv_control * c;
-    gsl_odeiv_evolve * e;
-    gsl_odeiv_system sys; 
+    const gsl_odeiv2_step_type * odeT;
+    gsl_odeiv2_step * s;
+    gsl_odeiv2_control * c;
+    gsl_odeiv2_evolve * e;
+    gsl_odeiv2_system sys; 
     int status;
 
     if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rk4;
+        odeT = gsl_odeiv2_step_rk4;
     }
     else if ( strncmp(get_str("odesolver_step_method"),"rk2",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rk2;
+        odeT = gsl_odeiv2_step_rk2;
     }
     else if ( strncmp(get_str("odesolver_step_method"),"rkf45",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rkf45;
+        odeT = gsl_odeiv2_step_rkf45;
     }
     else if ( strncmp(get_str("odesolver_step_method"),"rkck",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rkck;
+        odeT = gsl_odeiv2_step_rkck;
     }
     else if ( strncmp(get_str("odesolver_step_method"),"rk8pd",NAMELENGTH) == 0 )
     {
-        odeT = gsl_odeiv_step_rk8pd;
+        odeT = gsl_odeiv2_step_rk8pd;
     }
     else
     {
         fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
                 T_ERR,get_str("odesolver_step_method"),T_NOR);
         fprintf(stderr,"         %swill use 'rk4' as a default step method%s\n",T_ERR,T_NOR);
-        odeT = gsl_odeiv_step_rk4;
+        odeT = gsl_odeiv2_step_rk4;
     }
 
-    s = gsl_odeiv_step_alloc(odeT,ode_system_size);
-    c = gsl_odeiv_control_y_new(eps_abs,eps_rel);
-    e = gsl_odeiv_evolve_alloc(ode_system_size);
+    s = gsl_odeiv2_step_alloc(odeT,ode_system_size);
+    c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
+    e = gsl_odeiv2_evolve_alloc(ode_system_size);
 
     /* discontinuities */
     if ( tspan.length > 2 )
@@ -534,8 +534,8 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
         /* ODE solver - time step */
         while ( t < tnext)
         {
-            sys = (gsl_odeiv_system) {ode_rhs, NULL, ode_system_size, &mu};
-            status = gsl_odeiv_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+            sys = (gsl_odeiv2_system) {ode_rhs, NULL, ode_system_size, &mu};
+            status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
             if ( h < hmin )
             {
               h = hmin;
@@ -618,9 +618,9 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
 
     fclose(file);
 
-    gsl_odeiv_evolve_free(e);
-    gsl_odeiv_control_free(c);
-    gsl_odeiv_step_free(s);
+    gsl_odeiv2_evolve_free(e);
+    gsl_odeiv2_control_free(c);
+    gsl_odeiv2_step_free(s);
     
     free(y);
     free(ymin);
