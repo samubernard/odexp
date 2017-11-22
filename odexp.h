@@ -48,7 +48,7 @@
 /* =================================================================
                               EXTERN
 ================================================================= */
-extern long ode_system_size;
+extern size_t ode_system_size;
 extern int *num_ic;
 extern const char *T_IND; /* INDEX */
 extern const char *T_DET; /* DETAILS */
@@ -65,9 +65,9 @@ typedef struct namevalexp
     double *value;         /* numerical values */
     char **expression;     /* expressions (only string, not evaluated) */
     char **attribute;      /* attributes: to be better defined */
-    long nbr_el;           /* nbr of elements */
-    long nbr_expr;         /* nbr of expression <= nbr_el */
-    long *expr_index;      /* index of expression */
+    size_t nbr_el;           /* nbr of elements */
+    size_t nbr_expr;         /* nbr of expression <= nbr_el */
+    size_t *expr_index;      /* index of expression */
     int *max_name_length;  /* length of longest name */
     
     double *aux_pointer;   /* pointer to pass to rhs to retrieve auxiliary variable values */
@@ -81,7 +81,7 @@ typedef struct gen_option
     char    name[NAMELENGTH];
     char    valtype; /* d: double; i: int; s: string */
     double  numval;
-    long    intval;
+    int     intval;
     char    strval[NAMELENGTH];
     char    descr[EXPRLENGTH];
     char    optiontype[NAMELENGTH];
@@ -95,7 +95,7 @@ typedef struct steady_state
     double *re;
     double *im; 
     int index;
-    long size;
+    size_t size;
     int status;
 } steady_state;
 
@@ -125,14 +125,14 @@ void free_steady_state(steady_state *stst, int nbr_stst);
 void free_noptions();
 void free_soptions();
 
-int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, long *nbr_el, long *nbr_epxr);
-int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim);
+int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, size_t *nbr_el, size_t *nbr_epxr);
+int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim);
 
 int load_options(const char *filename, int exit_if_nofile);
-int update_plot_options(long ngx, long ngy, long ngz, nve dxv);
-int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv);
-int name2index( const char *name, nve var, long *n);
-int option_name2index( const char *name, long *n);
+int update_plot_options(int ngx, int ngy, int ngz, nve dxv);
+int update_plot_index(int *ngx, int *ngy, int *ngz, int *gx, int *gy, int *gz, nve dxv);
+int name2index( const char *name, nve var, int *n);
+int option_name2index( const char *name, int *n);
 int update_act_par_index(int *p, const nve mu);
 int update_act_par_options(const int p, const nve mu);
 
@@ -140,25 +140,24 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
 int load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len, int exit_if_nofile);
 int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile);
-int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len, int exit_if_nofile);
 
 int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         nve cst, nve dfl, nve func, double_array tspan, const char *curr_buffer, const char *odexp_filename);
 
 int printf_options(const char *optiontype);
-int printf_option_line(long i);
+int printf_option_line(size_t i);
 int set_dou(const char *name, const double val); 
 int set_int(const char *name, const int val); 
 int set_str(const char *name, const char * val); 
 double get_dou(const char *name);
-long   get_int(const char *name);
+int    get_int(const char *name);
 char*  get_str(const char *name);
 
-void printf_list_val(char type, long print_index, long nve_index, int padding, const nve *var, char *descr);
-void printf_list_str(char type, long print_index, long nve_index, int padding, const nve *var);
-void printf_list_str_val(char type, long print_index, long nve_index, int padding, const nve *var);
+void printf_list_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var, char *descr);
+void printf_list_str(char type, size_t print_index, size_t nve_index, int padding, const nve *var);
+void printf_list_str_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var);
 
-int plot_data(const long colx, const long coly, const char *datafile_plotted, FILE *gnuplot_pipe);
+int plot_data(const size_t colx, const size_t coly, const char *datafile_plotted, FILE *gnuplot_pipe);
 
 /* readline */
 void initialize_readline(void);

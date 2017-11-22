@@ -47,14 +47,14 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     int hmin_alert              = 0,
         disc_alert              = 0,
         abort_odesolver_alert   = 0;
-    long nbr_out = (long)get_int("odesolver_output_resolution");
+    int nbr_out = get_int("odesolver_output_resolution");
     FILE *file;
     FILE *quickfile;
     const char current_data_buffer[] = "current.tab";
     const char quick_buffer[] = "current.plot"; 
-    long i;
+    size_t i;
 
-    long ngx,
+    int  ngx,
          ngy,
          ngz;
 
@@ -358,7 +358,8 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     long nbr_out = (long)get_int("odesolver_output_resolution");
     FILE *file;
     const char current_data_buffer[] = "range.tab";
-    long i,p;
+    size_t i;
+    int    p;
     
     /* sigaction */
     struct sigaction abort_act;

@@ -31,7 +31,7 @@ const char *logfilename = ".odexp/model.log";
 static FILE *logfr = (FILE *)NULL;
 
 /* system size */
-long ode_system_size;
+size_t ode_system_size;
 
 /* options */
 
@@ -106,13 +106,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     char       par_details[32];
     char       par_filename[MAXFILENAMELENGTH];
     char       list_msg[EXPRLENGTH];
-    long i,j;
+    size_t i,j;
     int  success;
     
     double *lasty;
     
     /* number of dependent and auxiliary variables */
-    long total_nbr_x;
+    size_t total_nbr_x;
 
     /* tspan parameters */
     const char ts_string[] = "TIMESPAN"; 
@@ -170,7 +170,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     char c,
          op,
          op2;
-    long    gx,
+    int     gx,
             gy, 
             gz,
             ngx = -1,
@@ -224,35 +224,35 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* get random array */
     printf("\n%-25s%s\n", "random numbers", hline);
-    get_nbr_el(odefilename,"U",1,(long *)&rnd.length,NULL);
+    get_nbr_el(odefilename,"U",1,&rnd.length,NULL);
     rnd.array = malloc(rnd.length*sizeof(double));
     for (i = 0; i < rnd.length; i++)
     {
         rnd.array[i] = rand01();
     }
     mu.rand_pointer = rnd.array;
-    LOGPRINT("found %ld random numbers",rnd.length);
+    LOGPRINT("found %zu random numbers",rnd.length);
 
     /* get constant arrays */
     printf("\n%-25s%s\n", "constant arrays", hline);
     get_nbr_el(odefilename,"C",1, &cst.nbr_el, NULL);
     alloc_namevalexp(&cst);
     success = load_strings(odefilename,cst,"C",1,1,' ', exit_if_nofile);
-    LOGPRINT("found %ld constants",cst.nbr_el);
+    LOGPRINT("found %zu constants",cst.nbr_el);
 
     /* get data files */
     printf("\n%-25s%s\n", "data files", hline);
     get_nbr_el(odefilename,"F",1, &dfl.nbr_el, NULL);
     alloc_namevalexp(&dfl);
     success = load_strings(odefilename,dfl,"F",1,1,' ', exit_if_nofile);
-    LOGPRINT("found %ld data files",dfl.nbr_el);
+    LOGPRINT("found %zu data files",dfl.nbr_el);
 
     /* get user-defined functions */
     printf("\n%-25s%s\n", "user-defined functions", hline);
     get_nbr_el(odefilename,"@",1, &func.nbr_el, NULL);
     alloc_namevalexp(&func);
     success = load_strings(odefilename,func,"@",1,1,'=', exit_if_nofile);
-    LOGPRINT("found %ld user-defined function",func.nbr_el);
+    LOGPRINT("found %zu user-defined function",func.nbr_el);
 
     /* get parameters */
     printf("\n%-25s%s\n", "parameters", hline);
@@ -273,7 +273,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.value[0] = NAN;
         *mu.max_name_length = 15; 
     } 
-    LOGPRINT("found %ld parameters",mu.nbr_el);
+    LOGPRINT("found %zu parameters",mu.nbr_el);
     
     /* get parametric expressions */
     printf("\n%-25s%s\n", "parametric expressions", hline);
@@ -285,7 +285,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  no parametric expression found\n");
     } 
     mu.expr_pointer = pex.value; /* pointer to parametric expression values */
-    LOGPRINT("found %ld parametric expressions",pex.nbr_el);
+    LOGPRINT("found %zu parametric expressions",pex.nbr_el);
 
     /* get initial conditions */
     printf("\n%-25s%s\n", "initial conditions", hline);
@@ -302,7 +302,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         exit ( EXIT_FAILURE );
     } 
     ode_init_conditions(tspan.array[0],ics.value,&mu);
-    LOGPRINT("found %ld variables",ics.nbr_el);
+    LOGPRINT("found %zu variables",ics.nbr_el);
 
 
     /* get nonlinear functions */
@@ -315,7 +315,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         printf("  no auxiliary function found\n");
     } 
     mu.aux_pointer = fcn.value; /* pointer to fcn.value */
-    LOGPRINT("found %ld auxiliary variables",fcn.nbr_el);
+    LOGPRINT("found %zu auxiliary variables",fcn.nbr_el);
 
     /* get equations */
     printf("\n%-25s%s\n", "equations", hline);
@@ -331,7 +331,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         LOGPRINT("Error: Equations not found.");
         exit ( EXIT_FAILURE );
     } 
-    LOGPRINT("found %ld equations",eqn.nbr_el);
+    LOGPRINT("found %zu equations",eqn.nbr_el);
 
     ode_system_size = ics.nbr_el;
     total_nbr_x = ode_system_size + fcn.nbr_el;
@@ -418,7 +418,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
-    fprintf(gnuplot_pipe,"plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
+    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
 
@@ -609,7 +609,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 case '2' : /* set 2D */
                 case '3' : /* set 3D */
                 case 'v' : /* set 2D or 3D view */
-                    nbr_read = sscanf(cmdline+1,"%ld %ld %ld",&ngx,&ngy,&ngz);
+                    nbr_read = sscanf(cmdline+1,"%d %d %d",&ngx,&ngy,&ngz);
                     if ( nbr_read == 0 ) /* try reading two or three strings */
                     {
                         nbr_read = sscanf(cmdline+1,"%s %s %s", svalue, svalue2, svalue3);
@@ -680,7 +680,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     break;
                 case 'x' :
-                    nbr_read = sscanf(cmdline+1,"%ld",&ngx);
+                    nbr_read = sscanf(cmdline+1,"%d",&ngx);
                     if ( nbr_read == 0 ) /* try reading a string */
                     {
                         nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -710,7 +710,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     break;
                 case 'y' :
-                    nbr_read = sscanf(cmdline+1,"%ld",&ngy);
+                    nbr_read = sscanf(cmdline+1,"%d",&ngy);
                     if ( nbr_read == 0 ) /* try reading a string */
                     {
                         nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -749,7 +749,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     plotmode_normal=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                    printf("  y-axis: [%s%ld%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
+                    printf("  y-axis: [%s%d%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
                     break;
                 case '[' : /* plot previous x */
                     ngy = gy-2;
@@ -759,7 +759,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     plotmode_normal=1;
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-                    printf("  y-axis: [%s%ld%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
+                    printf("  y-axis: [%s%d%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
                     break;    
                 case 'i' : /* run with initial conditions */
                     nbr_read = sscanf(cmdline+1,"%c",&op);
@@ -821,7 +821,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         {
                             ics.value[i] = lastinit[i];
                             num_ic[i] = 1;
-                            printf("  I[%s%ld%s] %-20s = %s%f%s\n",T_IND,i,T_NOR,ics.name[i],T_VAL,ics.value[i],T_NOR);
+                            printf("  I[%s%zu%s] %-20s = %s%f%s\n",T_IND,i,T_NOR,ics.name[i],T_VAL,ics.value[i],T_NOR);
                         }
                     rerun = 1;
                     replot = 1;
@@ -891,7 +891,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         for (i=0; i<rnd.length; i++)
                         {
                             padding = (int)log10(rnd.length+0.5)-(int)log10(i+0.5);
-                            printf("  U[%s%ld%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
+                            printf("  U[%s%zu%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
                                     T_IND,i,T_NOR, padding, "", 4,"unif",\
                                     T_VAL,rnd.array[i],T_NOR,T_DET,"uniform [0,1] pseudo-random number",T_NOR);
                             /* printf_list_val('U',i,padding,4,"unif",rnd.array[i],"uniform random number"); */
@@ -908,7 +908,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             }
                             else
                             {
-                                snprintf(list_msg,EXPRLENGTH,"numerically set (cI %ld to revert to %s)",i,ics.expression[i]);
+                                snprintf(list_msg,EXPRLENGTH,"numerically set (cI %zu to revert to %s)",i,ics.expression[i]);
                                 printf_list_val('I',i,i,padding,&ics,list_msg);
 
                             }
@@ -923,7 +923,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             if ( strncmp(eqn.attribute[i],"hidden",3) )
                             {
                                 padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                                /* DBPRINT("expr_index = %ld",eqn.expr_index[i]); */
+                                /* DBPRINT("expr_index = %zu",eqn.expr_index[i]); */
                                 printf_list_str('D',i,i,padding,&eqn);
                             }
                         }
@@ -992,9 +992,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 'n') /* list ode system size */
                     {
-                        printf("  ODE system size               = %s%ld%s\n",T_VAL,ode_system_size,T_NOR);
-                        printf("  Number of auxiliary functions = %s%ld%s\n",T_VAL,fcn.nbr_el,T_NOR);
-                        printf("  Total number of variables     = %s%ld%s\n",T_VAL,total_nbr_x,T_NOR);
+                        printf("  ODE system size               = %s%zu%s\n",T_VAL,ode_system_size,T_NOR);
+                        printf("  Number of auxiliary functions = %s%zu%s\n",T_VAL,fcn.nbr_el,T_NOR);
+                        printf("  Total number of variables     = %s%zu%s\n",T_VAL,total_nbr_x,T_NOR);
                     }
                     else if (op == 'o') /* list options */
                     {
@@ -1011,13 +1011,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     else if (op == 'l') /* list fiLe and various information */
                     {
                         printf("  File name: %s%s%s\n",T_EXPR,odexp_filename,T_NOR);
-                        printf("  ODE system size               = %s%ld%s\n",T_VAL,ode_system_size,T_NOR);
-                        printf("  Number of auxiliary functions = %s%ld%s\n",T_VAL,fcn.nbr_el,T_NOR);
-                        printf("  Total number of variables     = %s%ld%s\n",T_VAL,total_nbr_x,T_NOR);
-                        printf("  Number of parameters          = %s%ld%s\n",T_VAL,mu.nbr_el,T_NOR);
-                        printf("  Number of parametric expr     = %s%ld%s\n",T_VAL,pex.nbr_expr,T_NOR);
-                        printf("  Number of constants           = %s%ld%s\n",T_VAL,cst.nbr_el,T_NOR);
-                        printf("  Number of data files          = %s%ld%s\n",T_VAL,dfl.nbr_el,T_NOR);
+                        printf("  ODE system size               = %s%zu%s\n",T_VAL,ode_system_size,T_NOR);
+                        printf("  Number of auxiliary functions = %s%zu%s\n",T_VAL,fcn.nbr_el,T_NOR);
+                        printf("  Total number of variables     = %s%zu%s\n",T_VAL,total_nbr_x,T_NOR);
+                        printf("  Number of parameters          = %s%zu%s\n",T_VAL,mu.nbr_el,T_NOR);
+                        printf("  Number of parametric expr     = %s%zu%s\n",T_VAL,pex.nbr_expr,T_NOR);
+                        printf("  Number of constants           = %s%zu%s\n",T_VAL,cst.nbr_el,T_NOR);
+                        printf("  Number of data files          = %s%zu%s\n",T_VAL,dfl.nbr_el,T_NOR);
                     }
                     else
                     {
@@ -1056,12 +1056,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         nbr_read = sscanf(cmdline+1,"%s %lf", svalue, &nvalue); /* try reading a string and a double */
                         if ( nbr_read == 1 )
                         {
-                            name2index(svalue,mu,(long *)&p);
+                            name2index(svalue,mu,&p);
                             printf("  new active parameter %s with value %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
                         }
                         else if ( nbr_read == 2 )
                         {
-                            if ( name2index(svalue,mu,(long *)&p) )
+                            if ( name2index(svalue,mu,&p) )
                             {
                                 mu.value[p] = nvalue;
                                 rerun = 1;
@@ -1095,11 +1095,11 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     sscanf(cmdline+1,"%c",&op);
                     if ( op == 'i' ) 
                     {
-                        nbr_read = sscanf(cmdline+2,"%ld %lf",&i,&nvalue);
+                        nbr_read = sscanf(cmdline+2,"%zu %lf",&i,&nvalue);
                         if (nbr_read == 1)
                         {
                             /* just print the initial condition */
-                            if ( i >= 0 && i<ode_system_size)
+                            if (i<ode_system_size)
                             {
                                 padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
                                 printf_list_val('I',i,i,padding,&ics,"");
@@ -1107,7 +1107,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         else if (nbr_read == 2)
                         {
-                          if ( i >= 0 && i<ode_system_size)
+                          if (i<ode_system_size)
                           {
                             lastinit[i] = ics.value[i];
                             ics.value[i] = nvalue;
@@ -1125,7 +1125,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             if ( nbr_read == 1 )
                             {
                                 /* only initial condition line */
-                                if ( name2index(svalue, ics, &i) )
+                                if ( name2index(svalue, ics, (int *)&i) )
                                 {
                                     padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
                                     printf_list_val('I',i,i,padding,&ics,"");
@@ -1133,7 +1133,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             }
                             else if ( nbr_read == 2 )
                             {
-                                if ( name2index(svalue, ics,  &i) )
+                                if ( name2index(svalue, ics,  (int *)&i) )
                                 {
                                     lastinit[i] = ics.value[i];
                                     ics.value[i] = nvalue;
@@ -1151,8 +1151,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if (op == 'I') /* revert initial condition i to expression */
                     {
-                        sscanf(cmdline+2,"%ld",&i);
-                        if ( i >= 0 && i<ode_system_size)
+                        sscanf(cmdline+2,"%zu",&i);
+                        if (i<ode_system_size)
                         {
                             lastinit[i] = ics.value[i];
                             num_ic[i] = 0;
@@ -1175,8 +1175,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if ( op == 't' )
                     {
-                        sscanf(cmdline+2,"%ld %lf",&i,&nvalue);
-                        if ( i >=0 && i < tspan.length )
+                        sscanf(cmdline+2,"%zu %lf",&i,&nvalue);
+                        if (i < tspan.length )
                         {
                             tspan.array[i] = nvalue;
                         }
@@ -1188,12 +1188,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     else if ( op == 'o' ) /* change options */
                     {
-                        nbr_read = sscanf(cmdline+2,"%ld %s",&i,svalue);
+                        nbr_read = sscanf(cmdline+2,"%zu %s",&i,svalue);
                         
                         if ( nbr_read >= 1) /* get option number and value */
                         {
-                            sscanf(cmdline+2,"%ld %[^\n]",&i,svalue);
-                            if ( i >=0 && i < NBROPTS )
+                            sscanf(cmdline+2,"%zu %[^\n]",&i,svalue);
+                            if (i < NBROPTS )
                             {
                                 switch (gopts[i].valtype)
                                 {
@@ -1227,14 +1227,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             if ( nbr_read == 1 )
                             {
                                 /* only printf option line */
-                                if ( option_name2index(svalue, &i) )
+                                if ( option_name2index(svalue, (int *)&i) )
                                 {
                                   printf_option_line(i);
                                 }
                             }
                             else if ( nbr_read == 2 )
                             {
-                                if ( option_name2index(svalue, &i) )
+                                if ( option_name2index(svalue, (int *)&i) )
                                 {
                                     switch (gopts[i].valtype)
                                     {
@@ -1362,7 +1362,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     }
                     break;
                 case '#' : /* add data from file to plot */
-                    nbr_read = sscanf(cmdline+1,"%s %ld %ld",svalue,&colx,&coly);
+                    nbr_read = sscanf(cmdline+1,"%s %d %d",svalue,&colx,&coly);
                     if ( nbr_read == 3 )
                     {
                         i = 0;
@@ -1372,7 +1372,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         }
                         if (i<dfl.nbr_el) /* found the dataset to plot */
                         {
-                            DBPRINT("%s %ld %ld\n", svalue, colx, coly);
+                            DBPRINT("%s %d %d\n", svalue, colx, coly);
                             if ( sscanf(dfl.expression[i]," %*lu %*lu %s ",data_fn) )
                             {
                                 DBPRINT("data_fn=%s\n", data_fn);
@@ -1465,8 +1465,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 for (i = 1; i < nbr_hold; i++)
                 {
                     fprintf(gnuplot_pipe,\
-                            "replot \".odexp/curve.%ld\" binary format=\"%%3lf\" using 1:2 with %s title \"%ld\"\n",\
-                            i,get_str("plot_with_style"),i);
+                            "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%d\"\n",\
+                            (int)i,get_str("plot_with_style"),(int)i);
                 }
                 fflush(gnuplot_pipe);
             }
@@ -1515,13 +1515,13 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                 if ( get_int("freeze") == 0 ) /* normal plot command: 2D, freeze=0, curves=0 */
                 {
                   fprintf(gnuplot_pipe,\
-                      "plot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
+                      "plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
                       current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);    
                 }
                 else if ( get_int("freeze") )
                 {
                   fprintf(gnuplot_pipe,\
-                      "replot \"%s\" using %ld:%ld with %s title columnhead(%ld).\" vs \".columnhead(%ld)\n",\
+                      "replot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
                       current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx); 
                 }
               } 
@@ -1529,12 +1529,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
               {
                 if ( get_int("freeze") == 0 )
                 {
-                  fprintf(gnuplot_pipe,"splot \"%s\" u %ld:%ld:%ld w %s notitle\n",current_data_buffer,gx,gy,gz,\
+                  fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w %s notitle\n",current_data_buffer,gx,gy,gz,\
                       get_str("plot_with_style"));    
                 }
                 else
                 {
-                  fprintf(gnuplot_pipe,"replot \"%s\" u %ld:%ld:%ld w %s notitle\n",current_data_buffer,gx,gy,gz,\
+                  fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d:%d w %s notitle\n",current_data_buffer,gx,gy,gz,\
                       get_str("plot_with_style"));    
                 }
               }
@@ -1546,7 +1546,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             {
                 fprintf(gnuplot_pipe,"set xlabel '%s'\n",mu.name[p]);
                 fprintf(gnuplot_pipe,"set xrange[%lf:%lf]\n",get_dou("range_par0"),get_dou("range_par1"));
-                fprintf(gnuplot_pipe,"plot \"stst_branches.tab\" u 2:%ld w %s\n",gy+1,get_str("plot_with_style"));
+                fprintf(gnuplot_pipe,"plot \"stst_branches.tab\" u 2:%d w %s\n",gy+1,get_str("plot_with_style"));
                 fflush(gnuplot_pipe);
             }
             else if ( plotmode_range ) /* try to plot range */
@@ -1635,7 +1635,7 @@ void free_double_array(double_array var)
 
 void free_namevalexp(nve var )
 {
-    long i;
+    size_t i;
     
     /* do not free _pointeris, they will be freed in time */
     for (i = 0; i < var.nbr_el; i++)
@@ -1659,7 +1659,7 @@ void alloc_namevalexp( nve *var )
     var->name = malloc(var->nbr_el*sizeof(char*));
     var->expression = malloc(var->nbr_el*sizeof(char*));
     var->attribute = malloc(var->nbr_el*sizeof(char*));
-    var->expr_index = malloc(var->nbr_el*sizeof(long));
+    var->expr_index = malloc(var->nbr_el*sizeof(size_t));
     var->max_name_length = malloc(sizeof(int));
     for (i = 0; i < var->nbr_el; i++)
     {
@@ -1693,7 +1693,7 @@ void free_steady_state( steady_state *stst, int nbr_stst )
 }
 
 int get_nbr_el(const char *filename, const char *sym,\
-               const size_t sym_len, long *nbr_el, long *nbr_expr)
+               const size_t sym_len, size_t *nbr_el, size_t *nbr_expr)
 {
     int k = 0;
     ssize_t linelength;
@@ -1703,8 +1703,8 @@ int get_nbr_el(const char *filename, const char *sym,\
     size_t i, nbr_dim = 0;
     int    has_read,
            success = 0; 
-    long   *size_dim = malloc(sizeof(long));
-    long   multi_dim = 1;
+    size_t   *size_dim = malloc(sizeof(size_t));
+    size_t   multi_dim = 1;
     FILE *fr;
     fr = fopen (filename, "rt");
 
@@ -1736,7 +1736,7 @@ int get_nbr_el(const char *filename, const char *sym,\
                 multi_dim *= size_dim[i];
             }
             *nbr_el += multi_dim;
-            /* printf("--nbr_el %ld\n",*nbr_el); */
+            /* printf("--nbr_el %d\n",*nbr_el); */
 
         }
         k = 0; /* reset k */
@@ -1748,7 +1748,7 @@ int get_nbr_el(const char *filename, const char *sym,\
     return success;
 }
 
-int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
+int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
 {
 
     int     bracket1;
@@ -1764,14 +1764,14 @@ int get_multiindex(const char *line, size_t *nbr_dim, long **size_dim)
     {
         do 
         {
-            *size_dim = realloc(*size_dim, ((*nbr_dim)+1)*sizeof(long));
+            *size_dim = realloc(*size_dim, ((*nbr_dim)+1)*sizeof(size_t));
             LOGPRINT("realloc: nbr_dim=%zu (from %zu to %zu)", *nbr_dim,index0,index1);
             (*size_dim)[*nbr_dim] = index1 - index0; 
             (*nbr_dim)++;
             line+=bracket1;
             /* scan for two integers, index0, index1 in [iter=i0:i1] */
             nbr_index = sscanf(line," [ %*[^=] = %zu : %zu ]%n",&index0,&index1,&bracket1);
-            /* printf("--nbr_dim %zu, size_dim %ld\n",*nbr_dim,(*size_dim)[*nbr_dim-1]); */
+            /* printf("--nbr_dim %zu, size_dim %zu\n",*nbr_dim,(*size_dim)[*nbr_dim-1]); */
             /* printf("--nbr_index %d\n",nbr_index); */
         } while ( nbr_index == 2 );
     }
@@ -1919,7 +1919,7 @@ int load_options(const char *filename, int exit_if_nofile)
                     switch (gopts[idx_opt].valtype)
                     {
                         case 'i':
-                            sscanf(line,"%*s %*s %ld",&gopts[idx_opt].intval);
+                            sscanf(line,"%*s %*s %d",&gopts[idx_opt].intval);
                             break;
                         case 'd':
                             sscanf(line,"%*s %*s %lf",&gopts[idx_opt].numval);
@@ -1945,7 +1945,7 @@ int load_options(const char *filename, int exit_if_nofile)
     return success;
 }
 
-int update_plot_options(long ngx, long ngy, long ngz, nve dxv)
+int update_plot_options(int ngx, int ngy, int ngz, nve dxv)
 {
 
     if ( ngx == -1 )
@@ -1969,7 +1969,7 @@ int update_plot_options(long ngx, long ngy, long ngz, nve dxv)
 
 }
 
-int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long *gz, nve dxv)
+int update_plot_index(int *ngx, int *ngy, int *ngz, int *gx, int *gy, int *gz, nve dxv)
 {
     char sval[NAMELENGTH];
     strncpy(sval,get_str("plot_x"),NAMELENGTH-1);
@@ -1996,9 +1996,9 @@ int update_plot_index(long *ngx, long *ngy, long *ngz, long *gx, long *gy, long 
     
 }
 
-int name2index( const char *name, nve var, long *n) /* get index of var.name == name */
+int name2index( const char *name, nve var, int *n) /* get index of var.name == name */
 {
-    long i = 0;
+    size_t i = 0;
     int s = 0;
 
     if ( (strcmp(name,"T") == 0) | (strcmp(name,"t") == 0) )
@@ -2039,9 +2039,9 @@ int name2index( const char *name, nve var, long *n) /* get index of var.name == 
 
 }
 
-int option_name2index( const char *name, long *n) /* get index of option.name == name or option.abbr == name */
+int option_name2index( const char *name, int *n) /* get index of option.name == name or option.abbr == name */
 {
-    long i = 0;
+    size_t i = 0;
     int s = 0;
 
     if ( strcmp(name,"") == 0 )
@@ -2086,7 +2086,7 @@ int update_act_par_index(int *p, const nve mu)
         strncpy(sval,get_str("act_par"),NAMELENGTH-1);
         if ( strlen(sval) )
         {
-            name2index(sval,mu,(long *)p);
+            name2index(sval,mu,p);
         }
     }
     else
@@ -2213,7 +2213,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             nbr_read_1,
             nbr_read_2;
     size_t  nbr_dim = 0;
-    long   *size_dim = malloc(sizeof(long));
+    size_t   *size_dim = malloc(sizeof(size_t));
     char *line = NULL;
     char str2match[NAMELENGTH];
     char key[NAMELENGTH]; 
@@ -2363,59 +2363,6 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     return success;
 }
 
-int load_int(const char *filename, long *mypars, size_t len, const char *sym, size_t sym_len, int exit_if_nofile)
-{
-    /* tries to find a line starting with string sym and copy integers on that line into mypars. If no line starts with sym, mypars is not assigned. */
-    ssize_t linelength;
-    size_t linecap = 0;
-    char *line = NULL;
-    char *current_ptr;
-    FILE *fr;
-    size_t i;
-    size_t k = 0;
-    int success = 0;
-    fr = fopen (filename, "rt");
-
-    if ( fr == NULL )
-    {
-        if ( exit_if_nofile )
-        {
-            fprintf(stderr,"  Error: %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
-            exit ( EXIT_FAILURE );
-        }
-        else
-        {
-            fprintf(stderr,"  %sError: Could not open file %s%s\n", T_ERR,filename,T_NOR);
-            return 0;
-        }
-    }
-
-    printf("  %s: ",sym);
-    /* search for keyword sym */
-    while( (linelength = getline(&line, &linecap, fr)) > 0)
-    {
-        while(line[k] == toupper(sym[k]) && !isspace(line[k]) && \
-                k < sym_len && k < linelength)
-        {
-            k++;
-        }
-        if(line[k] == ' ' && k == sym_len) /* keyword was found */
-        {
-            current_ptr = line+k;
-            for (i = 0; i < len; i++)
-            {
-                mypars[i] = strtol(current_ptr,&current_ptr,10); 
-                printf("%ld ",(long)mypars[i]);
-            }
-            success = 1;
-        }
-        k = 0; /* reset k */
-    }
-    printf("\n");
-    fclose(fr);
-    return success;
-} 
-
 int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         nve cst, nve dfl, nve func, double_array tspan, const char *curr_buffer, const char *odexp_filename)
 {
@@ -2511,7 +2458,7 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
                     fprintf(fr,"O%zu %-*s %g\n",i,len,gopts[i].name,gopts[i].numval);
                     break;
                 case 'i' :
-                    fprintf(fr,"O%zu %-*s %ld\n",i,len,gopts[i].name,gopts[i].intval);
+                    fprintf(fr,"O%zu %-*s %d\n",i,len,gopts[i].name,gopts[i].intval);
                     break;
                 case 's' :
                     fprintf(fr,"O%zu %-*s %s\n",i,len,gopts[i].name,gopts[i].strval);
@@ -2556,7 +2503,7 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
 
 int printf_options(const char *optiontype)
 {
-    long i; 
+    size_t i; 
     char last_option_type[NAMELENGTH]; 
     snprintf(last_option_type,NAMELENGTH,""); 
     for(i=0;i<NBROPTS;i++)
@@ -2574,12 +2521,12 @@ int printf_options(const char *optiontype)
     return 1;
 }
 
-int printf_option_line(long i)
+int printf_option_line(size_t i)
 {
       static int p = 16;
       int s = (int)log10(NBROPTS)+1;
       int success = 0;
-      if ( (i>=0) && (i<NBROPTS) )
+      if ( i<NBROPTS )
       { 
         switch (gopts[i].valtype)
         {
@@ -2592,7 +2539,7 @@ int printf_option_line(long i)
           case 'i':
             printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
             printf("%-*s",p,gopts[i].abbr);
-            printf("%s%-*ld ",T_VAL,p,gopts[i].intval);
+            printf("%s%-*d ",T_VAL,p,gopts[i].intval);
             printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
             break;
           case 's':
@@ -2718,7 +2665,7 @@ double get_dou(const char *name)
     }
 }
 
-long get_int(const char *name)
+int get_int(const char *name)
 {
     size_t idx_opt = 0;
     while ( idx_opt < NBROPTS)
@@ -2767,25 +2714,25 @@ char * get_str(const char *name)
     }
 }
 
-void printf_list_val(char type, long print_index, long nve_index, int padding, const nve *var, char *descr)
+void printf_list_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var, char *descr)
 {
-    printf("  %c[%s%ld%s]%-*s %-*s = %s%14g%s   %s%s %s%s\n",\
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%14g%s   %s%s %s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,var->name[nve_index],\
             T_VAL,var->value[nve_index],T_NOR,T_DET,var->attribute[nve_index],descr,T_NOR);
  
 }
 
-void printf_list_str(char type, long print_index, long nve_index, int padding, const nve *var)
+void printf_list_str(char type, size_t print_index, size_t nve_index, int padding, const nve *var)
 {
-    printf("  %c[%s%ld%s]%-*s %-*s = %s%s%s %s%s%s\n",\
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%s%s %s%s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,var->name[nve_index],\
             T_EXPR,var->expression[nve_index],T_NOR,T_DET,var->attribute[nve_index],T_NOR);
  
 }
 
-void printf_list_str_val(char type, long print_index, long nve_index, int padding, const nve *var)
+void printf_list_str_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var)
 {
-    printf("  %c[%s%ld%s]%-*s %-*s = %s%14g%s  %s%s%s %s%s%s\n",\
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%14g%s  %s%s%s %s%s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,\
             var->name[nve_index],T_VAL,var->value[nve_index],\
             T_NOR,T_EXPR,var->expression[nve_index],T_NOR,\
@@ -2794,9 +2741,9 @@ void printf_list_str_val(char type, long print_index, long nve_index, int paddin
 }
 
 /* plot data from file 'data_fn', with column x as x-axis and column y as y-axis */
-int plot_data(const long x, const long y, const char *data_fn, FILE *gnuplot_pipe)
+int plot_data(const size_t x, const size_t y, const char *data_fn, FILE *gnuplot_pipe)
 {
-    int success = fprintf(gnuplot_pipe,"replot \"%s\" u %ld:%ld w p title \"data\"\n",data_fn,x,y);
+    int success = fprintf(gnuplot_pipe,"replot \"%s\" u %zu:%zu w p title \"data\"\n",data_fn,x,y);
     fflush(gnuplot_pipe);
     return success;
 }
