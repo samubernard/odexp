@@ -901,18 +901,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     {
                         for (i=0; i<ode_system_size; i++)
                         {
-                            padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                            if (num_ic[i] == 0)
+                            if ( strncmp(ics.attribute[i],"hidden",3) )
                             {
-                                printf_list_val('I',i,i,padding,&ics,"");
-                            }
-                            else
-                            {
-                                snprintf(list_msg,EXPRLENGTH,"numerically set (cI %zu to revert to %s)",i,ics.expression[i]);
-                                printf_list_val('I',i,i,padding,&ics,list_msg);
+                                padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                                if (num_ic[i] == 0)
+                                {
+                                    printf_list_val('I',i,i,padding,&ics,"");
+                                }
+                                else
+                                {
+                                    snprintf(list_msg,EXPRLENGTH,"numerically set (cI %zu to revert to %s)",i,ics.expression[i]);
+                                    printf_list_val('I',i,i,padding,&ics,list_msg);
 
+                                }
                             }
-
                         }
                     }
                     else if (op == 'x') /* list equations */
@@ -923,8 +925,15 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             if ( strncmp(eqn.attribute[i],"hidden",3) )
                             {
                                 padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                                /* DBPRINT("expr_index = %zu",eqn.expr_index[i]); */
                                 printf_list_str('D',i,i,padding,&eqn);
+                            }
+                            else if ( eqn.expr_index[i] > eqn.expr_index[(eqn.nbr_el + i-1) % eqn.nbr_el] ) 
+                            {
+                                printf("  D[%zu..",i);
+                            }
+                            else if ( (i == eqn.nbr_el-1) || (eqn.expr_index[i] < eqn.expr_index[(i+1) % eqn.nbr_el]) ) 
+                            {
+                                printf("%zu] %s(hidden variables)%s\n",i,T_DET,T_NOR);
                             }
                         }
                         for (i=0; i<fcn.nbr_el; i++)
