@@ -993,8 +993,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             for (i=0; i<ode_system_size; i++)
                             {
                                 padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                                DBPRINT("TODO print steady states");
                                 /* printf_list_val('S',i,padding,*ics.max_name_length,ics.name[i],stst[j].s[i],"*"); */
+                                printf("  S[%s%zu%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
+                                    T_IND,i,T_NOR, padding, "",*ics.max_name_length,ics.name[i],\
+                                    T_VAL,stst[j].s[i],T_NOR,T_DET,"*",T_NOR);
                             }
                             printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
                         }
