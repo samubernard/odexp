@@ -1,13 +1,3 @@
-/* =================================================================
-                              Libraries
-================================================================= */
-
-#include <ctype.h>
-#include <string.h>
-#include <time.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_odeiv.h>
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_eigen.h> 
@@ -85,6 +75,7 @@ struct gen_option gopts[NBROPTS] = {
 /* what kind of initial conditions to take */
 int *num_ic;
 
+/* formatting strings */
 const char *T_IND = "\033[0;35m";  /* index */
 const char *T_DET = "\033[3;36m";  /* description */
 const char *T_VAL = "\033[0;32m";  /* values */
@@ -206,6 +197,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     unsigned long randseed;
 
     /* end variable declaration */
+
     logfr = fopen(logfilename, "w");
     if ( logfr != NULL ) 
     { 
@@ -391,7 +383,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     printf("\nrandom number generator %s\n", hline);
     printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR);
     LOGPRINT("RAND_MAX %d",RAND_MAX);
-    
+
     /* readline */
     /* printf("\nreadline library version: %s\n\n", rl_library_version); */
     
@@ -928,13 +920,20 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         namelength = max(*eqn.max_name_length,*fcn.max_name_length);
                         for (i=0; i<eqn.nbr_el; i++)
                         {
-                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                            printf_list_str('D',i,i,padding,&eqn);
+                            if ( strncmp(eqn.attribute[i],"hidden",3) )
+                            {
+                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
+                                /* DBPRINT("expr_index = %ld",eqn.expr_index[i]); */
+                                printf_list_str('D',i,i,padding,&eqn);
+                            }
                         }
                         for (i=0; i<fcn.nbr_el; i++)
                         {
-                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            printf_list_str('A',i+eqn.nbr_el,i,padding,&fcn);
+                            if ( strncmp(fcn.attribute[i],"hidden",3) )
+                            {
+                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
+                                printf_list_str('A',i+eqn.nbr_el,i,padding,&fcn);
+                            }
                         }
                     }
                     else if (op == 'a') /* list auxiliary equation */ 

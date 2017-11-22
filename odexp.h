@@ -19,6 +19,9 @@
 /* number of global options */
 #define NBROPTS 33
 
+/* size of history buffer */
+#define SIZEHIST 100
+
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
            __typeof__ (b) _b = (b); \
@@ -58,17 +61,18 @@ extern const char *hline;  /* horizontal line */
 
 typedef struct namevalexp
 {
-    double *value;         /* numerical values */
-    double *aux_pointer;   /* pointer to pass to rhs to retrieve auxiliary variable values */
-    double *rand_pointer;  /* pointer to array of random numbers to pass to rhs */
-    double *expr_pointer;  /* pointer to pass to rhs to retrieve parametric expression values */
     char **name;           /* names */
+    double *value;         /* numerical values */
     char **expression;     /* expressions (only string, not evaluated) */
     char **attribute;      /* attributes: to be better defined */
     long nbr_el;           /* nbr of elements */
     long nbr_expr;         /* nbr of expression <= nbr_el */
     long *expr_index;      /* index of expression */
     int *max_name_length;  /* length of longest name */
+    
+    double *aux_pointer;   /* pointer to pass to rhs to retrieve auxiliary variable values */
+    double *rand_pointer;  /* pointer to array of random numbers to pass to rhs */
+    double *expr_pointer;  /* pointer to pass to rhs to retrieve parametric expression values */
 } nve;
 
 typedef struct gen_option
@@ -100,6 +104,7 @@ typedef struct double_array
     double *array;
     size_t length;
 } double_array;
+
 
 /* function declaration */
 

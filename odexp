@@ -361,7 +361,7 @@ define_equations () {
       a=substr($1, RSTART, RLENGTH);
       split(a,b,/[\[\]=:]/);
       myvar="f_";
-      split($0,e,/=/);
+      split($0,e,/[^=]=[^=]/);
       myrhs=e[length(e)];
       split(myrhs,e2,/!/);
       myexpr=e2[1];

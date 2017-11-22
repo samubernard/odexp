@@ -6,6 +6,7 @@
 
 #include <math.h>                          
 #include <signal.h>                          
+#include <gsl/gsl_spline.h>
 
 /* =================================================================
                               Header files
@@ -147,3 +148,27 @@ double sumxy(long len, double (*f)(double), double (*g)(double, double), const d
     return s;
 }
 
+double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len)
+{
+    double beta = (double)len/delay;
+    return beta*((link==0 ? root : chain[link-1]) - chain[link]);
+}
+
+/*
+* double history(double tmtau)
+* {
+*     double yint;
+*     size_t size = st_history.size;
+*     
+*     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+*     gsl_spline *spline  = gsl_spline_alloc (gsl_interp_cspline_periodic, size);
+*     gsl_spline_init (spline, st_history.t, st_history.y, size);
+* 
+*     yint =  gsl_spline_eval (spline, tmtau, acc); 
+* 
+*     gsl_spline_free (spline);
+*     gsl_interp_accel_free (acc);
+* 
+*     return yint; 
+* }
+*/

@@ -22,4 +22,5 @@ double minus(double x, double y); /* subtraction */
 double plus(double x, double y); /* addition */
 double identity(double x);
 double sumxy(long len, double (*f)(double), double (*g)(double, double), const double *x, const double yi); 
-
+double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len);
+/* double history(double tmtau); */

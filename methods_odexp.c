@@ -196,6 +196,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
     fprintf(file,"\n");
 
+    /* TODO update history */
+
     /* current.plot binary file with three columns: plot_x, plot_y, plot_z */
     /* use hexdump to see the file content:
      * hexdump -e '"%f " "%f " "%f " "\n"' current.plot
@@ -249,6 +251,8 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
                 break;
                 
         }
+        /* TODO update history */
+
         fprintf(file,"%g ",t);
         for (i = 0; i < ode_system_size; i++)
         {
@@ -329,8 +333,6 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     
     free(y);
     free(tstops);
-
-
       
     return status;
 
@@ -515,6 +517,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
         ymin[i] = INFINITY;
         ymax[i] = -INFINITY;
     }
+
     printf("\n  running par %s = %g... ", mu.name[p],mu.value[p]);
     fflush(stdout);
 
