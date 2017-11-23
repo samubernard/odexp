@@ -553,7 +553,12 @@ echo "int main ( int argc, char *argv[] )" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    int status;" >>.odexp/model.c
 echo "" >>.odexp/model.c
-echo "    status = odexp(ode_rhs,ode_init_conditions,multiroot_rhs,argv[1]);" >>.odexp/model.c
+echo "    if ( argc == 2 ) {" >>.odexp/model.c
+echo "        status = odexp(ode_rhs,ode_init_conditions,multiroot_rhs,argv[1]);" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
+echo "    else {" >>.odexp/model.c
+echo "        status = odexp(ode_rhs,ode_init_conditions,multiroot_rhs,\"unkown\");" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    exit(EXIT_SUCCESS);" >>.odexp/model.c
 echo "}" >>.odexp/model.c

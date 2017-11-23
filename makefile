@@ -1,4 +1,4 @@
-CFLAGS=-Wall -I/usr/local/include -I/usr/local/opt/readline/include -std=c99
+CFLAGS=-Wall -g -I/usr/local/include -I/usr/local/opt/readline/include -std=c99
 #CFLAGS=-Wall -g `pkg-config --cflags gsl`  -std=c99
 LDFLAGS=-L/usr/local/opt/readline/lib -lreadline -L/usr/local/lib -lgsl -lgslcblas -lm 
 #LDFLAGS=-g `pkg-config --libs gsl` -lreadline -lm 

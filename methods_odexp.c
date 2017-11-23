@@ -35,7 +35,7 @@ static void set_abort_odesolver_flag(int sig)
 
 int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
  int (*ode_init_conditions)(const double t, double ic_[], void *params),\
- double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe)    
+ double *lasty, nve *ics, nve *mu, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)    
 {
     clock_t start = clock();
     double *y,
@@ -113,19 +113,19 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
     /* tspan */
     /* it is assumed that the first and last values of tspan are t0 and t1 */
-    t = tspan.array[0];
-    t1 = tspan.array[tspan.length-1];
+    t = tspan->array[0];
+    t1 = tspan->array[tspan->length-1];
     dt = (t1-t)/(double)(nbr_out-1);
 
     /* discontinuities */
-    /* printf("--tspan.length=%ld\n",tspan.length); */
-    if ( tspan.length > 2 )
+    /* printf("--tspan->length=%ld\n",tspan->length); */
+    if ( tspan->length > 2 )
     {
-       nbr_stops = tspan.length-2;
+       nbr_stops = tspan->length-2;
        tstops = malloc( nbr_stops*sizeof(double) );
        for(i=0;i<nbr_stops;i++)
        {
-          tstops[i] = tspan.array[i+1];
+          tstops[i] = tspan->array[i+1];
           /* printf("--tstop[%ld]=%g\n",i,tstops[i]); */
        }
        mergesort(tstops, nbr_stops, sizeof(double),compare);
@@ -139,18 +139,18 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
     /* initial condition */
     y = malloc(ode_system_size*sizeof(double));
-    ode_init_conditions(t, y, &mu);
+    ode_init_conditions(t, y, mu);
     for (i = 0; i < ode_system_size; i++)
     {
         if (num_ic[i]) /* use ics.value as initial condition */
         {
-            y[i] = ics.value[i];
+            y[i] = ics->value[i];
         }
-        else /* set ics.value to y as initial condition */
+        else /* set ics->value to y as initial condition */
         {
-            ics.value[i] = y[i];
+            ics->value[i] = y[i];
         }
-        /* printf("--ic[%d]=%f\n",i,ics.value[i]);  */
+        /* printf("--ic[%d]=%f\n",i,ics->value[i]);  */
     }
    
     /* open output file */
@@ -170,13 +170,13 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fprintf(file,"T");
     for (i = 0; i<ode_system_size; i++)
     {
-        /* if (strncmp(ics.attribute[i],"hidden",3) )  */
-        fprintf(file,"\t%s",ics.name[i]);
+        /* if (strncmp(ics->attribute[i],"hidden",3) )  */
+        fprintf(file,"\t%s",ics->name[i]);
     }
-    for (i = 0; i<fcn.nbr_el; i++)
+    for (i = 0; i<fcn->nbr_el; i++)
     {
-        /* if (strncmp(fcn.attribute[i],"hidden",3) )  */
-        fprintf(file,"\t%s",fcn.name[i]);
+        /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
+        fprintf(file,"\t%s",fcn->name[i]);
     }
     fprintf(file,"\n");
 
@@ -184,15 +184,15 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     fprintf(file,"%g ",t);
     for (i = 0; i < ode_system_size; i++)
     {
-        /* if (strncmp(ics.attribute[i],"hidden",3) )  */
+        /* if (strncmp(ics->attribute[i],"hidden",3) )  */
         fprintf (file,"\t%g",y[i]);  
     }
     f = malloc(ode_system_size*sizeof(double));
-    ode_rhs(t, y, f, &mu);
-    for (i = 0; i < fcn.nbr_el; i++)
+    ode_rhs(t, y, f, mu);
+    for (i = 0; i < fcn->nbr_el; i++)
     {
-        /* if (strncmp(fcn.attribute[i],"hidden",3) )  */
-        fprintf (file,"\t%g",mu.aux_pointer[i]);
+        /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
+        fprintf (file,"\t%g",mu->aux_pointer[i]);
     }
     fprintf(file,"\n");
 
@@ -205,7 +205,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     ngx = get_int("plot_x");
     ngy = get_int("plot_y");
     ngz = get_int("plot_z");
-    fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
+    fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu->aux_pointer);
 
     /* sigaction -- detect Ctrl-C during the simulation  */
     abort_odesolver_flag = 0;
@@ -236,7 +236,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         /* ODE solver - time step */
         while ( t < tnext)
         {
-            sys = (gsl_odeiv2_system) {ode_rhs, NULL, ode_system_size, &mu};
+            sys = (gsl_odeiv2_system) {ode_rhs, NULL, ode_system_size, mu};
             status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
             if ( h < hmin )
             {
@@ -256,39 +256,39 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         fprintf(file,"%g ",t);
         for (i = 0; i < ode_system_size; i++)
         {
-            /* if (strncmp(ics.attribute[i],"hidden",3) )  */
+            /* if (strncmp(ics->attribute[i],"hidden",3) )  */
             fprintf (file,"\t%g",y[i]); 
         }
-        for (i = 0; i < fcn.nbr_el; i++)
+        for (i = 0; i < fcn->nbr_el; i++)
         {
-            /* if (strncmp(fcn.attribute[i],"hidden",3) )  */
-            fprintf (file,"\t%g",fcn.value[i]);
+            /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
+            fprintf (file,"\t%g",fcn->value[i]);
         }
         fprintf(file,"\n");
 
-        fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
+        fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu->aux_pointer);
 
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
-          ode_init_conditions(t, y, &mu);
+          ode_init_conditions(t, y, mu);
           /* update auxiliary functions */
-          ode_rhs(t, y, f, &mu);
+          ode_rhs(t, y, f, mu);
           /* write the new state to file */
           fprintf(file,"%g ",t);
           for (i = 0; i < ode_system_size; i++)
           {
-              /* if (strncmp(ics.attribute[i],"hidden",3) )  */
+              /* if (strncmp(ics->attribute[i],"hidden",3) )  */
               fprintf (file,"\t%g",y[i]); 
           }
-          for (i = 0; i < fcn.nbr_el; i++)
+          for (i = 0; i < fcn->nbr_el; i++)
           {
-              /* if (strncmp(fcn.attribute[i],"hidden",3) )  */
-              fprintf (file,"\t%g",fcn.value[i]);
+              /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
+              fprintf (file,"\t%g",fcn->value[i]);
           }
           fprintf(file,"\n");  
 
-          fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu.aux_pointer);
+          fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu->aux_pointer);
           
 
           /* calculating next stop */

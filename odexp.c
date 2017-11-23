@@ -413,7 +413,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* first run after system init */
     LOGPRINT("System init done. Running first simulation");
-    status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
+    status = odesolver(ode_rhs, ode_init_conditions, lasty, &ics, &mu, &fcn, &tspan, gnuplot_pipe);
 
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
@@ -1431,7 +1431,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
+                status = odesolver(ode_rhs, ode_init_conditions, lasty, &ics, &mu, &fcn, &tspan, gnuplot_pipe);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
