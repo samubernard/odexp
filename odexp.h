@@ -73,6 +73,9 @@ typedef struct namevalexp
     double *aux_pointer;   /* pointer to pass to rhs to retrieve auxiliary variable values */
     double *rand_pointer;  /* pointer to array of random numbers to pass to rhs */
     double *expr_pointer;  /* pointer to pass to rhs to retrieve parametric expression values */
+
+    size_t ode_system_size; 
+    size_t pop_size;
 } nve;
 
 typedef struct gen_option

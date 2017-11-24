@@ -334,6 +334,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     LOGPRINT("found %zu equations",eqn.nbr_el);
 
     ode_system_size = ics.nbr_el;
+    mu.ode_system_size = ode_system_size;
     total_nbr_x = ode_system_size + fcn.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
     lastinit = malloc(ode_system_size*sizeof(double));
@@ -375,6 +376,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     * 1 if using runtime numerical values 
                     */
     }
+
+    /* TODO get population size */
+    mu.pop_size = 1;
 
     /* seed random number generator */
     randseed = 1306;

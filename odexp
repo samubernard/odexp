@@ -543,6 +543,7 @@ echo "/* =================================================================" >>.o
 echo "                              Functions" >>.odexp/model.c
 echo "================================================================= */" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
+echo "int pop_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
 echo "int ode_init_conditions(const double t, double y_[], void *params);" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -596,6 +597,25 @@ echo "" >>.odexp/model.c
 # END MULTIROOT_RHS
 # ====================================================================================
 
+# ====================================================================================
+# BEGIN POP_RHS
+echo "/* POP_RHS replicate  ode_rhs N times. y_ and f_ are array of size pop_size*ode_system_size */" >>.odexp/model.c
+echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
+echo "{" >>.odexp/model.c
+echo "    size_t i;" >>.odexp/model.c
+echo "    nve mu = *(nve *)params;" >>.odexp/model.c
+echo "    size_t ind_size = mu.ode_system_size;" >>.odexp/model.c
+echo "    size_t pop_size = mu.pop_size;" >>.odexp/model.c
+echo "    for ( i = 0; i<pop_size; i++ )" >>.odexp/model.c
+echo "    {" >>.odexp/model.c
+echo "        ode_rhs(t, y+i*ind_size, f+i*ind_size, params);" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
+echo "" >>.odexp/model.c
+echo "    return GSL_SUCCESS;" >>.odexp/model.c
+echo "}" >>.odexp/model.c
+echo "" >>.odexp/model.c
+# END POP_RHS
+# ====================================================================================
 echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single node */" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
