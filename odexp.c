@@ -272,7 +272,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.nbr_el = 1;
         mu.nbr_expr = 1;
         strncpy(mu.name[0],"--",NAMELENGTH-1);
-        strncpy(mu.attribute[0],"not a parameter",NAMELENGTH-1);
+        strncpy(mu.attribute[0],"no parameter",NAMELENGTH-1);
         mu.value[0] = NAN;
         *mu.max_name_length = 15; 
     } 
