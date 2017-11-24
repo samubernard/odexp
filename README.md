@@ -8,7 +8,7 @@ A command line tool for ODE simulation.
 * ``[``, ``C^[`` Plot previous variable on the y-axis (cyclic)
 * ``>`` Double the number of time steps 
 * ``<`` Halve the number of time steps 
-* ``!`` **filename** Try to save the current plot to **filename**. EPS format
+* ``!`` **filename** Save the current plot to **filename**. EPS format
 * ``0``, ``n`` Switch to/update normal plot 
 * ``9``, ``b`` Switch to continuation plot
 * ``8``, ``j`` Switch to range plot
@@ -16,7 +16,7 @@ A command line tool for ODE simulation.
 * ``a``**us**, ``a``**su** Set axis **u**={x|y} to scale **s**={l|n}, n for linear (normal) scale and l for log scale 
 * ``ci`` {**ind**|**var**} **val** Set value of initial condition of variable with index  **i** or name **var** to **val**
 * ``cI`` **ind** Revert variable **ind** to expression
-* ``cl`` Change to last initial conditions, same as **il**
+* ``cl`` Change to last initial conditions, same as **il** but no rerun
 * ``co`` {**ind**|**var**} **val** Set value of option with index **ind** or name **var** to **val**
 * ``ct`` **ti** **val**  Set value of **ti** to **val** (**i** = 0 or 1) 
 * ``d`` Reload the parameter file 
@@ -68,7 +68,7 @@ and z-axis to **k** (variable **z**). Set variable to T or index -1 for time.
 * ``y`` {**ind**|**var**} Plot variable with index **ind** or name **var** on the y-axis
 
 ## ODEXP DECLARATIONS
-* P Parameters. Must be numerical (double). Parameters appear in the list of parameters. 
+* __P__ Parameters. Must be numerical (double). Parameters appear in the list of parameters.
 They can be modified from within odexp and can be ranged over. Parameters are declared in name value pairs, separated with semicolumns (;), or one parameter per line.
 
 ```
@@ -78,14 +78,14 @@ P a 0.1
 P b 0.1
 ```
 
-* E Expressions. Expressions are function of the parameters. They cannot be modified. 
+* __E__ Expressions. Expressions are function of the parameters. They cannot be modified.
 Expression are declared as Name Expression pairs.
 
 ```
 E c a*a
 ```
 
-* A Auxiliary variables. Auxiliary variables depend on parameters, expressions and dynamical variables. 
+* __A__ Auxiliary variables. Auxiliary variables depend on parameters, expressions and dynamical variables.
 They are declared as Name Expression pairs, and must be scalars or one-dimensional arrays.
 Auxiliary variables are useful to monitor quantities that depend on the dynamical variables. They can be 
 plotted, and their values are recorded in the output file current.tab. 
@@ -98,16 +98,14 @@ A norm_x sqrt(sum(a,5))
 A norm_x2 dotprod(X,X,5)
 ```
 
-
-* D Dynamical variables. Dynamical variables are the dependent variables of the ODE system.
+* __dX/dt__ Dynamical variables. Dynamical variables are the dependent variables of the ODE system.
 Dynamical variable x is declared as dx/dt followed by = and the RHS of the equation
 
 ```
 dx/dt = -a*x
 ```
 
-
-* I Initial conditions. 
+* __I__ Initial conditions.
 Initial conditions can be numerical, or can be expression that depend on parameters, expressions and auxiliary variables.
 If initial conditions are expressions, their values can be overruled or reset in odexp.
 
@@ -117,44 +115,38 @@ I x 1.0
 I x b
 ```
 
-
-* O Options. Options can be preset. See below for a list of options.
+* __O__ Options. Options can be preset. See below for a list of options.
 
 ```
 O plot_x x
 O reltol 1e-3
 ```
 
-
-* T Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
+* __T__ Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times.
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
-
  
-* U Uniform random array. To generate an array of length 5 of pseudo-random numbers uniformly distbuted between -1 and 1 
+* __U__ Uniform random array. To generate an array of length 5 of pseudo-random numbers uniformly distbuted between -1 and 1
 
 ```
 U r[i=0:5] 
 E rand_array[i=0:5] -1 + 2*r[i]
 ```
 
-
-* S Static variable. Must be numerical. Static variables cannot be modified.
+* __S__ Static variable. Must be numerical. Static variables cannot be modified.
 
 ```
 S MY_PI 3.14
 ```
 
-
-* C Constant array. Must be numerical array. Constant arrays cannot be modified.
+* __C__ Constant array. Must be numerical array. Constant arrays cannot be modified.
 Constant arrays can be of any dimensions. Useful for arrays of small sizes. 
 
 ```
 C MY_ARRAY[2][3] { {1.1, 1.2, 1.3}, {2.1, 2.2, 2.3} }
 ```
 
-
-* F Constant array from file. The declaration has the following syntax 
+* __F__ Constant array from file. The declaration has the following syntax
 
 ```
 F MY_ARRAY NROWS NCOLS FILENAME                      
@@ -163,8 +155,7 @@ F MY_ARRAY NROWS NCOLS FILENAME
 where NROWS and NCOLS are the number of rows and columns in the file FILENAME.
 FILENAME is a text file containing space delimited array of floats.
 
-
-* @ User-defined function.
+* __@__ User-defined function.
 
 ```
 @ my_fun_name (x, y, z) = x*x+y+z 
@@ -228,12 +219,10 @@ Scalar product of two arrays ``x`` and ``y`` of lengths ``len``. Returns the sca
 convolution product between arrays ``u`` and ``v``, each of length ``len``. Returns the convolution product.
 
 * ``double minus(double x, double y)``
-Subtraction. 
-Used with ``sumxy``.
+Subtraction.  Used with ``sumxy``.
 
 * ``double plus(double x, double y)``
-Addition.
-Used with ``sumxy``.
+Addition. Used with ``sumxy``.
 
 * ``double sumxy(long len, double (*f)(double), double (*g)(double,double), const double *x, const double yi)``
 Sum over ``j`` of ``f(g(x[j],yi))`` 
@@ -245,7 +234,7 @@ Sum over ``j`` of ``f(g(x[j],yi))``
 Here is an example of an odexp file
 
 ```
-# file lotka.odexp
+# file lotka.op
 # a simple nonlinear ODE system
 
 P a 0.2; b 0.3
