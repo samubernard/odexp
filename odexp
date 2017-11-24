@@ -160,6 +160,7 @@ declare_parameters () {
         switch (toupper(a[2])) {
             case /INITIAL/ :
             case /UNUSED/  :
+            case /INEXPR/  :
                 printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++;
                 break;
             default :
@@ -471,7 +472,7 @@ define_parametric_expressions_from_expr_pointer () {
         printf "[%s]", b[k] 
         mm*=b[k+2]-b[k+1] 
       }; 
-      {printf "expr_[%d+ii_++]", nv};
+      {printf " = expr_[%d+ii_++]", nv};
       nv+=mm;
       {printf ";\n"};
       for (k=length(b)-1; k>=2; k-=4)
@@ -824,6 +825,7 @@ echo "    int success_ = 0;" >>.odexp/model.c
 # find iterators in the source file and declare them 
 echo "    /* iterators */" >>.odexp/model.c
 declare_iterators
+echo "    long ii_ __attribute__((unused));" >>.odexp/model.c
 echo "" >>.odexp/model.c
 
 # ====================================================================================
