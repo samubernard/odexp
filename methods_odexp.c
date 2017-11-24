@@ -137,7 +137,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
         nextstop = INFINITY; /* set nextstop outside the integration range */
     }
 
-    /* initial condition */
+    /* initial conditions */
     y = malloc(ode_system_size*sizeof(double));
     ode_init_conditions(t, y, mu);
     for (i = 0; i < ode_system_size; i++)
