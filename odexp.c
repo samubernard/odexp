@@ -265,11 +265,14 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
         mu.value = realloc(mu.value,sizeof(double));
         mu.name = realloc(mu.name,sizeof(char*));
         mu.name[0] = malloc(NAMELENGTH*sizeof(char));
-        mu.expression[0] = malloc(EXPRLENGTH*sizeof(char*));
         mu.expression = realloc(mu.expression,sizeof(char*));
+        mu.expression[0] = malloc(EXPRLENGTH*sizeof(char*));
+        mu.attribute = realloc(mu.attribute,sizeof(char*));
+        mu.attribute[0] = malloc(EXPRLENGTH*sizeof(char*));
         mu.nbr_el = 1;
         mu.nbr_expr = 1;
-        strncpy(mu.name[0],"not_a_parameter",NAMELENGTH-1);
+        strncpy(mu.name[0],"--",NAMELENGTH-1);
+        strncpy(mu.attribute[0],"not a parameter",NAMELENGTH-1);
         mu.value[0] = NAN;
         *mu.max_name_length = 15; 
     } 
@@ -1859,6 +1862,11 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
                 /* try to read SYM0:N VAR VALUE ! OPTION */
                 snprintf(attribute,1,"");
                 has_read = sscanf(line,"%*s %s %lf ! %s ",var.name[var_index],&var.value[var_index],attribute);
+                /* if cannot read double, try to read SYM0:N VAR ~ RAND EXPRESSION */
+                if ( has_read < 2 )
+                {
+                    has_read = sscanf(line,"%*s %s ~ %[^\n]",var.name[var_index],attribute);
+                }
                 var.expr_index[var_index] = var_index;
                 strncpy(var.attribute[var_index],attribute,NAMELENGTH-1);
 

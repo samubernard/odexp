@@ -168,6 +168,20 @@ declare_parameters () {
     }' $file >>.odexp/model.c
 }
 
+declare_parameters_ic () {
+# find variable parameters and declare them in model.c 
+    gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {
+        split($0,a,/!/);
+        switch (toupper(a[2])) {
+            case /INITIAL/ :
+                printf "    double %s = pars_[%d];\n", $2, i++;
+                break;
+            default :
+                printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++;
+        }
+    }' $file >>.odexp/model.c
+}
+
 declare_parametric_expressions () {
     # find parametric expressions and declare them in .odexp/model.c
     # find parametric expression vectors and declare them in .odexp/model.c
@@ -432,6 +446,41 @@ define_parametric_expression_pointer () {
       }' $file >>.odexp/model.c
 }
 
+define_parametric_expressions_from_expr_pointer () {
+    gawk -F ' ' -v nv=0 '$1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+      lhs=$2;
+      printf "    %s = expr_[%d];\n", lhs, nv; nv++
+      };
+      $1 ~ /^[eE]/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
+      a=substr($2, RSTART, RLENGTH);
+      split(a,b,/[\[\]=:]/);
+      split($2,c,/\[/);
+      myrhsvar=c[1];
+      $1="";
+      $2="";
+      ex=$0;
+      printf "    ii_ = 0;\n";
+      for (k=2; k<=length(b); k+=4) 
+      { 
+        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
+      };
+      {printf "%*s%s", k+2, "",  myrhsvar};
+      mm = 1;
+      for (k=2; k<=length(b); k+=4) 
+      { 
+        printf "[%s]", b[k] 
+        mm*=b[k+2]-b[k+1] 
+      }; 
+      {printf "expr_[%d+ii_++]", nv};
+      nv+=mm;
+      {printf ";\n"};
+      for (k=length(b)-1; k>=2; k-=4)
+      {
+        printf "%-*s}\n", k, ""    
+      };
+      }' $file >>.odexp/model.c
+}
+
 define_uniform_random_array () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[uU][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       ex=$2;
@@ -543,8 +592,9 @@ echo "/* =================================================================" >>.o
 echo "                              Functions" >>.odexp/model.c
 echo "================================================================= */" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
-echo "int pop_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
+echo "int pop_rhs(double t, const double y[], double f[], void *params);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
+echo "int pop_init_conditions(const double t, double y[], void *params);" >>.odexp/model.c
 echo "int ode_init_conditions(const double t, double y_[], void *params);" >>.odexp/model.c
 echo "" >>.odexp/model.c
 
@@ -599,7 +649,7 @@ echo "" >>.odexp/model.c
 
 # ====================================================================================
 # BEGIN POP_RHS
-echo "/* POP_RHS replicate  ode_rhs N times. y_ and f_ are array of size pop_size*ode_system_size */" >>.odexp/model.c
+echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */" >>.odexp/model.c
 echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    size_t i;" >>.odexp/model.c
@@ -615,6 +665,28 @@ echo "    return GSL_SUCCESS;" >>.odexp/model.c
 echo "}" >>.odexp/model.c
 echo "" >>.odexp/model.c
 # END POP_RHS
+# ====================================================================================
+
+# ====================================================================================
+# BEGIN POP_INIT_CONDITIONS
+echo "/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is an array of size pop_size*ode_system_size */" >>.odexp/model.c
+echo "int pop_init_conditions(const double t, double y[], void *params)" >>.odexp/model.c
+echo "{" >>.odexp/model.c
+echo "    size_t i;" >>.odexp/model.c
+echo "    nve mu = *(nve *)params;" >>.odexp/model.c
+echo "    size_t ind_size = mu.ode_system_size;" >>.odexp/model.c
+echo "    size_t pop_size = mu.pop_size;" >>.odexp/model.c
+echo "    for ( i = 0; i<pop_size; i++ )" >>.odexp/model.c
+echo "    {" >>.odexp/model.c
+echo "        ode_init_conditions(t, y+i*ind_size, params);" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
+echo "" >>.odexp/model.c
+echo "    return GSL_SUCCESS;" >>.odexp/model.c
+echo "}" >>.odexp/model.c
+echo "" >>.odexp/model.c
+# END POP_INIT_CONDITIONS
+# ====================================================================================
+
 # ====================================================================================
 echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single node */" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params_)" >>.odexp/model.c
@@ -696,7 +768,7 @@ define_uniform_random_array
 echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
 # initialize parametric expression vectors and write them in .odexp/model.c
-define_parametric_expressions 
+define_parametric_expressions_from_expr_pointer 
 # ====================================================================================
 
 # ====================================================================================
@@ -722,11 +794,9 @@ echo "    /* initialization - aux_pointer */" >>.odexp/model.c
 define_aux_pointer
 
 # DEFINE parametric_expression_pointer 
-echo "" >>.odexp/model.c
-echo "    /* initialization - expr_pointer */" >>.odexp/model.c
-define_parametric_expression_pointer
-
-# $1 ~ /^[a-zA-Z0-9_]\'/ && $1 !~ /[\[\]]/ {split($1,a,/\'/); print a[1]}; 
+# echo "" >>.odexp/model.c
+# echo "    /* initialization - expr_pointer */" >>.odexp/model.c
+# define_parametric_expression_pointer
 
 # ====================================================================================
 # construct initial conditions
@@ -747,6 +817,7 @@ echo "{" >>.odexp/model.c
 echo "    nve mu_ = *(nve *)params_;" >>.odexp/model.c
 echo "    double * pars_ __attribute__((unused)) = mu_.value;" >>.odexp/model.c
 echo "    double * aux_  __attribute__((unused)) = mu_.aux_pointer;" >>.odexp/model.c
+echo "    double * expr_ __attribute__((unused)) = mu_.expr_pointer;" >>.odexp/model.c
 echo "    double * rnd_  __attribute__((unused)) = mu_.rand_pointer;" >>.odexp/model.c
 echo "    int success_ = 0;" >>.odexp/model.c
 # ITERATORS
@@ -761,7 +832,7 @@ echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 # find variable parameters and declare them in model.c 
-gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++}' $file >>.odexp/model.c
+declare_parameters_ic
 # ====================================================================================
 
 # ====================================================================================
@@ -778,18 +849,6 @@ declare_parametric_expressions
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE VARIABLES and AUXILIARY VARIABLES
-# echo "" >>.odexp/model.c
-# echo "    /* Declaration - auxiliary functions */" >>.odexp/model.c
-# # find vector variables and declare them to model.c
-# declare_auxiliary_functions
-# 
-# echo "" >>.odexp/model.c
-# echo "    /* Declaration - variables */" >>.odexp/model.c
-# declare_variables
-# ====================================================================================
-
-# ====================================================================================
 # DEFINE UNIFORM RANDOM ARRAY
 echo "" >>.odexp/model.c
 echo "    /* Initialization - uniform random array */" >>.odexp/model.c
@@ -803,15 +862,10 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
 define_parametric_expressions
 
-# echo "" >>.odexp/model.c
-# echo "    /* Initialization - variables */" >>.odexp/model.c
-# define_variables
-# 
-# # DEFINE AUXILIARY FUNCTIONS
-# echo "" >>.odexp/model.c
-# echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
-# # initialize auxiliary function 
-# define_auxiliary_functions
+# DEFINE parametric_expression_pointer 
+echo "" >>.odexp/model.c
+echo "    /* initialization - expr_pointer */" >>.odexp/model.c
+define_parametric_expression_pointer
 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - initial condition */" >>.odexp/model.c
