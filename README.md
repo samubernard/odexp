@@ -238,6 +238,9 @@ Used with ``sumxy``.
 * ``double sumxy(long len, double (*f)(double), double (*g)(double,double), const double *x, const double yi)``
 Sum over ``j`` of ``f(g(x[j],yi))`` 
 
+* ``double linchaindelay(double root, double *chain, size_t link, double delay, size_t len)``
+``link``'th element of a linear chain ``beta*(chain[link-1]-chain[link])``, (and ``beta*(root-chain[0])``)
+
 ## EXAMPLES
 Here is an example of an odexp file
 

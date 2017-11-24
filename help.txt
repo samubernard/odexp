@@ -426,6 +426,9 @@ Used with \fBsumxy\fR.
 .TP
 .BR \fIdouble\fR " " sumxy\fR(\fIlong " " \fIlen, " " \fIdouble " " \fI(*f)(double)\fR, " " \fIdouble " " \fI(*g)(double,double)\fR, " " \fIconst " "  \fIdouble " " \fI*x\fR, " " \fIconst " " \fIdouble " " \fIyi\fR)
 Sum over j of \fIf\fR(\fIg\fR(\fIx_j\fR,\fIyi\fR)) 
+.TP
+.BR \fIdouble\fR " " linchaindelay\fR(\fIdouble " " \fIroot\fR, " " \fIdouble " " \fI*chain\fR, " " \fIsize_t " " \fIlink\fR, " " \fIdouble " " \fIdelay\fR, " " \fIsize_t " " \fIlen\fR)
+\fIlink\fR'th element of a linear chain \fIbeta\fR*(\fIchain\fR[\fIlink\fR-1]-\fIchain\fR[\fIlink\fR]), (and \fIbeta\fR*(\fIroot\fR-\fIchain\fR[\fI0\fR]))
 
 .SH EXAMPLES
 Here is an example of an odexp file
