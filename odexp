@@ -175,6 +175,7 @@ declare_parameters_ic () {
         split($0,a,/!/);
         switch (toupper(a[2])) {
             case /INITIAL/ :
+            case /INEXPR/  :
                 printf "    double %s = pars_[%d];\n", $2, i++;
                 break;
             default :
