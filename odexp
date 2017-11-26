@@ -651,41 +651,41 @@ echo "" >>.odexp/model.c
 
 # ====================================================================================
 # BEGIN POP_RHS
-echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */" >>.odexp/model.c
-echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
-echo "{" >>.odexp/model.c
-echo "    size_t i;" >>.odexp/model.c
-echo "    nve mu = *(nve *)params;" >>.odexp/model.c
-echo "    size_t ind_size = mu.ode_system_size;" >>.odexp/model.c
-echo "    size_t pop_size = mu.pop_size;" >>.odexp/model.c
-echo "    for ( i = 0; i<pop_size; i++ )" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        ode_rhs(t, y+i*ind_size, f+i*ind_size, params);" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    return GSL_SUCCESS;" >>.odexp/model.c
-echo "}" >>.odexp/model.c
-echo "" >>.odexp/model.c
+# echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */" >>.odexp/model.c
+# echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
+# echo "{" >>.odexp/model.c
+# echo "    size_t i;" >>.odexp/model.c
+# echo "    nve mu = *(nve *)params;" >>.odexp/model.c
+# echo "    size_t ind_size = mu.ode_system_size;" >>.odexp/model.c
+# echo "    size_t pop_size = mu.pop_size;" >>.odexp/model.c
+# echo "    for ( i = 0; i<pop_size; i++ )" >>.odexp/model.c
+# echo "    {" >>.odexp/model.c
+# echo "        ode_rhs(t, y+i*ind_size, f+i*ind_size, params);" >>.odexp/model.c
+# echo "    }" >>.odexp/model.c
+# echo "" >>.odexp/model.c
+# echo "    return GSL_SUCCESS;" >>.odexp/model.c
+# echo "}" >>.odexp/model.c
+# echo "" >>.odexp/model.c
 # END POP_RHS
 # ====================================================================================
 
 # ====================================================================================
 # BEGIN POP_INIT_CONDITIONS
-echo "/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is an array of size pop_size*ode_system_size */" >>.odexp/model.c
-echo "int pop_init_conditions(const double t, double y[], void *params)" >>.odexp/model.c
-echo "{" >>.odexp/model.c
-echo "    size_t i;" >>.odexp/model.c
-echo "    nve mu = *(nve *)params;" >>.odexp/model.c
-echo "    size_t ind_size = mu.ode_system_size;" >>.odexp/model.c
-echo "    size_t pop_size = mu.pop_size;" >>.odexp/model.c
-echo "    for ( i = 0; i<pop_size; i++ )" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        ode_init_conditions(t, y+i*ind_size, params);" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    return GSL_SUCCESS;" >>.odexp/model.c
-echo "}" >>.odexp/model.c
-echo "" >>.odexp/model.c
+# echo "/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is an array of size pop_size*ode_system_size */" >>.odexp/model.c
+# echo "int pop_init_conditions(const double t, double y[], void *params)" >>.odexp/model.c
+# echo "{" >>.odexp/model.c
+# echo "    size_t i;" >>.odexp/model.c
+# echo "    nve mu = *(nve *)params;" >>.odexp/model.c
+# echo "    size_t ind_size = mu.ode_system_size;" >>.odexp/model.c
+# echo "    size_t pop_size = mu.pop_size;" >>.odexp/model.c
+# echo "    for ( i = 0; i<pop_size; i++ )" >>.odexp/model.c
+# echo "    {" >>.odexp/model.c
+# echo "        ode_init_conditions(t, y+i*ind_size, params);" >>.odexp/model.c
+# echo "    }" >>.odexp/model.c
+# echo "" >>.odexp/model.c
+# echo "    return GSL_SUCCESS;" >>.odexp/model.c
+# echo "}" >>.odexp/model.c
+# echo "" >>.odexp/model.c
 # END POP_INIT_CONDITIONS
 # ====================================================================================
 
