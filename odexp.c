@@ -1,5 +1,4 @@
 #include <gsl/gsl_multiroots.h>
-#include <gsl/gsl_vector.h>
 #include <gsl/gsl_eigen.h> 
 #include <readline/readline.h>
 #include <readline/history.h>                             
@@ -12,6 +11,7 @@
 #include "methods_odexp.h"
 #include "utils_odexp.h"
 #include "rand_gen.h"
+#include "dlist.h"
 
 /* =================================================================
                               Defines
@@ -149,6 +149,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* data files */
     nve dfl;
+
+    /* particle list */
+    dlist *pop; 
 
     /* last initial conditions */
     double *lastinit;
@@ -338,7 +341,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     LOGPRINT("found %zu equations",eqn.nbr_el);
 
     ode_system_size = ics.nbr_el;
-    mu.ode_system_size = ode_system_size;
+    /* mu.ode_system_size = ode_system_size; */
     total_nbr_x = ode_system_size + fcn.nbr_el;
     lasty = malloc(ode_system_size*sizeof(double));
     lastinit = malloc(ode_system_size*sizeof(double));
@@ -382,7 +385,9 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     }
 
     /* TODO get population size */
-    mu.pop_size = 1;
+    init_dlist(pop);
+
+
 
     /* seed random number generator */
     randseed = 1306;
@@ -1631,6 +1636,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free(num_ic);
     free(lasty);
     free(lastinit);
+    destroy(pop);
 
     /* write history */
     if ( write_history(".history") )

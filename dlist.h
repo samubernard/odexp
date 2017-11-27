@@ -18,36 +18,46 @@
    Header files
    ================================================================= */
 
+typedef struct particle_state {
+    double *pars;
+    size_t nbr_pars;
+    double *expr;
+    size_t nbr_expr;
+    double aux;
+    size_t nbr_aux;
+    double *rndval;
+    size_t nbr_rndval;
+    double *y;
+    size_t nbr_y;
+
+    size_t id;
+
+    struct particle_state *nextel;
+    struct particle_state *prevel;
+} par;
+
+typedef struct dlist_struct {
+
+    par *start;
+    par *end;
+    size_t size;
+
+} dlist;
+
 /* DOUBLE CHAIN LIST */
 
-/* init population of nve */
-void init_dlist(dlist *nvelist );
+/* init population of particle_state */
+void init_dlist(dlist *list );
 
 /* insert in empty list */
-int insert_first_el ( dlist *nvelist, nve *var );
+int insert_first_el ( dlist *list, par *var );
 
 /* insert at the end of the list */
-int insert_endoflist ( dlist *, double, double, double *, int, double, RANDINT, int);
+int insert_endoflist ( dlist *, par *var);
 
 /* delete element pos from the list */
-int delete_el( dlist *cellList, cell *to_del);
+int delete_el( dlist *list, par *to_del);
 
 /* destroy the list */
-void destroy(dlist *cellList);
-
-/* print particle */
-void printf_nve( nve *var );
-
-/* print list */
-void printf_dlist( dlist *nvelist );
-
-/* save and load lists */
-void fprintf_dlist(FILE*, dlist *nvelist, double tt);
-
-void fwrite_dlist(FILE*, dlist *nvelist, double tt);
-
-void fscanf_dlist(FILE*, dlist *nvelist, double *tt);
-
-void fread_dlist(FILE*, dlist *nvelist, double *tt);
-
+void destroy(dlist *list);
 

@@ -7,6 +7,7 @@
 ================================================================= */
 
 #include <time.h>
+#include <gsl/gsl_vector.h>
 
 /* =================================================================
                               DEFINE
@@ -74,8 +75,8 @@ typedef struct namevalexp
     double *rand_pointer;  /* pointer to array of random numbers to pass to rhs */
     double *expr_pointer;  /* pointer to pass to rhs to retrieve parametric expression values */
 
-    size_t ode_system_size; 
-    size_t pop_size;
+    struct namevalexp *nextel;
+    struct namevalexp *prevel;
 } nve;
 
 typedef struct gen_option
