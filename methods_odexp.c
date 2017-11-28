@@ -33,9 +33,8 @@ static void set_abort_odesolver_flag(int sig)
     abort_odesolver_flag = 1;
 }
 
-int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- int (*ode_init_conditions)(const double t, double ic_[], void *params),\
- double *lasty, nve *ics, nve *mu, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)    
+int odesolver( oderhs ode_rhs, odeic ode_init_conditions,\
+ double *lasty, nve *ics, nve *mu, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)
 {
     clock_t start = clock();
     double *y,
@@ -339,8 +338,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
 
 }
 
-int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- int (*ode_init_conditions)(const double t, double ic_[], void *params),\
+int parameter_range( oderhs ode_rhs, odeic ode_init_conditions,\
  double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe)
 {
 
@@ -636,8 +634,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
 }
 
 
-int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve ics, nve mu, steady_state **stst)
+int phasespaceanalysis( multirootrhs multiroot_rhs, nve ics, nve mu, steady_state **stst)
 {
     int status, status_res, status_delta, newstst;
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
@@ -773,8 +770,7 @@ int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, 
     return nbr_stst;
 }
 
-int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve ics, nve mu, steady_state *stst)
+int ststsolver( multirootrhs multiroot_rhs, nve ics, nve mu, steady_state *stst)
 {
     
 

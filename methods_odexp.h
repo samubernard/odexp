@@ -10,27 +10,23 @@
                               DEFINE
 ================================================================= */
 
-int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- int (*ode_init_conditions)(const double t, double ic_[], void *params),\
+int odesolver( oderhs ode_rhs, odeic ode_ic,\
  double *lasty, nve *ics, nve *mu, nve *fcn, double_array *tspan, FILE *gnuplot_pipe);
 
-int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
- int (*ode_init_conditions)(const double t, double ic_[], void *params),\
+int parameter_range( oderhs ode_rhs, odeic ode_ic,\
  double *lasty, nve init, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe);
 
-int phasespaceanalysis(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve ics, nve mu, steady_state **stst);
+int phasespaceanalysis( multirootrhs multiroot_rhs, nve ics, nve mu, steady_state **stst);
 
-int ststsolver(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve ics, nve mu, steady_state *stst);
+int ststsolver( multirootrhs multiroot_rhs, nve ics, nve mu, steady_state *stst);
 
-int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve ics, nve mu);
+int ststcont( multirootrhs multiroot_rhs, nve ics, nve mu);
 
 
 int eig(gsl_matrix *J, steady_state *stst);
 
-int jac(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+int jac( multirootrhs multiroot_rhs,\
         gsl_vector *x, gsl_vector *f, double eps_rel, double eps_abs, gsl_matrix *J, void *params);
 
 int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, const double t, const double *y, const double *a);
+
