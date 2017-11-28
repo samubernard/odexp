@@ -11,7 +11,7 @@
 #include "methods_odexp.h"
 #include "utils_odexp.h"
 #include "rand_gen.h"
-#include "dlist.h"
+
 
 /* =================================================================
                               Defines
@@ -150,8 +150,8 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     /* data files */
     nve dfl;
 
-    /* particle list */
-    dlist *pop; 
+    /* world */
+    world *s = malloc(sizeof(world));
 
     /* last initial conditions */
     double *lastinit;
@@ -385,8 +385,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     }
 
     /* TODO get population size */
-    init_dlist(pop);
+    DBPRINT("init world");
+    init_world( s, &eqn, &fcn );
+    insert_first_el(s->pop,&mu,&pex,&fcn,&ics);
 
+    DBPRINT("s->dynnames[0] = %s",s->dynnames[0]);
+    DBPRINT("end init world");
 
 
     /* seed random number generator */
@@ -1636,7 +1640,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free(num_ic);
     free(lasty);
     free(lastinit);
-    destroy(pop);
+    free_world(s);
 
     /* write history */
     if ( write_history(".history") )

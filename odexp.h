@@ -9,6 +9,8 @@
 #include <time.h>
 #include <gsl/gsl_vector.h>
 
+#include "dlist.h"
+
 /* =================================================================
                               DEFINE
 ================================================================= */
@@ -59,25 +61,6 @@ extern const char *T_NOR;  /* NORMAL */
 extern const char *T_ERR;  /* ERROR (non fatal) */
 extern const char *T_BLD;  /* BOLD */
 extern const char *hline;  /* horizontal line */
-
-typedef struct namevalexp
-{
-    char **name;           /* names */
-    double *value;         /* numerical values */
-    char **expression;     /* expressions (only string, not evaluated) */
-    char **attribute;      /* attributes: to be better defined */
-    size_t nbr_el;           /* nbr of elements */
-    size_t nbr_expr;         /* nbr of expression <= nbr_el */
-    size_t *expr_index;      /* index of expression */
-    int *max_name_length;  /* length of longest name */
-    
-    double *aux_pointer;   /* pointer to pass to rhs to retrieve auxiliary variable values */
-    double *rand_pointer;  /* pointer to array of random numbers to pass to rhs */
-    double *expr_pointer;  /* pointer to pass to rhs to retrieve parametric expression values */
-
-    struct namevalexp *nextel;
-    struct namevalexp *prevel;
-} nve;
 
 typedef struct gen_option
 {
