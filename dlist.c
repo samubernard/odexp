@@ -66,8 +66,17 @@ int insert_first_el ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics)
     for (i=0;i<p->nbr_pars;i++)
     {
         p->pars[i] = mu->value[i];
+    }
+    for (i=0;i<p->nbr_expr;i++)
+    {
         p->expr[i] = pex->value[i];
+    }
+    for (i=0;i<p->nbr_aux;i++)
+    {
         p->aux[i]  = fcn->value[i];
+    }
+    for (i=0;i<p->nbr_y;i++)
+    {
         p->y[i]    = ics->value[i];
     }
 
