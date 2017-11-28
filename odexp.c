@@ -93,8 +93,7 @@ const char *hline = "--------------------------";
 /* =================================================================
                              Main Loop 
 ================================================================= */
-int odexp( oderhs ode_rhs, odeic ode_ic, multirootrhs multiroot_rhs,\
-   const char *odexp_filename )
+int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_filename )
 {
 
     /* variable declaration */
@@ -1365,11 +1364,11 @@ int odexp( oderhs ode_rhs, odeic ode_ic, multirootrhs multiroot_rhs,\
                         stst = malloc(sizeof(steady_state));
                         init_steady_state( &(stst[0]), 0 );
                         nbr_stst = 1;
-                        status = ststsolver(multiroot_rhs,ics,mu, stst);
+                        status = ststsolver(root_rhs,ics,mu, stst);
                     } 
                     else if ( op == 'm')
                     {
-                        nbr_stst = phasespaceanalysis(multiroot_rhs,ics,mu, &stst);
+                        nbr_stst = phasespaceanalysis(root_rhs,ics,mu, &stst);
                         for (j=0; j<nbr_stst; j++)
                         {
                             printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
@@ -1377,7 +1376,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, multirootrhs multiroot_rhs,\
                     } 
                     else if ( op == 'c' )
                     {
-                        status = ststcont(multiroot_rhs,ics,mu);
+                        status = ststcont(root_rhs,ics,mu);
                         plotmode_continuation = 1;
                     }
                     else if ( op == 'r' )

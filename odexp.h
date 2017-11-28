@@ -41,7 +41,7 @@ extern const char *hline;  /* horizontal line */
 
 typedef int (*oderhs)(double, const double *, double *, void *);
 typedef int (*odeic)(double, double *, void *);
-typedef int (*multirootrhs)(const gsl_vector *, void *, gsl_vector *);
+typedef int (*rootrhs)(const gsl_vector *, void *, gsl_vector *);
 
 typedef struct gen_option
 {
@@ -75,8 +75,7 @@ typedef struct double_array
 
 
 /* function declaration */
-int odexp( oderhs ode_rhs, odeic ode_ic, multirootrhs multiroot_rhs,\
-   const char *odexp_filename );
+int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_filename );
 
 void free_double_array( double_array var );
 

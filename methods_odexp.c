@@ -634,7 +634,7 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
 }
 
 
-int phasespaceanalysis( multirootrhs multiroot_rhs, nve ics, nve mu, steady_state **stst)
+int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
 {
     int status, status_res, status_delta, newstst;
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
@@ -657,7 +657,7 @@ int phasespaceanalysis( multirootrhs multiroot_rhs, nve ics, nve mu, steady_stat
 
     size_t iter = 0;
 
-    gsl_multiroot_function f = {multiroot_rhs, ode_system_size, &mu};
+    gsl_multiroot_function f = {root_rhs, ode_system_size, &mu};
 
     gsl_vector *x = gsl_vector_alloc(ode_system_size);
 
@@ -746,7 +746,7 @@ int phasespaceanalysis( multirootrhs multiroot_rhs, nve ics, nve mu, steady_stat
             printf("  Steady State\n");
             gsl_vector_fprintf(stdout,s->x,"    %+.5e");
             /* gsl_multiroot_fdjacobian(&f, s->x, s->f, 1e-9, J); */
-            jac(multiroot_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,&mu);
+            jac(root_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,&mu);
             eig(J, (*stst)+nbr_stst-1);
         }
         else
@@ -770,7 +770,7 @@ int phasespaceanalysis( multirootrhs multiroot_rhs, nve ics, nve mu, steady_stat
     return nbr_stst;
 }
 
-int ststsolver( multirootrhs multiroot_rhs, nve ics, nve mu, steady_state *stst)
+int ststsolver( rootrhs root_rhs, nve ics, nve mu, steady_state *stst)
 {
     
 
@@ -781,7 +781,7 @@ int ststsolver( multirootrhs multiroot_rhs, nve ics, nve mu, steady_state *stst)
     size_t i, iter = 0;
 
     const size_t n = ics.nbr_el;
-    gsl_multiroot_function f = {multiroot_rhs, n, &mu};
+    gsl_multiroot_function f = {root_rhs, n, &mu};
 
     gsl_matrix *J = gsl_matrix_alloc(n,n);
 
@@ -828,7 +828,7 @@ int ststsolver( multirootrhs multiroot_rhs, nve ics, nve mu, steady_state *stst)
      * gsl_matrix_fprintf(stdout,J,"%f");
      */
 
-    jac(multiroot_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,&mu);
+    jac(root_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,&mu);
     /* printf("--Jacobian matrix with homemade numerical derivatives\n");  */
     /* gsl_matrix_fprintf(stdout,J,"%f"); */
 
@@ -877,8 +877,7 @@ int eig(gsl_matrix *J, steady_state *stst)
 }
 
 
-int jac(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-        gsl_vector *x, gsl_vector *f, double eps_rel, double eps_abs, gsl_matrix *J, void *params)
+int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double eps_abs, gsl_matrix *J, void *params)
 {
 
     const size_t n = J->size1;
@@ -901,7 +900,7 @@ int jac(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),
         gsl_vector_set(x1,j,gsl_vector_get(x,j)+dx); /* set x+dx */
         for(i=0;i<n;i++)
         {
-            multiroot_rhs(x1,params,f1); /* set f(x+dx) */
+            root_rhs(x1,params,f1); /* set f(x+dx) */
             dfdx = (gsl_vector_get(f1,i)-gsl_vector_get(f,i))/dx;
             /* printf("--ststsolver dx=%g, dfdx=%g, [i,j]=%ld,%ld\n",dx,dfdx,i,j); */
             gsl_matrix_set(J,i,j,dfdx);
@@ -917,8 +916,7 @@ int jac(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),
 }
 
 
-int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    nve ics, nve mu)
+int ststcont( rootrhs root_rhs, nve ics, nve mu)
 {
     /* naive steady state continuation method */
     clock_t start = clock();
@@ -983,7 +981,7 @@ int ststcont(int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector
          * =============================*/
         printf("  *----------------------*\n");
         printf("  %ld: %s = %g, s=%g\n",ntry,mu.name[p],mu.value[p],s);
-        status = ststsolver(multiroot_rhs,ics,mu, &stst);
+        status = ststsolver(root_rhs,ics,mu, &stst);
         if ( status == GSL_SUCCESS ) /* then move to next point */
         {
             nstst++;
