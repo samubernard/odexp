@@ -14,7 +14,6 @@
 /* =================================================================
                               DEFINE
 ================================================================= */
-#define NAMELENGTH  63
 #define MAXFILENAMELENGTH 63
 #define MAXROOTLENGTH     63 
 #define EXPRLENGTH     1023                            
@@ -25,34 +24,12 @@
 /* size of history buffer */
 #define SIZEHIST 100
 
-#define max(a,b) \
-       ({ __typeof__ (a) _a = (a); \
-           __typeof__ (b) _b = (b); \
-         _a > _b ? _a : _b; })
-
-#define min(a,b) \
-       ({ __typeof__ (a) _a = (a); \
-           __typeof__ (b) _b = (b); \
-         _a < _b ? _a : _b; })
-
-/* log file */
-#define LOGPRINT(...) \
-    ({ fprintf(logfr,"%s: ",__FUNCTION__); \
-       fprintf(logfr, __VA_ARGS__); \
-       fprintf(logfr,", in %s, line %d\n",__FILE__,__LINE__); \
-       fflush(logfr); })
-
-/* debug printf */
-#define DBPRINT(...) \
-    ({ printf("--%s: ",__FUNCTION__); \
-       printf( __VA_ARGS__); \
-       printf(", in %s, line %d\n",__FILE__,__LINE__); })
-
 /* =================================================================
                               EXTERN
 ================================================================= */
 extern size_t ode_system_size;
-extern int *num_ic;
+extern world  *SIM;
+extern int *NUM_IC;
 extern const char *T_IND; /* INDEX */
 extern const char *T_DET; /* DETAILS */
 extern const char *T_VAL; /* VALUE */
@@ -74,7 +51,7 @@ typedef struct gen_option
     char    optiontype[NAMELENGTH];
 } gopt;
 
-extern struct gen_option gopts[NBROPTS];
+extern struct gen_option GOPTS[NBROPTS];
 
 typedef struct steady_state
 {

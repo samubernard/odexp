@@ -33,9 +33,12 @@ static FILE *logfr = (FILE *)NULL;
 /* system size */
 size_t ode_system_size;
 
+/* world */
+world *SIM = (world *)NULL;
+
 /* options */
 
-struct gen_option gopts[NBROPTS] = { 
+struct gen_option GOPTS[NBROPTS] = { 
     {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)", "plot"},
     {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)", "plot"},
     {"z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)", "plot"},
@@ -74,7 +77,7 @@ struct gen_option gopts[NBROPTS] = {
 
 
 /* what kind of initial conditions to take */
-int *num_ic;
+int *NUM_IC;
 
 /* formatting strings */
 const char *T_IND = "\033[0;35m";  /* index */
@@ -149,9 +152,6 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
 
     /* data files */
     nve dfl;
-
-    /* world */
-    world *s = malloc(sizeof(world));
 
     /* last initial conditions */
     double *lastinit;
@@ -376,20 +376,19 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     LOGPRINT("Options loaded");
 
     /* set IC to their numerical values */
-    num_ic = malloc(ode_system_size*sizeof(int));
+    NUM_IC = malloc(ode_system_size*sizeof(int));
     for(i=0; i<ode_system_size; i++)
     {
-      num_ic[i]=0; /* 0 if using expression as init cond; 
+      NUM_IC[i]=0; /* 0 if using expression as init cond; 
                     * 1 if using runtime numerical values 
                     */
     }
 
     /* TODO get population size */
     DBPRINT("init world");
-    init_world( s, &eqn, &fcn );
-    insert_first_el(s->pop,&mu,&pex,&fcn,&ics);
-
-    DBPRINT("s->dynnames[0] = %s",s->dynnames[0]);
+    SIM = malloc(sizeof(world));
+    init_world( SIM, &eqn, &fcn );
+    insert_first_el(SIM->pop,&mu,&pex,&fcn,&ics);
     DBPRINT("end init world");
 
 
@@ -788,7 +787,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             {
                                 lastinit[i] = ics.value[i];
                                 ics.value[i] = lasty[i];
-                                num_ic[i] = 1;
+                                NUM_IC[i] = 1;
                             }
                         } 
                         else if ( op == 's') /* run from steady state */
@@ -799,7 +798,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                 {
                                     lastinit[i] = ics.value[i];
                                     ics.value[i] = stst->s[i];
-                                    num_ic[i] = 1;
+                                    NUM_IC[i] = 1;
                                 }
                             }
                         }
@@ -815,7 +814,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                     {
                                         lastinit[i] = ics.value[i];
                                         ics.value[i] = nvalue; 
-                                        num_ic[i] = 1;
+                                        NUM_IC[i] = 1;
                                     }
                                     else /* try to read a char */
                                     {
@@ -823,7 +822,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                         if ( op2 == 'd' | op2 == 'I' )
                                         {
                                             lastinit[i] = ics.value[i];
-                                            num_ic[i] = 0;
+                                            NUM_IC[i] = 0;
                                         }
                                     }
                                 }
@@ -837,7 +836,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     for ( i=0; i<ode_system_size; i++ )
                         {
                             ics.value[i] = lastinit[i];
-                            num_ic[i] = 1;
+                            NUM_IC[i] = 1;
                             printf("  I[%s%zu%s] %-20s = %s%f%s\n",T_IND,i,T_NOR,ics.name[i],T_VAL,ics.value[i],T_NOR);
                         }
                     rerun = 1;
@@ -921,7 +920,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             if ( strncmp(ics.attribute[i],"hidden",3) )
                             {
                                 padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                                if (num_ic[i] == 0)
+                                if (NUM_IC[i] == 0)
                                 {
                                     printf_list_val('I',i,i,padding,&ics,"");
                                 }
@@ -1139,7 +1138,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                           {
                             lastinit[i] = ics.value[i];
                             ics.value[i] = nvalue;
-                            num_ic[i] = 1;
+                            NUM_IC[i] = 1;
                           }
                           else 
                           {
@@ -1165,7 +1164,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                 {
                                     lastinit[i] = ics.value[i];
                                     ics.value[i] = nvalue;
-                                    num_ic[i] = 1;
+                                    NUM_IC[i] = 1;
                                     rerun = 1;
                                     plotmode_normal = 1;
                                 }
@@ -1183,7 +1182,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                         if (i<ode_system_size)
                         {
                             lastinit[i] = ics.value[i];
-                            num_ic[i] = 0;
+                            NUM_IC[i] = 0;
                             rerun = 1;
                             replot = 1;
                         }
@@ -1223,16 +1222,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             sscanf(cmdline+2,"%zu %[^\n]",&i,svalue);
                             if (i < NBROPTS )
                             {
-                                switch (gopts[i].valtype)
+                                switch (GOPTS[i].valtype)
                                 {
                                   case 'd':
-                                    gopts[i].numval = strtod(svalue,NULL);
+                                    GOPTS[i].numval = strtod(svalue,NULL);
                                     break;
                                   case 'i':
-                                    gopts[i].intval = strtol(svalue,NULL,10);
+                                    GOPTS[i].intval = strtol(svalue,NULL,10);
                                     break;
                                   case 's':
-                                    strncpy(gopts[i].strval,svalue,NAMELENGTH-1);
+                                    strncpy(GOPTS[i].strval,svalue,NAMELENGTH-1);
                                     break;
                                   default:
                                     printf("  Warning: option not defined\n");
@@ -1264,16 +1263,16 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             {
                                 if ( option_name2index(svalue, (int *)&i) )
                                 {
-                                    switch (gopts[i].valtype)
+                                    switch (GOPTS[i].valtype)
                                     {
                                         case 'i':
-                                            gopts[i].intval = strtol(svalue2,NULL,10);
+                                            GOPTS[i].intval = strtol(svalue2,NULL,10);
                                             break;
                                         case 'd':
-                                            gopts[i].numval = strtod(svalue2,NULL);
+                                            GOPTS[i].numval = strtod(svalue2,NULL);
                                             break;
                                         case 's':
-                                            strncpy(gopts[i].strval,svalue2,NAMELENGTH-1);
+                                            strncpy(GOPTS[i].strval,svalue2,NAMELENGTH-1);
                                             break;
                                     }
                                     /* rerun = 1; */
@@ -1298,7 +1297,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                     for ( i=0; i<ode_system_size; i++ )
                         {
                             lastinit[i] = ics.value[i];
-                            num_ic[i] = 0;
+                            NUM_IC[i] = 0;
                         }
                     /* reset parameter values */
                     load_nameval(parfilename, mu, "P", 1,exit_if_nofile);
@@ -1328,7 +1327,7 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                             /* reset initial condtitions */
                             for ( i=0; i<ode_system_size; i++ )
                             {
-                                num_ic[i] = 1;
+                                NUM_IC[i] = 1;
                                 lastinit[i] = ics.value[i];
                             }
                         }
@@ -1637,10 +1636,10 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
     free_steady_state( stst, nbr_stst );
     free_double_array( tspan );
     free_double_array( rnd );
-    free(num_ic);
+    free(NUM_IC);
     free(lasty);
     free(lastinit);
-    free_world(s);
+    free_world(SIM);
 
     /* write history */
     if ( write_history(".history") )
@@ -1942,24 +1941,24 @@ int load_options(const char *filename, int exit_if_nofile)
                 sscanf(line,"%*s %s",opt_name);
 
                 idx_opt = 0;
-                while (    strncmp(opt_name, gopts[idx_opt].name,len2uniq) 
-                        && strncmp(opt_name, gopts[idx_opt].abbr,len2uniq) 
+                while (    strncmp(opt_name, GOPTS[idx_opt].name,len2uniq) 
+                        && strncmp(opt_name, GOPTS[idx_opt].abbr,len2uniq) 
                         && idx_opt < NBROPTS)
                 {
                   idx_opt++;
                 }
                 if (idx_opt < NBROPTS)
                 {
-                    switch (gopts[idx_opt].valtype)
+                    switch (GOPTS[idx_opt].valtype)
                     {
                         case 'i':
-                            sscanf(line,"%*s %*s %d",&gopts[idx_opt].intval);
+                            sscanf(line,"%*s %*s %d",&GOPTS[idx_opt].intval);
                             break;
                         case 'd':
-                            sscanf(line,"%*s %*s %lf",&gopts[idx_opt].numval);
+                            sscanf(line,"%*s %*s %lf",&GOPTS[idx_opt].numval);
                             break;
                         case 's':
-                            sscanf(line,"%*s %*s %s",gopts[idx_opt].strval);
+                            sscanf(line,"%*s %*s %s",GOPTS[idx_opt].strval);
                             break;
                     }
                   success = 1;
@@ -2086,8 +2085,8 @@ int option_name2index( const char *name, int *n) /* get index of option.name == 
     {
         while (  i < NBROPTS )
         {
-            if ( strcmp(name, gopts[i].name)
-                 && strcmp(name, gopts[i].abbr))
+            if ( strcmp(name, GOPTS[i].name)
+                 && strcmp(name, GOPTS[i].abbr))
             {
                 i++;
             }
@@ -2486,16 +2485,16 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         fprintf(fr,"# options\n");
         for(i=0;i<NBROPTS;i++)
         {
-            switch (gopts[i].valtype)
+            switch (GOPTS[i].valtype)
             {
                 case 'd' :
-                    fprintf(fr,"O%zu %-*s %g\n",i,len,gopts[i].name,gopts[i].numval);
+                    fprintf(fr,"O%zu %-*s %g\n",i,len,GOPTS[i].name,GOPTS[i].numval);
                     break;
                 case 'i' :
-                    fprintf(fr,"O%zu %-*s %d\n",i,len,gopts[i].name,gopts[i].intval);
+                    fprintf(fr,"O%zu %-*s %d\n",i,len,GOPTS[i].name,GOPTS[i].intval);
                     break;
                 case 's' :
-                    fprintf(fr,"O%zu %-*s %s\n",i,len,gopts[i].name,gopts[i].strval);
+                    fprintf(fr,"O%zu %-*s %s\n",i,len,GOPTS[i].name,GOPTS[i].strval);
             }
         }
 
@@ -2542,15 +2541,15 @@ int printf_options(const char *optiontype)
     snprintf(last_option_type,NAMELENGTH,""); 
     for(i=0;i<NBROPTS;i++)
     {
-      if ( strcmp(gopts[i].optiontype,optiontype) == 0 || strlen(optiontype) == 0 )
+      if ( strcmp(GOPTS[i].optiontype,optiontype) == 0 || strlen(optiontype) == 0 )
       {
-        if ( strcmp(gopts[i].optiontype,last_option_type) )
+        if ( strcmp(GOPTS[i].optiontype,last_option_type) )
         {
-            printf("\n%-*s %s\n",20,gopts[i].optiontype,hline);
+            printf("\n%-*s %s\n",20,GOPTS[i].optiontype,hline);
         }
         printf_option_line(i);
       }
-      snprintf(last_option_type,NAMELENGTH,"%s",gopts[i].optiontype); 
+      snprintf(last_option_type,NAMELENGTH,"%s",GOPTS[i].optiontype); 
     }
     return 1;
 }
@@ -2562,28 +2561,28 @@ int printf_option_line(size_t i)
       int success = 0;
       if ( i<NBROPTS )
       { 
-        switch (gopts[i].valtype)
+        switch (GOPTS[i].valtype)
         {
           case 'd':
             printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-            printf("%-*s",p,gopts[i].abbr);
-            printf("%s%-*g ",T_VAL,p,gopts[i].numval);
-            printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
+            printf("%-*s",p,GOPTS[i].abbr);
+            printf("%s%-*g ",T_VAL,p,GOPTS[i].numval);
+            printf("%s%s%s\n",T_DET,GOPTS[i].descr,T_NOR);
             break;
           case 'i':
             printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-            printf("%-*s",p,gopts[i].abbr);
-            printf("%s%-*d ",T_VAL,p,gopts[i].intval);
-            printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
+            printf("%-*s",p,GOPTS[i].abbr);
+            printf("%s%-*d ",T_VAL,p,GOPTS[i].intval);
+            printf("%s%s%s\n",T_DET,GOPTS[i].descr,T_NOR);
             break;
           case 's':
             printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
-            printf("%-*s",p,gopts[i].abbr);
-            printf("%s%-*s ",T_VAL,p,gopts[i].strval);
-            printf("%s%s%s\n",T_DET,gopts[i].descr,T_NOR);
+            printf("%-*s",p,GOPTS[i].abbr);
+            printf("%s%-*s ",T_VAL,p,GOPTS[i].strval);
+            printf("%s%s%s\n",T_DET,GOPTS[i].descr,T_NOR);
             break;
           default:
-            printf("  O[%-*zu] %-*s = not defined\n",s,i,p,gopts[i].abbr);
+            printf("  O[%-*zu] %-*s = not defined\n",s,i,p,GOPTS[i].abbr);
         }
         success = 1;
       }
@@ -2596,7 +2595,7 @@ int set_dou(const char *name, const double val)
     int success = 0;
     while ( idx_opt < NBROPTS)
     {
-        if ( strcmp(name, gopts[idx_opt].name) )
+        if ( strcmp(name, GOPTS[idx_opt].name) )
         {
             idx_opt++;
         }
@@ -2607,7 +2606,7 @@ int set_dou(const char *name, const double val)
     }
     if (idx_opt < NBROPTS)
     {
-      gopts[idx_opt].numval = val;
+      GOPTS[idx_opt].numval = val;
       success = 1;
     }
     else
@@ -2624,7 +2623,7 @@ int set_int(const char *name, const int val)
     int success = 0;
     while ( idx_opt < NBROPTS)
     {
-        if ( strcmp(name, gopts[idx_opt].name) )
+        if ( strcmp(name, GOPTS[idx_opt].name) )
         {
             idx_opt++;
         }
@@ -2635,7 +2634,7 @@ int set_int(const char *name, const int val)
     }
     if (idx_opt < NBROPTS)
     {
-      gopts[idx_opt].intval = val;
+      GOPTS[idx_opt].intval = val;
       success = 1;
     }
     else
@@ -2652,7 +2651,7 @@ int set_str(const char *name, const char * val)
     int success = 0;
     while ( idx_opt < NBROPTS)
     {
-        if ( strcmp(name, gopts[idx_opt].name) )
+        if ( strcmp(name, GOPTS[idx_opt].name) )
         {
             idx_opt++;
         }
@@ -2663,7 +2662,7 @@ int set_str(const char *name, const char * val)
     }
     if (idx_opt < NBROPTS)
     {
-      strncpy(gopts[idx_opt].strval,val,NAMELENGTH-1);
+      strncpy(GOPTS[idx_opt].strval,val,NAMELENGTH-1);
       success = 1;
     }
     else
@@ -2680,7 +2679,7 @@ double get_dou(const char *name)
     size_t idx_opt = 0;
     while ( idx_opt < NBROPTS)
     {
-        if ( strcmp(name, gopts[idx_opt].name) )
+        if ( strcmp(name, GOPTS[idx_opt].name) )
         {
             idx_opt++;
         }
@@ -2691,7 +2690,7 @@ double get_dou(const char *name)
     }
     if (idx_opt < NBROPTS)
     {
-      return gopts[idx_opt].numval;
+      return GOPTS[idx_opt].numval;
     }
     else
     {  
@@ -2704,7 +2703,7 @@ int get_int(const char *name)
     size_t idx_opt = 0;
     while ( idx_opt < NBROPTS)
     {
-        if ( strcmp(name, gopts[idx_opt].name) )
+        if ( strcmp(name, GOPTS[idx_opt].name) )
         {
             idx_opt++;
         }
@@ -2715,7 +2714,7 @@ int get_int(const char *name)
     }
     if (idx_opt < NBROPTS)
     {
-      return gopts[idx_opt].intval;
+      return GOPTS[idx_opt].intval;
     }
     else
     {  
@@ -2729,7 +2728,7 @@ char * get_str(const char *name)
     size_t idx_opt = 0;
     while ( idx_opt < NBROPTS)
     {
-        if ( strcmp(name, gopts[idx_opt].name) )
+        if ( strcmp(name, GOPTS[idx_opt].name) )
         {
             idx_opt++;
         }
@@ -2740,7 +2739,7 @@ char * get_str(const char *name)
     }
     if (idx_opt < NBROPTS)
     {
-      return gopts[idx_opt].strval;
+      return GOPTS[idx_opt].strval;
     }
     else
     {  
@@ -2807,15 +2806,15 @@ completion_list_generator(const char *text, int state)
 
     while (list_index++<NBROPTS) 
     {
-        name = gopts[list_index].name;
+        name = GOPTS[list_index].name;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
-        name = gopts[list_index].abbr;
+        name = GOPTS[list_index].abbr;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
-        name = gopts[list_index].optiontype;
+        name = GOPTS[list_index].optiontype;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }

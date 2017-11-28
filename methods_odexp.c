@@ -138,11 +138,12 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
 
     /* initial conditions */
+    DBPRINT("world SIM: SIM->nbr_dyn = %zu",SIM->nbr_dyn);
     y = malloc(ode_system_size*sizeof(double));
     ode_init_conditions(t, y, mu);
     for (i = 0; i < ode_system_size; i++)
     {
-        if (num_ic[i]) /* use ics.value as initial condition */
+        if (NUM_IC[i]) /* use ics.value as initial condition */
         {
             y[i] = ics->value[i];
         }
@@ -469,7 +470,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     ode_init_conditions(tspan.array[0], y, &mu);
     for (i = 0; i < ode_system_size; i++)
     {
-        if (num_ic[i]) /* use ics.value as initial condition */
+        if (NUM_IC[i]) /* use ics.value as initial condition */
         {
             y[i] = ics.value[i];
         }
@@ -502,7 +503,7 @@ int parameter_range( int (*ode_rhs)(double t, const double y[], double f[], void
     {
         if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_init_conditions */
         {
-            if (num_ic[i]) /* use ics.value as initial condition */
+            if (NUM_IC[i]) /* use ics.value as initial condition */
             {
                 y[i] = ics.value[i];
             }
