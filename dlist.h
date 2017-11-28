@@ -86,7 +86,7 @@ void init_dlist(dlist *list );
 void init_world( world *s, nve *eqn, nve *fcn );
 
 /* insert in empty list */
-int insert_first_el ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics);
+int insert_first_el ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics);
 
 /* insert at the end of the list */
 int insert_endoflist ( dlist *, par *var);

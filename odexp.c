@@ -92,7 +92,7 @@ const char *hline = "--------------------------";
 
 /* =================================================================
                              Main Loop 
-================================================================= */
+================================================================ */
 int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_filename )
 {
 
@@ -305,7 +305,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
         LOGPRINT("Error: Initial conditions not found.");
         exit ( EXIT_FAILURE );
     } 
-    ode_ic(tspan.array[0],ics.value,&mu);
+    DBPRINT("before ode_ic");
+    /* ode_ic(tspan.array[0],ics.value,&mu); */
     LOGPRINT("found %zu variables",ics.nbr_el);
 
 
@@ -387,6 +388,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     init_world( SIM, &eqn, &fcn );
     insert_first_el(SIM->pop,&mu,&pex,&fcn,&ics);
     DBPRINT("end init world");
+    ode_ic(tspan.array[0],ics.value,&mu);
 
 
     /* seed random number generator */

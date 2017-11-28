@@ -607,10 +607,10 @@ echo "{" >>.odexp/model.c
 echo "    int status;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    if ( argc == 2 ) {" >>.odexp/model.c
-echo "        status = odexp(ode_rhs,ode_init_conditions,multiroot_rhs,argv[1]);" >>.odexp/model.c
+echo "        status = odexp(pop_rhs,pop_init_conditions,multiroot_rhs,argv[1]);" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
 echo "    else {" >>.odexp/model.c
-echo "        status = odexp(ode_rhs,ode_init_conditions,multiroot_rhs,\"unkown\");" >>.odexp/model.c
+echo "        status = odexp(pop_rhs,pop_init_conditions,multiroot_rhs,\"unkown\");" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    exit(EXIT_SUCCESS);" >>.odexp/model.c
@@ -651,41 +651,54 @@ echo "" >>.odexp/model.c
 
 # ====================================================================================
 # BEGIN POP_RHS
-# echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */" >>.odexp/model.c
-# echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
-# echo "{" >>.odexp/model.c
-# echo "    size_t i;" >>.odexp/model.c
-# echo "    nve mu = *(nve *)params;" >>.odexp/model.c
-# echo "    size_t ind_size = mu.ode_system_size;" >>.odexp/model.c
-# echo "    size_t pop_size = mu.pop_size;" >>.odexp/model.c
-# echo "    for ( i = 0; i<pop_size; i++ )" >>.odexp/model.c
-# echo "    {" >>.odexp/model.c
-# echo "        ode_rhs(t, y+i*ind_size, f+i*ind_size, params);" >>.odexp/model.c
-# echo "    }" >>.odexp/model.c
-# echo "" >>.odexp/model.c
-# echo "    return GSL_SUCCESS;" >>.odexp/model.c
-# echo "}" >>.odexp/model.c
-# echo "" >>.odexp/model.c
+echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */" >>.odexp/model.c
+echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
+echo "{" >>.odexp/model.c
+echo "    size_t i = 0, j;" >>.odexp/model.c
+echo "    par *p_ = SIM->pop->start;" >>.odexp/model.c
+echo "    nve mu = *(nve *)params;" >>.odexp/model.c
+echo "    while ( p_ != NULL )" >>.odexp/model.c
+echo "    {" >>.odexp/model.c
+echo "        ode_rhs(t, y+i*p_->nbr_y, f+i*p_->nbr_y, params);" >>.odexp/model.c
+echo "        for(j=0;j<p_->nbr_aux;j++)" >>.odexp/model.c
+echo "        {" >>.odexp/model.c
+echo "            p_->aux[j] = mu->aux_pointer[j];" >>.odexp/model.c
+echo "        }" >>.odexp/model.c
+echo "        i++;" >>.odexp/model.c
+echo "        p_ = p_->nextel;" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
+echo "" >>.odexp/model.c
+echo "    return GSL_SUCCESS;" >>.odexp/model.c
+echo "}" >>.odexp/model.c
+echo "" >>.odexp/model.c
 # END POP_RHS
 # ====================================================================================
 
 # ====================================================================================
 # BEGIN POP_INIT_CONDITIONS
-# echo "/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is an array of size pop_size*ode_system_size */" >>.odexp/model.c
-# echo "int pop_init_conditions(const double t, double y[], void *params)" >>.odexp/model.c
-# echo "{" >>.odexp/model.c
-# echo "    size_t i;" >>.odexp/model.c
-# echo "    nve mu = *(nve *)params;" >>.odexp/model.c
-# echo "    size_t ind_size = mu.ode_system_size;" >>.odexp/model.c
-# echo "    size_t pop_size = mu.pop_size;" >>.odexp/model.c
-# echo "    for ( i = 0; i<pop_size; i++ )" >>.odexp/model.c
-# echo "    {" >>.odexp/model.c
-# echo "        ode_init_conditions(t, y+i*ind_size, params);" >>.odexp/model.c
-# echo "    }" >>.odexp/model.c
-# echo "" >>.odexp/model.c
-# echo "    return GSL_SUCCESS;" >>.odexp/model.c
-# echo "}" >>.odexp/model.c
-# echo "" >>.odexp/model.c
+echo "/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is an array of size pop_size*ode_system_size */" >>.odexp/model.c
+echo "int pop_init_conditions(const double t, double y[], void *params)" >>.odexp/model.c
+echo "{" >>.odexp/model.c
+echo "    size_t i = 0, j;" >>.odexp/model.c
+echo "    par *p_ = SIM->pop->start;" >>.odexp/model.c
+echo "    while ( p_ != NULL )" >>.odexp/model.c
+echo "    {" >>.odexp/model.c
+echo "        ode_init_conditions(t, y+i*p_->nbr_y, params);" >>.odexp/model.c
+echo "        for(j=0;j<p_->nbr_y;j++)" >>.odexp/model.c
+echo "        {" >>.odexp/model.c
+echo "            p_->y[j] = *(y+i*p_->nbr_y);" >>.odexp/model.c
+echo "        }" >>.odexp/model.c
+echo "        for(j=0;j<p_->nbr_expr;j++)" >>.odexp/model.c
+echo "        {" >>.odexp/model.c
+echo "            p_->expr[j] = *(y+i*p_->nbr_expr);" >>.odexp/model.c
+echo "        }" >>.odexp/model.c
+echo "        i++;" >>.odexp/model.c
+echo "        p_ = p_->nextel;" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
+echo "" >>.odexp/model.c
+echo "    return GSL_SUCCESS;" >>.odexp/model.c
+echo "}" >>.odexp/model.c
+echo "" >>.odexp/model.c
 # END POP_INIT_CONDITIONS
 # ====================================================================================
 
