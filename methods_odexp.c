@@ -138,7 +138,7 @@ int odesolver( int (*ode_rhs)(double t, const double y[], double f[], void *para
     }
 
     /* initial conditions */
-    DBPRINT("world SIM: SIM->nbr_dyn = %zu",SIM->nbr_dyn);
+    DBPRINT("world SIM: SIM->pop->size = %zu",SIM->pop->size);
     y = malloc(ode_system_size*sizeof(double));
     ode_init_conditions(t, y, mu);
     for (i = 0; i < ode_system_size; i++)

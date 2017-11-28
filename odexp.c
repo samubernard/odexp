@@ -943,13 +943,12 @@ int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),
                                 padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
                                 printf_list_str('D',i,i,padding,&eqn);
                             }
-                            else if ( eqn.expr_index[i] > eqn.expr_index[(eqn.nbr_el + i-1) % eqn.nbr_el] ) 
+                            else 
                             {
-                                printf("  D[%zu..",i);
-                            }
-                            else if ( (i == eqn.nbr_el-1) || (eqn.expr_index[i] < eqn.expr_index[(i+1) % eqn.nbr_el]) ) 
-                            {
-                                printf("%zu] %s(hidden variables)%s\n",i,T_DET,T_NOR);
+                                if ( eqn.expr_index[i] > eqn.expr_index[(eqn.nbr_el + i-1) % eqn.nbr_el] )
+                                    printf("  D[%zu..",i);
+                                if ( (i == eqn.nbr_el-1) || (eqn.expr_index[i] < eqn.expr_index[(i+1) % eqn.nbr_el]) ) 
+                                    printf("%zu] %s(hidden variables)%s\n",i,T_DET,T_NOR);
                             }
                         }
                         for (i=0; i<fcn.nbr_el; i++)
