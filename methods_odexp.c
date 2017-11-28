@@ -33,7 +33,7 @@ static void set_abort_odesolver_flag(int sig)
     abort_odesolver_flag = 1;
 }
 
-int odesolver( oderhs ode_rhs, odeic ode_init_conditions,\
+int odesolver( oderhs ode_rhs, odeic ode_ic,\
  double *lasty, nve *ics, nve *mu, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)
 {
     clock_t start = clock();
@@ -139,7 +139,7 @@ int odesolver( oderhs ode_rhs, odeic ode_init_conditions,\
     /* initial conditions */
     DBPRINT("world SIM: SIM->pop->size = %zu",SIM->pop->size);
     y = malloc(ode_system_size*sizeof(double));
-    ode_init_conditions(t, y, mu);
+    ode_ic(t, y, mu);
     for (i = 0; i < ode_system_size; i++)
     {
         if (NUM_IC[i]) /* use ics.value as initial condition */
@@ -271,7 +271,7 @@ int odesolver( oderhs ode_rhs, odeic ode_init_conditions,\
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
-          ode_init_conditions(t, y, mu);
+          ode_ic(t, y, mu);
           /* update auxiliary functions */
           ode_rhs(t, y, f, mu);
           /* write the new state to file */
@@ -338,7 +338,7 @@ int odesolver( oderhs ode_rhs, odeic ode_init_conditions,\
 
 }
 
-int parameter_range( oderhs ode_rhs, odeic ode_init_conditions,\
+int parameter_range( oderhs ode_rhs, odeic ode_ic,\
  double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe)
 {
 
@@ -465,7 +465,7 @@ int parameter_range( oderhs ode_rhs, odeic ode_init_conditions,\
     }  
 
     /* initial condition */
-    ode_init_conditions(tspan.array[0], y, &mu);
+    ode_ic(tspan.array[0], y, &mu);
     for (i = 0; i < ode_system_size; i++)
     {
         if (NUM_IC[i]) /* use ics.value as initial condition */
@@ -493,13 +493,13 @@ int parameter_range( oderhs ode_rhs, odeic ode_init_conditions,\
     dt = (t1-t)/(double)(nbr_out-1);
     nextstop = t;
     /* initial conditions */
-    if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_init_conditions */
+    if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_ic */
     {
-        ode_init_conditions(tspan.array[0], y, &mu); /* evaluate initial conditions in y */
+        ode_ic(tspan.array[0], y, &mu); /* evaluate initial conditions in y */
     }
     for (i = 0; i < ode_system_size; i++)
     {
-        if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_init_conditions */
+        if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_ic */
         {
             if (NUM_IC[i]) /* use ics.value as initial condition */
             {
@@ -556,7 +556,7 @@ int parameter_range( oderhs ode_rhs, odeic ode_init_conditions,\
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
-          ode_init_conditions(t, y, &mu);
+          ode_ic(t, y, &mu);
           /* update auxiliary functions */
           ode_rhs(t, y, f, &mu);
           /* calculating next stop */

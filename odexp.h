@@ -75,13 +75,7 @@ typedef struct double_array
 
 
 /* function declaration */
-
-/* int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
-*     int (*ode_init_conditions)(const double t, double ic_[], void *params),\
-*     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-*     const char *odexp_filename );
-*/
-int odexp( oderhs ode_rhs, odeic ode_init_conditions, multirootrhs multiroot_rhs,\
+int odexp( oderhs ode_rhs, odeic ode_ic, multirootrhs multiroot_rhs,\
    const char *odexp_filename );
 
 void free_double_array( double_array var );

@@ -93,7 +93,7 @@ const char *hline = "--------------------------";
 /* =================================================================
                              Main Loop 
 ================================================================= */
-int odexp( oderhs ode_rhs, odeic ode_init_conditions, multirootrhs multiroot_rhs,\
+int odexp( oderhs ode_rhs, odeic ode_ic, multirootrhs multiroot_rhs,\
    const char *odexp_filename )
 {
 
@@ -306,7 +306,7 @@ int odexp( oderhs ode_rhs, odeic ode_init_conditions, multirootrhs multiroot_rhs
         LOGPRINT("Error: Initial conditions not found.");
         exit ( EXIT_FAILURE );
     } 
-    ode_init_conditions(tspan.array[0],ics.value,&mu);
+    ode_ic(tspan.array[0],ics.value,&mu);
     LOGPRINT("found %zu variables",ics.nbr_el);
 
 
@@ -427,7 +427,7 @@ int odexp( oderhs ode_rhs, odeic ode_init_conditions, multirootrhs multiroot_rhs
 
     /* first run after system init */
     LOGPRINT("System init done. Running first simulation");
-    status = odesolver(ode_rhs, ode_init_conditions, lasty, &ics, &mu, &fcn, &tspan, gnuplot_pipe);
+    status = odesolver(ode_rhs, ode_ic, lasty, &ics, &mu, &fcn, &tspan, gnuplot_pipe);
 
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
@@ -1299,7 +1299,7 @@ int odexp( oderhs ode_rhs, odeic ode_init_conditions, multirootrhs multiroot_rhs
                     /* reset parameter values */
                     load_nameval(parfilename, mu, "P", 1,exit_if_nofile);
                     /* reset initial conditions */
-                    ode_init_conditions(tspan.array[0], ics.value, &mu);
+                    ode_ic(tspan.array[0], ics.value, &mu);
                     rerun = 1;
                     replot = 1;
                     update_act_par_options(p, mu);
@@ -1382,7 +1382,7 @@ int odexp( oderhs ode_rhs, odeic ode_init_conditions, multirootrhs multiroot_rhs
                     }
                     else if ( op == 'r' )
                     {
-                        status = parameter_range(ode_rhs, ode_init_conditions, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
+                        status = parameter_range(ode_rhs, ode_ic, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
                     }
                     break;
                 case '#' : /* add data from file to plot */
@@ -1444,7 +1444,7 @@ int odexp( oderhs ode_rhs, odeic ode_init_conditions, multirootrhs multiroot_rhs
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_init_conditions, lasty, &ics, &mu, &fcn, &tspan, gnuplot_pipe);
+                status = odesolver(ode_rhs, ode_ic, lasty, &ics, &mu, &fcn, &tspan, gnuplot_pipe);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
