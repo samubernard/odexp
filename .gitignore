@@ -14,3 +14,4 @@ methods_odexp.o
 *.o
 
 .DS_Store
+libodexp.dylib.dSYM/Contents/Info.plist
