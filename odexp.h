@@ -39,6 +39,9 @@ extern const char *T_ERR;  /* ERROR (non fatal) */
 extern const char *T_BLD;  /* BOLD */
 extern const char *hline;  /* horizontal line */
 
+typedef int (*oderhs)(double, const double *, double *, void *);
+typedef int (*odeic)(double, double *, void *);
+
 typedef struct gen_option
 {
     char    abbr[NAMELENGTH];
