@@ -93,10 +93,14 @@ const char *hline = "--------------------------";
 /* =================================================================
                              Main Loop 
 ================================================================= */
-int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
-    int (*ode_init_conditions)(const double t, double ic_[], void *params),\
-    int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
-    const char *odexp_filename )
+/* int odexp( int (*ode_rhs)(double t, const double y[], double f[], void *params),\
+*     int (*ode_init_conditions)(const double t, double ic_[], void *params),\
+*     int (*multiroot_rhs)( const gsl_vector *x, void *params, gsl_vector *f),\
+*     const char *odexp_filename )
+*/
+int odexp( oderhs ode_rhs, odeic ode_init_conditions, multirootrhs multiroot_rhs,\
+   const char *odexp_filename )
+
 {
 
     /* variable declaration */
