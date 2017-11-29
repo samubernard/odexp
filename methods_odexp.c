@@ -172,19 +172,22 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     /* initial conditions */
     y = malloc(sim_size*sizeof(double));
     DBPRINT("before ode_ic");
-    ode_ic(t, y, NULL);
+    ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
     DBPRINT("Fix NUM_IC");
     pars = SIM->pop->start;
     j = 0;
     while ( pars != NULL )
     {
-        for (i = 0; i < ode_system_size; i++)
+        for (i = 0; i < SIM->nbr_var; i++)
         {
             if (NUM_IC[i]) /* use ics.value as initial condition */
             {
-                DBPRINT("par %zu: y[i] = %f", pars->id, ics->value[i]);
                 pars->y[i] = ics->value[i];
                 y[i+j] = ics->value[i];
+            }
+            else
+            {
+                ics->value[i] = y[i+j];
             }
         }
         pars = pars->nextel;
@@ -205,28 +208,38 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     }
 
     /* current.tab: fill in the variable/function names */
+    DBPRINT("fill names in current.tab");
     fprintf(file,"T");
-    for (i = 0; i<sim_size; i++)
+    pars = SIM->pop->start;
+    j = 0;
+    while ( pars != NULL )
     {
-        fprintf(file,"\t%s.%zu",SIM->varnames[i % ode_system_size], i/ode_system_size);
-    }
-    for (i = 0; i<SIM->nbr_aux*pop_size; i++)
-    {
-        fprintf(file,"\t%s.%zu",SIM->auxnames[i % SIM->nbr_aux], i/SIM->nbr_aux);
+        for (i = 0; i<SIM->nbr_var; i++)
+        {
+            fprintf(file,"\t%s.%zu",SIM->varnames[i], j);
+        }
+        for (i = 0; i<SIM->nbr_aux; i++)
+        {
+            fprintf(file,"\t%s.%zu",SIM->auxnames[i], j);
+        }
+        pars = pars->nextel;
+        j++;
     }
     fprintf(file,"\n");
 
-    /* current.tab: fill in the initial conditions */
-    fprintf(file,"%g ",t);
-    for (i = 0; i < sim_size; i++)
-    {
-        fprintf (file,"\t%g",y[i]);  
-    }
     f = malloc(sim_size*sizeof(double));
     ode_rhs(t, y, f, NULL);
+
+    /* current.tab: fill in the initial conditions */
+    DBPRINT("fill IC in current.tab");
+    fprintf(file,"%g ",t);
     pars = SIM->pop->start;
     while ( pars != NULL )
     {
+        for (i = 0; i < SIM->nbr_var; i++)
+        {
+            fprintf (file,"\t%g",pars->y[i]);  
+        }
         for (i = 0; i < pars->nbr_aux; i++)
         {
             fprintf (file,"\t%g", pars->aux[i]);
@@ -297,22 +310,9 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         }
         /* TODO update history */
 
-        fprintf(file,"%g ",t);
-        for (i = 0; i < sim_size; i++)
-        {
-            /* if (strncmp(ics->attribute[i],"hidden",3) )  */
-            fprintf (file,"\t%g",y[i]); 
-        }
-        pars = SIM->pop->start;
-        while ( pars != NULL )
-        {
-            for (i = 0; i < pars->nbr_aux; i++)
-            {
-                fprintf (file,"\t%g", pars->aux[i]);
-            }
-            pars = pars->nextel;
-        }
-        fprintf(file,"\n");
+        /* DBPRINT("before fprintf_SIM_y"); */
+        fprintf_SIM_y(file, t, y);
+        /* DBPRINT("after fprintf_SIM_y"); */
 
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu->aux_pointer);
 
@@ -326,7 +326,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
           fprintf(file,"%g ",t);
           for (i = 0; i < sim_size; i++)
           {
-              /* if (strncmp(ics->attribute[i],"hidden",3) )  */
               fprintf (file,"\t%g",y[i]); 
           }
           pars = SIM->pop->start;
@@ -1270,4 +1269,29 @@ int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, 
 
 
     return 1;
+}
+
+
+
+void fprintf_SIM_y(FILE *file, double t, double *y)
+{
+        size_t i,j = 0;
+        par *pars;
+        fprintf(file,"%g ",t);
+        pars = SIM->pop->start;
+        while ( pars != NULL )
+        {
+            for (i = 0; i < SIM->nbr_var; i++)
+            {
+                fprintf (file,"\t%g",y[i+j]); 
+            }
+            for (i = 0; i < SIM->nbr_aux; i++)
+            {
+                fprintf (file,"\t%g", pars->aux[i]);
+            }
+            pars = pars->nextel;
+            j += SIM->nbr_var;
+        }
+        fprintf(file,"\n");
+
 }

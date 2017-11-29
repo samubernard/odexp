@@ -58,6 +58,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
     {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
     {"popsize","population_size", 'i', 0.0, 1, "", "population size for particle simulations", "population"},
+    {"p/par","pop_current_particle", 'i', 0.0, 0, "", "current particle", "population"},
     {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steadyStates"},  
     {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steadyStates"},  
     {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steadyStates"},  
@@ -149,7 +150,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     int     success,
             status, 
             file_status;
-
 
     /* modes */
     int     replot                = 0, /* gnuplot replot */
@@ -1991,7 +1991,9 @@ int update_plot_index(int *ngx, int *ngy, int *ngz, int *gx, int *gy, int *gz, n
     set_int("plot_x",*ngx);
     set_int("plot_y",*ngy);
     set_int("plot_z",*ngz);
-    *gx = *ngx+2; *gy = *ngy+2; *gz = *ngz+2;
+    *gx = *ngx+2; 
+    *gy = *ngy+2 + dxv.nbr_el*get_int("pop_current_particle"); 
+    *gz = *ngz+2 + dxv.nbr_el*get_int("pop_current_particle");
 
     return 1;
     

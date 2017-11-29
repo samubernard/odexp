@@ -76,9 +76,6 @@ typedef struct system_state {
 } world;
 
 
-
-/* DOUBLE CHAIN LIST */
-
 /* init population of particle_state */
 void init_dlist(dlist *list );
 

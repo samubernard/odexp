@@ -29,3 +29,5 @@ int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double e
 
 int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, const double t, const double *y, const double *a);
 
+/* print */
+void fprintf_SIM_y(FILE *file, double t, double *y);

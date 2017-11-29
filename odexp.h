@@ -19,7 +19,7 @@
 #define EXPRLENGTH     1023                            
 
 /* number of global options */
-#define NBROPTS 34
+#define NBROPTS 35
 
 /* size of history buffer */
 #define SIZEHIST 100
