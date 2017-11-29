@@ -209,7 +209,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     for (i = 0; i<sim_size; i++)
     {
         /* if (strncmp(ics->attribute[i],"hidden",3) )  */
-        fprintf(file,"\t%s",SIM->dynnames[i % ode_system_size]);
+        fprintf(file,"\t%s",SIM->varnames[i % ode_system_size]);
     }
     for (i = 0; i<SIM->nbr_aux*pop_size; i++)
     {

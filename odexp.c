@@ -370,7 +370,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
     DBPRINT("init world SIM");
     SIM = malloc(sizeof(world));
-    init_world( SIM, &eqn, &fcn );
+    init_world( SIM, &ics, &fcn );
     /* ode_ic(tspan.array[0],ics.value,&mu); */
 
     /* seed random number generator */

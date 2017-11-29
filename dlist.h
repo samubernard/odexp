@@ -67,9 +67,9 @@ typedef struct dlist_struct {
 typedef struct system_state {
 
     dlist *pop;
-    char **dynnames;
+    char **varnames;
     char **auxnames;
-    size_t nbr_dyn;
+    size_t nbr_var;
     size_t nbr_aux;
     double *pop_stats;
 
@@ -83,7 +83,7 @@ typedef struct system_state {
 void init_dlist(dlist *list );
 
 /* init world */
-void init_world( world *s, nve *eqn, nve *fcn );
+void init_world( world *s, nve *ics, nve *fcn );
 
 /* insert at the end of the list */
 int insert_endoflist ( dlist *, nve *mu, nve *pex, nve *fcn, nve *ics);

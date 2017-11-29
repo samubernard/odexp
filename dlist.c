@@ -27,17 +27,17 @@ void init_dlist(dlist *list)
     list->size = 0;
 }
 
-void init_world( world *s, nve *eqn, nve *fcn )
+void init_world( world *s, nve *ics, nve *fcn )
 {
     size_t i;
-    s->nbr_dyn = eqn->nbr_el;
+    s->nbr_var = ics->nbr_el;
     s->nbr_aux = fcn->nbr_el;
-    s->dynnames = malloc(s->nbr_dyn*sizeof(char*));
+    s->varnames = malloc(s->nbr_var*sizeof(char*));
     s->auxnames = malloc(s->nbr_aux*sizeof(char*));
-    for(i=0;i<s->nbr_dyn;i++)
+    for(i=0;i<s->nbr_var;i++)
     {
-        s->dynnames[i] = malloc(NAMELENGTH*sizeof(char));
-        strncpy(s->dynnames[i],eqn->name[i],NAMELENGTH-1);
+        s->varnames[i] = malloc(NAMELENGTH*sizeof(char));
+        strncpy(s->varnames[i],ics->name[i],NAMELENGTH-1);
     }
     for(i=0;i<s->nbr_aux;i++)
     {
@@ -159,15 +159,15 @@ void free_world(world *s)
 {
     size_t i;
     destroy(s->pop);
-    for(i=0;i<s->nbr_dyn;i++)
+    for(i=0;i<s->nbr_var;i++)
     {
-        free(s->dynnames[i]);
+        free(s->varnames[i]);
     }
     for(i=0;i<s->nbr_aux;i++)
     {
         free(s->auxnames[i]);
     }
-    free(s->dynnames);
+    free(s->varnames);
     free(s->auxnames);
     free(s->pop_stats);
     free(s);
