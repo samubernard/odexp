@@ -120,9 +120,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     const size_t ts_len = 1;
     double_array  tspan;
 
-    /* array of random numbers */
-    double_array rnd;
-
     /* parametric expressions */
     nve pex;
 
@@ -222,17 +219,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     }
     printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
     LOGPRINT("Found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
-
-    /* get random array */
-    printf("\n%-25s%s\n", "random numbers", HLINE);
-    get_nbr_el(odefilename,"U",1,&rnd.length,NULL);
-    rnd.array = malloc(rnd.length*sizeof(double));
-    for (i = 0; i < rnd.length; i++)
-    {
-        rnd.array[i] = rand01();
-    }
-    mu.rand_pointer = rnd.array;
-    LOGPRINT("found %zu random numbers",rnd.length);
 
     /* get constant arrays */
     printf("\n%-25s%s\n", "constant arrays", HLINE);
@@ -899,14 +885,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                     }
                     else if (op == 'r') /* list random arrays         */
                     {
-                        for (i=0; i<rnd.length; i++)
-                        {
-                            padding = (int)log10(rnd.length+0.5)-(int)log10(i+0.5);
-                            printf("  U[%s%zu%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
-                                    T_IND,i,T_NOR, padding, "", 4,"unif",\
-                                    T_VAL,rnd.array[i],T_NOR,T_DET,"uniform [0,1] pseudo-random number",T_NOR);
-                            /* printf_list_val('U',i,padding,4,"unif",rnd.array[i],"uniform random number"); */
-                        }
+                            printf("  there are no random arrays anymore. Use random parametric expressions instead\n");
                     }
                     else if (op == 'i') /* list initial conditions */
                     {
@@ -1629,7 +1608,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     free_namevalexp( dfl );
     free_steady_state( stst, nbr_stst );
     free_double_array( tspan );
-    free_double_array( rnd );
     free(NUM_IC);
     free(lasty);
     free(lastinit);

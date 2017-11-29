@@ -227,20 +227,6 @@ declare_auxiliary_functions () {
       {printf ";\n"} }' $file >>.odexp/model.c
 }
 
-declare_uniform_random_array () {
-    gawk -F ' ' '$1 ~ /^[uU][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      printf "    double %s;\n", $2 };
-      $1 ~ /^[uU]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myvar=c[1];
-      {printf "    double %s", myvar };
-      for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
-      {printf ";\n"} }' $file >>.odexp/model.c
-
-}
-
 define_functions () {
     # declare and define functions
     gawk -F '=' '$1 ~ /^@/ {
@@ -483,26 +469,6 @@ define_parametric_expressions_from_expr_pointer () {
       }' $file >>.odexp/model.c
 }
 
-define_uniform_random_array () {
-    gawk -F ' ' -v nv=0 '$1 ~ /^[uU][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      ex=$2;
-      printf "    %s = rnd_[%d];\n", ex, nv; nv++
-      };
-      
-      $1 ~ /^[uU][a-zA-Z0-9]*$/ && $2 ~ /(\[.+:.+\])+/ { match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      myvar="rnd_";
-      split($2,c,/\[/);
-      ex=c[1];
-      printf "%-*sfor(%s=%s;%s<%s;%s++) {\n ", 5, "", b[2], b[3], b[2], b[4], b[2]; 
-      printf "%-*s%s[%s]", 8, "", ex, b[2];
-      printf " = %s[%s+%d];\n%-*s}\n", myvar, b[2], nv, 5, "";
-      nv+=b[4]-b[3]
-      }' $file >>.odexp/model.c
-}
-
-
 define_initial_conditions () {
     gawk -F ' ' -v nv=0 '$1 ~ /^[iI][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       $1="";
@@ -732,13 +698,6 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE UNIFORM RANDOM ARRAY
-echo "    /* uniform random array */" >>.odexp/model.c
-declare_uniform_random_array
-echo "" >>.odexp/model.c
-# ====================================================================================
-
-# ====================================================================================
 # DECLARE PARAMETRIC EXPRESSIONS AND DEFINE NONVECTOR PARAMETRIC EXPRESSIONS
 echo "    /* parametric expressions */" >>.odexp/model.c
 declare_parametric_expressions
@@ -756,16 +715,6 @@ echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    /* Declaration - variables */" >>.odexp/model.c
 declare_variables
-# ====================================================================================
-
-
-
-# ====================================================================================
-# DEFINE UNIFORM RANDOM ARRAY
-echo "" >>.odexp/model.c
-echo "    /* Initialization - uniform random array */" >>.odexp/model.c
-# initialize uniform random array and write them in .odexp/model.c
-define_uniform_random_array 
 # ====================================================================================
 
 # ====================================================================================
@@ -841,24 +790,9 @@ declare_parameters_ic
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE UNIFORM RANDOM ARRAY
-echo "    /* uniform random array */" >>.odexp/model.c
-declare_uniform_random_array
-echo "" >>.odexp/model.c
-# ====================================================================================
-
-# ====================================================================================
 # DECLARE PARAMETRIC EXPRESSIONS AND DEFINE NONVECTOR PARAMETRIC EXPRESSIONS
 echo "    /* parametric expressions */" >>.odexp/model.c
 declare_parametric_expressions
-# ====================================================================================
-
-# ====================================================================================
-# DEFINE UNIFORM RANDOM ARRAY
-echo "" >>.odexp/model.c
-echo "    /* Initialization - uniform random array */" >>.odexp/model.c
-# initialize uniform random array and write them in .odexp/model.c
-define_uniform_random_array 
 # ====================================================================================
 
 # ====================================================================================
