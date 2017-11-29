@@ -115,10 +115,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         odeT = gsl_odeiv2_step_rk4;
     }
 
-    s = gsl_odeiv2_step_alloc(odeT,ode_system_size);
-    c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
-    e = gsl_odeiv2_evolve_alloc(ode_system_size);
-
     /* tspan */
     /* it is assumed that the first and last values of tspan are t0 and t1 */
     t = tspan->array[0];
@@ -261,7 +257,12 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     printf("  %sintegrating%s on T=[%.2f, %.2f]... ", T_BLD,T_NOR, t,t1);
     fflush(stdout);
 
+    s = gsl_odeiv2_step_alloc(odeT,sim_size);
+    c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
+    e = gsl_odeiv2_evolve_alloc(sim_size);
+
     /* ODE solver - main loop */
+    DBPRINT("begin main loop");
     while (t < t1 && !abort_odesolver_flag)
     {
         tnext = fmin(t+dt,t1);
