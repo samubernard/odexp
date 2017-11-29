@@ -62,6 +62,7 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics)
     p->expr     = malloc(p->nbr_expr*sizeof(double));
     p->aux      = malloc(p->nbr_aux*sizeof(double));
     p->y        = malloc(p->nbr_y*sizeof(double));
+    p->id        = rand();
 
     for (i=0;i<p->nbr_pars;i++)
     {
