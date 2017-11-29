@@ -97,77 +97,42 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 {
 
     /* variable declaration */
-    char *extracmd = (char *)NULL;
-    FILE *gnuplot_pipe = popen("gnuplot -persist","w");
+
+    /* files */
     const char *odefilename = ".odexp/model.op";    /* */
     const char *parfilename = ".odexp/model.par";    /* */
+    const char current_data_buffer[] = "current.tab";
+    char       par_filename[MAXFILENAMELENGTH];
+    char data_fn[NAMELENGTH]; /* dataset filename */
+
+    /* system commands */
     const char *helpcmd = "man .odexp/help.txt";
     char mv_plot_cmd[EXPRLENGTH];
-    const char current_data_buffer[] = "current.tab";
-    char       par_details[32];
-    char       par_filename[MAXFILENAMELENGTH];
-    char       list_msg[EXPRLENGTH];
-    size_t i,j;
-    int  success;
-    
-    double *lasty;
-    
-    /* number of dependent and auxiliary variables */
-    size_t total_nbr_x;
 
-    /* tspan parameters */
-    const char ts_string[] = "TIMESPAN"; 
-    const size_t ts_len = 1;
-    double_array  tspan;
-
-    /* parametric expressions */
-    nve pex;
-
-    /* user-defined functions */
-    nve func;
-
-    /* parameters */
-    nve mu;
-
-    /* initial conditions */
-    nve ics;
-
-    /* auxiliary functions */
-    nve fcn;
-
-    /* dynamical equations */
-    nve eqn;
-
-    /* list of all Dynamical  + auXiliary Variables */
-    nve dxv;
-
-    /* constant arrays */
-    nve cst;
-
-    /* data files */
-    nve dfl;
-
-    /* last initial conditions */
-    double *lastinit;
-
-    /* steady states */
-    steady_state *stst = NULL;
-    int nbr_stst = 0;
-
-    int status, file_status;
-    int exit_if_nofile=1,
-        no_exit=0,
-        p=0,
-        np,
-        padding,
-        namelength,
-        charpos,
-        nbr_read,
-        extracmdpos,
-        nbr_hold = 0;
-    char c,
-         op,
-         op2;
+    /* commands and options */
+    char    *extracmd = (char *)NULL;
+    FILE    *gnuplot_pipe = popen("gnuplot -persist","w");
+    char    par_details[32];
+    char    list_msg[EXPRLENGTH];
+    char    c,
+            op,
+            op2;
+    int     rep_command = 1;
+    double  nvalue,
+            nvalue2;
+    char    svalue[NAMELENGTH],
+            svalue2[NAMELENGTH],
+            svalue3[NAMELENGTH];
+    int     exit_if_nofile=1,
+            no_exit=0,
+            p=0,
+            np,
+            padding,
+            namelength,
+            charpos,
+            nbr_read,
+            extracmdpos,
+            nbr_hold = 0;
     int     gx,
             gy, 
             gz,
@@ -176,24 +141,55 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
             ngz =  1,
             colx = 1,
             coly = 2;
-    int     rep_command = 1;
-    double nvalue,
-           nvalue2;
-    char svalue[NAMELENGTH],
-         svalue2[NAMELENGTH],
-         svalue3[NAMELENGTH],
-         data_fn[NAMELENGTH];
-    int replot                = 0, /* gnuplot replot */
-        rerun                 = 0, /* run a new ODE simulation */
-        plot3d                = 0,
-        data_plotted          = 0,
-        plotmode_normal       = 0, /* normal mode: update plot with new parameters/option */
-        plotmode_continuation = 0, /* continuation mode: plot continuation branch */
-        plotmode_range        = 0, /* plot range */
-        quit                  = 0;
-    
-    unsigned long randseed;
 
+    /* iterators */
+    size_t  i,j;
+
+    /* status */
+    int     success,
+            status, 
+            file_status;
+
+
+    /* modes */
+    int     replot                = 0, /* gnuplot replot */
+            rerun                 = 0, /* run a new ODE simulation */
+            plot3d                = 0,
+            data_plotted          = 0,
+            plotmode_normal       = 0, /* normal mode: update plot with new parameters/option */
+            plotmode_continuation = 0, /* continuation mode: plot continuation branch */
+            plotmode_range        = 0, /* plot range */
+            quit                  = 0;
+    
+    /* random number generator */
+    unsigned long randseed;
+    
+    /* odes */
+    double *lasty;       /* end state of the simulation */
+    double *lastinit;    /* last initial conditions */
+    
+    /* sizes */
+    size_t total_nbr_x;  /* number of dependent and auxiliary variables */
+
+    /* tspan parameters */
+    const char      ts_string[] = "TIMESPAN"; 
+    const size_t    ts_len = 1;
+    double_array    tspan;
+    
+    /* nve */
+    nve pex;     /* parametric expressions */
+    nve func;    /* user-defined functions */
+    nve mu;      /* parameters */
+    nve ics;     /* initial conditions */
+    nve fcn;     /* auxiliary functions */
+    nve eqn;     /* dynamical equations */
+    nve dxv;     /* list of all Dynamical  + auXiliary Variables */
+    nve cst;     /* constant arrays */
+    nve dfl;     /* data files */
+
+    /* steady states */
+    steady_state    *stst = NULL;
+    int             nbr_stst = 0;
     /* end variable declaration */
 
     logfr = fopen(logfilename, "w");
