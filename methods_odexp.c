@@ -174,17 +174,17 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     DBPRINT("before ode_ic");
     ode_ic(t, y, NULL);
     DBPRINT("Fix NUM_IC");
-    for (i = 0; i < ode_system_size; i++)
+    pars = SIM->pop->start;
+    while ( pars != NULL )
     {
-        if (NUM_IC[i]) /* use ics.value as initial condition */
+        for (i = 0; i < ode_system_size; i++)
         {
-            y[i] = ics->value[i];
+            if (NUM_IC[i]) /* use ics.value as initial condition */
+            {
+                pars->y[i] = ics->value[i];
+            }
         }
-        else /* set ics->value to y as initial condition */
-        {
-            ics->value[i] = y[i];
-        }
-        /* printf("--ic[%d]=%f\n",i,ics->value[i]);  */
+        pars = pars->nextel;
     }
    
     /* open output file */
