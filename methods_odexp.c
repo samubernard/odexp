@@ -204,13 +204,11 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     fprintf(file,"T");
     for (i = 0; i<sim_size; i++)
     {
-        /* if (strncmp(ics->attribute[i],"hidden",3) )  */
-        fprintf(file,"\t%s",SIM->varnames[i % ode_system_size]);
+        fprintf(file,"\t%s.%zu",SIM->varnames[i % ode_system_size], i/ode_system_size);
     }
     for (i = 0; i<SIM->nbr_aux*pop_size; i++)
     {
-        /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
-        fprintf(file,"\t%s",SIM->auxnames[i % SIM->nbr_aux]);
+        fprintf(file,"\t%s.%zu",SIM->auxnames[i % SIM->nbr_aux], i/SIM->nbr_aux);
     }
     fprintf(file,"\n");
 
