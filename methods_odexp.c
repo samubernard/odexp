@@ -85,7 +85,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     size_t sim_size = ode_system_size*pop_size;
 
     /* iterators */
-    size_t i;
+    size_t i,j;
 
     if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
     {
@@ -175,16 +175,20 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     ode_ic(t, y, NULL);
     DBPRINT("Fix NUM_IC");
     pars = SIM->pop->start;
+    j = 0;
     while ( pars != NULL )
     {
         for (i = 0; i < ode_system_size; i++)
         {
             if (NUM_IC[i]) /* use ics.value as initial condition */
             {
+                DBPRINT("par %zu: y[i] = %f", pars->id, ics->value[i]);
                 pars->y[i] = ics->value[i];
+                y[i+j] = ics->value[i];
             }
         }
         pars = pars->nextel;
+        j += ode_system_size;
     }
    
     /* open output file */
