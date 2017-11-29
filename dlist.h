@@ -49,6 +49,8 @@ typedef struct particle_state {
     size_t nbr_aux;
     double *y;
     size_t nbr_y;
+    double *psi;
+    size_t nbr_psi;
 
     size_t id;
 
@@ -83,7 +85,7 @@ void init_dlist(dlist *list );
 void init_world( world *s, nve *ics, nve *fcn );
 
 /* insert at the end of the list */
-int insert_endoflist ( dlist *, nve *mu, nve *pex, nve *fcn, nve *ics);
+int insert_endoflist ( dlist *, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi);
 
 /* delete element pos from the list */
 int delete_el( dlist *list, par *to_del);
@@ -95,3 +97,5 @@ void destroy(dlist *list);
 void free_world(world *s);
 
 void printf_particle(par *p);
+
+

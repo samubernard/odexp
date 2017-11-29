@@ -34,7 +34,7 @@ static void set_abort_odesolver_flag(int sig)
 }
 
 int odesolver( oderhs ode_rhs, odeic ode_ic,\
- nve *ics, nve *mu, nve *pex, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)
+ nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan, FILE *gnuplot_pipe)
 {
     /* time */
     clock_t start = clock();
@@ -80,7 +80,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     size_t idx_stop = 0;
 
     /* world SIM */
-    par *pars;
+    par *pars, *next_pars;
     size_t pop_size = get_int("population_size");
     size_t sim_size = ode_system_size*pop_size;
 
@@ -145,8 +145,9 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     pars = SIM->pop->start;
     while ( pars != NULL )
     {
+        next_pars = pars->nextel;
         delete_el( SIM->pop, pars);
-        pars = pars->nextel;
+        pars = next_pars;
     }
       
     /* check that SIM->pop is empty */
@@ -162,7 +163,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     /* Initialize world SIM */
     for (i = 0; i < pop_size; i++)
     {
-        insert_endoflist(SIM->pop,mu,pex,fcn,ics);
+        insert_endoflist(SIM->pop,mu,pex,fcn,ics,psi);
     }
     DBPRINT("end init world SIM");
 

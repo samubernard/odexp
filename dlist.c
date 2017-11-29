@@ -50,7 +50,7 @@ void init_world( world *s, nve *ics, nve *fcn )
 }
 
 /* insert in empty list */
-int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics)
+int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi)
 {
     par *p = malloc(sizeof(par));
     size_t i;
@@ -58,11 +58,13 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics)
     p->nbr_expr = pex->nbr_el;
     p->nbr_aux  = fcn->nbr_el;
     p->nbr_y    = ics->nbr_el;
+    p->nbr_psi  = psi->nbr_el;
     p->pars     = malloc(p->nbr_pars*sizeof(double));
     p->expr     = malloc(p->nbr_expr*sizeof(double));
     p->aux      = malloc(p->nbr_aux*sizeof(double));
     p->y        = malloc(p->nbr_y*sizeof(double));
-    p->id        = rand();
+    p->psi      = malloc(p->nbr_psi*sizeof(double));
+    p->id       = rand();
 
     for (i=0;i<p->nbr_pars;i++)
     {
@@ -79,6 +81,10 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics)
     for (i=0;i<p->nbr_y;i++)
     {
         p->y[i]    = ics->value[i];
+    }
+    for (i=0;i<p->nbr_psi;i++)
+    {
+        p->psi[i]    = psi->value[i];
     }
 
     p->nextel = NULL; /* p is at the end of the list */
@@ -133,6 +139,7 @@ int delete_el( dlist *list, par *to_del)
     free(to_del->expr);
     free(to_del->aux);
     free(to_del->y);
+    free(to_del->psi);
     free(to_del);
 
     list->size--;

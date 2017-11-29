@@ -182,6 +182,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     nve ics;     /* initial conditions */
     nve fcn;     /* auxiliary functions */
     nve eqn;     /* dynamical equations */
+    nve psi;     /* pop means/pop stats */
     nve dxv;     /* list of all Dynamical  + auXiliary Variables */
     nve cst;     /* constant arrays */
     nve dfl;     /* data files */
@@ -324,6 +325,17 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     total_nbr_x = ode_system_size + fcn.nbr_el;
     lastinit = malloc(ode_system_size*sizeof(double));
 
+    /* define psi */
+    printf("\n%-25s%s\n", "population mean fields", HLINE);
+    get_nbr_el(odefilename,"M",1, &psi.nbr_el, &psi.nbr_expr);
+    alloc_namevalexp(&psi);
+    success = load_strings(odefilename,psi,"M",1,1,' ', exit_if_nofile);
+    if (!success)
+    {
+        printf("  no population mean fields found\n");
+    } 
+    LOGPRINT("found %zu population mean fields",psi.nbr_el);
+
     /* define dxv */
     
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr;
@@ -404,7 +416,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
     /* first run after system init */
     LOGPRINT("System init done. Running first simulation");
-    status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &tspan, gnuplot_pipe);
+    status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
 
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
@@ -876,6 +888,14 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                         {
                             padding = (int)log10(pex.nbr_el+0.5)-(int)log10(i+0.5);
                             printf_list_str_val('E',i,i,padding, &pex);
+                        }
+                    }
+                    else if (op == 'm') /* list mean fields */
+                    {
+                        for (i=0; i<psi.nbr_el; i++)
+                        {
+                            padding = (int)log10(psi.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf_list_str('M',i,i,padding, &psi);
                         }
                     }
                     else if (op == 'r') /* list random arrays         */
@@ -1428,7 +1448,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &tspan, gnuplot_pipe);
+                status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
@@ -1611,6 +1631,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     free_namevalexp( ics );
     free_namevalexp( eqn );
     free_namevalexp( fcn );
+    free_namevalexp( psi );
     free_namevalexp( dxv );
     free_namevalexp( cst );
     free_namevalexp( dfl );

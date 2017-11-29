@@ -11,7 +11,7 @@
 ================================================================= */
 
 int odesolver( oderhs ode_rhs, odeic ode_ic,\
- nve *ics, nve *mu, nve *pex, nve *fcn, double_array *tspan, FILE *gnuplot_pipe);
+ nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan, FILE *gnuplot_pipe);
 
 int parameter_range( oderhs ode_rhs, odeic ode_ic,\
  double *lasty, nve init, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe);
