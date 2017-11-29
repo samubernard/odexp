@@ -34,7 +34,7 @@ static void set_abort_odesolver_flag(int sig)
 }
 
 int odesolver( oderhs ode_rhs, odeic ode_ic,\
- double *lasty, nve *ics, nve *mu, nve *pex, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)
+ nve *ics, nve *mu, nve *pex, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)
 {
     /* time */
     clock_t start = clock();
@@ -141,6 +141,14 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         nextstop = INFINITY; /* set nextstop outside the integration range */
     }
 
+    /* reset SIM with an empty pop */
+    pars = SIM->pop->start;
+    while ( pars != NULL )
+    {
+        delete_el( SIM->pop, pars);
+        pars = pars->nextel;
+    }
+      
     /* check that SIM->pop is empty */
     if ( SIM->pop->size == 0 )
     {
@@ -371,10 +379,17 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     }
 
     DBPRINT("Fix lasty");
-    for (i = 0; i < ode_system_size; i++)
+    pars = SIM->pop->start;
+    j = 0;
+    while ( pars != NULL )
     {
-        lasty[i] = y[i]; 
-    } 
+        for (i = 0; i < SIM->nbr_var; i++)
+        {
+            pars->y[i] = y[i+j]; 
+        }   
+        pars = pars->nextel;
+        j += SIM->nbr_var;
+    }
 
     fclose(file);
     fclose(quickfile);
@@ -386,13 +401,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     free(y);
     free(tstops);
 
-    pars = SIM->pop->start;
-    while ( pars != NULL )
-    {
-        delete_el( SIM->pop, pars);
-        pars = pars->nextel;
-    }
-      
     return status;
 
 }

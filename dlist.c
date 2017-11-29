@@ -174,3 +174,25 @@ void free_world(world *s)
     free(s);
 }
 
+
+void printf_particle(par *p)
+{
+    size_t i;
+    printf("  id: %zu", p->id);
+    for (i=0;i<p->nbr_pars;i++)
+    {
+        printf("  pars[%zu] = %g\n", i, p->pars[i]);
+    }
+    for (i=0;i<p->nbr_expr;i++)
+    {
+        printf("  expr[%zu] = %g\n", i, p->expr[i]);
+    }
+    for (i=0;i<p->nbr_aux;i++)
+    {
+        printf("  aux[%zu] = %g\n", i, p->aux[i]);
+    }
+    for (i=0;i<p->nbr_y;i++)
+    {
+        printf("  y[%zu] = %g\n", i, p->y[i]);
+    }
+}

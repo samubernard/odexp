@@ -165,7 +165,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     unsigned long randseed;
     
     /* odes */
-    double *lasty;       /* end state of the simulation */
     double *lastinit;    /* last initial conditions */
     
     /* sizes */
@@ -323,7 +322,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     ode_system_size = ics.nbr_el;
     /* mu.ode_system_size = ode_system_size; */
     total_nbr_x = ode_system_size + fcn.nbr_el;
-    lasty = malloc(ode_system_size*sizeof(double));
     lastinit = malloc(ode_system_size*sizeof(double));
 
     /* define dxv */
@@ -406,7 +404,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
     /* first run after system init */
     LOGPRINT("System init done. Running first simulation");
-    status = odesolver(ode_rhs, ode_ic, lasty, &ics, &mu, &pex, &fcn, &tspan, gnuplot_pipe);
+    status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &tspan, gnuplot_pipe);
 
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
@@ -763,7 +761,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                             for ( i=0; i<ode_system_size; i++ )
                             {
                                 lastinit[i] = ics.value[i];
-                                ics.value[i] = lasty[i];
+                                DBPRINT("Fix this");
+                                ics.value[i] = SIM->pop->start->y[i];
                                 NUM_IC[i] = 1;
                             }
                         } 
@@ -1166,7 +1165,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                         for ( i=0; i<ode_system_size; i++ )
                         {
                             lastinit[i] = ics.value[i];
-                            ics.value[i] = lasty[i];
+                            DBPRINT("Fix this");
+                            ics.value[i] = SIM->pop->start->y[i];
                         }
                     }
                     else if ( op == 't' )
@@ -1354,7 +1354,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                     }
                     else if ( op == 'r' )
                     {
-                        status = parameter_range(ode_rhs, ode_ic, lasty, ics, mu, fcn, tspan, gnuplot_pipe);
+                        status = parameter_range(ode_rhs, ode_ic, NULL, ics, mu, fcn, tspan, gnuplot_pipe);
                     }
                     break;
                 case '#' : /* add data from file to plot */
@@ -1381,6 +1381,18 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                         printf("  plotting data off\n");
                         data_plotted = 0;
                         replot = 1;
+                    }
+                    break;
+                case 'w' :  /* world */
+                    nbr_read = sscanf(cmdline+1," %zu ",&i); 
+                    if (nbr_read <= 0) /* list all */
+                    {
+                       DBPRINT("nbr_read %d", nbr_read);
+                       DBPRINT("pop size %zu", SIM->pop->size);
+                       for(i=0;i<SIM->pop->size;i++)
+                       {
+                           printf_SIM(i);
+                       }
                     }
                     break;
                 case 'Q' :  /* quit without saving */
@@ -1416,7 +1428,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_ic, lasty, &ics, &mu, &pex, &fcn, &tspan, gnuplot_pipe);
+                status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &tspan, gnuplot_pipe);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
@@ -1605,7 +1617,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     free_steady_state( stst, nbr_stst );
     free_double_array( tspan );
     free(NUM_IC);
-    free(lasty);
     free(lastinit);
     free_world(SIM);
 
@@ -2741,6 +2752,24 @@ void printf_list_str_val(char type, size_t print_index, size_t nve_index, int pa
             T_NOR,T_EXPR,var->expression[nve_index],T_NOR,\
             T_DET,var->attribute[nve_index],T_NOR);
  
+}
+
+
+void printf_SIM(size_t i)
+{
+    par *p = SIM->pop->start;
+    size_t j = 0;
+    while ( p != NULL && j<i )
+    {
+        p = p->nextel;
+        j++;
+    }
+    DBPRINT(" i=%zu, j=%zu",i,j);
+    if ( j == i )
+    {
+        printf("  particle %zu\n", i);
+        printf_particle(p);
+    }
 }
 
 /* plot data from file 'data_fn', with column x as x-axis and column y as y-axis */
