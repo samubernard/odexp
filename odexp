@@ -656,14 +656,9 @@ echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odex
 echo "{" >>.odexp/model.c
 echo "    size_t i = 0, j;" >>.odexp/model.c
 echo "    par *p_ = SIM->pop->start;" >>.odexp/model.c
-echo "    nve mu = *(nve *)params;" >>.odexp/model.c
 echo "    while ( p_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        ode_rhs(t, y+i*p_->nbr_y, f+i*p_->nbr_y, params);" >>.odexp/model.c
-echo "        for(j=0;j<p_->nbr_aux;j++)" >>.odexp/model.c
-echo "        {" >>.odexp/model.c
-echo "            p_->aux[j] = mu->aux_pointer[j];" >>.odexp/model.c
-echo "        }" >>.odexp/model.c
+echo "        ode_rhs(t, y+i*p_->nbr_y, f+i*p_->nbr_y, p_);" >>.odexp/model.c
 echo "        i++;" >>.odexp/model.c
 echo "        p_ = p_->nextel;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
@@ -683,14 +678,10 @@ echo "    size_t i = 0, j;" >>.odexp/model.c
 echo "    par *p_ = SIM->pop->start;" >>.odexp/model.c
 echo "    while ( p_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        ode_init_conditions(t, y+i*p_->nbr_y, params);" >>.odexp/model.c
+echo "        ode_init_conditions(t, y+i*p_->nbr_y, p_);" >>.odexp/model.c
 echo "        for(j=0;j<p_->nbr_y;j++)" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
 echo "            p_->y[j] = *(y+i*p_->nbr_y);" >>.odexp/model.c
-echo "        }" >>.odexp/model.c
-echo "        for(j=0;j<p_->nbr_expr;j++)" >>.odexp/model.c
-echo "        {" >>.odexp/model.c
-echo "            p_->expr[j] = *(y+i*p_->nbr_expr);" >>.odexp/model.c
 echo "        }" >>.odexp/model.c
 echo "        i++;" >>.odexp/model.c
 echo "        p_ = p_->nextel;" >>.odexp/model.c
@@ -706,11 +697,10 @@ echo "" >>.odexp/model.c
 echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single node */" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
-echo "    nve mu_ = *(nve *)params_;" >>.odexp/model.c
-echo "    double * pars_ __attribute__((unused)) = mu_.value;" >>.odexp/model.c
-echo "    double * aux_  __attribute__((unused)) = mu_.aux_pointer;" >>.odexp/model.c
-echo "    double * expr_ __attribute__((unused)) = mu_.expr_pointer;" >>.odexp/model.c
-echo "    double * rnd_  __attribute__((unused)) = mu_.rand_pointer;" >>.odexp/model.c
+echo "    par *mu_ = (par *)params_;" >>.odexp/model.c
+echo "    double * pars_ __attribute__((unused)) = mu_->pars;" >>.odexp/model.c
+echo "    double * aux_  __attribute__((unused)) = mu_->aux;" >>.odexp/model.c
+echo "    double * expr_ __attribute__((unused)) = mu_->expr;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -829,11 +819,10 @@ echo "" >>.odexp/model.c
 # function ode_init_conditions
 echo "int ode_init_conditions(const double t, double y_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
-echo "    nve mu_ = *(nve *)params_;" >>.odexp/model.c
-echo "    double * pars_ __attribute__((unused)) = mu_.value;" >>.odexp/model.c
-echo "    double * aux_  __attribute__((unused)) = mu_.aux_pointer;" >>.odexp/model.c
-echo "    double * expr_ __attribute__((unused)) = mu_.expr_pointer;" >>.odexp/model.c
-echo "    double * rnd_  __attribute__((unused)) = mu_.rand_pointer;" >>.odexp/model.c
+echo "    par *mu_ = (par *)params_;" >>.odexp/model.c
+echo "    double * pars_ __attribute__((unused)) = mu_->pars;" >>.odexp/model.c
+echo "    double * aux_  __attribute__((unused)) = mu_->aux;" >>.odexp/model.c
+echo "    double * expr_ __attribute__((unused)) = mu_->expr;" >>.odexp/model.c
 echo "    int success_ = 0;" >>.odexp/model.c
 # ITERATORS
 # find iterators in the source file and declare them 

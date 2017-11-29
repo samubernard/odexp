@@ -50,7 +50,7 @@ void init_world( world *s, nve *eqn, nve *fcn )
 }
 
 /* insert in empty list */
-int insert_first_el ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics)
+int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics)
 {
     par *p = malloc(sizeof(par));
     size_t i;
@@ -80,27 +80,20 @@ int insert_first_el ( dlist *list, nve *mu, nve *pex, nve *fcn,  nve *ics)
         p->y[i]    = ics->value[i];
     }
 
-
-    list->start = p;
-    list->end   = p;
+    p->nextel = NULL; /* p is at the end of the list */
+    p->prevel = list->end;
+    if ( list->size > 0) /* list->end points to a cell */
+    {
+      list->end->nextel = p;
+    }
+    else /* there are no cells in the list, list->end points to NULL */ 
+    {
+      list->start = p;
+    }
+    list->end = p;
     list->size++;
+
     return 0;
-}
-
-/* insert at the end of the list */
-int insert_endoflist ( dlist *list, par *particle)
-{
-    if ( list->size > 0) /* cellList->end points to a cell */
-    {
-      list->end->nextel = particle;
-    }
-    else /* there are no cells in the list, cellList->end points to NULL */ 
-    {
-      list->start = particle;
-    }
-    list->end = particle;
-    list->size++;
-    return 0;  
 }
 
 /* delete element pos from the list */

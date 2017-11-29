@@ -34,31 +34,40 @@ static void set_abort_odesolver_flag(int sig)
 }
 
 int odesolver( oderhs ode_rhs, odeic ode_ic,\
- double *lasty, nve *ics, nve *mu, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)
+ double *lasty, nve *ics, nve *mu, nve *pex, nve *fcn, double_array *tspan, FILE *gnuplot_pipe)
 {
+    /* time */
     clock_t start = clock();
+    
+    /* gsl_odeiv */
     double *y,
            *f;
     double hmin     = get_dou("odesolver_min_h"),
            h        = get_dou("odesolver_init_h"),
            eps_abs  = get_dou("odesolver_eps_abs"),
            eps_rel  = get_dou("odesolver_eps_rel");
+    const gsl_odeiv2_step_type * odeT;
+    gsl_odeiv2_step * s;
+    gsl_odeiv2_control * c;
+    gsl_odeiv2_evolve * e;
+    gsl_odeiv2_system sys; 
+    int status;
+    
+    /* alerts and interrupt singals */
+    struct sigaction abort_act;
     int hmin_alert              = 0,
         disc_alert              = 0,
         abort_odesolver_alert   = 0;
     int nbr_out = get_int("odesolver_output_resolution");
+
+    /* output files */
     FILE *file;
     FILE *quickfile;
     const char current_data_buffer[] = "current.tab";
     const char quick_buffer[] = "current.plot"; 
-    size_t i;
-
     int  ngx,
          ngy,
          ngz;
-
-    /* sigaction */
-    struct sigaction abort_act;
 
     /* tspan parameters */
     double  t, 
@@ -70,13 +79,13 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
            *tstops = NULL;
     size_t idx_stop = 0;
 
-    /* gsl ode */
-    const gsl_odeiv2_step_type * odeT;
-    gsl_odeiv2_step * s;
-    gsl_odeiv2_control * c;
-    gsl_odeiv2_evolve * e;
-    gsl_odeiv2_system sys; 
-    int status;
+    /* world SIM */
+    par *pars;
+    size_t pop_size = get_int("population_size");
+    size_t sim_size = ode_system_size*pop_size;
+
+    /* iterators */
+    size_t i;
 
     if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
     {
@@ -136,10 +145,39 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         nextstop = INFINITY; /* set nextstop outside the integration range */
     }
 
+    /* check that SIM->pop is empty */
+    if ( SIM->pop->size == 0 )
+    {
+        DBPRINT("SIM->pop is empty, ok");
+    }
+    else
+    {
+        DBPRINT("SIM->pop not empty - error");
+    }
+
+    /* Initialize world SIM */
+    for (i = 0; i < pop_size; i++)
+    {
+        insert_endoflist(SIM->pop,mu,pex,fcn,ics);
+    }
+    DBPRINT("end init world SIM");
+
+    /* check that pop_size == SIM->pop->size */
+    if ( pop_size == SIM->pop->size )
+    {
+        DBPRINT("pop size = %zu ok", pop_size);
+    }
+    else
+    {
+        DBPRINT("mismatch in pop sizes: pop_size = %zu, SIM->pop->size = %zu", pop_size, SIM->pop->size);
+    }
+
+
     /* initial conditions */
-    DBPRINT("world SIM: SIM->pop->size = %zu",SIM->pop->size);
-    y = malloc(ode_system_size*sizeof(double));
-    ode_ic(t, y, mu);
+    y = malloc(sim_size*sizeof(double));
+    DBPRINT("before ode_ic");
+    ode_ic(t, y, NULL);
+    DBPRINT("Fix NUM_IC");
     for (i = 0; i < ode_system_size; i++)
     {
         if (NUM_IC[i]) /* use ics.value as initial condition */
@@ -168,31 +206,34 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
 
     /* current.tab: fill in the variable/function names */
     fprintf(file,"T");
-    for (i = 0; i<ode_system_size; i++)
+    for (i = 0; i<sim_size; i++)
     {
         /* if (strncmp(ics->attribute[i],"hidden",3) )  */
-        fprintf(file,"\t%s",ics->name[i]);
+        fprintf(file,"\t%s",SIM->dynnames[i % ode_system_size]);
     }
-    for (i = 0; i<fcn->nbr_el; i++)
+    for (i = 0; i<SIM->nbr_aux*pop_size; i++)
     {
         /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
-        fprintf(file,"\t%s",fcn->name[i]);
+        fprintf(file,"\t%s",SIM->auxnames[i % SIM->nbr_aux]);
     }
     fprintf(file,"\n");
 
     /* current.tab: fill in the initial conditions */
     fprintf(file,"%g ",t);
-    for (i = 0; i < ode_system_size; i++)
+    for (i = 0; i < sim_size; i++)
     {
-        /* if (strncmp(ics->attribute[i],"hidden",3) )  */
         fprintf (file,"\t%g",y[i]);  
     }
-    f = malloc(ode_system_size*sizeof(double));
-    ode_rhs(t, y, f, mu);
-    for (i = 0; i < fcn->nbr_el; i++)
+    f = malloc(sim_size*sizeof(double));
+    ode_rhs(t, y, f, NULL);
+    pars = SIM->pop->start;
+    while ( pars != NULL )
     {
-        /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
-        fprintf (file,"\t%g",mu->aux_pointer[i]);
+        for (i = 0; i < pars->nbr_aux; i++)
+        {
+            fprintf (file,"\t%g", pars->aux[i]);
+        }
+        pars = pars->nextel;
     }
     fprintf(file,"\n");
 
@@ -236,7 +277,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         /* ODE solver - time step */
         while ( t < tnext)
         {
-            sys = (gsl_odeiv2_system) {ode_rhs, NULL, ode_system_size, mu};
+            sys = (gsl_odeiv2_system) {ode_rhs, NULL, sim_size, NULL};
             status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
             if ( h < hmin )
             {
@@ -254,15 +295,19 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         /* TODO update history */
 
         fprintf(file,"%g ",t);
-        for (i = 0; i < ode_system_size; i++)
+        for (i = 0; i < sim_size; i++)
         {
             /* if (strncmp(ics->attribute[i],"hidden",3) )  */
             fprintf (file,"\t%g",y[i]); 
         }
-        for (i = 0; i < fcn->nbr_el; i++)
+        pars = SIM->pop->start;
+        while ( pars != NULL )
         {
-            /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
-            fprintf (file,"\t%g",fcn->value[i]);
+            for (i = 0; i < pars->nbr_aux; i++)
+            {
+                fprintf (file,"\t%g", pars->aux[i]);
+            }
+            pars = pars->nextel;
         }
         fprintf(file,"\n");
 
@@ -271,20 +316,24 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
-          ode_ic(t, y, mu);
+          ode_ic(t, y, NULL);
           /* update auxiliary functions */
-          ode_rhs(t, y, f, mu);
+          ode_rhs(t, y, f, NULL);
           /* write the new state to file */
           fprintf(file,"%g ",t);
-          for (i = 0; i < ode_system_size; i++)
+          for (i = 0; i < sim_size; i++)
           {
               /* if (strncmp(ics->attribute[i],"hidden",3) )  */
               fprintf (file,"\t%g",y[i]); 
           }
-          for (i = 0; i < fcn->nbr_el; i++)
+          pars = SIM->pop->start;
+          while ( pars != NULL )
           {
-              /* if (strncmp(fcn->attribute[i],"hidden",3) )  */
-              fprintf (file,"\t%g",fcn->value[i]);
+              for (i = 0; i < pars->nbr_aux; i++)
+              {
+                  fprintf (file,"\t%g", pars->aux[i]);
+              }
+              pars = pars->nextel;
           }
           fprintf(file,"\n");  
 
@@ -319,6 +368,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         printf("GSL Error %d occured.\n", status);
     }
 
+    DBPRINT("Fix lasty");
     for (i = 0; i < ode_system_size; i++)
     {
         lasty[i] = y[i]; 
@@ -333,6 +383,13 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     
     free(y);
     free(tstops);
+
+    pars = SIM->pop->start;
+    while ( pars != NULL )
+    {
+        delete_el( SIM->pop, pars);
+        pars = pars->nextel;
+    }
       
     return status;
 
@@ -614,6 +671,7 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
         printf("GSL Error %d occured.\n", status);
     }
 
+    DBPRINT("Fix lasty");
     for (i = 0; i < ode_system_size; i++)
     {
         lasty[i] = y[i]; 

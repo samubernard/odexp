@@ -37,7 +37,7 @@ extern const char *T_EXPR; /* EXPRESSION */
 extern const char *T_NOR;  /* NORMAL */
 extern const char *T_ERR;  /* ERROR (non fatal) */
 extern const char *T_BLD;  /* BOLD */
-extern const char *hline;  /* horizontal line */
+extern const char *HLINE;  /* horizontal line */
 
 typedef int (*oderhs)(double, const double *, double *, void *);
 typedef int (*odeic)(double, double *, void *);

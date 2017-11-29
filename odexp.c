@@ -87,7 +87,7 @@ const char *T_EXPR = "\033[0;33m"; /* expressions */
 const char *T_NOR = "\033[0m";     /* normal */
 const char *T_ERR = "\033[0;31m";  /* error */
 const char *T_BLD = "\033[2;0m";   /* bold */
-const char *hline = "--------------------------";
+const char *HLINE = "--------------------------";
 
 
 /* =================================================================
@@ -210,7 +210,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
 
     /* get tspan */
-    printf("\n%-25s%s\n","time span",hline);
+    printf("\n%-25s%s\n","time span",HLINE);
     success = load_double_array(parfilename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
@@ -224,7 +224,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     LOGPRINT("Found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
 
     /* get random array */
-    printf("\n%-25s%s\n", "random numbers", hline);
+    printf("\n%-25s%s\n", "random numbers", HLINE);
     get_nbr_el(odefilename,"U",1,&rnd.length,NULL);
     rnd.array = malloc(rnd.length*sizeof(double));
     for (i = 0; i < rnd.length; i++)
@@ -235,28 +235,28 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     LOGPRINT("found %zu random numbers",rnd.length);
 
     /* get constant arrays */
-    printf("\n%-25s%s\n", "constant arrays", hline);
+    printf("\n%-25s%s\n", "constant arrays", HLINE);
     get_nbr_el(odefilename,"C",1, &cst.nbr_el, NULL);
     alloc_namevalexp(&cst);
     success = load_strings(odefilename,cst,"C",1,1,' ', exit_if_nofile);
     LOGPRINT("found %zu constants",cst.nbr_el);
 
     /* get data files */
-    printf("\n%-25s%s\n", "data files", hline);
+    printf("\n%-25s%s\n", "data files", HLINE);
     get_nbr_el(odefilename,"F",1, &dfl.nbr_el, NULL);
     alloc_namevalexp(&dfl);
     success = load_strings(odefilename,dfl,"F",1,1,' ', exit_if_nofile);
     LOGPRINT("found %zu data files",dfl.nbr_el);
 
     /* get user-defined functions */
-    printf("\n%-25s%s\n", "user-defined functions", hline);
+    printf("\n%-25s%s\n", "user-defined functions", HLINE);
     get_nbr_el(odefilename,"@",1, &func.nbr_el, NULL);
     alloc_namevalexp(&func);
     success = load_strings(odefilename,func,"@",1,1,'=', exit_if_nofile);
     LOGPRINT("found %zu user-defined function",func.nbr_el);
 
     /* get parameters */
-    printf("\n%-25s%s\n", "parameters", hline);
+    printf("\n%-25s%s\n", "parameters", HLINE);
     get_nbr_el(parfilename,"P",1, &mu.nbr_el, &mu.nbr_expr);
     alloc_namevalexp(&mu);
     success = load_nameval(parfilename,mu,"P",1,exit_if_nofile);
@@ -280,7 +280,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     LOGPRINT("found %zu parameters",mu.nbr_el);
     
     /* get parametric expressions */
-    printf("\n%-25s%s\n", "parametric expressions", hline);
+    printf("\n%-25s%s\n", "parametric expressions", HLINE);
     get_nbr_el(odefilename,"E",1, &pex.nbr_el, &pex.nbr_expr);
     alloc_namevalexp(&pex);
     success = load_strings(odefilename,pex,"E",1,1,' ', exit_if_nofile);
@@ -292,7 +292,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     LOGPRINT("found %zu parametric expressions",pex.nbr_el);
 
     /* get initial conditions */
-    printf("\n%-25s%s\n", "initial conditions", hline);
+    printf("\n%-25s%s\n", "initial conditions", HLINE);
     get_nbr_el(parfilename,"I",1, &ics.nbr_el, &ics.nbr_expr);
     alloc_namevalexp(&ics);
     success = load_strings(parfilename,ics,"I",1,1,' ', exit_if_nofile);
@@ -311,7 +311,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
 
     /* get nonlinear functions */
-    printf("\n%-25s%s\n", "auxiliary variables", hline);
+    printf("\n%-25s%s\n", "auxiliary variables", HLINE);
     get_nbr_el(odefilename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
     alloc_namevalexp(&fcn);
     success = load_strings(odefilename,fcn,"A",1,1,' ', exit_if_nofile);
@@ -323,7 +323,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     LOGPRINT("found %zu auxiliary variables",fcn.nbr_el);
 
     /* get equations */
-    printf("\n%-25s%s\n", "equations", hline);
+    printf("\n%-25s%s\n", "equations", HLINE);
     get_nbr_el(odefilename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
     alloc_namevalexp(&eqn);
     success = load_strings(odefilename,eqn,"d",1,0,'=', exit_if_nofile);   
@@ -363,7 +363,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
 
     /* get options */
-    printf("\n%-25s%s\n", "options", hline);
+    printf("\n%-25s%s\n", "options", HLINE);
     success = load_options(parfilename, exit_if_nofile); 
     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
@@ -382,20 +382,16 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                     */
     }
 
-    /* TODO get population size */
-    DBPRINT("init world");
+    DBPRINT("init world SIM");
     SIM = malloc(sizeof(world));
     init_world( SIM, &eqn, &fcn );
-    insert_first_el(SIM->pop,&mu,&pex,&fcn,&ics);
-    DBPRINT("end init world");
-    ode_ic(tspan.array[0],ics.value,&mu);
-
+    /* ode_ic(tspan.array[0],ics.value,&mu); */
 
     /* seed random number generator */
     randseed = 1306;
     srand(randseed);
     /* test rng */
-    printf("\nrandom number generator %s\n", hline);
+    printf("\nrandom number generator %s\n", HLINE);
     printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR);
     LOGPRINT("RAND_MAX %d",RAND_MAX);
 
@@ -428,7 +424,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
     /* first run after system init */
     LOGPRINT("System init done. Running first simulation");
-    status = odesolver(ode_rhs, ode_ic, lasty, &ics, &mu, &fcn, &tspan, gnuplot_pipe);
+    status = odesolver(ode_rhs, ode_ic, lasty, &ics, &mu, &pex, &fcn, &tspan, gnuplot_pipe);
 
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
@@ -1445,7 +1441,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_ic, lasty, &ics, &mu, &fcn, &tspan, gnuplot_pipe);
+                status = odesolver(ode_rhs, ode_ic, lasty, &ics, &mu, &pex, &fcn, &tspan, gnuplot_pipe);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
@@ -2543,7 +2539,7 @@ int printf_options(const char *optiontype)
       {
         if ( strcmp(GOPTS[i].optiontype,last_option_type) )
         {
-            printf("\n%-*s %s\n",20,GOPTS[i].optiontype,hline);
+            printf("\n%-*s %s\n",20,GOPTS[i].optiontype,HLINE);
         }
         printf_option_line(i);
       }
