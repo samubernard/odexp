@@ -311,7 +311,7 @@ get_mean_fields () {
       $1="";
       $2="";
       rhs=$0;
-      printf "                p_->psi[%d] += %s;\n", nv, rhs; nv++
+      printf "            p_->psi[%d] += %s;\n", nv, rhs; nv++
     }' $file >>.odexp/model.c
 }
 
@@ -649,16 +649,18 @@ echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odex
 echo "{" >>.odexp/model.c
 echo "    size_t i = 0, j;" >>.odexp/model.c
 echo "    par *p_ = SIM->pop->start;" >>.odexp/model.c
-echo "    par *other_ = SIM->pop->start;" >>.odexp/model.c
+echo "    par *other_ = (par *)NULL;" >>.odexp/model.c
 echo "    while ( p_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
 echo "        /* update mean fields */" >>.odexp/model.c
+echo "        for(j=0;j<p_->nbr_psi;j++)" >>.odexp/model.c
+echo "        {" >>.odexp/model.c
+echo "            p_->psi[j] = 0.0;" >>.odexp/model.c
+echo "        }" >>.odexp/model.c
+echo "        other_ = SIM->pop->start;" >>.odexp/model.c
 echo "        while ( other_ != NULL )" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
-echo "            for(j=0;j<p_->nbr_psi;j++)" >>.odexp/model.c
-echo "            {" >>.odexp/model.c
 get_mean_fields
-echo "            }" >>.odexp/model.c
 echo "            other_ = other_->nextel;" >>.odexp/model.c
 echo "        }" >>.odexp/model.c
 echo "        ode_rhs(t, y+i*p_->nbr_y, f+i*p_->nbr_y, p_);" >>.odexp/model.c
@@ -775,17 +777,17 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization - variables */" >>.odexp/model.c
 define_variables
 
-# DEFINE AUXILIARY FUNCTIONS
-echo "" >>.odexp/model.c
-echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
-# initialize auxiliary function 
-define_auxiliary_functions
-
 # DEFINE MEAN FIELDS 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - mean fields */" >>.odexp/model.c
 # initialize auxiliary function 
 define_mean_fields
+
+# DEFINE AUXILIARY FUNCTIONS
+echo "" >>.odexp/model.c
+echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
+# initialize auxiliary function 
+define_auxiliary_functions
 
 # DEFINE EQUATIONS 
 echo "" >>.odexp/model.c

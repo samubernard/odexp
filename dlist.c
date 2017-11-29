@@ -84,7 +84,7 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
     }
     for (i=0;i<p->nbr_psi;i++)
     {
-        p->psi[i]    = psi->value[i];
+        p->psi[i]    = 0.0;
     }
 
     p->nextel = NULL; /* p is at the end of the list */
