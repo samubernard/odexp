@@ -3,7 +3,6 @@
 /* header file */
 #include <stdio.h>
 
-#include "odexp.h"
 
 /* =================================================================
                               Libraries
