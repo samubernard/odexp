@@ -77,6 +77,7 @@ typedef struct system_state {
 
 } world;
 
+extern world  *SIM;
 
 /* init population of particle_state */
 void init_dlist(dlist *list );

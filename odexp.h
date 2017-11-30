@@ -9,7 +9,6 @@
 #include <time.h>
 #include <gsl/gsl_vector.h>
 
-#include "dlist.h"
 
 /* =================================================================
                               DEFINE
@@ -28,7 +27,6 @@
                               EXTERN
 ================================================================= */
 extern size_t ode_system_size;
-extern world  *SIM;
 extern int *NUM_IC;
 extern const char *T_IND; /* INDEX */
 extern const char *T_DET; /* DETAILS */

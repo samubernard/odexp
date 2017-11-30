@@ -14,6 +14,7 @@
 ================================================================= */
 
 #include "utils_odexp.h"
+#include "odexp.h"
 
 double sum(double *array, long len) /* sum the elements of the array */
 {
