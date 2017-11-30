@@ -180,8 +180,11 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
 
     /* initial conditions */
     y = malloc(sim_size*sizeof(double));
-    DBPRINT("before ode_ic");
+    f = malloc(sim_size*sizeof(double));
+    DBPRINT("ode_ic: get expr and y");
     ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
+    DBPRINT("ode_rhs: get aux and psi");
+    ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi  */
     DBPRINT("Fix NUM_IC");
     pars = SIM->pop->start;
     j = 0;
@@ -236,8 +239,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     }
     fprintf(file,"\n");
 
-    f = malloc(sim_size*sizeof(double));
-    ode_rhs(t, y, f, NULL);
 
     /* current.tab: fill in the initial conditions */
     DBPRINT("fill IC in current.tab");

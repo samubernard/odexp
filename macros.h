@@ -12,7 +12,6 @@
            __typeof__ (b) _b = (b); \
          _a < _b ? _a : _b; })
 
-
 /* log file */
 #define LOGPRINT(...) \
     ({ fprintf(logfr,"%s: ",__FUNCTION__); \
@@ -25,5 +24,23 @@
     ({ printf("--%s: ",__FUNCTION__); \
        printf( __VA_ARGS__); \
        printf(", in %s, line %d\n",__FILE__,__LINE__); })
+
+#define POP_SIZE SIM->pop->size
+
+#define THEM(name)                                            \
+    ({ while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_aux;                    \
+       }                                                      \
+       other_->aux[index];                                    \
+     })
+
+#define US(name)                                              \
+    ({ while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_aux;                    \
+       }                                                      \
+       p_->aux[index];                                        \
+     })
 
 #endif /* !FILE_MACROS_SEEN */

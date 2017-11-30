@@ -3,6 +3,8 @@
 /* header file */
 #include <stdio.h>
 
+#include "odexp.h"
+
 /* =================================================================
                               Libraries
 ================================================================= */
@@ -24,3 +26,5 @@ double identity(double x);
 double sumxy(long len, double (*f)(double), double (*g)(double, double), const double *x, const double yi); 
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len);
 /* double history(double tmtau); */
+
+double getv(char *name, par *p);

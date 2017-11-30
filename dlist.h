@@ -97,5 +97,3 @@ void destroy(dlist *list);
 void free_world(world *s);
 
 void printf_particle(par *p);
-
-

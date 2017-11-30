@@ -7,6 +7,7 @@
 #include <math.h>                          
 #include <signal.h>                          
 #include <gsl/gsl_spline.h>
+#include <string.h>
 
 /* =================================================================
                               Header files
@@ -172,3 +173,16 @@ double linchaindelay(const double root, const double *chain, const size_t link, 
 *     return yint; 
 * }
 */
+
+
+
+double getv(char *name, par *p)
+{
+    static size_t index = 0;
+    while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) 
+    {                                                      
+        index++; index %= SIM->nbr_aux;                    
+    }                                                 
+    return p->aux[index];                              
+}
+

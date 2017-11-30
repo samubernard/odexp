@@ -543,6 +543,7 @@ echo "" >>.odexp/model.c
 echo "#include <gsl/gsl_errno.h>" >>.odexp/model.c
 echo "#include <gsl/gsl_vector.h>" >>.odexp/model.c
 echo "#include <gsl/gsl_matrix.h>                              " >>.odexp/model.c
+echo "#include <string.h>                            " >>.odexp/model.c
 echo "#include <math.h>                              " >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -647,9 +648,18 @@ echo "" >>.odexp/model.c
 echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */" >>.odexp/model.c
 echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
+echo "    static size_t index = 0;" >>.odexp/model.c
 echo "    size_t i = 0, j;" >>.odexp/model.c
 echo "    par *p_ = SIM->pop->start;" >>.odexp/model.c
 echo "    par *other_ = (par *)NULL;" >>.odexp/model.c
+echo "    while ( p_ != NULL )" >>.odexp/model.c
+echo "    {" >>.odexp/model.c
+echo "        ode_rhs(t, y+i*p_->nbr_y, f+i*p_->nbr_y, p_); /* first update p_->aux  */" >>.odexp/model.c
+echo "        i++;" >>.odexp/model.c
+echo "        p_ = p_->nextel;" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
+echo "    p_ = SIM->pop->start;" >>.odexp/model.c
+echo "    i = 0;" >>.odexp/model.c
 echo "    while ( p_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
 echo "        /* update mean fields */" >>.odexp/model.c
