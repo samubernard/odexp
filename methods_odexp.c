@@ -154,11 +154,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     }
       
     /* check that SIM->pop is empty */
-    if ( SIM->pop->size == 0 )
-    {
-        DBPRINT("SIM->pop is empty, ok");
-    }
-    else
+    if ( SIM->pop->size > 0 )
     {
         DBPRINT("SIM->pop not empty - error");
     }
@@ -168,27 +164,18 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     {
         insert_endoflist(SIM->pop,mu,pex,fcn,ics,psi);
     }
-    DBPRINT("end init world SIM");
 
     /* check that pop_size == SIM->pop->size */
-    if ( pop_size == SIM->pop->size )
+    if ( pop_size != SIM->pop->size )
     {
-        DBPRINT("pop size = %zu ok", pop_size);
+        DBPRINT("pop_size = %zu, SIM->pop->size = %zu - error", pop_size, SIM->pop->size);
     }
-    else
-    {
-        DBPRINT("mismatch in pop sizes: pop_size = %zu, SIM->pop->size = %zu", pop_size, SIM->pop->size);
-    }
-
 
     /* initial conditions */
     y = malloc(sim_size*sizeof(double));
     f = malloc(sim_size*sizeof(double));
-    DBPRINT("ode_ic: get expr and y");
     ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
-    DBPRINT("ode_rhs: get aux and psi");
     ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi  */
-    DBPRINT("Fix NUM_IC");
     pars = SIM->pop->start;
     j = 0;
     while ( pars != NULL )
@@ -223,7 +210,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     }
 
     /* current.tab: fill in the variable/function names */
-    DBPRINT("fill names in current.tab");
     fprintf(file,"T");
     pars = SIM->pop->start;
     j = 0;
@@ -244,7 +230,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
 
 
     /* current.tab: fill in the initial conditions */
-    DBPRINT("fill IC in current.tab");
     fprintf(file,"%g ",t);
     pars = SIM->pop->start;
     while ( pars != NULL )
@@ -290,7 +275,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     e = gsl_odeiv2_evolve_alloc(sim_size);
 
     /* ODE solver - main loop */
-    DBPRINT("begin main loop");
     while (t < t1 && !abort_odesolver_flag)
     {
         tnext = fmin(t+dt,t1);
