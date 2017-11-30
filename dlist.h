@@ -77,6 +77,9 @@ typedef struct system_state {
 
 extern world  *SIM;
 
+void alloc_namevalexp( nve *mu );
+void free_namevalexp( nve mu );
+
 /* init population of particle_state */
 void init_dlist(dlist *list );
 

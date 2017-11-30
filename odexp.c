@@ -36,9 +36,6 @@ world *SIM = (world *)NULL;
 
 /* options */
 
-/* number of global options */
-#define NBROPTS 35
-
 struct gen_option GOPTS[NBROPTS] = { 
     {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)", "plot"},
     {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)", "plot"},

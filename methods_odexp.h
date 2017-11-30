@@ -89,9 +89,6 @@ int option_name2index( const char *name, int *n);
 
 void free_double_array( double_array var );
 
-void alloc_namevalexp( nve *mu );
-void free_namevalexp( nve mu );
-
 void init_steady_state(steady_state *stst, int index);
 
 void free_steady_state(steady_state *stst, int nbr_stst);

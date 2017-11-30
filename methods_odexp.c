@@ -22,10 +22,6 @@
 
 #include "methods_odexp.h"
 
-/* number of global options */
-#define NBROPTS 35
-
-
 static int compare (void const *a, void const *b);
 
 static volatile sig_atomic_t abort_odesolver_flag;
@@ -1392,42 +1388,6 @@ int option_name2index( const char *name, int *n) /* get index of option.name == 
 void free_double_array(double_array var)
 {
     free(var.array);
-}
-
-void alloc_namevalexp( nve *var )
-{
-    size_t i;
-    var->value = malloc(var->nbr_el*sizeof(double));
-    var->name = malloc(var->nbr_el*sizeof(char*));
-    var->expression = malloc(var->nbr_el*sizeof(char*));
-    var->attribute = malloc(var->nbr_el*sizeof(char*));
-    var->expr_index = malloc(var->nbr_el*sizeof(size_t));
-    var->max_name_length = malloc(sizeof(int));
-    for (i = 0; i < var->nbr_el; i++)
-    {
-        var->name[i] = malloc(NAMELENGTH*sizeof(char));
-        var->expression[i] = malloc(EXPRLENGTH*sizeof(char));
-        var->attribute[i] = malloc(EXPRLENGTH*sizeof(char));
-    }
-}
-
-void free_namevalexp(nve var )
-{
-    size_t i;
-    
-    /* do not free _pointeris, they will be freed in time */
-    for (i = 0; i < var.nbr_el; i++)
-    {
-        free(var.name[i]);
-        free(var.expression[i]);
-        free(var.attribute[i]);
-    }
-    free(var.value);
-    free(var.name);
-    free(var.expression);
-    free(var.attribute);
-    free(var.expr_index);
-    free(var.max_name_length);
 }
 
 void init_steady_state(steady_state *mystst, int index)
