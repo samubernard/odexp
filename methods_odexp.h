@@ -2,6 +2,8 @@
 
 /* header file */
 
+#include "dlist.h"
+
 /* =================================================================
                               Libraries
 ================================================================= */
@@ -9,6 +11,56 @@
 /* =================================================================
                               DEFINE
 ================================================================= */
+/* number of global options */
+#define NBROPTS 35
+
+extern size_t ode_system_size;
+extern int *NUM_IC;
+extern const char *T_IND; /* INDEX */
+extern const char *T_DET; /* DETAILS */
+extern const char *T_VAL; /* VALUE */
+extern const char *T_EXPR; /* EXPRESSION */
+extern const char *T_NOR;  /* NORMAL */
+extern const char *T_ERR;  /* ERROR (non fatal) */
+extern const char *T_BLD;  /* BOLD */
+extern const char *HLINE;  /* horizontal line */
+
+
+typedef int (*oderhs)(double, const double *, double *, void *);
+typedef int (*odeic)(double, double *, void *);
+typedef int (*rootrhs)(const gsl_vector *, void *, gsl_vector *);
+
+typedef struct gen_option
+{
+    char    abbr[NAMELENGTH];
+    char    name[NAMELENGTH];
+    char    valtype; /* d: double; i: int; s: string */
+    double  numval;
+    int     intval;
+    char    strval[NAMELENGTH];
+    char    descr[EXPRLENGTH];
+    char    optiontype[NAMELENGTH];
+} gopt;
+
+extern struct gen_option GOPTS[NBROPTS];
+
+typedef struct steady_state
+{
+    double *s;
+    double *re;
+    double *im; 
+    int index;
+    size_t size;
+    int status;
+} steady_state;
+
+typedef struct double_array
+{
+    double *array;
+    size_t length;
+} double_array;
+
+
 
 int odesolver( oderhs ode_rhs, odeic ode_ic,\
  nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan, FILE *gnuplot_pipe);
@@ -31,3 +83,23 @@ int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, 
 
 /* print */
 void fprintf_SIM_y(FILE *file, double t, double *y);
+
+int name2index( const char *name, nve var, int *n);
+int option_name2index( const char *name, int *n);
+
+void free_double_array( double_array var );
+
+void alloc_namevalexp( nve *mu );
+void free_namevalexp( nve mu );
+
+void init_steady_state(steady_state *stst, int index);
+
+void free_steady_state(steady_state *stst, int nbr_stst);
+
+int set_dou(const char *name, const double val); 
+int set_int(const char *name, const int val); 
+int set_str(const char *name, const char * val); 
+double get_dou(const char *name);
+int    get_int(const char *name);
+char*  get_str(const char *name);
+

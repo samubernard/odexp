@@ -20,9 +20,11 @@
                               Header files
 ================================================================= */
 
-#include "odexp.h"
 #include "methods_odexp.h"
-#include "rand_gen.h"
+
+/* number of global options */
+#define NBROPTS 35
+
 
 static int compare (void const *a, void const *b);
 
@@ -1305,3 +1307,307 @@ void fprintf_SIM_y(FILE *file, double t, double *y)
         fprintf(file,"\n");
 
 }
+
+int name2index( const char *name, nve var, int *n) /* get index of var.name == name */
+{
+    size_t i = 0;
+    int s = 0;
+
+    if ( (strcmp(name,"T") == 0) | (strcmp(name,"t") == 0) )
+    {
+        *n = -1;
+        s = 1;
+    }
+    else if ( strcmp(name,"") == 0 )
+    {
+        fprintf(stderr,"  %swarning: empty variable%s\n",T_ERR,T_NOR);
+    }
+    else
+    {
+        while (  i < var.nbr_el )
+        {
+            if ( strcmp(name, var.name[i]) )
+            {
+                i++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if ( i < var.nbr_el )
+        {
+            *n =  i;
+            s = 1;
+        }
+        else
+        {
+            fprintf(stderr,"  %sError: Unknown variable name: %s. List variables with 'lx'.%s\n",T_ERR,name,T_NOR);
+        }
+        /* else do not change *n */
+    }
+
+    return s;
+
+}
+
+int option_name2index( const char *name, int *n) /* get index of option.name == name or option.abbr == name */
+{
+    size_t i = 0;
+    int s = 0;
+
+    if ( strcmp(name,"") == 0 )
+    {
+        fprintf(stderr,"  %swarning: empty option%s\n",T_ERR,T_NOR);
+    }
+    else
+    {
+        while (  i < NBROPTS )
+        {
+            if ( strcmp(name, GOPTS[i].name)
+                 && strcmp(name, GOPTS[i].abbr))
+            {
+                i++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if ( i < NBROPTS )
+        {
+            *n =  i;
+            s = 1;
+        }
+        else
+        {
+            fprintf(stderr,"  %sError: Unknown option '%s' %s\n",T_ERR,name,T_NOR);
+        }
+        /* else do not change *n */
+    }
+
+    return s;
+}
+
+void free_double_array(double_array var)
+{
+    free(var.array);
+}
+
+void alloc_namevalexp( nve *var )
+{
+    size_t i;
+    var->value = malloc(var->nbr_el*sizeof(double));
+    var->name = malloc(var->nbr_el*sizeof(char*));
+    var->expression = malloc(var->nbr_el*sizeof(char*));
+    var->attribute = malloc(var->nbr_el*sizeof(char*));
+    var->expr_index = malloc(var->nbr_el*sizeof(size_t));
+    var->max_name_length = malloc(sizeof(int));
+    for (i = 0; i < var->nbr_el; i++)
+    {
+        var->name[i] = malloc(NAMELENGTH*sizeof(char));
+        var->expression[i] = malloc(EXPRLENGTH*sizeof(char));
+        var->attribute[i] = malloc(EXPRLENGTH*sizeof(char));
+    }
+}
+
+void free_namevalexp(nve var )
+{
+    size_t i;
+    
+    /* do not free _pointeris, they will be freed in time */
+    for (i = 0; i < var.nbr_el; i++)
+    {
+        free(var.name[i]);
+        free(var.expression[i]);
+        free(var.attribute[i]);
+    }
+    free(var.value);
+    free(var.name);
+    free(var.expression);
+    free(var.attribute);
+    free(var.expr_index);
+    free(var.max_name_length);
+}
+
+void init_steady_state(steady_state *mystst, int index)
+{
+    /* init steady state */
+    mystst->index = index;
+    mystst->size = ode_system_size;
+    mystst->s  = malloc(ode_system_size*sizeof(double));
+    mystst->re = malloc(ode_system_size*sizeof(double));
+    mystst->im = malloc(ode_system_size*sizeof(double));
+    mystst->status = 1;
+}
+
+void free_steady_state( steady_state *stst, int nbr_stst )
+{
+    int j;
+    for (j=0; j<nbr_stst; j++)
+    {
+        free( stst[j].s );
+        free( stst[j].re );
+        free( stst[j].im );
+    }
+    free( stst );
+}
+
+int set_dou(const char *name, const double val) 
+{
+    size_t idx_opt = 0;
+    int success = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      GOPTS[idx_opt].numval = val;
+      success = 1;
+    }
+    else
+    {
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+    }
+
+    return success;
+}
+
+int set_int(const char *name, const int val) 
+{
+    size_t idx_opt = 0;
+    int success = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      GOPTS[idx_opt].intval = val;
+      success = 1;
+    }
+    else
+    {
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+    }
+
+    return success;
+}
+
+int set_str(const char *name, const char * val) 
+{
+    size_t idx_opt = 0;
+    int success = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      strncpy(GOPTS[idx_opt].strval,val,NAMELENGTH-1);
+      success = 1;
+    }
+    else
+    {
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+    }
+
+    return success;
+}
+
+
+double get_dou(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return GOPTS[idx_opt].numval;
+    }
+    else
+    {  
+      return -1.0;
+    }
+}
+
+int get_int(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return GOPTS[idx_opt].intval;
+    }
+    else
+    {  
+      return -1;
+    }
+}
+
+
+char * get_str(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return GOPTS[idx_opt].strval;
+    }
+    else
+    {  
+      return NULL;
+    }
+}
+

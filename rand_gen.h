@@ -8,9 +8,6 @@
 /* =================================================================
                               Libraries
 ================================================================= */
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 typedef long RANDINT;
 #define POISSON_RAND_MAX RAND_MAX

@@ -204,3 +204,14 @@ void printf_particle(par *p)
     }
 }
 
+
+double getv(char *name, par *p)
+{
+    static size_t index = 0;
+    while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) 
+    {                                                      
+        index++; index %= SIM->nbr_aux;                    
+    }                                                 
+    return p->aux[index];                              
+}
+

@@ -19,8 +19,6 @@
    ================================================================= */
 #include "macros.h"
 
-#define NAMELENGTH  63
-
 typedef struct namevalexp
 {
     char **name;           /* names */
@@ -98,3 +96,5 @@ void destroy(dlist *list);
 void free_world(world *s);
 
 void printf_particle(par *p);
+
+double getv(char *name, par *p);

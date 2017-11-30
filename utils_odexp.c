@@ -6,15 +6,12 @@
 
 #include <math.h>                          
 #include <signal.h>                          
-#include <gsl/gsl_spline.h>
-#include <string.h>
 
 /* =================================================================
                               Header files
 ================================================================= */
 
 #include "utils_odexp.h"
-#include "odexp.h"
 
 double sum(double *array, long len) /* sum the elements of the array */
 {
@@ -156,34 +153,5 @@ double linchaindelay(const double root, const double *chain, const size_t link, 
     return beta*((link==0 ? root : chain[link-1]) - chain[link]);
 }
 
-/*
-* double history(double tmtau)
-* {
-*     double yint;
-*     size_t size = st_history.size;
-*     
-*     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-*     gsl_spline *spline  = gsl_spline_alloc (gsl_interp_cspline_periodic, size);
-*     gsl_spline_init (spline, st_history.t, st_history.y, size);
-* 
-*     yint =  gsl_spline_eval (spline, tmtau, acc); 
-* 
-*     gsl_spline_free (spline);
-*     gsl_interp_accel_free (acc);
-* 
-*     return yint; 
-* }
-*/
 
-
-
-double getv(char *name, par *p)
-{
-    static size_t index = 0;
-    while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) 
-    {                                                      
-        index++; index %= SIM->nbr_aux;                    
-    }                                                 
-    return p->aux[index];                              
-}
 

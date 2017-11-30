@@ -2,6 +2,12 @@
 #ifndef FILE_MACROS_SEEN
 #define FILE_MACROS_SEEN
 
+
+#define NAMELENGTH        64
+#define MAXFILENAMELENGTH 64
+#define MAXROOTLENGTH     64 
+#define EXPRLENGTH        1024                            
+
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
            __typeof__ (b) _b = (b); \
