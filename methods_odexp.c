@@ -1,7 +1,6 @@
-/* =================================================================
-                              Libraries
-================================================================= */
+/* file methods_odexp.c */
 
+/* includes */
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv2.h>
@@ -16,11 +15,17 @@
 #include <signal.h>                          
 #include <unistd.h>
 
-/* =================================================================
-                              Header files
-================================================================= */
-
 #include "methods_odexp.h"
+
+/* formatting strings */
+const char *T_IND = "\033[0;35m";  /* index */
+const char *T_DET = "\033[3;36m";  /* description */
+const char *T_VAL = "\033[0;32m";  /* values */
+const char *T_EXPR = "\033[0;33m"; /* expressions */
+const char *T_NOR = "\033[0m";     /* normal */
+const char *T_ERR = "\033[0;31m";  /* error */
+const char *T_BLD = "\033[2;0m";   /* bold */
+const char *HLINE = "--------------------------";
 
 static int compare (void const *a, void const *b);
 

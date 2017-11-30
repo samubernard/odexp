@@ -1,22 +1,11 @@
-/* dlist.h
+/* file dlist.h */
 
- * double chain list 
- * 
- * SEE tc.c, modelTC.c
- *
- */
-
-/* =================================================================
-   Libraries
-   ================================================================= */
+/* includes */
 #include <stdint.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-/* =================================================================
-   Header files
-   ================================================================= */
 #include "macros.h"
 
 typedef struct namevalexp

@@ -1,24 +1,13 @@
+/* file odexp.c */
+
+/* includes */
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_eigen.h> 
 #include <readline/readline.h>
 #include <readline/history.h>                             
 
-/* =================================================================
-                              Header files
-================================================================= */
-
 #include "odexp.h"
 #include "rand_gen.h"
-
-
-/* =================================================================
-                              Defines
-================================================================= */
-
-/* =================================================================
-                              Global variables 
-================================================================= */
-
 
 /* static variable for holding the command line string */
 static char *rawcmdline = (char *)NULL;
@@ -35,7 +24,6 @@ size_t ode_system_size;
 world *SIM = (world *)NULL;
 
 /* options */
-
 struct gen_option GOPTS[NBROPTS] = { 
     {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)", "plot"},
     {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)", "plot"},
@@ -73,24 +61,11 @@ struct gen_option GOPTS[NBROPTS] = {
     {"r/ric","range_reset_ic", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
     {"g/font","gnuplot_font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot font", "gnuplotSettings"} };
 
-
-
 /* what kind of initial conditions to take */
 int *NUM_IC;
 
-/* formatting strings */
-const char *T_IND = "\033[0;35m";  /* index */
-const char *T_DET = "\033[3;36m";  /* description */
-const char *T_VAL = "\033[0;32m";  /* values */
-const char *T_EXPR = "\033[0;33m"; /* expressions */
-const char *T_NOR = "\033[0m";     /* normal */
-const char *T_ERR = "\033[0;31m";  /* error */
-const char *T_BLD = "\033[2;0m";   /* bold */
-const char *HLINE = "--------------------------";
-
-
 /* =================================================================
-                             Main Loop 
+                             Main Function 
 ================================================================ */
 int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_filename )
 {

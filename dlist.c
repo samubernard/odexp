@@ -1,22 +1,12 @@
-/* dlist.c
- *
- * double chain list 
- * 
- *
- */
+/* file dlist.c */
 
-/* =================================================================
-   Libraries
-   ================================================================= */
+/* includes */
 #include <stdint.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-/* =================================================================
-   Header files
-   ================================================================= */
 #include "dlist.h"
 
 void alloc_namevalexp( nve *var )

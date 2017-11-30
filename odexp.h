@@ -1,30 +1,18 @@
-/* odexp.h */
+/* file odexp.h */
 
-/* header file */
-
-/* =================================================================
-                              Libraries
-================================================================= */
-
+/* includes */
 #include <gsl/gsl_vector.h>
 
 #include "methods_odexp.h"
 
-/* =================================================================
-                              DEFINE
-================================================================= */
-
 /* size of history buffer */
 #define SIZEHIST 100
 
-/* =================================================================
-                              EXTERN
-================================================================= */
-
+extern size_t ode_system_size;
+extern int *NUM_IC;
 
 /* function declaration */
 int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_filename );
-
 
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, size_t *nbr_el, size_t *nbr_epxr);
 int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim);
