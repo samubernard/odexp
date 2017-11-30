@@ -8,6 +8,7 @@
 
 extern size_t ode_system_size;
 extern int *NUM_IC;
+
 extern const char *T_IND; /* INDEX */
 extern const char *T_DET; /* DETAILS */
 extern const char *T_VAL; /* VALUE */

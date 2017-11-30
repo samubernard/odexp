@@ -1,4 +1,5 @@
 /* file macros.h */
+
 #ifndef FILE_MACROS_SEEN
 #define FILE_MACROS_SEEN
 

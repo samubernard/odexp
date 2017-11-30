@@ -17,9 +17,6 @@ static char *cmdline  = (char *)NULL;
 const char *logfilename = ".odexp/model.log";
 static FILE *logfr = (FILE *)NULL;
 
-/* system size */
-size_t ode_system_size;
-
 /* world */
 world *SIM = (world *)NULL;
 
@@ -63,6 +60,7 @@ struct gen_option GOPTS[NBROPTS] = {
 
 /* what kind of initial conditions to take */
 int *NUM_IC;
+size_t ode_system_size;
 
 /* =================================================================
                              Main Function 

@@ -8,8 +8,6 @@
 /* size of history buffer */
 #define SIZEHIST 100
 
-extern size_t ode_system_size;
-extern int *NUM_IC;
 
 /* function declaration */
 int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_filename );
