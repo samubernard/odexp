@@ -9,6 +9,9 @@
 
 #include "dlist.h"
 
+
+size_t MAXID = 0;
+
 void alloc_namevalexp( nve *var )
 {
     size_t i;
@@ -53,13 +56,15 @@ void init_dlist(dlist *list)
     list->size = 0;
 }
 
-void init_world( world *s, nve *ics, nve *fcn )
+void init_world( world *s, nve *ics, nve *fcn, nve *psi )
 {
     size_t i;
     s->nbr_var = ics->nbr_el;
     s->nbr_aux = fcn->nbr_el;
+    s->nbr_psi = psi->nbr_el;
     s->varnames = malloc(s->nbr_var*sizeof(char*));
     s->auxnames = malloc(s->nbr_aux*sizeof(char*));
+    s->psinames = malloc(s->nbr_psi*sizeof(char*));
     for(i=0;i<s->nbr_var;i++)
     {
         s->varnames[i] = malloc(NAMELENGTH*sizeof(char));
@@ -70,12 +75,17 @@ void init_world( world *s, nve *ics, nve *fcn )
         s->auxnames[i] = malloc(NAMELENGTH*sizeof(char));
         strncpy(s->auxnames[i],fcn->name[i],NAMELENGTH-1);
     }
+    for(i=0;i<s->nbr_psi;i++)
+    {
+        s->psinames[i] = malloc(NAMELENGTH*sizeof(char));
+        strncpy(s->psinames[i],psi->name[i],NAMELENGTH-1);
+    }
     s->pop_stats = NULL;
     s->pop = malloc(sizeof(dlist));
     init_dlist(s->pop);
 }
 
-/* insert in empty list */
+/* insert at the end of the list (including an empty list) */
 int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi)
 {
     par *p = malloc(sizeof(par));
@@ -90,7 +100,7 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
     p->aux      = malloc(p->nbr_aux*sizeof(double));
     p->y        = malloc(p->nbr_y*sizeof(double));
     p->psi      = malloc(p->nbr_psi*sizeof(double));
-    p->id       = rand();
+    p->id       = MAXID++;
 
     for (i=0;i<p->nbr_pars;i++)
     {
@@ -201,8 +211,13 @@ void free_world(world *s)
     {
         free(s->auxnames[i]);
     }
+    for(i=0;i<s->nbr_psi;i++)
+    {
+        free(s->psinames[i]);
+    }
     free(s->varnames);
     free(s->auxnames);
+    free(s->psinames);
     free(s->pop_stats);
     free(s);
 }

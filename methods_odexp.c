@@ -217,11 +217,15 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     {
         for (i = 0; i<SIM->nbr_var; i++)
         {
-            fprintf(file,"\t%s.%zu",SIM->varnames[i], j);
+            fprintf(file,"\t%s(%zu)",SIM->varnames[i], pars->id);
         }
         for (i = 0; i<SIM->nbr_aux; i++)
         {
-            fprintf(file,"\t%s.%zu",SIM->auxnames[i], j);
+            fprintf(file,"\t%s(%zu)",SIM->auxnames[i], pars->id);
+        }
+        for (i = 0; i<SIM->nbr_psi; i++)
+        {
+            fprintf(file,"\t%s(%zu)",SIM->psinames[i], pars->id);
         }
         pars = pars->nextel;
         j++;
@@ -241,6 +245,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         for (i = 0; i < pars->nbr_aux; i++)
         {
             fprintf (file,"\t%g", pars->aux[i]);
+        }
+        for (i = 0; i < pars->nbr_psi; i++)
+        {
+            fprintf (file,"\t%g", pars->psi[i]);
         }
         pars = pars->nextel;
     }
@@ -331,6 +339,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
               for (i = 0; i < pars->nbr_aux; i++)
               {
                   fprintf (file,"\t%g", pars->aux[i]);
+              }
+              for (i = 0; i < pars->nbr_psi; i++)
+              {
+                  fprintf (file,"\t%g", pars->psi[i]);
               }
               pars = pars->nextel;
           }
@@ -1285,6 +1297,10 @@ void fprintf_SIM_y(FILE *file, double t, double *y)
             for (i = 0; i < SIM->nbr_aux; i++)
             {
                 fprintf (file,"\t%g", pars->aux[i]);
+            }
+            for (i = 0; i < SIM->nbr_psi; i++)
+            {
+                fprintf (file,"\t%g", pars->psi[i]);
             }
             pars = pars->nextel;
             j += SIM->nbr_var;

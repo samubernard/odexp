@@ -8,6 +8,8 @@
 
 #include "macros.h"
 
+extern size_t MAXID;
+
 typedef struct namevalexp
 {
     char **name;           /* names */
@@ -58,8 +60,10 @@ typedef struct system_state {
     dlist *pop;
     char **varnames;
     char **auxnames;
+    char **psinames;
     size_t nbr_var;
     size_t nbr_aux;
+    size_t nbr_psi;
     double *pop_stats;
 
 } world;
@@ -73,7 +77,7 @@ void free_namevalexp( nve mu );
 void init_dlist(dlist *list );
 
 /* init world */
-void init_world( world *s, nve *ics, nve *fcn );
+void init_world( world *s, nve *ics, nve *fcn, nve *psi );
 
 /* insert at the end of the list */
 int insert_endoflist ( dlist *, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi);

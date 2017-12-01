@@ -291,11 +291,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     } 
     LOGPRINT("found %zu equations",eqn.nbr_el);
 
-    ode_system_size = ics.nbr_el;
-    /* mu.ode_system_size = ode_system_size; */
-    total_nbr_x = ode_system_size + fcn.nbr_el;
-    lastinit = malloc(ode_system_size*sizeof(double));
-
     /* define psi */
     printf("\n%-25s%s\n", "population mean fields", HLINE);
     get_nbr_el(odefilename,"M",1, &psi.nbr_el, &psi.nbr_expr);
@@ -308,20 +303,31 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     LOGPRINT("found %zu population mean fields",psi.nbr_el);
 
     /* define dxv */
-    
-    dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr;
+    DBPRINT("define dxv");
+    ode_system_size = ics.nbr_el;
+    total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el;
+    DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x);
+    lastinit = malloc(ode_system_size*sizeof(double));
+    dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr;
     dxv.nbr_el = total_nbr_x;
+    DBPRINT("alloc dxv");
     alloc_namevalexp(&dxv);
-    *dxv.max_name_length = max(*ics.max_name_length, *fcn.max_name_length);
+    *dxv.max_name_length = max(*psi.max_name_length, max(*ics.max_name_length, *fcn.max_name_length));
+    DBPRINT("assign dxv");
     for (i = 0; i < ode_system_size; i++)
     {
         strcpy(dxv.name[i],ics.name[i]);
         strcpy(dxv.expression[i],ics.expression[i]);
     }
-    for (i = ode_system_size; i < dxv.nbr_el; i++)
+    for (i = ode_system_size; i < ode_system_size + fcn.nbr_el; i++)
     {
         strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
         strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
+    }
+    for (i = ode_system_size + fcn.nbr_el; i < dxv.nbr_el; i++)
+    {
+        strcpy(dxv.name[i],psi.name[i-ode_system_size-fcn.nbr_el]);
+        strcpy(dxv.expression[i],psi.expression[i-ode_system_size-fcn.nbr_el]);
     }
 
 
@@ -347,7 +353,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
     DBPRINT("init world SIM");
     SIM = malloc(sizeof(world));
-    init_world( SIM, &ics, &fcn );
+    init_world( SIM, &ics, &fcn, &psi );
     /* ode_ic(tspan.array[0],ics.value,&mu); */
 
     /* seed random number generator */
@@ -915,8 +921,16 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                         {
                             if ( strncmp(fcn.attribute[i],"hidden",3) )
                             {
-                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
+                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+total_nbr_x+0.5);
                                 printf_list_str('A',i+eqn.nbr_el,i,padding,&fcn);
+                            }
+                        }
+                        for (i=0; i<psi.nbr_el; i++)
+                        {
+                            if ( strncmp(psi.attribute[i],"hidden",3) )
+                            {
+                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+total_nbr_x+0.5);
+                                printf_list_str('A',i+eqn.nbr_el+fcn.nbr_el,i,padding,&psi);
                             }
                         }
                     }

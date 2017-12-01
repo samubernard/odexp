@@ -35,7 +35,8 @@
 #define POP_SIZE SIM->pop->size
 
 #define THEM(name)                                            \
-    ({ while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_aux;                    \
        }                                                      \
@@ -43,7 +44,8 @@
      })
 
 #define US(name)                                              \
-    ({ while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_aux;                    \
        }                                                      \
