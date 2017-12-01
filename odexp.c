@@ -140,6 +140,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     
     /* sizes */
     size_t total_nbr_x;  /* number of dependent and auxiliary variables */
+    size_t nbr_cols;     /* number of columns written in particle files id.dat */
 
     /* tspan parameters */
     const char      ts_string[] = "TIMESPAN"; 
@@ -157,6 +158,9 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     nve dxv;     /* list of all Dynamical  + auXiliary Variables */
     nve cst;     /* constant arrays */
     nve dfl;     /* data files */
+
+    /* particle */
+    par *pars = (par *)NULL;
 
     /* steady states */
     steady_state    *stst = NULL;
@@ -306,6 +310,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     DBPRINT("define dxv");
     ode_system_size = ics.nbr_el;
     total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el;
+    nbr_cols = 1 + mu.nbr_el + pex.nbr_el + total_nbr_x;
     DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x);
     lastinit = malloc(ode_system_size*sizeof(double));
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr;
@@ -398,8 +403,14 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
-    fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
-        current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
+    fprintf(gnuplot_pipe,\
+      "plot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
+      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+      get_int("pop_current_particle"), nbr_cols, gx, gy,\
+      get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
+      get_int("pop_current_particle"));
+//     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
+//         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
 
     while(1)
@@ -740,6 +751,28 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                     update_plot_options(ngx,ngy,ngz,dxv);
                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                     printf("  y-axis: [%s%d%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
+                    break;    
+                case '}' : /* plot next particle  */
+                    pars = getpar(get_int("pop_current_particle"));
+                    if ( pars == NULL )
+                    {
+                        pars = SIM->pop->end;
+                    }
+                    set_int("pop_current_particle",pars->nextel != NULL ? pars->nextel->id : SIM->pop->start->id);
+                    plotmode_normal=1;
+                    printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
+                            T_IND, get_int("pop_current_particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
+                    break;
+                case '{' : /* plot previous particle  */
+                    pars = getpar(get_int("pop_current_particle"));
+                    if ( pars == NULL )
+                    {
+                        pars = SIM->pop->start;
+                    }
+                    set_int("pop_current_particle",pars->prevel != NULL ? pars->prevel->id : SIM->pop->end->id);
+                    plotmode_normal=1;
+                    printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
+                            T_IND, get_int("pop_current_particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
                     break;    
                 case 'i' : /* run with initial conditions */
                     nbr_read = sscanf(cmdline+1,"%c",&op);
@@ -1529,9 +1562,15 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
               {
                 if ( get_int("freeze") == 0 ) /* normal plot command: 2D, freeze=0, curves=0 */
                 {
-                  fprintf(gnuplot_pipe,\
-                      "plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
-                      current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);    
+                    fprintf(gnuplot_pipe,\
+                      "plot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
+                      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+                      get_int("pop_current_particle"), nbr_cols, gx, gy,\
+                      get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
+                      get_int("pop_current_particle"));
+//                  fprintf(gnuplot_pipe,\
+//                      "plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
+//                      current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);    
                 }
                 else if ( get_int("freeze") )
                 {
@@ -1946,30 +1985,9 @@ int update_plot_index(int *ngx, int *ngy, int *ngz, int *gx, int *gy, int *gz, n
     set_int("plot_x",*ngx);
     set_int("plot_y",*ngy);
     set_int("plot_z",*ngz);
-    if ( *ngx >= 0 ) 
-    {
-        *gx = *ngx+2 + dxv.nbr_el*get_int("pop_current_particle");  
-    }
-    else /* time: index gx stays at 1 */
-    {
-        *gx = *ngx+2;
-    }
-    if ( *ngy >= 0 ) 
-    {
-        *gy = *ngy+2 + dxv.nbr_el*get_int("pop_current_particle");  
-    }
-    else /* time: index gy stays at 1 */
-    {
-        *gy = *ngy+2;
-    }
-    if ( *ngz >= 0 ) 
-    {
-        *gz = *ngz+2 + dxv.nbr_el*get_int("pop_current_particle");  
-    }
-    else /* time: index gz stays at 1 */
-    {
-        *gz = *ngz+2;
-    }
+    *gx = *ngx+2;
+    *gy = *ngy+2;
+    *gz = *ngz+2;
 
     return 1;
     
