@@ -100,4 +100,5 @@ double getv(char *name, par *p);
 par * getpar( size_t with_id );
 
 int fwrite_particle_state(const double *restrict t, par *p, const char *restrict mode);
+int fwrite_SIM(const double *restrict t, char *restrict mode);
 

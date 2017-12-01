@@ -275,6 +275,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
     /* DBPRINT("  after quick file"); */
 
+    /* printf each particle in a binary file pars->buffer */
+    system("rm .odexp/id*.dat");
+    fwrite_SIM(&t, "w");
+
     /* sigaction -- detect Ctrl-C during the simulation  */
     abort_odesolver_flag = 0;
     abort_act.sa_handler = &set_abort_odesolver_flag;
@@ -332,6 +336,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         /* DBPRINT("after fprintf_SIM_y"); */
 
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
+        fwrite_SIM(&t, "a");
 
         if (disc_alert == 1)
         {
@@ -361,6 +366,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
           fprintf(file,"\n");  
 
           fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
+          fwrite_SIM(&t, "a");
           
 
           /* calculating next stop */

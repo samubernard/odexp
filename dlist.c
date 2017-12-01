@@ -122,7 +122,7 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
         p->psi[i]    = 0.0;
     }
 
-    snprintf(p->buffer,MAXFILENAMELENGTH-1,"id%zu.dat",p->id);
+    snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
 
     p->nextel = NULL; /* p is at the end of the list */
     p->prevel = list->end;
@@ -300,4 +300,17 @@ int fwrite_particle_state(const double *restrict t, par *p, const char *restrict
     
     return 0;
 
+}
+
+
+int fwrite_SIM(const double *restrict t, char *restrict mode)
+{
+    par *pars = SIM->pop->start;
+    while ( pars != NULL )
+    {
+        fwrite_particle_state(t, pars, mode);
+        pars = pars->nextel;
+    }
+
+    return 0; 
 }
