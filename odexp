@@ -202,7 +202,7 @@ declare_parametric_expressions () {
 declare_mean_fields () {
     # find mean fields and declare them in .odexp/model.c
     # no vector allowed
-    gawk -F ' ' '$1 ~ /^[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+    gawk -F ' ' '$1 ~ /^%[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       printf "    double %s;\n", $2 
     }' $file >>.odexp/model.c
 }
@@ -299,7 +299,7 @@ define_parametric_expressions () {
 define_mean_fields () {
     # define mean fields and declare them in .odexp/model.c
     # No vectors allowed 
-    gawk -F ' ' -v nv=0 '$1 ~ /^[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+    gawk -F ' ' -v nv=0 '$1 ~ /^%[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       lhs=$2;
       printf "    %s = psi_[%d];\n", lhs, nv; nv++
     }' $file >>.odexp/model.c
@@ -307,7 +307,7 @@ define_mean_fields () {
 
 get_mean_fields () {
     # 
-    gawk -F ' ' -v nv=0 '$1 ~ /^[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+    gawk -F ' ' -v nv=0 '$1 ~ /^%[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
       $1="";
       $2="";
       rhs=$0;

@@ -41,7 +41,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
     {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
     {"popsize","population_size", 'i', 0.0, 1, "", "population size for particle simulations", "population"},
-    {"p/par","pop_current_particle", 'i', 0.0, 0, "", "current particle", "population"},
+    {"p/par","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
     {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steadyStates"},  
     {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steadyStates"},  
     {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steadyStates"},  
@@ -170,8 +170,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     logfr = fopen(logfilename, "w");
     if ( logfr != NULL ) 
     { 
-        fprintf(logfr,"Log file for %s\n", odexp_filename); 
-        fflush(logfr);
+        LOGPRINT("Log file for %s\n", odexp_filename); 
     }
 
     /* begin */
@@ -297,9 +296,9 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
     /* define psi */
     printf("\n%-25s%s\n", "population mean fields", HLINE);
-    get_nbr_el(odefilename,"M",1, &psi.nbr_el, &psi.nbr_expr);
+    get_nbr_el(odefilename,"%M",2, &psi.nbr_el, &psi.nbr_expr);
     alloc_namevalexp(&psi);
-    success = load_strings(odefilename,psi,"M",1,1,' ', exit_if_nofile);
+    success = load_strings(odefilename,psi,"%M",2,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no population mean fields found\n");
