@@ -397,8 +397,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         printf("GSL Error %d occured.\n", status);
     }
 
-    DBPRINT("Fix lasty");
-
     fclose(file);
     fclose(quickfile);
 

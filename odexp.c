@@ -1568,23 +1568,29 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                       get_int("pop_current_particle"), nbr_cols, gx, gy,\
                       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
                       get_int("pop_current_particle"));
-//                  fprintf(gnuplot_pipe,\
-//                      "plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
-//                      current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);    
                 }
                 else if ( get_int("freeze") )
                 {
-                  fprintf(gnuplot_pipe,\
-                      "replot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
-                      current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx); 
+                    fprintf(gnuplot_pipe,\
+                      "replot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
+                      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+                      get_int("pop_current_particle"), nbr_cols, gx, gy,\
+                      get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
+                      get_int("pop_current_particle"));
                 }
               } 
               else /* plot3d == 1 */
               {
                 if ( get_int("freeze") == 0 )
                 {
-                  fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w %s notitle\n",current_data_buffer,gx,gy,gz,\
-                      get_str("plot_with_style"));    
+                    fprintf(gnuplot_pipe,\
+                      "splot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
+                      "with %s title \"(%d)\"\n",\
+                      get_int("pop_current_particle"), nbr_cols, gx, gy, gz,\
+                      get_str("plot_with_style"),\
+                      get_int("pop_current_particle"));
+//                  fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w %s notitle\n",current_data_buffer,gx,gy,gz,\
+//                      get_str("plot_with_style"));    
                 }
                 else
                 {

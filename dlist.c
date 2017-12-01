@@ -290,11 +290,11 @@ int fwrite_particle_state(const double *restrict t, par *p, const char *restrict
     }
 
     fwrite(t,sizeof(double),1,p->fid);
-    fwrite(p->pars,sizeof(double),p->nbr_pars,p->fid);
     fwrite(p->y,sizeof(double),p->nbr_y,p->fid);
-    fwrite(p->expr,sizeof(double),p->nbr_expr,p->fid);
     fwrite(p->aux,sizeof(double),p->nbr_aux,p->fid);
     fwrite(p->psi,sizeof(double),p->nbr_psi,p->fid);
+    fwrite(p->pars,sizeof(double),p->nbr_pars,p->fid);
+    fwrite(p->expr,sizeof(double),p->nbr_expr,p->fid);
 
     fclose(p->fid);
     
