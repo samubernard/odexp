@@ -7,7 +7,6 @@
 #include <readline/history.h>                             
 
 #include "odexp.h"
-#include "rand_gen.h"
 
 /* static variable for holding the command line string */
 static char *rawcmdline = (char *)NULL;

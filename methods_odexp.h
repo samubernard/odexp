@@ -94,3 +94,5 @@ double get_dou(const char *name);
 int    get_int(const char *name);
 char*  get_str(const char *name);
 
+
+double SSA_timestep();
