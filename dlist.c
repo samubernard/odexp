@@ -123,6 +123,8 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
         p->psi[i]    = 0.0;
     }
 
+    snprintf(p->buffer,MAXFILENAMELENGTH-1,"id%zu.dat",p->id);
+
     p->nextel = NULL; /* p is at the end of the list */
     p->prevel = list->end;
     if ( list->size > 0) /* list->end points to a cell */
@@ -139,7 +141,7 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
     return 0;
 }
 
-/* delete element pos from the list */
+/* delete element to_del from the list */
 int delete_el( dlist *list, par *to_del)
 {
 
@@ -226,7 +228,11 @@ void free_world(world *s)
 void printf_particle(par *p)
 {
     size_t i;
-    printf("  id: %zu", p->id);
+    printf("  id: %zu\n", p->id);
+    for (i=0;i<p->nbr_y;i++)
+    {
+        printf("  y[%zu] = %g\n", i, p->y[i]);
+    }
     for (i=0;i<p->nbr_pars;i++)
     {
         printf("  pars[%zu] = %g\n", i, p->pars[i]);
@@ -239,10 +245,11 @@ void printf_particle(par *p)
     {
         printf("  aux[%zu] = %g\n", i, p->aux[i]);
     }
-    for (i=0;i<p->nbr_y;i++)
+    for (i=0;i<p->nbr_psi;i++)
     {
-        printf("  y[%zu] = %g\n", i, p->y[i]);
+        printf("  psi[%zu] = %g\n", i, p->psi[i]);
     }
+
 }
 
 
@@ -264,4 +271,26 @@ par *getpar( size_t with_id )
         pars = pars->nextel;
     }
     return pars;
+}
+
+int fwrite_particle_state(const double *restrict t, par *p, const char *restrict mode)
+{
+    p->fid = fopen(p->buffer, mode);
+
+    if ( p->fid == NULL ) 
+    {
+        return -1;
+    }
+
+    fwrite(t,sizeof(double),1,p->fid);
+    fwrite(p->pars,sizeof(double),p->nbr_pars,p->fid);
+    fwrite(p->y,sizeof(double),p->nbr_y,p->fid);
+    fwrite(p->expr,sizeof(double),p->nbr_expr,p->fid);
+    fwrite(p->aux,sizeof(double),p->nbr_aux,p->fid);
+    fwrite(p->psi,sizeof(double),p->nbr_psi,p->fid);
+
+    fclose(p->fid);
+    
+    return 0;
+
 }

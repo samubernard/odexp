@@ -43,6 +43,9 @@ typedef struct particle_state {
 
     size_t id;
 
+    FILE *fid;
+    char buffer[MAXFILENAMELENGTH];
+
     struct particle_state *nextel;
     struct particle_state *prevel;
 } par;
@@ -96,3 +99,6 @@ void printf_particle(par *p);
 double getv(char *name, par *p);
 
 par *getpar( size_t with_id );
+
+int fwrite_particle_state(const double *restrict t, par *p, const char *restrict mode);
+
