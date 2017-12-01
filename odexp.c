@@ -1589,13 +1589,15 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                       get_int("pop_current_particle"), nbr_cols, gx, gy, gz,\
                       get_str("plot_with_style"),\
                       get_int("pop_current_particle"));
-//                  fprintf(gnuplot_pipe,"splot \"%s\" u %d:%d:%d w %s notitle\n",current_data_buffer,gx,gy,gz,\
-//                      get_str("plot_with_style"));    
                 }
                 else
                 {
-                  fprintf(gnuplot_pipe,"replot \"%s\" u %d:%d:%d w %s notitle\n",current_data_buffer,gx,gy,gz,\
-                      get_str("plot_with_style"));    
+                    fprintf(gnuplot_pipe,\
+                      "replot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
+                      "with %s title \"(%d)\"\n",\
+                      get_int("pop_current_particle"), nbr_cols, gx, gy, gz,\
+                      get_str("plot_with_style"),\
+                      get_int("pop_current_particle"));
                 }
               }
               fflush(gnuplot_pipe);
