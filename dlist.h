@@ -8,8 +8,6 @@
 
 #include "macros.h"
 
-extern size_t MAXID;
-
 typedef struct namevalexp
 {
     char **name;           /* names */
@@ -67,7 +65,8 @@ typedef struct system_state {
     size_t nbr_var;
     size_t nbr_aux;
     size_t nbr_psi;
-    double *pop_stats;
+
+    size_t max_id;
 
 } world;
 
@@ -98,7 +97,7 @@ void printf_particle(par *p);
 
 double getv(char *name, par *p);
 
-par *getpar( size_t with_id );
+par * getpar( size_t with_id );
 
 int fwrite_particle_state(const double *restrict t, par *p, const char *restrict mode);
 

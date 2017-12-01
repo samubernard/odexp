@@ -144,6 +144,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         nextstop = INFINITY; /* set nextstop outside the integration range */
     }
 
+    /* DBPRINT("reset SIM"); */
     /* reset SIM with an empty pop */
     pars = SIM->pop->start;
     while ( pars != NULL )
@@ -152,6 +153,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         delete_el( SIM->pop, pars);
         pars = next_pars;
     }
+    SIM->max_id = 0;
       
     /* check that SIM->pop is empty */
     if ( SIM->pop->size > 0 )
@@ -171,6 +173,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         DBPRINT("pop_size = %zu, SIM->pop->size = %zu - error", pop_size, SIM->pop->size);
     }
 
+    /* DBPRINT("init cond"); */
     /* initial conditions */
     y = malloc(sim_size*sizeof(double));
     f = malloc(sim_size*sizeof(double));
@@ -197,6 +200,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     }
    
     /* open output file */
+    /* DBPRINT("output files"); */
     file = fopen(current_data_buffer,"w");
     quickfile = fopen(quick_buffer,"w");
     
@@ -263,7 +267,13 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     ngx = get_int("plot_x");
     ngy = get_int("plot_y");
     ngz = get_int("plot_z");
+    /* DBPRINT("  quick file"); */
+    if ( get_int("pop_current_particle") >= SIM->max_id )
+    {
+        printf("  warning, pop_current_particle is too large\n");
+    }
     fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
+    /* DBPRINT("  after quick file"); */
 
     /* sigaction -- detect Ctrl-C during the simulation  */
     abort_odesolver_flag = 0;
@@ -282,6 +292,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
     e = gsl_odeiv2_evolve_alloc(sim_size);
 
+    /* DBPRINT("main loop"); */
     /* ODE solver - main loop */
     while (t < t1 && !abort_odesolver_flag)
     {
@@ -316,6 +327,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         /* TODO update history */
 
         /* DBPRINT("before fprintf_SIM_y"); */
+        update_SIM_y(y);
         fprintf_SIM_y(file, t, y);
         /* DBPRINT("after fprintf_SIM_y"); */
 
@@ -380,17 +392,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     }
 
     DBPRINT("Fix lasty");
-    pars = SIM->pop->start;
-    j = 0;
-    while ( pars != NULL )
-    {
-        for (i = 0; i < SIM->nbr_var; i++)
-        {
-            pars->y[i] = y[i+j]; 
-        }   
-        pars = pars->nextel;
-        j += SIM->nbr_var;
-    }
 
     fclose(file);
     fclose(quickfile);
@@ -1239,7 +1240,14 @@ int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, con
 {
     int cp = get_int("pop_current_particle");
     size_t tx = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
-    par *pars = getpar((size_t)cp);
+    par *pars = (par *)NULL;
+    pars = getpar((size_t)cp);
+    if ( pars == NULL )
+    {
+        fprintf(stderr,"  %serror: pop_current_particle %d could not be found %s, in %s, %s, %d\n",\
+                T_ERR,cp,T_NOR, __FILE__, __FUNCTION__, __LINE__);
+        return -1;
+    }
     if ( ngx == -1 )
     {
         fwrite(&t,sizeof(double),1,quickfile);
@@ -1295,6 +1303,20 @@ int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, con
 }
 
 
+void update_SIM_y(const double *y)
+{
+    par *pars = SIM->pop->start;
+    size_t i,j = 0;
+    while ( pars != NULL )
+    {
+        for (i = 0; i < SIM->nbr_var; i++)
+        {
+            pars->y[i] = y[i+j]; 
+        }   
+        pars = pars->nextel;
+        j += SIM->nbr_var;
+    }
+}
 
 void fprintf_SIM_y(FILE *file, double t, double *y)
 {

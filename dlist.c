@@ -9,9 +9,6 @@
 
 #include "dlist.h"
 
-
-size_t MAXID = 0;
-
 void alloc_namevalexp( nve *var )
 {
     size_t i;
@@ -80,7 +77,9 @@ void init_world( world *s, nve *ics, nve *fcn, nve *psi )
         s->psinames[i] = malloc(NAMELENGTH*sizeof(char));
         strncpy(s->psinames[i],psi->name[i],NAMELENGTH-1);
     }
-    s->pop_stats = NULL;
+
+    s->max_id = 0;
+
     s->pop = malloc(sizeof(dlist));
     init_dlist(s->pop);
 }
@@ -100,7 +99,7 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
     p->aux      = malloc(p->nbr_aux*sizeof(double));
     p->y        = malloc(p->nbr_y*sizeof(double));
     p->psi      = malloc(p->nbr_psi*sizeof(double));
-    p->id       = MAXID++;
+    p->id       = SIM->max_id++;
 
     for (i=0;i<p->nbr_pars;i++)
     {
@@ -220,7 +219,6 @@ void free_world(world *s)
     free(s->varnames);
     free(s->auxnames);
     free(s->psinames);
-    free(s->pop_stats);
     free(s);
 }
 
@@ -263,14 +261,23 @@ double getv(char *name, par *p)
     return p->aux[index];                              
 }
 
-par *getpar( size_t with_id )
+par * getpar( size_t with_id )
 {
     par *pars = SIM->pop->start;
-    while ( (pars->id != with_id) && (pars != NULL) )
+    while ( pars != NULL )
     {
+        if ( pars->id == with_id )
+            break;
         pars = pars->nextel;
     }
-    return pars;
+    if ( pars == NULL )
+    {
+        return (par *)NULL;
+    }
+    else
+    {
+        return pars;
+    }
 }
 
 int fwrite_particle_state(const double *restrict t, par *p, const char *restrict mode)
