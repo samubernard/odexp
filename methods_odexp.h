@@ -72,7 +72,7 @@ int eig(gsl_matrix *J, steady_state *stst);
 
 int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double eps_abs, gsl_matrix *J, void *params);
 
-int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, const double t, const double *y, const double *a);
+int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, const double t, const double *y);
 
 /* print */
 void fprintf_SIM_y(FILE *file, double t, double *y);

@@ -256,3 +256,12 @@ double getv(char *name, par *p)
     return p->aux[index];                              
 }
 
+par *getpar( size_t with_id )
+{
+    par *pars = SIM->pop->start;
+    while ( (pars->id != with_id) && (pars != NULL) )
+    {
+        pars = pars->nextel;
+    }
+    return pars;
+}

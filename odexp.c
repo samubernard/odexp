@@ -1944,9 +1944,30 @@ int update_plot_index(int *ngx, int *ngy, int *ngz, int *gx, int *gy, int *gz, n
     set_int("plot_x",*ngx);
     set_int("plot_y",*ngy);
     set_int("plot_z",*ngz);
-    *gx = *ngx+2; 
-    *gy = *ngy+2 + dxv.nbr_el*get_int("pop_current_particle"); 
-    *gz = *ngz+2 + dxv.nbr_el*get_int("pop_current_particle");
+    if ( *ngx >= 0 ) 
+    {
+        *gx = *ngx+2 + dxv.nbr_el*get_int("pop_current_particle");  
+    }
+    else /* time: index gx stays at 1 */
+    {
+        *gx = *ngx+2;
+    }
+    if ( *ngy >= 0 ) 
+    {
+        *gy = *ngy+2 + dxv.nbr_el*get_int("pop_current_particle");  
+    }
+    else /* time: index gy stays at 1 */
+    {
+        *gy = *ngy+2;
+    }
+    if ( *ngz >= 0 ) 
+    {
+        *gz = *ngz+2 + dxv.nbr_el*get_int("pop_current_particle");  
+    }
+    else /* time: index gz stays at 1 */
+    {
+        *gz = *ngz+2;
+    }
 
     return 1;
     

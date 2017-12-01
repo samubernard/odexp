@@ -263,7 +263,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     ngx = get_int("plot_x");
     ngy = get_int("plot_y");
     ngz = get_int("plot_z");
-    fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu->aux_pointer);
+    fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
 
     /* sigaction -- detect Ctrl-C during the simulation  */
     abort_odesolver_flag = 0;
@@ -319,7 +319,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         fprintf_SIM_y(file, t, y);
         /* DBPRINT("after fprintf_SIM_y"); */
 
-        fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu->aux_pointer);
+        fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
 
         if (disc_alert == 1)
         {
@@ -348,7 +348,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
           }
           fprintf(file,"\n");  
 
-          fwrite_quick(quickfile,ngx,ngy,ngz,t,y,mu->aux_pointer);
+          fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
           
 
           /* calculating next stop */
@@ -1235,49 +1235,63 @@ static int compare (void const *a, void const *b)
 }
 
 
-int fwrite_quick(FILE *quickfile,const long ngx,const long ngy, const long ngz, const double t, const double *y, const double *a)
+int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, const double t, const double *y)
 {
+    int cp = get_int("pop_current_particle");
+    size_t tx = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
+    par *pars = getpar((size_t)cp);
     if ( ngx == -1 )
     {
         fwrite(&t,sizeof(double),1,quickfile);
     }    
-    else if ( ngx < ode_system_size)
+    else if ( ngx < SIM->nbr_var)
     {
-        fwrite(y+ngx,sizeof(double),1,quickfile);
+        fwrite(y+cp*tx+ngx,sizeof(double),1,quickfile);
+    }
+    else if ( ngx < (SIM->nbr_var + SIM->nbr_aux) )
+    { 
+        fwrite(pars->aux + ngx - SIM->nbr_var,sizeof(double),1,quickfile);
     }
     else
     { 
-        fwrite(a+ngx-ode_system_size,sizeof(double),1,quickfile);
+        fwrite(pars->psi + ngx - SIM->nbr_var - SIM->nbr_aux,sizeof(double),1,quickfile);
     }
+
     if ( ngy == -1 )
     {
         fwrite(&t,sizeof(double),1,quickfile);
     }    
-    else if ( ngy < ode_system_size)
+    else if ( ngy < SIM->nbr_var)
     {
-        fwrite(y+ngy,sizeof(double),1,quickfile);
+        fwrite(y+cp*tx+ngy,sizeof(double),1,quickfile);
+    }
+    else if ( ngy < (SIM->nbr_var + SIM->nbr_aux) )
+    { 
+        fwrite(pars->aux + ngy - SIM->nbr_var,sizeof(double),1,quickfile);
     }
     else
     { 
-        fwrite(a+ngy-ode_system_size,sizeof(double),1,quickfile);
+        fwrite(pars->psi + ngy - SIM->nbr_var - SIM->nbr_aux,sizeof(double),1,quickfile);
     }
-    if ( ngx == -1 )
+
+    if ( ngz == -1 )
     {
         fwrite(&t,sizeof(double),1,quickfile);
     }    
-    else if ( ngz < ode_system_size)
+    else if ( ngz < SIM->nbr_var)
     {
-        fwrite(y+ngz,sizeof(double),1,quickfile);
+        fwrite(y+cp*tx+ngz,sizeof(double),1,quickfile);
+    }
+    else if ( ngz < (SIM->nbr_var + SIM->nbr_aux) )
+    { 
+        fwrite(pars->aux + ngz - SIM->nbr_var,sizeof(double),1,quickfile);
     }
     else
     { 
-        fwrite(a+ngz-ode_system_size,sizeof(double),1,quickfile);
+        fwrite(pars->psi + ngz - SIM->nbr_var - SIM->nbr_aux,sizeof(double),1,quickfile);
     }
 
-
-
-
-    return 1;
+    return 0;
 }
 
 

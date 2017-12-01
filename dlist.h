@@ -94,3 +94,5 @@ void free_world(world *s);
 void printf_particle(par *p);
 
 double getv(char *name, par *p);
+
+par *getpar( size_t with_id );
