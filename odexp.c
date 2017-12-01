@@ -1013,11 +1013,13 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                         printf("  File name: %s%s%s\n",T_EXPR,odexp_filename,T_NOR);
                         printf("  ODE system size               = %s%zu%s\n",T_VAL,ode_system_size,T_NOR);
                         printf("  Number of auxiliary functions = %s%zu%s\n",T_VAL,fcn.nbr_el,T_NOR);
+                        printf("  Number of mean fields         = %s%zu%s\n",T_VAL,psi.nbr_el,T_NOR);
                         printf("  Total number of variables     = %s%zu%s\n",T_VAL,total_nbr_x,T_NOR);
                         printf("  Number of parameters          = %s%zu%s\n",T_VAL,mu.nbr_el,T_NOR);
                         printf("  Number of parametric expr     = %s%zu%s\n",T_VAL,pex.nbr_expr,T_NOR);
                         printf("  Number of constants           = %s%zu%s\n",T_VAL,cst.nbr_el,T_NOR);
                         printf("  Number of data files          = %s%zu%s\n",T_VAL,dfl.nbr_el,T_NOR);
+                        printf("  Number of columns in id.dat   = %s%zu%s\n",T_VAL,1+mu.nbr_el+total_nbr_x+pex.nbr_el,T_NOR);
                     }
                     else
                     {
