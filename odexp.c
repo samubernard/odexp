@@ -1051,6 +1051,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
                         printf("  Number of constants           = %s%zu%s\n",T_VAL,cst.nbr_el,T_NOR);
                         printf("  Number of data files          = %s%zu%s\n",T_VAL,dfl.nbr_el,T_NOR);
                         printf("  Number of columns in id.dat   = %s%zu%s\n",T_VAL,1+mu.nbr_el+total_nbr_x+pex.nbr_el,T_NOR);
+                        printf("  Particle population size      = %s%zu%s\n",T_VAL,POP_SIZE,T_NOR);
                     }
                     else
                     {
