@@ -39,6 +39,9 @@ typedef struct particle_state {
     double *psi;
     size_t nbr_psi;
 
+    double death_rate;
+    double repli_rate;
+
     size_t id;
 
     FILE *fid;
@@ -67,6 +70,8 @@ typedef struct system_state {
     size_t nbr_psi;
 
     size_t max_id;
+
+    double pop_birth_rate;
 
 } world;
 

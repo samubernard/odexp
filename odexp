@@ -677,6 +677,7 @@ echo "        i++;" >>.odexp/model.c
 echo "        p_ = p_->nextel;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
 echo "" >>.odexp/model.c
+gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "    SIM->pop_birth_rate = %s;\n", $0}' $file >>.odexp/model.c
 echo "    return GSL_SUCCESS;" >>.odexp/model.c
 echo "}" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -807,6 +808,16 @@ define_equations
 echo "" >>.odexp/model.c
 echo "    /* initialization - aux_pointer */" >>.odexp/model.c
 define_aux_pointer
+
+# DEFINE death_ 
+echo "" >>.odexp/model.c
+echo "    /* initialization -  particle death */" >>.odexp/model.c
+gawk -F ' ' '$1 ~ /^%[dD][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->death_rate = %s;\n", $0}' $file >>.odexp/model.c
+
+# DEFINE repli_ 
+echo "" >>.odexp/model.c
+echo "    /* initialization -  particle replication */" >>.odexp/model.c
+gawk -F ' ' '$1 ~ /^%[rR][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->repli_rate = %s;\n", $0}' $file >>.odexp/model.c
 
 # DEFINE parametric_expression_pointer 
 # echo "" >>.odexp/model.c

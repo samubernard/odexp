@@ -122,7 +122,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
             file_status;
 
     /* modes */
-    int     replot                = 0, /* gnuplot replot */
+    int     not_run               = 0, /* do not run initially if = 1 */
+            replot                = 0, /* gnuplot replot */
             rerun                 = 0, /* run a new ODE simulation */
             plot3d                = 0,
             data_plotted          = 0,
@@ -396,8 +397,10 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
 
     /* first run after system init */
     LOGPRINT("System init done. Running first simulation");
-    status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
-
+    if ( not_run == 0 )
+    {    
+        status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
+    }
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);

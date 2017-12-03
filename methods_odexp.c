@@ -61,8 +61,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     struct sigaction abort_act;
     int hmin_alert              = 0,
         bd_alert                = 0,
-        bd_reset                = 1,
-        bd_tokill               = 0,
         disc_alert              = 0,
         abort_odesolver_alert   = 0;
     int nbr_out = get_int("odesolver_output_resolution");
@@ -179,12 +177,13 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         DBPRINT("pop_size = %zu, SIM->pop->size = %zu - error", pop_size, SIM->pop->size);
     }
 
-    /* DBPRINT("init cond"); */
+    /* DBPRINT("init cond");  */
     /* initial conditions */
     y = malloc(sim_size*sizeof(double));
     f = malloc(sim_size*sizeof(double));
     ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
-    ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi  */
+    ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
+    /* DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate); */
     pars = SIM->pop->start;
     j = 0;
     while ( pars != NULL )
@@ -220,11 +219,15 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     }
 
     /* current.tab: fill in the variable/function names */
+    /* DBPRINT("current.tab var/aux names"); */
     fprintf(file,"T");
     pars = SIM->pop->start;
     j = 0;
     while ( pars != NULL )
     {
+        /* DBPRINT(" pars->id = %zu",pars->id); */
+        /* DBPRINT(" SIM->nbr_var = %zu",SIM->nbr_var); */
+        /* DBPRINT(" SIM->varnames[0] = %s",SIM->varnames[0]); */
         for (i = 0; i<SIM->nbr_var; i++)
         {
             fprintf(file,"\t%s(%zu)",SIM->varnames[i], pars->id);
@@ -244,6 +247,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
 
 
     /* current.tab: fill in the initial conditions */
+    /* DBPRINT("current.tab init conds"); */
     fprintf(file,"%g ",t);
     pars = SIM->pop->start;
     while ( pars != NULL )
@@ -302,36 +306,46 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
     e = gsl_odeiv2_evolve_alloc(sim_size);
 
-    /* DBPRINT("main loop"); */
+    DBPRINT("main loop");
     /* ODE solver - main loop */
     while (t < t1 && !abort_odesolver_flag && POP_SIZE > 0)
     {
+        tnext = fmin(t+dt,t1);
+        if ( (t<=nextstop) && (tnext>=nextstop) )
+        {
+            tnext = nextstop;
+            disc_alert = 1;
+            printf("\n  stopping time = %g (t = %g)", nextstop, t);
+            fflush(stdout);
+        }
         /* BIRTH and DEATH 
          * compute the time of the next event 
+         * Time to next event ~ exponential law, without memory
+         *
+         * -|------------|-------|------------------> t
+         *  t0         tnext    bd_next
+         *
+         *  If time to next birth death event is after tnext,
+         *  advance to tnext and redraw bd_next. If time to next birth
+         *  death occurs before tnext, set tnext to bd_next
+         *
+         *  -|------|------------|------------------> t
+         *   t0   bd_next   <-  tnext
+         *
          *
          * bd_nbr_events = 2*POP_SIZE+1;  particles can die, divide, or a new particle can be added 
          * bd_rate = 
+         *
          */
-        tnext = fmin(t+dt,t1);
-        
-        if (  bd_reset == 1 )
-        {
-            bd_dt = SSA_timestep();
-            bd_next = t+bd_dt;
-            bd_reset = 0;
-        }
-        if ( bd_next < nextstop && bd_next < tnext) /* next stop is birth/death */
+        /* DBPRINT("before SSA_timestep"); */
+        bd_dt = SSA_timestep(); /* compute time to next birth/death in all cases */
+        bd_next = t+bd_dt;
+        if ( bd_next < tnext ) /* birth/death will occur */
         {
             tnext = bd_next; 
             bd_alert = 1;
-            printf(" birth/death at ts =%.2e", tnext);
-        }
-        if ( (t<=nextstop) && (tnext>=nextstop) )
-        {
-          tnext = nextstop;
-          disc_alert = 1;
-          printf("\n  stopping time = %g (t = %g)", nextstop, t);
-          fflush(stdout);
+            disc_alert = 0; /* switch off disc_alert */
+            printf("\n  birth/death at %.2e", bd_next);
         }
         
         /* ODE solver - time step */
@@ -360,25 +374,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
 
         if ( bd_alert == 1 )
         {
-            bd_tokill = randIntMax(POP_SIZE);
-            DBPRINT("now only death: killing %d'th part",bd_tokill);
-            pars = SIM->pop->start;
-            i = 0;
-            while ( pars != NULL )
-            {
-                if ( bd_tokill == i )
-                    break;
-                pars = pars->nextel;
-                i++;
-            }
-            if ( pars != NULL )
-            {
-                delete_el(SIM->pop, pars);
-            }   
-            else
-            {
-                DBPRINT("birth/death: couldn't find particle to kill, doing nothing");
-            }
+            DBPRINT("birth/death");
+            apply_birthdeath( mu, pex, fcn, ics, psi );
             y = realloc(y,POP_SIZE*SIM->nbr_var*sizeof(double));
             f = realloc(f,POP_SIZE*SIM->nbr_var*sizeof(double));
             pars = SIM->pop->start;
@@ -414,7 +411,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
             fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
             /* printf each particle in a binary file pars->buffer */
             fwrite_SIM(&t, "a");
-            bd_reset = 1;
             bd_alert = 0;
             gsl_odeiv2_evolve_free(e);
             gsl_odeiv2_step_free(s);
@@ -1332,8 +1328,9 @@ int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, con
     pars = getpar((size_t)cp);
     if ( pars == NULL )
     {
-        fprintf(stderr,"  %serror: pop_current_particle %d could not be found %s, in %s, %s, %d\n",\
-                T_ERR,cp,T_NOR, __FILE__, __FUNCTION__, __LINE__);
+        /* fprintf(stderr,"  %serror: pop_current_particle %d could not be found %s, in %s, %s, %d\n",\
+                T_ERR,cp,T_NOR, __FILE__, __FUNCTION__, __LINE__); */
+        /* do nothing, silent return--the particle could just be death or not born yet */
         return -1;
     }
     if ( ngx == -1 )
@@ -1702,9 +1699,66 @@ char * get_str(const char *name)
 
 double SSA_timestep()
 {
-    double dt;
-    double r=0.1;
-    dt = exprand((double)POP_SIZE*r);
-
+    double dt = 0.0;
+    double pop_death_rate = 0.;
+    double pop_repli_rate = 0.;
+    double pop_birth_rate = SIM->pop_birth_rate;
+    par *pars = SIM->pop->start;
+    while ( pars != NULL )
+    {
+        pop_death_rate += pars->death_rate;
+        pop_repli_rate += pars->repli_rate;
+        pars = pars->nextel;
+    }
+    /* DBPRINT("pop_death_rate = %g, pop_repli_rate = %g, pop_birth_rate = %g",pop_death_rate,pop_repli_rate,pop_birth_rate); */
+    dt = exprand((double)POP_SIZE*(pop_death_rate + pop_repli_rate + pop_birth_rate));
+    /* DBPRINT("dt = %g", dt); */
     return dt;
+}
+
+
+void apply_birthdeath( nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi )
+{
+    int bd_death = 0;
+    int bd_birth = 0;
+    int bd_tokill = 0;
+    par *pars = (par *)NULL;
+    size_t i;
+
+
+    if ( rand01() < (0.1)/(0.1+0.01) )
+    {
+        bd_death = 1;
+        bd_tokill = randIntMax(POP_SIZE);
+        DBPRINT("death: killing %d'th part",bd_tokill);
+    }
+    else
+    {
+        DBPRINT("birth: adding part");
+        bd_birth = 1;
+    }
+    pars = SIM->pop->start;
+    i = 0;
+    if ( bd_death == 1 )
+    {
+        while ( pars != NULL )
+        {
+            if ( bd_tokill == i )
+                break;
+            pars = pars->nextel;
+            i++;
+        }
+        if ( pars != NULL )
+        {
+            delete_el(SIM->pop, pars);
+        }   
+        else
+        {
+            DBPRINT("birth/death: couldn't find particle to kill, doing nothing");
+        }
+    }
+    else 
+    {
+        insert_endoflist ( SIM->pop, mu, pex, fcn, ics, psi);
+    }
 }
