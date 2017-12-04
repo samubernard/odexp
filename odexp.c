@@ -2518,7 +2518,7 @@ void printf_SIM(size_t i)
         p = p->nextel;
         j++;
     }
-    DBPRINT(" i=%zu, j=%zu",i,j);
+    /* DBPRINT(" i=%zu, j=%zu",i,j); */
     if ( j == i )
     {
         printf("  particle %zu\n", i);

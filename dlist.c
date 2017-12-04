@@ -140,6 +140,62 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
     return 0;
 }
 
+int replicate_endoflist ( dlist *list, par *mother)
+{
+    par *p = malloc(sizeof(par));
+    size_t i;
+    p->nbr_pars = mother->nbr_pars;
+    p->nbr_expr = mother->nbr_expr;
+    p->nbr_aux  = mother->nbr_aux;
+    p->nbr_y    = mother->nbr_y;
+    p->nbr_psi  = mother->nbr_psi;
+    p->pars     = malloc(p->nbr_pars*sizeof(double));
+    p->expr     = malloc(p->nbr_expr*sizeof(double));
+    p->aux      = malloc(p->nbr_aux*sizeof(double));
+    p->y        = malloc(p->nbr_y*sizeof(double));
+    p->psi      = malloc(p->nbr_psi*sizeof(double));
+    p->id       = SIM->max_id++;
+
+    for (i=0;i<p->nbr_pars;i++)
+    {
+        p->pars[i] = mother->pars[i];
+    }
+    for (i=0;i<p->nbr_expr;i++)
+    {
+        p->expr[i] = mother->expr[i];
+    }
+    for (i=0;i<p->nbr_aux;i++)
+    {
+        p->aux[i]  = mother->aux[i];
+    }
+    for (i=0;i<p->nbr_y;i++)
+    {
+        p->y[i]    = mother->y[i];
+    }
+    for (i=0;i<p->nbr_psi;i++)
+    {
+        p->psi[i]  = mother->psi[i]; 
+    }
+
+    snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
+
+    p->nextel = NULL; /* p is at the end of the list */
+    p->prevel = list->end;
+    if ( list->size > 0) /* list->end points to a cell */
+    {
+      list->end->nextel = p;
+    }
+    else /* there are no cells in the list, list->end points to NULL */ 
+    {
+      list->start = p;
+    }
+    list->end = p;
+    list->size++;
+
+    return 0;
+}
+
+
 /* delete element to_del from the list */
 int delete_el( dlist *list, par *to_del)
 {
@@ -229,11 +285,11 @@ void printf_particle(par *p)
     printf("  id: %zu\n", p->id);
     for (i=0;i<p->nbr_y;i++)
     {
-        printf("  y[%zu] = %g\n", i, p->y[i]);
+        printf("  %s = %g\n", SIM->varnames[i], p->y[i]);
     }
     for (i=0;i<p->nbr_pars;i++)
     {
-        printf("  pars[%zu] = %g\n", i, p->pars[i]);
+        printf("  par[%zu] = %g\n", i, p->pars[i]);
     }
     for (i=0;i<p->nbr_expr;i++)
     {
@@ -241,11 +297,11 @@ void printf_particle(par *p)
     }
     for (i=0;i<p->nbr_aux;i++)
     {
-        printf("  aux[%zu] = %g\n", i, p->aux[i]);
+        printf("  %s = %g\n", SIM->auxnames[i], p->aux[i]);
     }
     for (i=0;i<p->nbr_psi;i++)
     {
-        printf("  psi[%zu] = %g\n", i, p->psi[i]);
+        printf("  %s = %g\n", SIM->psinames[i], p->psi[i]);
     }
     printf("  death_rate = %g\n", p->death_rate);
     printf("  repli_rate = %g\n", p->repli_rate);

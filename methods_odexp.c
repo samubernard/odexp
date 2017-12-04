@@ -306,7 +306,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
     e = gsl_odeiv2_evolve_alloc(sim_size);
 
-    DBPRINT("main loop");
+    /* DBPRINT("main loop"); */
     /* ODE solver - main loop */
     while (t < t1 && !abort_odesolver_flag && POP_SIZE > 0)
     {
@@ -345,7 +345,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
             tnext = bd_next; 
             bd_alert = 1;
             disc_alert = 0; /* switch off disc_alert */
-            printf("\n  birth/death at %.2e", bd_next);
+            /* printf("\n  birth/death at %.2e", bd_next); */
         }
         
         /* ODE solver - time step */
@@ -374,7 +374,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
 
         if ( bd_alert == 1 )
         {
-            DBPRINT("birth/death");
+            /* DBPRINT("birth/death"); */
             apply_birthdeath(t, single_ic, mu, pex, fcn, ics, psi ); /* delete or insert particle 
                                                          * ! p->expr and p->y are not correctly 
                                                          * initialized. 
@@ -1719,8 +1719,8 @@ double SSA_timestep()
         pars = pars->nextel;
     }
     /* DBPRINT("pop_death_rate = %g, pop_repli_rate = %g, pop_birth_rate = %g",pop_death_rate,pop_repli_rate,pop_birth_rate); */
-    dt = exprand((double)POP_SIZE*r);
-    DBPRINT("dt = %g (r = %g)", dt,(double)POP_SIZE*r );
+    dt = exprand(r);
+    /* DBPRINT("dt = %g (r = %g)", dt,r); */
     return dt;
 }
 
@@ -1788,12 +1788,14 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
         {
             if ( die && (choose_pars == i) )
             {
-                DBPRINT("death: killing %zu'th part",choose_pars);
+                /* DBPRINT("death: killing %zu'th part",choose_pars); */
                 delete_el(SIM->pop, pars);
             }
             else if ( repli && (choose_pars == i) )
             {
-                DBPRINT("repli: adding part doing nothin' at the moment");
+                DBPRINT("repli: adding particle");
+                replicate_endoflist(SIM->pop, pars);
+                single_ic(t, SIM->pop->end->y, SIM->pop->end);
             }
             pars = pars->nextel;
             i++;

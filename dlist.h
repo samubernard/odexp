@@ -88,6 +88,7 @@ void init_world( world *s, nve *ics, nve *fcn, nve *psi );
 
 /* insert at the end of the list */
 int insert_endoflist ( dlist *, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi);
+int replicate_endoflist ( dlist *, par *pars);
 
 /* delete element pos from the list */
 int delete_el( dlist *list, par *to_del);
