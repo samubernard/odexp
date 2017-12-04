@@ -247,7 +247,8 @@ void printf_particle(par *p)
     {
         printf("  psi[%zu] = %g\n", i, p->psi[i]);
     }
-
+    printf("  death_rate = %g\n", p->death_rate);
+    printf("  repli_rate = %g\n", p->repli_rate);
 }
 
 

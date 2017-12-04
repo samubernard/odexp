@@ -375,12 +375,16 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         if ( bd_alert == 1 )
         {
             DBPRINT("birth/death");
-            apply_birthdeath( mu, pex, fcn, ics, psi );
+            apply_birthdeath( mu, pex, fcn, ics, psi ); /* delete or insert particle 
+                                                         * ! p->expr are not correctly 
+                                                         * initialized. 
+                                                         * TODO
+                                                         */
             y = realloc(y,POP_SIZE*SIM->nbr_var*sizeof(double));
             f = realloc(f,POP_SIZE*SIM->nbr_var*sizeof(double));
             pars = SIM->pop->start;
             j = 0;
-            while ( pars != NULL )
+            while ( pars != NULL )   /* fill in the new y from existing state */
             {
                 for (i = 0; i < SIM->nbr_var; i++)
                 {
@@ -389,6 +393,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
                 pars = pars->nextel;
                 j += ode_system_size;
             }
+            ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
+            ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
             fprintf(file,"%g ",t);
             pars = SIM->pop->start;
             while ( pars != NULL )
@@ -1700,65 +1706,118 @@ char * get_str(const char *name)
 double SSA_timestep()
 {
     double dt = 0.0;
-    double pop_death_rate = 0.;
-    double pop_repli_rate = 0.;
-    double pop_birth_rate = SIM->pop_birth_rate;
+    double r  = SIM->pop_birth_rate;
     par *pars = SIM->pop->start;
     while ( pars != NULL )
     {
-        pop_death_rate += pars->death_rate;
-        pop_repli_rate += pars->repli_rate;
+        r += pars->death_rate;
+        r += pars->repli_rate;
         pars = pars->nextel;
     }
     /* DBPRINT("pop_death_rate = %g, pop_repli_rate = %g, pop_birth_rate = %g",pop_death_rate,pop_repli_rate,pop_birth_rate); */
-    dt = exprand((double)POP_SIZE*(pop_death_rate + pop_repli_rate + pop_birth_rate));
-    /* DBPRINT("dt = %g", dt); */
+    dt = exprand((double)POP_SIZE*r);
+    DBPRINT("dt = %g (r = %g)", dt,(double)POP_SIZE*r );
     return dt;
 }
 
 
 void apply_birthdeath( nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi )
 {
-    int bd_death = 0;
-    int bd_birth = 0;
-    int bd_tokill = 0;
     par *pars = (par *)NULL;
     size_t i;
 
+    double *r,
+			sumr = 0.0,
+			choose_event;
+    size_t  event_index = 0,
+            choose_pars;
+	int die = 0, repli = 0, birth = 0;
 
-    if ( rand01() < (0.1)/(0.1+0.01) )
-    {
-        bd_death = 1;
-        bd_tokill = randIntMax(POP_SIZE);
-        DBPRINT("death: killing %d'th part",bd_tokill);
-    }
-    else
-    {
-        DBPRINT("birth: adding part");
-        bd_birth = 1;
-    }
+    /* get the rates */
+    r = malloc((2*POP_SIZE+1)*sizeof(double));
     pars = SIM->pop->start;
     i = 0;
-    if ( bd_death == 1 )
+    while ( pars != NULL )
     {
+        r[i] = pars->death_rate;
+        r[i+POP_SIZE] = pars->repli_rate;
+        pars = pars->nextel;
+        i++;
+    }
+    r[2*POP_SIZE] = SIM->pop_birth_rate;
+	
+	/* cumsum and normalize r */
+	ncumsum(r,(2*POP_SIZE+1),&sumr);
+
+	/* choose wich event takes place */
+	choose_event = rand01();
+    while(choose_event>r[event_index])
+    {
+        event_index++; /* index of the event.
+                        * death: 0 to POP_SIZE-1
+                        * repli: POP_SIZE-2*POP_SIZE-1
+                        * birth: POP_SIZE
+                        */
+    }
+
+    if(event_index < POP_SIZE) /* a particle dies */
+    {
+        choose_pars = event_index; /* will kill the choose_pars'th particle */
+        die = 1;
+    }
+    else if(event_index < 2*POP_SIZE) /* a particle replicates */
+    {
+        choose_pars = event_index - POP_SIZE; /* will replicate the choose_pars'th cell */
+        repli = 1;
+    }
+    else /* a particle is produced from scratch */
+    {
+        birth = 1;
+        choose_pars = 2*POP_SIZE;
+    }
+
+    if ( die || repli )
+    {
+        pars = SIM->pop->start;
+        i = 0;
         while ( pars != NULL )
         {
-            if ( bd_tokill == i )
-                break;
+            if ( die && (choose_pars == i) )
+            {
+                DBPRINT("death: killing %zu'th part",choose_pars);
+                delete_el(SIM->pop, pars);
+            }
+            else if ( repli && (choose_pars == i) )
+            {
+                DBPRINT("repli: adding part doing nothin' at the moment");
+            }
             pars = pars->nextel;
             i++;
         }
-        if ( pars != NULL )
-        {
-            delete_el(SIM->pop, pars);
-        }   
-        else
-        {
-            DBPRINT("birth/death: couldn't find particle to kill, doing nothing");
-        }
+
     }
-    else 
+	else /* birth */
+	{
+        DBPRINT("birth");
+        insert_endoflist(SIM->pop,mu,pex,fcn,ics,psi);
+	}
+
+    free(r);
+
+}
+
+
+int ncumsum(double *x, size_t len, double *sumx)
+{
+    size_t i;
+    for( i=1; i<len; i++)
     {
-        insert_endoflist ( SIM->pop, mu, pex, fcn, ics, psi);
+        x[i] += x[i-1];
     }
+    *sumx = x[len-1];
+    for( i=0; i<len; i++)
+    {
+        x[i] /= x[len-1];
+    }
+    return 0;
 }

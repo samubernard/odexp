@@ -97,3 +97,4 @@ char*  get_str(const char *name);
 /* birth/death */
 double SSA_timestep();
 void apply_birthdeath( nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi );
+int ncumsum(double *x, size_t len, double *sumx);
