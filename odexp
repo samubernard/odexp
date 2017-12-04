@@ -311,7 +311,7 @@ get_mean_fields () {
       $1="";
       $2="";
       rhs=$0;
-      printf "            p_->psi[%d] += %s;\n", nv, rhs; nv++
+      printf "            myself_->psi[%d] += %s;\n", nv, rhs; nv++
     }' $file >>.odexp/model.c
 }
 
@@ -649,22 +649,22 @@ echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop
 echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    size_t i = 0, j;" >>.odexp/model.c
-echo "    par *p_ = SIM->pop->start;" >>.odexp/model.c
+echo "    par *myself_ = SIM->pop->start;" >>.odexp/model.c
 echo "    par *other_ = (par *)NULL;" >>.odexp/model.c
-echo "    while ( p_ != NULL )" >>.odexp/model.c
+echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        ode_rhs(t, y+i*p_->nbr_y, f+i*p_->nbr_y, p_); /* first update p_->aux  */" >>.odexp/model.c
+echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux  */" >>.odexp/model.c
 echo "        i++;" >>.odexp/model.c
-echo "        p_ = p_->nextel;" >>.odexp/model.c
+echo "        myself_ = myself_->nextel;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
-echo "    p_ = SIM->pop->start;" >>.odexp/model.c
+echo "    myself_ = SIM->pop->start;" >>.odexp/model.c
 echo "    i = 0;" >>.odexp/model.c
-echo "    while ( p_ != NULL )" >>.odexp/model.c
+echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
 echo "        /* update mean fields */" >>.odexp/model.c
-echo "        for(j=0;j<p_->nbr_psi;j++)" >>.odexp/model.c
+echo "        for(j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
-echo "            p_->psi[j] = 0.0;" >>.odexp/model.c
+echo "            myself_->psi[j] = 0.0;" >>.odexp/model.c
 echo "        }" >>.odexp/model.c
 echo "        other_ = SIM->pop->start;" >>.odexp/model.c
 echo "        while ( other_ != NULL )" >>.odexp/model.c
@@ -672,9 +672,9 @@ echo "        {" >>.odexp/model.c
 get_mean_fields
 echo "            other_ = other_->nextel;" >>.odexp/model.c
 echo "        }" >>.odexp/model.c
-echo "        ode_rhs(t, y+i*p_->nbr_y, f+i*p_->nbr_y, p_);" >>.odexp/model.c
+echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);" >>.odexp/model.c
 echo "        i++;" >>.odexp/model.c
-echo "        p_ = p_->nextel;" >>.odexp/model.c
+echo "        myself_ = myself_->nextel;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
 echo "" >>.odexp/model.c
 gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "    SIM->pop_birth_rate = %s;\n", $0}' $file >>.odexp/model.c
@@ -690,16 +690,16 @@ echo "/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is 
 echo "int pop_init_conditions(const double t, double y[], void *params)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    size_t i = 0, j;" >>.odexp/model.c
-echo "    par *p_ = SIM->pop->start;" >>.odexp/model.c
-echo "    while ( p_ != NULL )" >>.odexp/model.c
+echo "    par *myself_ = SIM->pop->start;" >>.odexp/model.c
+echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        ode_init_conditions(t, y+i*p_->nbr_y, p_);" >>.odexp/model.c
-echo "        for(j=0;j<p_->nbr_y;j++)" >>.odexp/model.c
+echo "        ode_init_conditions(t, y+i*myself_->nbr_y, myself_);" >>.odexp/model.c
+echo "        for(j=0;j<myself_->nbr_y;j++)" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
-echo "            p_->y[j] = *(y+i*p_->nbr_y);" >>.odexp/model.c
+echo "            myself_->y[j] = *(y+i*myself_->nbr_y);" >>.odexp/model.c
 echo "        }" >>.odexp/model.c
 echo "        i++;" >>.odexp/model.c
-echo "        p_ = p_->nextel;" >>.odexp/model.c
+echo "        myself_ = myself_->nextel;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "    return GSL_SUCCESS;" >>.odexp/model.c
@@ -806,22 +806,22 @@ define_equations
 
 # DEFINE aux_pointer 
 echo "" >>.odexp/model.c
-echo "    /* initialization - aux_pointer */" >>.odexp/model.c
+echo "    /* Initialization - aux_ */" >>.odexp/model.c
 define_aux_pointer
 
 # DEFINE death_ 
 echo "" >>.odexp/model.c
-echo "    /* initialization -  particle death */" >>.odexp/model.c
+echo "    /* Initialization -  particle death */" >>.odexp/model.c
 gawk -F ' ' '$1 ~ /^%[dD][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->death_rate = %s;\n", $0}' $file >>.odexp/model.c
 
 # DEFINE repli_ 
 echo "" >>.odexp/model.c
-echo "    /* initialization -  particle replication */" >>.odexp/model.c
+echo "    /* Initialization -  particle replication */" >>.odexp/model.c
 gawk -F ' ' '$1 ~ /^%[rR][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->repli_rate = %s;\n", $0}' $file >>.odexp/model.c
 
 # DEFINE parametric_expression_pointer 
 # echo "" >>.odexp/model.c
-# echo "    /* initialization - expr_pointer */" >>.odexp/model.c
+# echo "    /* Initialization - expr_ */" >>.odexp/model.c
 # define_parametric_expression_pointer
 
 # ====================================================================================

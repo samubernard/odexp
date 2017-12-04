@@ -1793,7 +1793,7 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
             }
             else if ( repli && (choose_pars == i) )
             {
-                DBPRINT("repli: adding particle");
+                /* DBPRINT("repli: adding particle"); */
                 replicate_endoflist(SIM->pop, pars);
                 single_ic(t, SIM->pop->end->y, SIM->pop->end);
             }
@@ -1804,7 +1804,7 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
     }
 	else /* birth */
 	{
-        DBPRINT("birth");
+        /* DBPRINT("birth"); */
         insert_endoflist(SIM->pop,mu,pex,fcn,ics,psi);
         /* TODO: initialize pop->expr and pop->y for the new particle only */
         single_ic(t, SIM->pop->end->y, SIM->pop->end);
