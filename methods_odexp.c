@@ -37,7 +37,7 @@ static void set_abort_odesolver_flag(int sig)
     abort_odesolver_flag = 1;
 }
 
-int odesolver( oderhs ode_rhs, odeic ode_ic,\
+int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
  nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan, FILE *gnuplot_pipe)
 {
     /* time */
@@ -375,8 +375,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
         if ( bd_alert == 1 )
         {
             DBPRINT("birth/death");
-            apply_birthdeath( mu, pex, fcn, ics, psi ); /* delete or insert particle 
-                                                         * ! p->expr are not correctly 
+            apply_birthdeath(t, single_ic, mu, pex, fcn, ics, psi ); /* delete or insert particle 
+                                                         * ! p->expr and p->y are not correctly 
                                                          * initialized. 
                                                          * TODO
                                                          */
@@ -393,8 +393,12 @@ int odesolver( oderhs ode_rhs, odeic ode_ic,\
                 pars = pars->nextel;
                 j += ode_system_size;
             }
-            ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
-            ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
+            ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux 
+                                     *              SIM->pop->psi 
+                                     *              SIM->pop->death_rate
+                                     *              SIM->pop->repli_rate 
+                                     *              SIM->pop_birth_rate 
+                                     */
             fprintf(file,"%g ",t);
             pars = SIM->pop->start;
             while ( pars != NULL )
@@ -1721,7 +1725,7 @@ double SSA_timestep()
 }
 
 
-void apply_birthdeath( nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi )
+void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi )
 {
     par *pars = (par *)NULL;
     size_t i;
@@ -1800,6 +1804,8 @@ void apply_birthdeath( nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi )
 	{
         DBPRINT("birth");
         insert_endoflist(SIM->pop,mu,pex,fcn,ics,psi);
+        /* TODO: initialize pop->expr and pop->y for the new particle only */
+        single_ic(t, SIM->pop->end->y, SIM->pop->end);
 	}
 
     free(r);

@@ -64,7 +64,7 @@ size_t ode_system_size;
 /* =================================================================
                              Main Function 
 ================================================================ */
-int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_filename )
+int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, const char *odexp_filename )
 {
 
     /* variable declaration */
@@ -399,7 +399,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
     LOGPRINT("System init done. Running first simulation");
     if ( not_run == 0 )
     {    
-        status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
+        status = odesolver(ode_rhs, ode_ic, single_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
     }
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
@@ -1470,7 +1470,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, rootrhs root_rhs, const char *odexp_fil
             } 
             if (rerun)
             {
-                status = odesolver(ode_rhs, ode_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
+                status = odesolver(ode_rhs, ode_ic, single_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
