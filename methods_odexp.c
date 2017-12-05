@@ -500,7 +500,7 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
         fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,current_data_buffer,T_NOR);
     }
 
-    /* current.tab: fill in the variable/function names MIN MAX */
+    /* fill in the variable/function names MIN MAX */
     fprintf(file,"%s",mu.name[p]);
     for (i = 0; i<ode_system_size; i++)
     {
