@@ -66,9 +66,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     int nbr_out = get_int("odesolver_output_resolution");
 
     /* output files */
-    FILE *file;
     FILE *quickfile;
-    const char current_data_buffer[] = "current.tab";
     const char quick_buffer[] = "current.plot"; 
     int  ngx,
          ngy,
@@ -204,72 +202,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
         j += ode_system_size;
     }
    
-    /* open output file */
-    /* DBPRINT("output files"); */
-    file = fopen(current_data_buffer,"w");
     quickfile = fopen(quick_buffer,"w");
     
-    if( file == NULL )
-    {
-        fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,current_data_buffer,T_NOR);
-    }
-    if( quickfile == NULL )
-    {
-        fprintf(stderr,"  %swarning: could not open binary file %s%s\n", T_ERR,quick_buffer,T_NOR);
-    }
-
-    /* current.tab: fill in the variable/function names */
-    /* DBPRINT("current.tab var/aux names"); */
-    fprintf(file,"T");
-    pars = SIM->pop->start;
-    j = 0;
-    while ( pars != NULL )
-    {
-        /* DBPRINT(" pars->id = %zu",pars->id); */
-        /* DBPRINT(" SIM->nbr_var = %zu",SIM->nbr_var); */
-        /* DBPRINT(" SIM->varnames[0] = %s",SIM->varnames[0]); */
-        for (i = 0; i<SIM->nbr_var; i++)
-        {
-            fprintf(file,"\t%s(%zu)",SIM->varnames[i], pars->id);
-        }
-        for (i = 0; i<SIM->nbr_aux; i++)
-        {
-            fprintf(file,"\t%s(%zu)",SIM->auxnames[i], pars->id);
-        }
-        for (i = 0; i<SIM->nbr_psi; i++)
-        {
-            fprintf(file,"\t%s(%zu)",SIM->psinames[i], pars->id);
-        }
-        pars = pars->nextel;
-        j++;
-    }
-    fprintf(file,"\n");
-
-
-    /* current.tab: fill in the initial conditions */
-    /* DBPRINT("current.tab init conds"); */
-    fprintf(file,"%g ",t);
-    pars = SIM->pop->start;
-    while ( pars != NULL )
-    {
-        for (i = 0; i < SIM->nbr_var; i++)
-        {
-            fprintf (file,"\t%g",pars->y[i]);  
-        }
-        for (i = 0; i < pars->nbr_aux; i++)
-        {
-            fprintf (file,"\t%g", pars->aux[i]);
-        }
-        for (i = 0; i < pars->nbr_psi; i++)
-        {
-            fprintf (file,"\t%g", pars->psi[i]);
-        }
-        pars = pars->nextel;
-    }
-    fprintf(file,"\n");
-
-    /* TODO update history */
-
     /* current.plot binary file with three columns: plot_x, plot_y, plot_z */
     /* use hexdump to see the file content:
      * hexdump -e '"%f " "%f " "%f " "\n"' current.plot
@@ -368,7 +302,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
         }
 
         update_SIM_y(y);
-        fprintf_SIM_y(file, t, y);
+        /* fprintf_SIM_y(file, t, y); */
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
         fwrite_SIM(&t, "a");
 
@@ -399,25 +333,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
                                      *              SIM->pop->repli_rate 
                                      *              SIM->pop_birth_rate 
                                      */
-            fprintf(file,"%g ",t);
-            pars = SIM->pop->start;
-            while ( pars != NULL )
-            {
-                for (i = 0; i < SIM->nbr_var; i++)
-                {
-                    fprintf (file,"\t%g",pars->y[i]);  
-                }
-                for (i = 0; i < pars->nbr_aux; i++)
-                {
-                    fprintf (file,"\t%g", pars->aux[i]);
-                }
-                for (i = 0; i < pars->nbr_psi; i++)
-                {
-                    fprintf (file,"\t%g", pars->psi[i]);
-                }
-                pars = pars->nextel;
-            }
-            fprintf(file,"\n");
             fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
             /* printf each particle in a binary file pars->buffer */
             fwrite_SIM(&t, "a");
@@ -433,30 +348,9 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
           ode_ic(t, y, NULL);
           /* update auxiliary functions */
           ode_rhs(t, y, f, NULL);
-          /* write the new state to file */
-          fprintf(file,"%g ",t);
-          for (i = 0; i < sim_size; i++)
-          {
-              fprintf (file,"\t%g",y[i]); 
-          }
-          pars = SIM->pop->start;
-          while ( pars != NULL )
-          {
-              for (i = 0; i < pars->nbr_aux; i++)
-              {
-                  fprintf (file,"\t%g", pars->aux[i]);
-              }
-              for (i = 0; i < pars->nbr_psi; i++)
-              {
-                  fprintf (file,"\t%g", pars->psi[i]);
-              }
-              pars = pars->nextel;
-          }
-          fprintf(file,"\n");  
 
           fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
           fwrite_SIM(&t, "a");
-          
 
           /* calculating next stop */
           nextstop = tstops[idx_stop];
@@ -487,7 +381,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
         printf("GSL Error %d occured.\n", status);
     }
 
-    fclose(file);
     fclose(quickfile);
 
     gsl_odeiv2_evolve_free(e);
