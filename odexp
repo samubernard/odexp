@@ -199,10 +199,10 @@ declare_parametric_expressions () {
       {printf ";\n"} }' $file >>.odexp/model.c
 }
 
-declare_mean_fields () {
-    # find mean fields and declare them in .odexp/model.c
+declare_couplings () {
+    # find couplings and declare them in .odexp/model.c
     # no vector allowed
-    gawk -F ' ' '$1 ~ /^%[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+    gawk -F ' ' '$1 ~ /^%[cC][a-zA-Z0-9]*$/ {
       printf "    double %s;\n", $2 
     }' $file >>.odexp/model.c
 }
@@ -296,18 +296,18 @@ define_parametric_expressions () {
       }' $file >>.odexp/model.c
 }
 
-define_mean_fields () {
-    # define mean fields and declare them in .odexp/model.c
+define_couplings () {
+    # define couplings and declare them in .odexp/model.c
     # No vectors allowed 
-    gawk -F ' ' -v nv=0 '$1 ~ /^%[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+    gawk -F ' ' -v nv=0 '$1 ~ /^%[cC][a-zA-Z0-9]*$/ {
       lhs=$2;
       printf "    %s = psi_[%d];\n", lhs, nv; nv++
     }' $file >>.odexp/model.c
 }
 
-get_mean_fields () {
+get_couplings () {
     # 
-    gawk -F ' ' -v nv=0 '$1 ~ /^%[mM][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
+    gawk -F ' ' -v nv=0 '$1 ~ /^%[cC][a-zA-Z0-9]*$/ {
       $1="";
       $2="";
       rhs=$0;
@@ -651,17 +651,24 @@ echo "{" >>.odexp/model.c
 echo "    size_t i = 0, j;" >>.odexp/model.c
 echo "    par *myself_ = SIM->pop->start;" >>.odexp/model.c
 echo "    par *other_ = (par *)NULL;" >>.odexp/model.c
+echo "    SIM->pop_birth_rate=0.0;" >>.odexp/model.c
 echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux  */" >>.odexp/model.c
+echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux, ->____rate  */" >>.odexp/model.c
+# POPULATION BIRTH RATE  =====================================
+gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "        SIM->pop_birth_rate += myself_->birth_rate;\n"}' $file >>.odexp/model.c
+# END POPULATION BIRTH RATE  =================================
 echo "        i++;" >>.odexp/model.c
 echo "        myself_ = myself_->nextel;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
+echo "    SIM->pop_birth_rate /= POP_SIZE;" >>.odexp/model.c
+
+# LOOP THROUGH ALL PARTICLES TO COMPUTE COUPLINGS =========
 echo "    myself_ = SIM->pop->start;" >>.odexp/model.c
 echo "    i = 0;" >>.odexp/model.c
 echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        /* update mean fields */" >>.odexp/model.c
+echo "        /* update couplings */" >>.odexp/model.c
 echo "        for(j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
 echo "            myself_->psi[j] = 0.0;" >>.odexp/model.c
@@ -669,15 +676,22 @@ echo "        }" >>.odexp/model.c
 echo "        other_ = SIM->pop->start;" >>.odexp/model.c
 echo "        while ( other_ != NULL )" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
-get_mean_fields
+
+# ======================
+# DEFINE THE COUPLINGS
+get_couplings
+# ======================
+
 echo "            other_ = other_->nextel;" >>.odexp/model.c
 echo "        }" >>.odexp/model.c
 echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);" >>.odexp/model.c
 echo "        i++;" >>.odexp/model.c
 echo "        myself_ = myself_->nextel;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
+# END LOOP ===================================================
+
 echo "" >>.odexp/model.c
-gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "    SIM->pop_birth_rate = %s;\n", $0}' $file >>.odexp/model.c
+
 echo "    return GSL_SUCCESS;" >>.odexp/model.c
 echo "}" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -755,9 +769,9 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
-# DECLARE MEAN FIELDS 
-echo "    /* mean fields */" >>.odexp/model.c
-declare_mean_fields
+# DECLARE COUPLINGS 
+echo "    /* couplings */" >>.odexp/model.c
+declare_couplings
 echo "" >>.odexp/model.c
 # ====================================================================================
 
@@ -787,11 +801,11 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization - variables */" >>.odexp/model.c
 define_variables
 
-# DEFINE MEAN FIELDS 
+# DEFINE COUPLINGS 
 echo "" >>.odexp/model.c
-echo "    /* Initialization - mean fields */" >>.odexp/model.c
-# initialize auxiliary function 
-define_mean_fields
+echo "    /* Initialization - couplings */" >>.odexp/model.c
+# initialize couplings 
+define_couplings
 
 # DEFINE AUXILIARY FUNCTIONS
 echo "" >>.odexp/model.c
@@ -819,13 +833,10 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization -  particle replication */" >>.odexp/model.c
 gawk -F ' ' '$1 ~ /^%[rR][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->repli_rate = %s;\n", $0}' $file >>.odexp/model.c
 
-# DEFINE parametric_expression_pointer 
-# echo "" >>.odexp/model.c
-# echo "    /* Initialization - expr_ */" >>.odexp/model.c
-# define_parametric_expression_pointer
-
-# ====================================================================================
-# construct initial conditions
+# DEFINE birth_ 
+echo "" >>.odexp/model.c
+echo "    /* Initialization -  particle birth */" >>.odexp/model.c
+gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->birth_rate = %s;\n", $0}' $file >>.odexp/model.c
 
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE ABOVE ====*/" >>.odexp/model.c

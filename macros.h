@@ -49,7 +49,7 @@
        {                                                      \
            index++; index %= SIM->nbr_aux;                    \
        }                                                      \
-       p_->aux[index];                                        \
+       myself_->aux[index];                                        \
      })
 
 #endif /* !FILE_MACROS_SEEN */

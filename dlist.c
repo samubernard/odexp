@@ -282,29 +282,33 @@ void free_world(world *s)
 void printf_particle(par *p)
 {
     size_t i;
+    printf("==============================\n");
     printf("  id: %zu\n", p->id);
     for (i=0;i<p->nbr_y;i++)
     {
-        printf("  %s = %g\n", SIM->varnames[i], p->y[i]);
+        printf("  %-15s = %g\n", SIM->varnames[i], p->y[i]);
     }
     for (i=0;i<p->nbr_pars;i++)
     {
-        printf("  par[%zu] = %g\n", i, p->pars[i]);
+        printf("  par[%zu]          = %g\n", i, p->pars[i]);
     }
     for (i=0;i<p->nbr_expr;i++)
     {
-        printf("  expr[%zu] = %g\n", i, p->expr[i]);
+        printf("  expr[%zu]         = %g\n", i, p->expr[i]);
     }
     for (i=0;i<p->nbr_aux;i++)
     {
-        printf("  %s = %g\n", SIM->auxnames[i], p->aux[i]);
+        printf("  %-15s = %g\n", SIM->auxnames[i], p->aux[i]);
     }
     for (i=0;i<p->nbr_psi;i++)
     {
-        printf("  %s = %g\n", SIM->psinames[i], p->psi[i]);
+        printf("  %-15s = %g\n", SIM->psinames[i], p->psi[i]);
     }
-    printf("  death_rate = %g\n", p->death_rate);
-    printf("  repli_rate = %g\n", p->repli_rate);
+    printf("  death_rate      = %g\n", p->death_rate);
+    printf("  repli_rate      = %g\n", p->repli_rate);
+    printf("  birth_rate      = %g\n", p->birth_rate);
+
+    printf("------------------------------\n");
 }
 
 

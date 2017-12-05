@@ -261,7 +261,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
         LOGPRINT("Error: Initial conditions not found.");
         exit ( EXIT_FAILURE );
     } 
-    DBPRINT("before ode_ic");
+    /* DBPRINT("before ode_ic"); */
     /* ode_ic(tspan.array[0],ics.value,&mu); */
     LOGPRINT("found %zu variables",ics.nbr_el);
 
@@ -295,29 +295,29 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     LOGPRINT("found %zu equations",eqn.nbr_el);
 
     /* define psi */
-    printf("\n%-25s%s\n", "population mean fields", HLINE);
-    get_nbr_el(odefilename,"%M",2, &psi.nbr_el, &psi.nbr_expr);
+    printf("\n%-25s%s\n", "population couplings", HLINE);
+    get_nbr_el(odefilename,"%C",2, &psi.nbr_el, &psi.nbr_expr);
     alloc_namevalexp(&psi);
-    success = load_strings(odefilename,psi,"%M",2,1,' ', exit_if_nofile);
+    success = load_strings(odefilename,psi,"%C",2,1,' ', exit_if_nofile);
     if (!success)
     {
-        printf("  no population mean fields found\n");
+        printf("  no population couplings found\n");
     } 
-    LOGPRINT("found %zu population mean fields",psi.nbr_el);
+    LOGPRINT("found %zu population couplings",psi.nbr_el);
 
     /* define dxv */
-    DBPRINT("define dxv");
+    /* DBPRINT("define dxv"); */
     ode_system_size = ics.nbr_el;
     total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el;
     nbr_cols = 1 + mu.nbr_el + pex.nbr_el + total_nbr_x;
-    DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x);
+    /* DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x); */
     lastinit = malloc(ode_system_size*sizeof(double));
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr;
     dxv.nbr_el = total_nbr_x;
-    DBPRINT("alloc dxv");
+    /* DBPRINT("alloc dxv"); */
     alloc_namevalexp(&dxv);
     *dxv.max_name_length = max(*psi.max_name_length, max(*ics.max_name_length, *fcn.max_name_length));
-    DBPRINT("assign dxv");
+    /* DBPRINT("assign dxv"); */
     for (i = 0; i < ode_system_size; i++)
     {
         strcpy(dxv.name[i],ics.name[i]);
@@ -355,7 +355,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     */
     }
 
-    DBPRINT("init world SIM");
+    /* DBPRINT("init world SIM"); */
     SIM = malloc(sizeof(world));
     init_world( SIM, &ics, &fcn, &psi );
     /* ode_ic(tspan.array[0],ics.value,&mu); */
@@ -406,7 +406,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
     fprintf(gnuplot_pipe,\
       "plot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
-      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
       get_int("pop_current_particle"), nbr_cols, gx, gy,\
       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
       get_int("pop_current_particle"));
@@ -901,7 +901,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                             printf_list_str_val('E',i,i,padding, &pex);
                         }
                     }
-                    else if (op == 'm') /* list mean fields */
+                    else if (op == 'm') /* list couplings */
                     {
                         for (i=0; i<psi.nbr_el; i++)
                         {
@@ -1047,7 +1047,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                         printf("  File name: %s%s%s\n",T_EXPR,odexp_filename,T_NOR);
                         printf("  ODE system size               = %s%zu%s\n",T_VAL,ode_system_size,T_NOR);
                         printf("  Number of auxiliary functions = %s%zu%s\n",T_VAL,fcn.nbr_el,T_NOR);
-                        printf("  Number of mean fields         = %s%zu%s\n",T_VAL,psi.nbr_el,T_NOR);
+                        printf("  Number of couplings           = %s%zu%s\n",T_VAL,psi.nbr_el,T_NOR);
                         printf("  Total number of variables     = %s%zu%s\n",T_VAL,total_nbr_x,T_NOR);
                         printf("  Number of parameters          = %s%zu%s\n",T_VAL,mu.nbr_el,T_NOR);
                         printf("  Number of parametric expr     = %s%zu%s\n",T_VAL,pex.nbr_expr,T_NOR);
@@ -1410,10 +1410,10 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                         }
                         if (i<dfl.nbr_el) /* found the dataset to plot */
                         {
-                            DBPRINT("%s %d %d\n", svalue, colx, coly);
+                            /* DBPRINT("%s %d %d\n", svalue, colx, coly); */
                             if ( sscanf(dfl.expression[i]," %*lu %*lu %s ",data_fn) )
                             {
-                                DBPRINT("data_fn=%s\n", data_fn);
+                                /* DBPRINT("data_fn=%s\n", data_fn); */
                                 data_plotted = 1;
                             }
                         }
@@ -1429,8 +1429,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     nbr_read = sscanf(cmdline+1," %zu ",&i); 
                     if (nbr_read <= 0) /* list all */
                     {
-                       DBPRINT("nbr_read %d", nbr_read);
-                       DBPRINT("pop size %zu", SIM->pop->size);
+                       /* DBPRINT("nbr_read %d", nbr_read); */
+                       /* DBPRINT("pop size %zu", SIM->pop->size); */
                        for(i=0;i<SIM->pop->size;i++)
                        {
                            printf_SIM(i);
@@ -1566,7 +1566,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 {
                     fprintf(gnuplot_pipe,\
                       "plot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
-                      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+                      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
                       get_int("pop_current_particle"), nbr_cols, gx, gy,\
                       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
                       get_int("pop_current_particle"));
@@ -1575,7 +1575,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 {
                     fprintf(gnuplot_pipe,\
                       "replot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
-                      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+                      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
                       get_int("pop_current_particle"), nbr_cols, gx, gy,\
                       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
                       get_int("pop_current_particle"));
@@ -1587,7 +1587,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 {
                     fprintf(gnuplot_pipe,\
                       "splot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
-                      "with %s title \"(%d)\"\n",\
+                      "with %s title \"#%d\"\n",\
                       get_int("pop_current_particle"), nbr_cols, gx, gy, gz,\
                       get_str("plot_with_style"),\
                       get_int("pop_current_particle"));
@@ -1596,7 +1596,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 {
                     fprintf(gnuplot_pipe,\
                       "replot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
-                      "with %s title \"(%d)\"\n",\
+                      "with %s title \"#%d\"\n",\
                       get_int("pop_current_particle"), nbr_cols, gx, gy, gz,\
                       get_str("plot_with_style"),\
                       get_int("pop_current_particle"));
@@ -2521,7 +2521,7 @@ void printf_SIM(size_t i)
     /* DBPRINT(" i=%zu, j=%zu",i,j); */
     if ( j == i )
     {
-        printf("  particle %zu\n", i);
+        /* printf("  particle %zu\n", i); */
         printf_particle(p);
     }
 }

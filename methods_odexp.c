@@ -183,7 +183,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     f = malloc(sim_size*sizeof(double));
     ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
     ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
-    /* DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate); */
+    DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate);
     pars = SIM->pop->start;
     j = 0;
     while ( pars != NULL )
