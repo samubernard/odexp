@@ -80,6 +80,9 @@ void init_world( world *s, nve *ics, nve *fcn, nve *psi )
 
     s->max_id = 0;
 
+
+    snprintf(s->stats_buffer,MAXFILENAMELENGTH-1,".odexp/stats.dat");
+
     s->pop = malloc(sizeof(dlist));
     init_dlist(s->pop);
 }
@@ -366,6 +369,7 @@ int fwrite_particle_state(const double *restrict t, par *p, const char *restrict
 
 int fwrite_SIM(const double *restrict t, char *restrict mode)
 {
+    FILE *fid;
     par *pars = SIM->pop->start;
     while ( pars != NULL )
     {
@@ -373,5 +377,11 @@ int fwrite_SIM(const double *restrict t, char *restrict mode)
         pars = pars->nextel;
     }
 
+    fid = fopen(SIM->stats_buffer, mode);
+    fwrite(t,sizeof(double),1,fid);
+    fwrite(&(SIM->pop->size),sizeof(int),1,fid);
+    fwrite(SIM->event,sizeof(int),3,fid);
+    fclose(fid);
+    
     return 0; 
 }

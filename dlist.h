@@ -74,6 +74,10 @@ typedef struct system_state {
 
     double pop_birth_rate;
 
+    int event[3]; /* IDParent event IDChild */
+
+    char stats_buffer[NAMELENGTH];
+
 } world;
 
 extern world  *SIM;
