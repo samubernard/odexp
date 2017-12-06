@@ -81,7 +81,7 @@ void init_world( world *s, nve *ics, nve *fcn, nve *psi )
     s->max_id = 0;
 
 
-    snprintf(s->stats_buffer,MAXFILENAMELENGTH-1,".odexp/stats.dat");
+    strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH-1);
 
     s->pop = malloc(sizeof(dlist));
     init_dlist(s->pop);

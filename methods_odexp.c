@@ -311,12 +311,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
             /* DBPRINT("birth/death"); */
 
             apply_birthdeath(t, single_ic, mu, pex, fcn, ics, psi ); /* delete or insert particle 
-                                                         * ! p->expr and p->y are not correctly 
-                                                         * initialized. 
-                                                         * TODO
                                                          */
-            y = realloc(y,POP_SIZE*SIM->nbr_var*sizeof(double));
-            f = realloc(f,POP_SIZE*SIM->nbr_var*sizeof(double));
+            sim_size = POP_SIZE*SIM->nbr_var;
+            y = realloc(y,sim_size*sizeof(double));
+            f = realloc(f,sim_size*sizeof(double));
             pars = SIM->pop->start;
             j = 0;
             while ( pars != NULL )   /* fill in the new y from existing state */
@@ -339,10 +337,13 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
             fwrite_SIM(&t, "a");
             bd_alert = 0;
             memset(SIM->event, 0, sizeof(SIM->event));
+            /* DBPRINT("SIM->stats_buffer = %s",SIM->stats_buffer); */
+            /* DBPRINT("SIM->event %d %d %d",SIM->event[0], SIM->event[1], SIM->event[2]); */
             gsl_odeiv2_evolve_free(e);
             gsl_odeiv2_step_free(s);
-            s = gsl_odeiv2_step_alloc(odeT,POP_SIZE*SIM->nbr_var);
-            e = gsl_odeiv2_evolve_alloc(POP_SIZE*SIM->nbr_var);
+            s = gsl_odeiv2_step_alloc(odeT,sim_size);
+            e = gsl_odeiv2_evolve_alloc(sim_size);
+
         }
         if (disc_alert == 1)
         {
