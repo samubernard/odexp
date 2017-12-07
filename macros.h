@@ -43,7 +43,7 @@
        other_->aux[index];                                    \
      })
 
-#define US(name)                                              \
+#define SELF(name)                                            \
     ({ static size_t index = 0;                               \
        while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
        {                                                      \
@@ -51,5 +51,19 @@
        }                                                      \
        myself_->aux[index];                                        \
      })
+
+#define EXPR(index) (expr_[index])
+
+#define MOTHER(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_var;                    \
+       }                                                      \
+       y_[index];                                             \
+     })                                                     
+
+#define ATBIRTH (SIM->event[0] == -1)
+#define ATREPLI (SIM->event[0] >= 0 && SIM->event[1] == 1)
 
 #endif /* !FILE_MACROS_SEEN */

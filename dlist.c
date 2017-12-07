@@ -83,6 +83,10 @@ void init_world( world *s, nve *ics, nve *fcn, nve *psi )
 
     strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH-1);
 
+    s->event[0] = -1;
+    s->event[1] =  1;
+    s->event[2] =  0;
+
     s->pop = malloc(sizeof(dlist));
     init_dlist(s->pop);
 }
@@ -126,6 +130,8 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
     }
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
+
+    p->mother = NULL; /* particle has no mother */
 
     p->nextel = NULL; /* p is at the end of the list */
     p->prevel = list->end;
@@ -181,6 +187,11 @@ int replicate_endoflist ( dlist *list, par *mother)
     }
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
+
+    p->mother = mother; /* pointer to mother particle. 
+                         * Warning: existence of mother not guarateed 
+                         * p->mother is reset to NULL after replication
+                         * */
 
     p->nextel = NULL; /* p is at the end of the list */
     p->prevel = list->end;

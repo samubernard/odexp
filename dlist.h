@@ -48,6 +48,8 @@ typedef struct particle_state {
     FILE *fid;
     char buffer[MAXFILENAMELENGTH];
 
+    struct particle_state *mother;
+
     struct particle_state *nextel;
     struct particle_state *prevel;
 } par;

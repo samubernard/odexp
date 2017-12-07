@@ -726,11 +726,11 @@ echo "" >>.odexp/model.c
 echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single node */" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
-echo "    par *mu_ = (par *)params_;" >>.odexp/model.c
-echo "    double * pars_ __attribute__((unused)) = mu_->pars;" >>.odexp/model.c
-echo "    double * aux_  __attribute__((unused)) = mu_->aux;" >>.odexp/model.c
-echo "    double * expr_ __attribute__((unused)) = mu_->expr;" >>.odexp/model.c
-echo "    double * psi_  __attribute__((unused)) = mu_->psi;" >>.odexp/model.c
+echo "    par *myself_ = (par *)params_;" >>.odexp/model.c
+echo "    double * pars_ __attribute__((unused)) = myself_->pars;" >>.odexp/model.c
+echo "    double * aux_  __attribute__((unused)) = myself_->aux;" >>.odexp/model.c
+echo "    double * expr_ __attribute__((unused)) = myself_->expr;" >>.odexp/model.c
+echo "    double * psi_  __attribute__((unused)) = myself_->psi;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -826,17 +826,17 @@ define_aux_pointer
 # DEFINE death_ 
 echo "" >>.odexp/model.c
 echo "    /* Initialization -  particle death */" >>.odexp/model.c
-gawk -F ' ' '$1 ~ /^%[dD][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->death_rate = %s;\n", $0}' $file >>.odexp/model.c
+gawk -F ' ' '$1 ~ /^%[dD][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->death_rate = %s;\n", $0}' $file >>.odexp/model.c
 
 # DEFINE repli_ 
 echo "" >>.odexp/model.c
 echo "    /* Initialization -  particle replication */" >>.odexp/model.c
-gawk -F ' ' '$1 ~ /^%[rR][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->repli_rate = %s;\n", $0}' $file >>.odexp/model.c
+gawk -F ' ' '$1 ~ /^%[rR][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->repli_rate = %s;\n", $0}' $file >>.odexp/model.c
 
 # DEFINE birth_ 
 echo "" >>.odexp/model.c
 echo "    /* Initialization -  particle birth */" >>.odexp/model.c
-gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "    mu_->birth_rate = %s;\n", $0}' $file >>.odexp/model.c
+gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->birth_rate = %s;\n", $0}' $file >>.odexp/model.c
 
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE ABOVE ====*/" >>.odexp/model.c
@@ -851,10 +851,10 @@ echo "" >>.odexp/model.c
 # function ode_init_conditions
 echo "int ode_init_conditions(const double t, double y_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
-echo "    par *mu_ = (par *)params_;" >>.odexp/model.c
-echo "    double * pars_ __attribute__((unused)) = mu_->pars;" >>.odexp/model.c
-echo "    double * aux_  __attribute__((unused)) = mu_->aux;" >>.odexp/model.c
-echo "    double * expr_ __attribute__((unused)) = mu_->expr;" >>.odexp/model.c
+echo "    par *myself_ = (par *)params_;" >>.odexp/model.c
+echo "    double * pars_ __attribute__((unused)) = myself_->pars;" >>.odexp/model.c
+echo "    double * aux_  __attribute__((unused)) = myself_->aux;" >>.odexp/model.c
+echo "    double * expr_ __attribute__((unused)) = myself_->expr;" >>.odexp/model.c
 echo "    int success_ = 0;" >>.odexp/model.c
 # ITERATORS
 # find iterators in the source file and declare them 

@@ -178,8 +178,23 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     /* DBPRINT("init cond");  */
     /* initial conditions */
     y = malloc(sim_size*sizeof(double));
+    DBPRINT("size y alloc: %zu",sim_size*sizeof(double));
+    DBPRINT("nbr bytes memset: %zu",sim_size*sizeof(double)/sizeof(char));
+
+    for ( i=0; i<sim_size; i++)
+    {
+        /* DBPRINT("y[%zu] = %g\n", i,y[i]); */
+    }
+    memset(y, 0, sim_size*sizeof(double)/sizeof(char));
+    for ( i=0; i<sim_size; i++)
+    {
+        DBPRINT("y[%zu] = %f\n", i,y[i]);
+    }
     f = malloc(sim_size*sizeof(double));
+    SIM->event[0] = -1;
+    SIM->event[1] =  1;
     ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
+    memset(SIM->event, 0, sizeof(SIM->event));
     ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
     DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate);
     pars = SIM->pop->start;
@@ -309,9 +324,12 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
         if ( bd_alert == 1 )
         {
             /* DBPRINT("birth/death"); */
-
-            apply_birthdeath(t, single_ic, mu, pex, fcn, ics, psi ); /* delete or insert particle 
-                                                         */
+            /* delete or insert particle 
+             * apply_birthdeath computes which event is realized:
+             * death, replication or birth,
+             * and updates SIM->pop.
+             */
+            apply_birthdeath(t, single_ic, mu, pex, fcn, ics, psi ); 
             sim_size = POP_SIZE*SIM->nbr_var;
             y = realloc(y,sim_size*sizeof(double));
             f = realloc(f,sim_size*sizeof(double));
@@ -336,7 +354,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
             /* printf each particle in a binary file pars->buffer */
             fwrite_SIM(&t, "a");
             bd_alert = 0;
-            memset(SIM->event, 0, sizeof(SIM->event));
             /* DBPRINT("SIM->stats_buffer = %s",SIM->stats_buffer); */
             /* DBPRINT("SIM->event %d %d %d",SIM->event[0], SIM->event[1], SIM->event[2]); */
             gsl_odeiv2_evolve_free(e);
@@ -1689,15 +1706,21 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
                 SIM->event[1] = -1;
                 SIM->event[2] = -1;
                 delete_el(SIM->pop, pars);
+                break;
             }
-            else if ( repli && (choose_pars == i) )
+            if ( repli && (choose_pars == i) )
             {
                 /* DBPRINT("repli: adding particle"); */
                 SIM->event[0] = (int)pars->id;
                 SIM->event[1] = 1;
                 replicate_endoflist(SIM->pop, pars);
                 SIM->event[2] = (int)SIM->pop->end->id;
+                /* first update mother particle initial conditions and expr */
+                single_ic(t, pars->y, pars);
+                /* then update new particle initial conditions and expr */
                 single_ic(t, SIM->pop->end->y, SIM->pop->end);
+                SIM->pop->end->mother = NULL;
+                break;
             }
             pars = pars->nextel;
             i++;
