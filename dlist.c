@@ -381,6 +381,23 @@ int fwrite_SIM(const double *restrict t, char *restrict mode)
     fwrite(t,sizeof(double),1,fid);
     fwrite(&(SIM->pop->size),sizeof(int),1,fid);
     fwrite(SIM->event,sizeof(int),3,fid);
+    
+    if ( strncmp(mode,"w",1) == 0 ) /* write initial population */
+    {
+        par *pars = SIM->pop->start;
+        while ( pars != NULL )
+        {
+            SIM->event[0] = -1;
+            SIM->event[1] =  1;
+            SIM->event[2] = pars->id;
+            fwrite(t,sizeof(double),1,fid);
+            fwrite(&(SIM->pop->size),sizeof(int),1,fid);
+            fwrite(SIM->event,sizeof(int),3,fid);
+            pars = pars->nextel;
+        }
+    }
+
+    memset(SIM->event, 0, sizeof(SIM->event));
     fclose(fid);
     
     return 0; 

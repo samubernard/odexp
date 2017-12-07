@@ -11,7 +11,7 @@ libodexp.dylib: odexp.o methods_odexp.o  utils_odexp.o rand_gen.o dlist.o
 odexp.o: odexp.c odexp.h methods_odexp.h 
 	    gcc -c odexp.c $(CFLAGS) 
 
-methods_odexp.o: methods_odexp.c methods_odexp.h 
+methods_odexp.o: methods_odexp.c methods_odexp.h dlist.h
 		gcc -c methods_odexp.c $(CFLAGS)
 
 utils_odexp.o: utils_odexp.c utils_odexp.h 
