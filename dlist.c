@@ -53,19 +53,26 @@ void init_dlist(dlist *list)
     list->size = 0;
 }
 
-void init_world( world *s, nve *ics, nve *fcn, nve *psi )
+void init_world( world *s, nve *ics, nve *pex, nve *fcn, nve *psi )
 {
     size_t i;
     s->nbr_var = ics->nbr_el;
+    s->nbr_expr= pex->nbr_el;
     s->nbr_aux = fcn->nbr_el;
     s->nbr_psi = psi->nbr_el;
     s->varnames = malloc(s->nbr_var*sizeof(char*));
+    s->exprnames= malloc(s->nbr_expr*sizeof(char*));
     s->auxnames = malloc(s->nbr_aux*sizeof(char*));
     s->psinames = malloc(s->nbr_psi*sizeof(char*));
     for(i=0;i<s->nbr_var;i++)
     {
         s->varnames[i] = malloc(NAMELENGTH*sizeof(char));
         strncpy(s->varnames[i],ics->name[i],NAMELENGTH-1);
+    }
+    for(i=0;i<s->nbr_expr;i++)
+    {
+        s->exprnames[i] = malloc(NAMELENGTH*sizeof(char));
+        strncpy(s->exprnames[i],pex->name[i],NAMELENGTH-1);
     }
     for(i=0;i<s->nbr_aux;i++)
     {
@@ -131,7 +138,7 @@ int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
 
-    p->mother = NULL; /* particle has no mother */
+    p->sister = NULL; /* particle has no sister */
 
     p->nextel = NULL; /* p is at the end of the list */
     p->prevel = list->end;
@@ -188,9 +195,9 @@ int replicate_endoflist ( dlist *list, par *mother)
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
 
-    p->mother = mother; /* pointer to mother particle. 
+    p->sister = mother; /* pointer to mother particle. 
                          * Warning: existence of mother not guarateed 
-                         * p->mother is reset to NULL after replication
+                         * p->sister is reset to NULL after replication
                          * */
 
     p->nextel = NULL; /* p is at the end of the list */
@@ -278,6 +285,10 @@ void free_world(world *s)
     {
         free(s->varnames[i]);
     }
+    for(i=0;i<s->nbr_expr;i++)
+    {
+        free(s->exprnames[i]);
+    }
     for(i=0;i<s->nbr_aux;i++)
     {
         free(s->auxnames[i]);
@@ -287,6 +298,7 @@ void free_world(world *s)
         free(s->psinames[i]);
     }
     free(s->varnames);
+    free(s->exprnames);
     free(s->auxnames);
     free(s->psinames);
     free(s);

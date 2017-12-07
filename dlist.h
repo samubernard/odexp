@@ -48,7 +48,7 @@ typedef struct particle_state {
     FILE *fid;
     char buffer[MAXFILENAMELENGTH];
 
-    struct particle_state *mother;
+    struct particle_state *sister;
 
     struct particle_state *nextel;
     struct particle_state *prevel;
@@ -66,9 +66,11 @@ typedef struct system_state {
 
     dlist *pop;
     char **varnames;
+    char **exprnames;
     char **auxnames;
     char **psinames;
     size_t nbr_var;
+    size_t nbr_expr;
     size_t nbr_aux;
     size_t nbr_psi;
 
@@ -91,7 +93,7 @@ void free_namevalexp( nve mu );
 void init_dlist(dlist *list );
 
 /* init world */
-void init_world( world *s, nve *ics, nve *fcn, nve *psi );
+void init_world( world *s, nve *ics, nve *pex, nve *fcn, nve *psi );
 
 /* insert at the end of the list */
 int insert_endoflist ( dlist *, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi);

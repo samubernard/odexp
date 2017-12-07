@@ -43,7 +43,7 @@
        other_->aux[index];                                    \
      })
 
-#define SELF(name)                                            \
+#define US(name)                                            \
     ({ static size_t index = 0;                               \
        while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
        {                                                      \
@@ -52,9 +52,25 @@
        myself_->aux[index];                                        \
      })
 
-#define EXPR(index) (expr_[index])
+#define ME(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_expr;                    \
+       }                                                      \
+       expr_[index];                                             \
+     })                                                     
 
-#define MOTHER(name)                                          \
+#define SE(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_expr;                    \
+       }                                                      \
+       myself_->sister == NULL ? 0.0 : myself_->sister->expr[index]; \
+     })                                                     
+
+#define MY(name)                                          \
     ({ static size_t index = 0;                               \
        while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
        {                                                      \
@@ -63,7 +79,18 @@
        y_[index];                                             \
      })                                                     
 
+#define SY(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_var;                    \
+       }                                                      \
+       myself_->sister == NULL ? 0.0 : myself_->sister->y[index];                                             \
+     })                                                     
+
+
 #define ATBIRTH (SIM->event[0] == -1)
 #define ATREPLI (SIM->event[0] >= 0 && SIM->event[1] == 1)
+#define ISDAUGHTER (myself_->sister != NULL)
 
 #endif /* !FILE_MACROS_SEEN */

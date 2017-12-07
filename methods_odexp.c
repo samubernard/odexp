@@ -1719,7 +1719,7 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
                 single_ic(t, pars->y, pars);
                 /* then update new particle initial conditions and expr */
                 single_ic(t, SIM->pop->end->y, SIM->pop->end);
-                SIM->pop->end->mother = NULL;
+                SIM->pop->end->sister = NULL;
                 break;
             }
             pars = pars->nextel;
