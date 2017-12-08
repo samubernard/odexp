@@ -348,7 +348,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     for (i = ode_system_size + fcn.nbr_el + psi.nbr_el; i < dxv.nbr_el; i++)
     {
         strcpy(dxv.name[i],mfd.name[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
-        strcpy(dxv.expression[i],mfd.expression[i-ode_system_size-fcn.nbr_el-mfd.nbr_el]);
+        strcpy(dxv.expression[i],mfd.expression[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
     }
 
 
@@ -770,26 +770,40 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     printf("  y-axis: [%s%d%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
                     break;    
                 case '}' : /* plot next particle  */
-                    pars = getpar(get_int("pop_current_particle"));
-                    if ( pars == NULL )
+                    if ( POP_SIZE )
                     {
-                        pars = SIM->pop->end;
+                        pars = getpar(get_int("pop_current_particle"));
+                        if ( pars == NULL )
+                        {
+                            pars = SIM->pop->end;
+                        }
+                        set_int("pop_current_particle",pars->nextel != NULL ? pars->nextel->id : SIM->pop->start->id);
+                        plotmode_normal=1;
+                        printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
+                                T_IND, get_int("pop_current_particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
                     }
-                    set_int("pop_current_particle",pars->nextel != NULL ? pars->nextel->id : SIM->pop->start->id);
-                    plotmode_normal=1;
-                    printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
-                            T_IND, get_int("pop_current_particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
+                    else
+                    {
+                        printf("  population contains no particle\n");
+                    }
                     break;
                 case '{' : /* plot previous particle  */
-                    pars = getpar(get_int("pop_current_particle"));
-                    if ( pars == NULL )
+                    if ( POP_SIZE )
                     {
-                        pars = SIM->pop->start;
+                        pars = getpar(get_int("pop_current_particle"));
+                        if ( pars == NULL )
+                        {
+                            pars = SIM->pop->start;
+                        }
+                        set_int("pop_current_particle",pars->prevel != NULL ? pars->prevel->id : SIM->pop->end->id);
+                        plotmode_normal=1;
+                        printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
+                                T_IND, get_int("pop_current_particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
                     }
-                    set_int("pop_current_particle",pars->prevel != NULL ? pars->prevel->id : SIM->pop->end->id);
-                    plotmode_normal=1;
-                    printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
-                            T_IND, get_int("pop_current_particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
+                    else
+                    {
+                        printf("  population contains no particle\n");
+                    }
                     break;    
                 case 'i' : /* run with initial conditions */
                     nbr_read = sscanf(cmdline+1,"%c",&op);

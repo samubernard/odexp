@@ -328,7 +328,7 @@ get_couplings () {
       $1="";
       $2="";
       rhs=$0;
-      printf "            myself_->psi[%d] += %s;\n", nv, rhs; nv++
+      printf "                myself_->psi[%d] += %s;\n", nv, rhs; nv++
     }' $file >>.odexp/model.c
 }
 
@@ -679,6 +679,10 @@ echo "    size_t i = 0, j;" >>.odexp/model.c
 echo "    par *myself_ = SIM->pop->start;" >>.odexp/model.c
 echo "    par *other_ = (par *)NULL;" >>.odexp/model.c
 echo "    SIM->pop_birth_rate=0.0;" >>.odexp/model.c
+echo "    for(j=0;j<SIM->nbr_mfd;j++)" >>.odexp/model.c
+echo "    {" >>.odexp/model.c
+echo "        SIM->meanfield[j] = 0.0;" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
 echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
 echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux, ->____rate  */" >>.odexp/model.c
@@ -691,9 +695,9 @@ get_meanfields
 echo "        i++;" >>.odexp/model.c
 echo "        myself_ = myself_->nextel;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
-echo "    for (i=0;i<SIM->nbr_mfd;i++)" >>.odexp/model.c
+echo "    for (j=0;j<SIM->nbr_mfd;j++)" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        SIM->meanfield[i] /= POP_SIZE;" >>.odexp/model.c
+echo "        SIM->meanfield[j] /= POP_SIZE;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
 echo "    SIM->pop_birth_rate /= POP_SIZE;" >>.odexp/model.c
 
@@ -702,25 +706,28 @@ echo "    myself_ = SIM->pop->start;" >>.odexp/model.c
 echo "    i = 0;" >>.odexp/model.c
 echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        /* update couplings */" >>.odexp/model.c
-echo "        for(j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
+echo "        /* update couplings if nbr_psi > 0 */" >>.odexp/model.c
+echo "        if ( myself_->nbr_psi )" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
-echo "            myself_->psi[j] = 0.0;" >>.odexp/model.c
-echo "        }" >>.odexp/model.c
-echo "        other_ = SIM->pop->start;" >>.odexp/model.c
-echo "        while ( other_ != NULL )" >>.odexp/model.c
-echo "        {" >>.odexp/model.c
+echo "            for(j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
+echo "            {" >>.odexp/model.c
+echo "                myself_->psi[j] = 0.0;" >>.odexp/model.c
+echo "            }" >>.odexp/model.c
+echo "            other_ = SIM->pop->start;" >>.odexp/model.c
+echo "            while ( other_ != NULL )" >>.odexp/model.c
+echo "            {" >>.odexp/model.c
 
-# ======================
-# DEFINE THE COUPLINGS
-get_couplings
-# ======================
+                  # ======================
+                  # DEFINE THE COUPLINGS
+                  get_couplings
+                  # ======================
 
-echo "            other_ = other_->nextel;" >>.odexp/model.c
-echo "        }" >>.odexp/model.c
-echo "        for (j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
-echo "        {" >>.odexp/model.c
-echo "            myself_->psi[j] /= POP_SIZE;" >>.odexp/model.c
+echo "                other_ = other_->nextel;" >>.odexp/model.c
+echo "            }" >>.odexp/model.c
+echo "            for (j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
+echo "            {" >>.odexp/model.c
+echo "                myself_->psi[j] /= POP_SIZE;" >>.odexp/model.c
+echo "            }" >>.odexp/model.c
 echo "        }" >>.odexp/model.c
 echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);" >>.odexp/model.c
 echo "        i++;" >>.odexp/model.c
