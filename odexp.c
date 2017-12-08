@@ -428,8 +428,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
       get_int("pop_current_particle"));
     fprintf(gnuplot_pipe,"plot %s", plot_cmd);
-//     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
-//         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
 
     while(1)
@@ -1605,31 +1603,44 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
               }
               if ( plot3d == 0 )
               {
-                if ( get_int("freeze") == 0 ) /* normal plot command: 2D, freeze=0, curves=0 */
+                if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el) && 
+                     (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el) )
                 {
-                    fprintf(gnuplot_pipe,\
-                      "plot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
+                    snprintf(plot_cmd,EXPRLENGTH,\
+                      "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
                       "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
                       get_int("pop_current_particle"), nbr_cols, gx, gy,\
                       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
                       get_int("pop_current_particle"));
                 }
+                else
+                {
+                    snprintf(plot_cmd,EXPRLENGTH,\
+                      "\".odexp/stats.dat\" binary format=\"%%%zulf%%%dd\" using %zu:%zu "\
+                      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(meanfield)\"\n",\
+                      1 + mfd.nbr_el, 4,\
+                      gx > 1 ? gx - ode_system_size - fcn.nbr_el - psi.nbr_el : gx,\
+                      gy > 1 ? gy - ode_system_size - fcn.nbr_el - psi.nbr_el : gy,\
+                      get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time");
+
+                }
+                if ( get_int("freeze") == 0 ) /* normal plot command: 2D, freeze=0, curves=0 */
+                {
+                    fprintf(gnuplot_pipe,"plot %s", plot_cmd);
+                }
                 else if ( get_int("freeze") )
                 {
-                    fprintf(gnuplot_pipe,\
-                      "replot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
-                      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
-                      get_int("pop_current_particle"), nbr_cols, gx, gy,\
-                      get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
-                      get_int("pop_current_particle"));
+                    fprintf(gnuplot_pipe,"replot %s", plot_cmd);
                 }
               } 
               else /* plot3d == 1 */
               {
-                if ( get_int("freeze") == 0 )
+                if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el) && 
+                     (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el) && 
+                     (gz <= ode_system_size + fcn.nbr_el + psi.nbr_el) )
                 {
-                    fprintf(gnuplot_pipe,\
-                      "splot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
+                    snprintf(plot_cmd,EXPRLENGTH,\
+                      "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
                       "with %s title \"#%d\"\n",\
                       get_int("pop_current_particle"), nbr_cols, gx, gy, gz,\
                       get_str("plot_with_style"),\
@@ -1637,12 +1648,23 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 }
                 else
                 {
-                    fprintf(gnuplot_pipe,\
-                      "replot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
-                      "with %s title \"#%d\"\n",\
-                      get_int("pop_current_particle"), nbr_cols, gx, gy, gz,\
-                      get_str("plot_with_style"),\
-                      get_int("pop_current_particle"));
+                    snprintf(plot_cmd,EXPRLENGTH,\
+                      "\".odexp/stats.dat\" binary format=\"%%%zulf%%%dd\" using %zu:%zu%zu "\
+                      "with %s title \"(meanfield)\"\n",\
+                      1 + mfd.nbr_el, 4,\
+                      gx > 1 ? gx - ode_system_size - fcn.nbr_el - psi.nbr_el : gx,\
+                      gy > 1 ? gy - ode_system_size - fcn.nbr_el - psi.nbr_el : gy,\
+                      gz > 1 ? gz - ode_system_size - fcn.nbr_el - psi.nbr_el : gz,\
+                      get_str("plot_with_style") );
+
+                }
+                if ( get_int("freeze") == 0 )
+                {
+                    fprintf(gnuplot_pipe,"splot %s", plot_cmd);
+                }
+                else
+                {
+                    fprintf(gnuplot_pipe,"replot %s", plot_cmd);
                 }
               }
               fflush(gnuplot_pipe);

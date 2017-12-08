@@ -362,6 +362,7 @@ int fwrite_SIM(const double *restrict t, char *restrict mode)
             SIM->event[1] =  1;
             SIM->event[2] = pars->id;
             fwrite(t,sizeof(double),1,fid);
+            fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,fid);
             fwrite(&(SIM->pop->size),sizeof(int),1,fid);
             fwrite(SIM->event,sizeof(int),3,fid);
             pars = pars->nextel;
