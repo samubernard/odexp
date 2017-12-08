@@ -893,10 +893,15 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     }
                     else if (op == 'e') /* list parametric expression */
                     {
+                        /* TODO: list values of parametric expression related to 
+                         * pop_current_particle, which may be dead.
+                         * Therefore, need to scan idXX.dat file.
+                         */
+                        DBPRINT("update parametric expression values pop_current_particle");
                         for (i=0; i<pex.nbr_el; i++)
                         {
                             padding = (int)log10(pex.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_str_val('E',i,i,padding, &pex);
+                            printf_list_str('E',i,i,padding, &pex);
                         }
                     }
                     else if (op == 'm') /* list couplings */
@@ -918,9 +923,10 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                             if ( strncmp(ics.attribute[i],"hidden",3) )
                             {
                                 padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                                DBPRINT("update initial condition values for pop_current_particle");
                                 if (NUM_IC[i] == 0)
                                 {
-                                    printf_list_val('I',i,i,padding,&ics,"");
+                                    printf_list_str('I',i,i,padding,&ics);
                                 }
                                 else
                                 {
@@ -953,7 +959,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                         {
                             if ( strncmp(fcn.attribute[i],"hidden",3) )
                             {
-                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+total_nbr_x+0.5);
+                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
                                 printf_list_str('A',i+eqn.nbr_el,i,padding,&fcn);
                             }
                         }
@@ -961,8 +967,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                         {
                             if ( strncmp(psi.attribute[i],"hidden",3) )
                             {
-                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+total_nbr_x+0.5);
-                                printf_list_str('A',i+eqn.nbr_el+fcn.nbr_el,i,padding,&psi);
+                                padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+fcn.nbr_el+0.5);
+                                printf_list_str('%',i+eqn.nbr_el+fcn.nbr_el,i,padding,&psi);
                             }
                         }
                     }
