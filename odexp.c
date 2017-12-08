@@ -307,7 +307,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     /* DBPRINT("define dxv"); */
     ode_system_size = ics.nbr_el;
     total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el;
-    nbr_cols = 1 + mu.nbr_el + pex.nbr_el + total_nbr_x;
+    nbr_cols = 1 + total_nbr_x + pex.nbr_el;
     /* DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x); */
     lastinit = malloc(ode_system_size*sizeof(double));
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr;
@@ -355,7 +355,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
 
     /* DBPRINT("init world SIM"); */
     SIM = malloc(sizeof(world));
-    init_world( SIM, &ics,&pex, &fcn, &psi );
+    init_world( SIM, &mu, &ics, &pex, &fcn, &psi );
     /* DBPRINT("SIM->exprnames[0] = %s", SIM->exprnames[0]); */
     /* ode_ic(tspan.array[0],ics.value,&mu); */
 
@@ -1057,7 +1057,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                         printf("  Number of parametric expr     = %s%zu%s\n",T_VAL,pex.nbr_expr,T_NOR);
                         printf("  Number of constants           = %s%zu%s\n",T_VAL,cst.nbr_el,T_NOR);
                         printf("  Number of data files          = %s%zu%s\n",T_VAL,dfl.nbr_el,T_NOR);
-                        printf("  Number of columns in id.dat   = %s%zu%s\n",T_VAL,1+mu.nbr_el+total_nbr_x+pex.nbr_el,T_NOR);
+                        printf("  Number of columns in id.dat   = %s%zu%s\n",T_VAL,nbr_cols,T_NOR);
                         printf("  Particle population size      = %s%zu%s\n",T_VAL,POP_SIZE,T_NOR);
                     }
                     else

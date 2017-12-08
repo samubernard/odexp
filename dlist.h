@@ -28,8 +28,6 @@ typedef struct namevalexp
 } nve;
 
 typedef struct particle_state {
-    double *pars;
-    size_t nbr_pars;
     double *expr;
     size_t nbr_expr;
     double *aux;
@@ -65,14 +63,18 @@ typedef struct dlist_struct {
 typedef struct system_state {
 
     dlist *pop;
+    char **parnames;
     char **varnames;
     char **exprnames;
     char **auxnames;
     char **psinames;
+    size_t nbr_par;
     size_t nbr_var;
     size_t nbr_expr;
     size_t nbr_aux;
     size_t nbr_psi;
+
+    double *mu;   /* simulation parameter values */ 
 
     size_t max_id;
 
@@ -93,10 +95,10 @@ void free_namevalexp( nve mu );
 void init_dlist(dlist *list );
 
 /* init world */
-void init_world( world *s, nve *ics, nve *pex, nve *fcn, nve *psi );
+void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi );
 
 /* insert at the end of the list */
-int insert_endoflist ( dlist *, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi);
+int insert_endoflist ( dlist *, nve *pex, nve *fcn, nve *ics, nve *psi);
 int replicate_endoflist ( dlist *, par *pars);
 
 /* delete element pos from the list */

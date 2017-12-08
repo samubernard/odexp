@@ -166,7 +166,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     /* Initialize world SIM */
     for (i = 0; i < pop_size; i++)
     {
-        insert_endoflist(SIM->pop,mu,pex,fcn,ics,psi);
+        insert_endoflist(SIM->pop,pex,fcn,ics,psi);
     }
 
     /* check that pop_size == SIM->pop->size */
@@ -1728,7 +1728,7 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
         /* DBPRINT("birth"); */
         SIM->event[0] = -1;
         SIM->event[1] = 1;
-        insert_endoflist(SIM->pop,mu,pex,fcn,ics,psi);
+        insert_endoflist(SIM->pop,pex,fcn,ics,psi);
         SIM->event[2] = (int)SIM->pop->end->id;
         /* TODO: initialize pop->expr and pop->y for the new particle only */
         single_ic(t, SIM->pop->end->y, SIM->pop->end);

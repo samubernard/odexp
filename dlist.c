@@ -53,17 +53,24 @@ void init_dlist(dlist *list)
     list->size = 0;
 }
 
-void init_world( world *s, nve *ics, nve *pex, nve *fcn, nve *psi )
+void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi )
 {
     size_t i;
+    s->nbr_par = mu->nbr_el;
     s->nbr_var = ics->nbr_el;
     s->nbr_expr= pex->nbr_el;
     s->nbr_aux = fcn->nbr_el;
     s->nbr_psi = psi->nbr_el;
+    s->parnames = malloc(s->nbr_par*sizeof(char*));
     s->varnames = malloc(s->nbr_var*sizeof(char*));
     s->exprnames= malloc(s->nbr_expr*sizeof(char*));
     s->auxnames = malloc(s->nbr_aux*sizeof(char*));
     s->psinames = malloc(s->nbr_psi*sizeof(char*));
+    for(i=0;i<s->nbr_par;i++)
+    {
+        s->parnames[i] = malloc(NAMELENGTH*sizeof(char));
+        strncpy(s->parnames[i],mu->name[i],NAMELENGTH-1);
+    }
     for(i=0;i<s->nbr_var;i++)
     {
         s->varnames[i] = malloc(NAMELENGTH*sizeof(char));
@@ -85,6 +92,8 @@ void init_world( world *s, nve *ics, nve *pex, nve *fcn, nve *psi )
         strncpy(s->psinames[i],psi->name[i],NAMELENGTH-1);
     }
 
+    s->mu = mu->value;
+
     s->max_id = 0;
 
 
@@ -99,26 +108,20 @@ void init_world( world *s, nve *ics, nve *pex, nve *fcn, nve *psi )
 }
 
 /* insert at the end of the list (including an empty list) */
-int insert_endoflist ( dlist *list, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi)
+int insert_endoflist ( dlist *list, nve *pex, nve *fcn, nve *ics, nve *psi)
 {
     par *p = malloc(sizeof(par));
     size_t i;
-    p->nbr_pars = mu->nbr_el;
     p->nbr_expr = pex->nbr_el;
     p->nbr_aux  = fcn->nbr_el;
     p->nbr_y    = ics->nbr_el;
     p->nbr_psi  = psi->nbr_el;
-    p->pars     = malloc(p->nbr_pars*sizeof(double));
     p->expr     = malloc(p->nbr_expr*sizeof(double));
     p->aux      = malloc(p->nbr_aux*sizeof(double));
     p->y        = malloc(p->nbr_y*sizeof(double));
     p->psi      = malloc(p->nbr_psi*sizeof(double));
     p->id       = SIM->max_id++;
 
-    for (i=0;i<p->nbr_pars;i++)
-    {
-        p->pars[i] = mu->value[i];
-    }
     for (i=0;i<p->nbr_expr;i++)
     {
         p->expr[i] = pex->value[i];
@@ -160,22 +163,16 @@ int replicate_endoflist ( dlist *list, par *mother)
 {
     par *p = malloc(sizeof(par));
     size_t i;
-    p->nbr_pars = mother->nbr_pars;
     p->nbr_expr = mother->nbr_expr;
     p->nbr_aux  = mother->nbr_aux;
     p->nbr_y    = mother->nbr_y;
     p->nbr_psi  = mother->nbr_psi;
-    p->pars     = malloc(p->nbr_pars*sizeof(double));
     p->expr     = malloc(p->nbr_expr*sizeof(double));
     p->aux      = malloc(p->nbr_aux*sizeof(double));
     p->y        = malloc(p->nbr_y*sizeof(double));
     p->psi      = malloc(p->nbr_psi*sizeof(double));
     p->id       = SIM->max_id++;
 
-    for (i=0;i<p->nbr_pars;i++)
-    {
-        p->pars[i] = mother->pars[i];
-    }
     for (i=0;i<p->nbr_expr;i++)
     {
         p->expr[i] = mother->expr[i];
@@ -249,7 +246,6 @@ int delete_el( dlist *list, par *to_del)
         list->end = NULL;
     }
 
-    free(to_del->pars);
     free(to_del->expr);
     free(to_del->aux);
     free(to_del->y);
@@ -281,6 +277,10 @@ void free_world(world *s)
 {
     size_t i;
     destroy(s->pop);
+    for(i=0;i<s->nbr_par;i++)
+    {
+        free(s->parnames[i]);
+    }
     for(i=0;i<s->nbr_var;i++)
     {
         free(s->varnames[i]);
@@ -297,6 +297,7 @@ void free_world(world *s)
     {
         free(s->psinames[i]);
     }
+    free(s->parnames);
     free(s->varnames);
     free(s->exprnames);
     free(s->auxnames);
@@ -313,10 +314,6 @@ void printf_particle(par *p)
     for (i=0;i<p->nbr_y;i++)
     {
         printf("  %-15s = %g\n", SIM->varnames[i], p->y[i]);
-    }
-    for (i=0;i<p->nbr_pars;i++)
-    {
-        printf("  par[%zu]          = %g\n", i, p->pars[i]);
     }
     for (i=0;i<p->nbr_expr;i++)
     {
@@ -380,7 +377,6 @@ int fwrite_particle_state(const double *restrict t, par *p, const char *restrict
     fwrite(p->y,sizeof(double),p->nbr_y,p->fid);
     fwrite(p->aux,sizeof(double),p->nbr_aux,p->fid);
     fwrite(p->psi,sizeof(double),p->nbr_psi,p->fid);
-    fwrite(p->pars,sizeof(double),p->nbr_pars,p->fid);
     fwrite(p->expr,sizeof(double),p->nbr_expr,p->fid);
 
     fclose(p->fid);

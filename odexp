@@ -727,7 +727,7 @@ echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single 
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    par *myself_ = (par *)params_;" >>.odexp/model.c
-echo "    double * pars_ __attribute__((unused)) = myself_->pars;" >>.odexp/model.c
+echo "    double * pars_ __attribute__((unused)) = SIM->mu;" >>.odexp/model.c
 echo "    double * aux_  __attribute__((unused)) = myself_->aux;" >>.odexp/model.c
 echo "    double * expr_ __attribute__((unused)) = myself_->expr;" >>.odexp/model.c
 echo "    double * psi_  __attribute__((unused)) = myself_->psi;" >>.odexp/model.c
@@ -852,7 +852,7 @@ echo "" >>.odexp/model.c
 echo "int ode_init_conditions(const double t, double y_[], void *params_)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
 echo "    par *myself_ = (par *)params_;" >>.odexp/model.c
-echo "    double * pars_ __attribute__((unused)) = myself_->pars;" >>.odexp/model.c
+echo "    double * pars_ __attribute__((unused)) = SIM->mu;" >>.odexp/model.c
 echo "    double * aux_  __attribute__((unused)) = myself_->aux;" >>.odexp/model.c
 echo "    double * expr_ __attribute__((unused)) = myself_->expr;" >>.odexp/model.c
 echo "    int success_ = 0;" >>.odexp/model.c
