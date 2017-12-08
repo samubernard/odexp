@@ -55,42 +55,16 @@ void init_dlist(dlist *list)
 
 void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi )
 {
-    size_t i;
     s->nbr_par = mu->nbr_el;
     s->nbr_var = ics->nbr_el;
     s->nbr_expr= pex->nbr_el;
     s->nbr_aux = fcn->nbr_el;
     s->nbr_psi = psi->nbr_el;
-    s->parnames = malloc(s->nbr_par*sizeof(char*));
-    s->varnames = malloc(s->nbr_var*sizeof(char*));
-    s->exprnames= malloc(s->nbr_expr*sizeof(char*));
-    s->auxnames = malloc(s->nbr_aux*sizeof(char*));
-    s->psinames = malloc(s->nbr_psi*sizeof(char*));
-    for(i=0;i<s->nbr_par;i++)
-    {
-        s->parnames[i] = malloc(NAMELENGTH*sizeof(char));
-        strncpy(s->parnames[i],mu->name[i],NAMELENGTH-1);
-    }
-    for(i=0;i<s->nbr_var;i++)
-    {
-        s->varnames[i] = malloc(NAMELENGTH*sizeof(char));
-        strncpy(s->varnames[i],ics->name[i],NAMELENGTH-1);
-    }
-    for(i=0;i<s->nbr_expr;i++)
-    {
-        s->exprnames[i] = malloc(NAMELENGTH*sizeof(char));
-        strncpy(s->exprnames[i],pex->name[i],NAMELENGTH-1);
-    }
-    for(i=0;i<s->nbr_aux;i++)
-    {
-        s->auxnames[i] = malloc(NAMELENGTH*sizeof(char));
-        strncpy(s->auxnames[i],fcn->name[i],NAMELENGTH-1);
-    }
-    for(i=0;i<s->nbr_psi;i++)
-    {
-        s->psinames[i] = malloc(NAMELENGTH*sizeof(char));
-        strncpy(s->psinames[i],psi->name[i],NAMELENGTH-1);
-    }
+    s->parnames = mu->name;
+    s->varnames = ics->name;
+    s->exprnames= pex->name;
+    s->auxnames = fcn->name;
+    s->psinames = psi->name;
 
     s->mu = mu->value;
 
@@ -275,33 +249,7 @@ void destroy(dlist *list)
 
 void free_world(world *s)
 {
-    size_t i;
     destroy(s->pop);
-    for(i=0;i<s->nbr_par;i++)
-    {
-        free(s->parnames[i]);
-    }
-    for(i=0;i<s->nbr_var;i++)
-    {
-        free(s->varnames[i]);
-    }
-    for(i=0;i<s->nbr_expr;i++)
-    {
-        free(s->exprnames[i]);
-    }
-    for(i=0;i<s->nbr_aux;i++)
-    {
-        free(s->auxnames[i]);
-    }
-    for(i=0;i<s->nbr_psi;i++)
-    {
-        free(s->psinames[i]);
-    }
-    free(s->parnames);
-    free(s->varnames);
-    free(s->exprnames);
-    free(s->auxnames);
-    free(s->psinames);
     free(s);
 }
 

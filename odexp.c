@@ -152,7 +152,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     nve ics;     /* initial conditions */
     nve fcn;     /* auxiliary functions */
     nve eqn;     /* dynamical equations */
-    nve psi;     /* pop means/pop stats */
+    nve psi;     /* pop coupling terms */
+    nve mfd;     /* pop mean fields/stats */
     nve dxv;     /* list of all Dynamical  + auXiliary Variables */
     nve cst;     /* constant arrays */
     nve dfl;     /* data files */
@@ -302,6 +303,17 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
         printf("  no population couplings found\n");
     } 
     LOGPRINT("found %zu population couplings",psi.nbr_el);
+
+    /* define mfd */
+    printf("\n%-25s%s\n", "population couplings", HLINE);
+    get_nbr_el(odefilename,"%C",2, &mfd.nbr_el, &mfd.nbr_expr);
+    alloc_namevalexp(&mfd);
+    success = load_strings(odefilename,mfd,"%C",2,1,' ', exit_if_nofile);
+    if (!success)
+    {
+        printf("  no population mean fields found\n");
+    } 
+    LOGPRINT("found %zu population couplings",mfd.nbr_el);
 
     /* define dxv */
     /* DBPRINT("define dxv"); */
@@ -1676,6 +1688,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     free_namevalexp( eqn );
     free_namevalexp( fcn );
     free_namevalexp( psi );
+    free_namevalexp( mfd );
     free_namevalexp( dxv );
     free_namevalexp( cst );
     free_namevalexp( dfl );
