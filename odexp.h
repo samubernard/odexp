@@ -26,8 +26,8 @@ int load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len, int exit_if_nofile);
 int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile);
 
-int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
-        nve cst, nve dfl, nve func, double_array tspan, const char *curr_buffer, const char *odexp_filename);
+int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
+        nve cst, nve dfl, nve func, nve psi, double_array tspan, const char *odexp_filename);
 
 int printf_options(const char *optiontype);
 int printf_option_line(size_t i);

@@ -74,7 +74,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     /* files */
     const char *odefilename = ".odexp/model.op";    /* */
     const char *parfilename = ".odexp/model.par";    /* */
-    const char current_data_buffer[] = "current.tab";
     char       par_filename[MAXFILENAMELENGTH];
     char data_fn[NAMELENGTH]; /* dataset filename */
 
@@ -357,7 +356,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     /* DBPRINT("init world SIM"); */
     SIM = malloc(sizeof(world));
     init_world( SIM, &ics,&pex, &fcn, &psi );
-    DBPRINT("SIM->exprnames[0] = %s", SIM->exprnames[0]);
+    /* DBPRINT("SIM->exprnames[0] = %s", SIM->exprnames[0]); */
     /* ode_ic(tspan.array[0],ics.value,&mu); */
 
     /* seed random number generator */
@@ -1331,7 +1330,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                         {
                             printf("  warning: could not load parameters.\n");
                         }
-                        success = load_nameval(par_filename, ics, "X", 1,no_exit); /* load initial conditions value from file */
+                        success = load_nameval(par_filename, ics, "I", 1,no_exit); /* load initial conditions value from file */
                         if ( success == 1)
                         {
                             /* reset initial condtitions */
@@ -1442,7 +1441,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case 's' : /* save file */
-                    file_status = fprintf_snapshot(ics,pex,mu,fcn,eqn,cst,dfl,func,tspan, current_data_buffer,odexp_filename);
+                    file_status = save_snapshot(ics,pex,mu,fcn,eqn,cst,dfl,func,psi,tspan, odexp_filename);
                     break;
                 case '!' : /* print ! */
                     nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -2292,8 +2291,9 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     return success;
 }
 
-int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
-        nve cst, nve dfl, nve func, double_array tspan, const char *curr_buffer, const char *odexp_filename)
+int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
+        nve cst, nve dfl, nve func, nve psi, double_array tspan,\
+        const char *odexp_filename)
 {
     int success = 0;
     size_t i;
@@ -2304,6 +2304,8 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
     char par_buffer[MAXFILENAMELENGTH];
     int len = *mu.max_name_length;
     clock_t time_stamp;
+
+    par *pars = SIM->pop->start;
 
     if (*init.max_name_length > len)
     {
@@ -2338,9 +2340,6 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
       snprintf(par_buffer,MAXFILENAMELENGTH,"%ju.par",(uintmax_t)time_stamp);
     }
 
-    /* rename "current.tab" to tab_buffer */
-    rename(curr_buffer,tab_buffer);
-
     /* open buffer parameter file (par) */
     fr = fopen(par_buffer,"w");
 
@@ -2368,7 +2367,7 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         fprintf(fr,"\n# dynamical variables/initial conditions\n");
         for(i=0;i<init.nbr_el;i++)
         {
-            fprintf(fr,"I%zu %-*s %g\n",i,len,init.name[i],init.value[i]);
+            fprintf(fr,"I%zu %-*s %g # %s\n",i,len,init.name[i],init.value[i],init.expression[i]);
         }    
 
         fprintf(fr,"\n# time span\nT ");
@@ -2420,10 +2419,23 @@ int fprintf_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         {
             fprintf(fr,"# F %s = %s\n",dfl.name[i],dfl.expression[i]);
         }
+        for(i=0;i<psi.nbr_el;i++)
+        {
+            fprintf(fr,"# %%C %s = %s\n",psi.name[i],psi.expression[i]);
+        }
+
+        
+        /* particle alive at the end of the simulation */
+        fprintf(fr,"\n# particles alive at the end of the simulation\n");
+        while ( pars != NULL )
+        {
+            fprintf(fr,"# id[%zu] %s\n",pars->id,pars->buffer); 
+            pars = pars->nextel;
+        }
 
         fclose(fr);
 
-        printf("  wrote %s and %s\n",par_buffer, tab_buffer);
+        printf("  wrote %s\n",par_buffer);
 
         success = 1;
     }
