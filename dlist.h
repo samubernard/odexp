@@ -68,13 +68,16 @@ typedef struct system_state {
     char **exprnames;
     char **auxnames;
     char **psinames;
+    char **mfdnames;
     size_t nbr_par;
     size_t nbr_var;
     size_t nbr_expr;
     size_t nbr_aux;
     size_t nbr_psi;
+    size_t nbr_mfd;
 
     double *mu;   /* simulation parameter values */ 
+    double *meanfield; /* meand fields */
 
     size_t max_id;
 
@@ -95,7 +98,7 @@ void free_namevalexp( nve mu );
 void init_dlist(dlist *list );
 
 /* init world */
-void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi );
+void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi, nve *mfd );
 
 /* insert at the end of the list */
 int insert_endoflist ( dlist *, nve *pex, nve *fcn, nve *ics, nve *psi);

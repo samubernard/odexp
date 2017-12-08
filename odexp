@@ -207,6 +207,14 @@ declare_couplings () {
     }' $file >>.odexp/model.c
 }
 
+declare_meanfields () {
+    # find mean fields and declare them in .odexp/model.c
+    # no vector allowed
+    gawk -F ' ' '$1 ~ /^%[mM][a-zA-Z0-9]*$/ {
+      printf "    double %s;\n", $2 
+    }' $file >>.odexp/model.c
+}
+
 declare_variables () {
     # find variables and declare them to model.c
     # find vector variables and declare them to model.c
@@ -305,6 +313,15 @@ define_couplings () {
     }' $file >>.odexp/model.c
 }
 
+define_meanfields () {
+    # define mean fields and declare them in .odexp/model.c
+    # No vectors allowed 
+    gawk -F ' ' -v nv=0 '$1 ~ /^%[mM][a-zA-Z0-9]*$/ {
+      lhs=$2;
+      printf "    %s = mfd_[%d];\n", lhs, nv; nv++
+    }' $file >>.odexp/model.c
+}
+
 get_couplings () {
     # 
     gawk -F ' ' -v nv=0 '$1 ~ /^%[cC][a-zA-Z0-9]*$/ {
@@ -312,6 +329,16 @@ get_couplings () {
       $2="";
       rhs=$0;
       printf "            myself_->psi[%d] += %s;\n", nv, rhs; nv++
+    }' $file >>.odexp/model.c
+}
+
+get_meanfields () {
+    # 
+    gawk -F ' ' -v nv=0 '$1 ~ /^%[mM][a-zA-Z0-9]*$/ {
+      $1="";
+      $2="";
+      rhs=$0;
+      printf "        SIM->meanfield[%d] += %s;\n", nv, rhs; nv++
     }' $file >>.odexp/model.c
 }
 
@@ -658,8 +685,15 @@ echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* fi
 # POPULATION BIRTH RATE  =====================================
 gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "        SIM->pop_birth_rate += myself_->birth_rate;\n"}' $file >>.odexp/model.c
 # END POPULATION BIRTH RATE  =================================
+# DEFINE THE COUPLINGS ====
+get_meanfields
+# =========================
 echo "        i++;" >>.odexp/model.c
 echo "        myself_ = myself_->nextel;" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
+echo "    for (i=0;i<SIM->nbr_mfd;i++)" >>.odexp/model.c
+echo "    {" >>.odexp/model.c
+echo "        SIM->meanfield[i] /= POP_SIZE;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
 echo "    SIM->pop_birth_rate /= POP_SIZE;" >>.odexp/model.c
 
@@ -683,6 +717,10 @@ get_couplings
 # ======================
 
 echo "            other_ = other_->nextel;" >>.odexp/model.c
+echo "        }" >>.odexp/model.c
+echo "        for (j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
+echo "        {" >>.odexp/model.c
+echo "            myself_->psi[j] /= POP_SIZE;" >>.odexp/model.c
 echo "        }" >>.odexp/model.c
 echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);" >>.odexp/model.c
 echo "        i++;" >>.odexp/model.c
@@ -731,6 +769,7 @@ echo "    double * pars_ __attribute__((unused)) = SIM->mu;" >>.odexp/model.c
 echo "    double * aux_  __attribute__((unused)) = myself_->aux;" >>.odexp/model.c
 echo "    double * expr_ __attribute__((unused)) = myself_->expr;" >>.odexp/model.c
 echo "    double * psi_  __attribute__((unused)) = myself_->psi;" >>.odexp/model.c
+echo "    double * mfd_  __attribute__((unused)) = SIM->meanfield;" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -776,6 +815,13 @@ echo "" >>.odexp/model.c
 # ====================================================================================
 
 # ====================================================================================
+# DECLARE MEAN FIELDS
+echo "    /* mean fields */" >>.odexp/model.c
+declare_meanfields
+echo "" >>.odexp/model.c
+# ====================================================================================
+
+# ====================================================================================
 # DECLARE VARIABLES and AUXILIARY VARIABLES
 echo "    /* Declaration - auxiliary functions */" >>.odexp/model.c
 # find vector variables and declare them to model.c
@@ -804,8 +850,12 @@ define_variables
 # DEFINE COUPLINGS 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - couplings */" >>.odexp/model.c
-# initialize couplings 
 define_couplings
+
+# DEFINE MEAN FIELDS 
+echo "" >>.odexp/model.c
+echo "    /* Initialization - mean fields */" >>.odexp/model.c
+define_meanfields
 
 # DEFINE AUXILIARY FUNCTIONS
 echo "" >>.odexp/model.c

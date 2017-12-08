@@ -86,6 +86,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     FILE    *gnuplot_pipe = popen("gnuplot -persist","w");
     char    par_details[32];
     char    list_msg[EXPRLENGTH];
+    char    plot_cmd[EXPRLENGTH];
     char    c,
             op,
             op2;
@@ -305,43 +306,49 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     LOGPRINT("found %zu population couplings",psi.nbr_el);
 
     /* define mfd */
-    printf("\n%-25s%s\n", "population couplings", HLINE);
-    get_nbr_el(odefilename,"%C",2, &mfd.nbr_el, &mfd.nbr_expr);
+    printf("\n%-25s%s\n", "population mean fields", HLINE);
+    get_nbr_el(odefilename,"%M",2, &mfd.nbr_el, &mfd.nbr_expr);
     alloc_namevalexp(&mfd);
-    success = load_strings(odefilename,mfd,"%C",2,1,' ', exit_if_nofile);
+    success = load_strings(odefilename,mfd,"%M",2,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no population mean fields found\n");
     } 
-    LOGPRINT("found %zu population couplings",mfd.nbr_el);
+    LOGPRINT("found %zu population mean fields",mfd.nbr_el);
 
     /* define dxv */
     /* DBPRINT("define dxv"); */
     ode_system_size = ics.nbr_el;
-    total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el;
-    nbr_cols = 1 + total_nbr_x + pex.nbr_el;
-    /* DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x); */
+    total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; /* nbr of plottable elements */
+    nbr_cols = 1 + ode_system_size + fcn.nbr_el + psi.nbr_el + pex.nbr_el;
+    DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x);
     lastinit = malloc(ode_system_size*sizeof(double));
-    dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr;
+    dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr + mfd.nbr_expr;
     dxv.nbr_el = total_nbr_x;
-    /* DBPRINT("alloc dxv"); */
+    DBPRINT("alloc dxv");
     alloc_namevalexp(&dxv);
-    *dxv.max_name_length = max(*psi.max_name_length, max(*ics.max_name_length, *fcn.max_name_length));
-    /* DBPRINT("assign dxv"); */
+    *dxv.max_name_length = max(*mfd.max_name_length,max(*psi.max_name_length, max(*ics.max_name_length, *fcn.max_name_length)));
+    DBPRINT("assign dxv");
     for (i = 0; i < ode_system_size; i++)
     {
         strcpy(dxv.name[i],ics.name[i]);
         strcpy(dxv.expression[i],ics.expression[i]);
     }
+    DBPRINT("dxv");
     for (i = ode_system_size; i < ode_system_size + fcn.nbr_el; i++)
     {
         strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
         strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
     }
-    for (i = ode_system_size + fcn.nbr_el; i < dxv.nbr_el; i++)
+    for (i = ode_system_size + fcn.nbr_el; i < ode_system_size + fcn.nbr_el + psi.nbr_el; i++)
     {
         strcpy(dxv.name[i],psi.name[i-ode_system_size-fcn.nbr_el]);
         strcpy(dxv.expression[i],psi.expression[i-ode_system_size-fcn.nbr_el]);
+    }
+    for (i = ode_system_size + fcn.nbr_el + psi.nbr_el; i < dxv.nbr_el; i++)
+    {
+        strcpy(dxv.name[i],mfd.name[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
+        strcpy(dxv.expression[i],mfd.expression[i-ode_system_size-fcn.nbr_el-mfd.nbr_el]);
     }
 
 
@@ -367,7 +374,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
 
     /* DBPRINT("init world SIM"); */
     SIM = malloc(sizeof(world));
-    init_world( SIM, &mu, &ics, &pex, &fcn, &psi );
+    init_world( SIM, &mu, &ics, &pex, &fcn, &psi, &mfd );
     /* DBPRINT("SIM->exprnames[0] = %s", SIM->exprnames[0]); */
     /* ode_ic(tspan.array[0],ics.value,&mu); */
 
@@ -414,12 +421,13 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
-    fprintf(gnuplot_pipe,\
-      "plot \".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
+    snprintf(plot_cmd,EXPRLENGTH,\
+      "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
       "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
       get_int("pop_current_particle"), nbr_cols, gx, gy,\
       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
       get_int("pop_current_particle"));
+    fprintf(gnuplot_pipe,"plot %s", plot_cmd);
 //     fprintf(gnuplot_pipe,"plot \"%s\" using %d:%d with %s title columnhead(%d).\" vs \".columnhead(%d)\n",\
 //         current_data_buffer,gx,gy,get_str("plot_with_style"),gy,gx);
     fflush(gnuplot_pipe);
@@ -916,12 +924,18 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                             printf_list_str('E',i,i,padding, &pex);
                         }
                     }
-                    else if (op == 'm') /* list couplings */
+                    else if (op == 'm') /* list couplings/mean fields */
                     {
+                        DBPRINT("fix indexing");
                         for (i=0; i<psi.nbr_el; i++)
                         {
                             padding = (int)log10(psi.nbr_el+0.5)-(int)log10(i+0.5);
-                            printf_list_str('M',i,i,padding, &psi);
+                            printf_list_str('C',i,i,padding, &psi);
+                        }
+                        for (i=0; i<mfd.nbr_el; i++)
+                        {
+                            padding = (int)log10(mfd.nbr_el+0.5)-(int)log10(i+0.5);
+                            printf_list_str('M',i,i,padding, &mfd);
                         }
                     }
                     else if (op == 'r') /* list random arrays         */
@@ -980,7 +994,16 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                             if ( strncmp(psi.attribute[i],"hidden",3) )
                             {
                                 padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+fcn.nbr_el+0.5);
-                                printf_list_str('%',i+eqn.nbr_el+fcn.nbr_el,i,padding,&psi);
+                                printf_list_str('C',i+eqn.nbr_el+fcn.nbr_el,i,padding,&psi);
+                            }
+                        }
+                        for (i=0; i<mfd.nbr_el; i++)
+                        {
+                            if ( strncmp(mfd.attribute[i],"hidden",3) )
+                            {
+                                padding = (int)log10(total_nbr_x+0.5)-\
+                                          (int)log10(i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el+0.5);
+                                printf_list_str('M',i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el,i,padding,&mfd);
                             }
                         }
                     }

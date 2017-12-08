@@ -53,20 +53,23 @@ void init_dlist(dlist *list)
     list->size = 0;
 }
 
-void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi )
+void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi, nve *mfd )
 {
     s->nbr_par = mu->nbr_el;
     s->nbr_var = ics->nbr_el;
     s->nbr_expr= pex->nbr_el;
     s->nbr_aux = fcn->nbr_el;
     s->nbr_psi = psi->nbr_el;
+    s->nbr_mfd = mfd->nbr_el;
     s->parnames = mu->name;
     s->varnames = ics->name;
     s->exprnames= pex->name;
     s->auxnames = fcn->name;
     s->psinames = psi->name;
+    s->mfdnames = mfd->name;
 
     s->mu = mu->value;
+    s->meanfield = mfd->value;
 
     s->max_id = 0;
 
@@ -346,6 +349,7 @@ int fwrite_SIM(const double *restrict t, char *restrict mode)
 
     fid = fopen(SIM->stats_buffer, mode);
     fwrite(t,sizeof(double),1,fid);
+    fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,fid);
     fwrite(&(SIM->pop->size),sizeof(int),1,fid);
     fwrite(SIM->event,sizeof(int),3,fid);
     
