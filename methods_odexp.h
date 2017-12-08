@@ -4,7 +4,7 @@
 #include "dlist.h"
 
 /* number of global options */
-#define NBROPTS 35
+#define NBROPTS 37
 
 extern size_t ode_system_size;
 extern int *NUM_IC;

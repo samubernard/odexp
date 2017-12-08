@@ -40,7 +40,9 @@ struct gen_option GOPTS[NBROPTS] = {
     {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
     {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
     {"popsize","population_size", 'i', 0.0, 1, "", "population size for particle simulations", "population"},
-    {"p/par","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
+    {"part","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
+    {"seed","random_generator_seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
+    {"resetseed","reset_random_generator_seed", 'i', 0.0, 0, "", "reset seed for the random number generator at each run", "random"},
     {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steadyStates"},  
     {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steadyStates"},  
     {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steadyStates"},  
@@ -129,11 +131,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
             data_plotted          = 0,
             plotmode_normal       = 0, /* normal mode: update plot with new parameters/option */
             plotmode_continuation = 0, /* continuation mode: plot continuation branch */
-            plotmode_range        = 0, /* plot range */
+            plotmode_range        = 0, /* plot range */       
             quit                  = 0;
-    
-    /* random number generator */
-    unsigned long randseed;
     
     /* odes */
     double *lastinit;    /* last initial conditions */
@@ -362,8 +361,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     /* ode_ic(tspan.array[0],ics.value,&mu); */
 
     /* seed random number generator */
-    randseed = 1306;
-    srand(randseed);
+    srand( (unsigned long)get_int("random_generator_seed") );
     /* test rng */
     printf("\nrandom number generator %s\n", HLINE);
     printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR);
@@ -1471,6 +1469,10 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
             } 
             if (rerun)
             {
+                if ( get_int("reset_random_generator_seed") )
+                {
+                    srand( (unsigned long)get_int("random_generator_seed") );
+                }
                 status = odesolver(ode_rhs, ode_ic, single_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {

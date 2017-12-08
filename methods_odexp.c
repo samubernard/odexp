@@ -178,25 +178,21 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     /* DBPRINT("init cond");  */
     /* initial conditions */
     y = malloc(sim_size*sizeof(double));
-    DBPRINT("size y alloc: %zu",sim_size*sizeof(double));
-    DBPRINT("nbr bytes memset: %zu",sim_size*sizeof(double)/sizeof(char));
+    /* DBPRINT("size y alloc: %zu",sim_size*sizeof(double)); */
+    /* DBPRINT("nbr bytes memset: %zu",sim_size*sizeof(double)/sizeof(char)); */
 
     for ( i=0; i<sim_size; i++)
     {
         /* DBPRINT("y[%zu] = %g\n", i,y[i]); */
     }
     memset(y, 0, sim_size*sizeof(double)/sizeof(char));
-    for ( i=0; i<sim_size; i++)
-    {
-        DBPRINT("y[%zu] = %f\n", i,y[i]);
-    }
     f = malloc(sim_size*sizeof(double));
     SIM->event[0] = -1;
     SIM->event[1] =  1;
     ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
     memset(SIM->event, 0, sizeof(SIM->event));
     ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
-    DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate);
+    /* DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate); */
     pars = SIM->pop->start;
     j = 0;
     while ( pars != NULL )

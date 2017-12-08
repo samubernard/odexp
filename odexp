@@ -905,7 +905,7 @@ cp "$ODEXPDIR"/.inputrc .odexp/
 
 
 
-echo "CFLAGS= -I$ODEXPDIR -Wall -g `pkg-config --cflags gsl` -pedantic" >.odexp/makefile
+echo "CFLAGS= -I$ODEXPDIR -Wall -Wno-gnu-statement-expression -g `pkg-config --cflags gsl` -pedantic" >.odexp/makefile
 echo "LDFLAGS=-g `pkg-config --libs gsl` -lm -L$ODEXPDIR -lodexp" >>.odexp/makefile
 echo "" >>.odexp/makefile
 echo "all: model.out " >>.odexp/makefile

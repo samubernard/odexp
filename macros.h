@@ -58,7 +58,7 @@
        {                                                      \
            index++; index %= SIM->nbr_expr;                    \
        }                                                      \
-       expr_[index];                                             \
+       myself_->expr[index];                                             \
      })                                                     
 
 #define SE(name)                                          \
@@ -76,7 +76,7 @@
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
-       y_[index];                                             \
+       myself_->y[index];                                             \
      })                                                     
 
 #define SY(name)                                          \
@@ -92,5 +92,6 @@
 #define ATBIRTH (SIM->event[0] == -1)
 #define ATREPLI (SIM->event[0] >= 0 && SIM->event[1] == 1)
 #define ISDAUGHTER (myself_->sister != NULL)
+#define ISMOTHER   (myself_->sister == NULL)
 
 #endif /* !FILE_MACROS_SEEN */
