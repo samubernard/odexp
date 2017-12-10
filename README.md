@@ -1,12 +1,14 @@
-# odexp - fast ODE solver with gnuplot graphical output
-A command line tool for ODE simulation.
+# odexp - fast population ODE solver with gnuplot graphical output
+A command line tool for ODE-based population simulation.
 
 ## COMMANDS 
 * ``+``, ``=``,  C^g Increment current parameter by a multiplicative factor ``par_step`` 
 * ``-``, ``C^h`` Decrement current parameter by a multiplicative factor ``par_step``
 * ``]``, ``C^]`` Plot next variable on the y-axis (cyclic)
 * ``[``, ``C^[`` Plot previous variable on the y-axis (cyclic)
-* ``>`` Double the number of time steps 
+* ``}``, ``C^}`` Plot next particle on the y-axis (cyclic)
+* ``{``, ``C^}`` Plot previous particle on the y-axis (cyclic)
+* ``>`` Double the number of time steps
 * ``<`` Halve the number of time steps 
 * ``!`` **filename** Save the current plot to **filename**. EPS format
 * ``0``, ``n`` Switch to/update normal plot 
@@ -36,18 +38,19 @@ A command line tool for ODE simulation.
 * ``lf`` List all array files (nrows ncols filename)
 * ``li`` List all variables with initial conditions 
 * ``ll`` List file name and various information 
-* ``ln`` Display system size
+* ``lm`` List coupling and mean field variable
+* ``ln`` Display ODE system size
 * ``lo`` [**optiontype**] List options that match **optiontype**, or all options if **optiontype** is missing
 * ``lp`` List all parameters and their values
-* ``ls`` List steady states
+* ``ls`` List steady states *not functional*
 * ``lx`` List all equations and auxiliary variables 
-* ``mm`` Try to find all steady states 
-* ``mr`` Range over parameters. The active parameter takes values between r/par0 and r/par1 with 
+* ``mm`` Try to find all steady states *not functional*
+* ``mr`` Range over parameters. The active parameter takes values between r/par0 and r/par1 with *not functional*
 multiplicative step r/mstep and additive stesp r/astep. For each value, the system is
 integrated over tspan and the min and the max of each variable is stored in the file range.tab. 
 If r/ric is 0, the initial conditions are set to the last state of the previous integration, 
 otherwise, the initial conditions are set as usual
-* ``ms`` Find a steady state with starting guess given by initial conditions 
+* ``ms`` Find a steady state with starting guess given by initial conditions *not functional*
 * ``o`` **filename** Load parameters values and options from file **filename**
 * ``P`` **val** Set current parameter to **val**
 * ``p`` {**ind**|**par**} [**val**] Make parameter with index **ind** or name **par** the current parameter, and set its value to **val** 
@@ -166,8 +169,62 @@ is interpreted as
 is interpreted as
 /* double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X } */
 ```
+The function **sum** is a helper function (see below for a list of helper functions).
 
-The function **sum** is a helper function (see below for a list of helper functions). 
+### POPULATION-SPECIFIC DECLARATIONS
+
+* __%BIRTH__ Particle (*de novo*) birth rate
+
+```
+%BIRTH 0.1 /* set birth rate to 0.1 per unit time */
+%BIRTH 1.0/(10 + POP_SIZE) /* set birth rate to a function of the total partice number POP_SIZE */
+```
+
+* __%DEATH__ Particle death rate
+
+```
+%DEATH 0.01 /* constant particle death rate */
+%DEATH var_death_rate /* set death rate to var_death_rate */
+```
+
+* __%REPLI__ Particle replication rate
+
+* __%C__ Coupling term. This is of the form ``PSI[i] = 1/POP_SIZE*sum_{j=1}^POP_SIZE phi(x[j],x[i])``, where ``phi`` is a function of two variables. The declaration is
+```
+%C PSI phi(THEM("x"),US("x"))
+```
+The coupling term ``PSI`` take a value for each particle.
+
+* __%M__ Mean field. This is of the form ``MF = 1/POP_SIZE*sum(j=1) phi(x[j])``, where ``phi`` depend only on one variable.
+
+```
+%M MF phi(US("x"))
+```
+The mean field term in an average over the population, and take a single value.
+
+## POPULATION-SPECIFIC MACROS
+
+* __POP_SIZE__ Total number of particles. Can be used anywhere.
+
+* __THEM("var")__ Used in __%C__ to iterate over all particles; var must be an auxiliary variable.
+
+* __US("var")__ Used in __%C__ and __%M__ to denote the current particle; var must be an auxiliary variable.
+
+* __ME("var")__ Value of the current particle parametric expression named var.
+
+* __MY("var")__ Value of the current particle dynamical variable named var.
+
+* __SE("var")__ Value of the current particle's sister parametric expression named var. Useful to specify what happens when particle replicates.
+
+* __SY("var")__ Value of the current particle's sister dynamical variable named var. Useful to specify what happens when particle replicates.
+
+* __ATBIRTH__ logical variable indicating if the particle is just born.
+
+* __ATREPLI__ logical varaible indicating if the particle is replicating.
+
+* __ISDAUGHTER__ logical variable indicating if the particle is the daughter. This is nonzero only at replication (ATREPLI = 1). The daughter particle is the newly formed particle. At replication, the daughter particle is created from the mother particle by copy. Then, the mother particle is updated and becomes the __sister__ particle. The daughter is then updated, and can refer to the sister particle with __SE__ and __SY__.
+
+* __ISMOTHER__ logical variable indicating if the particle is the mother. This is nonzero only at replication (ATREPLI = 1).
 
 ## NUMERICAL AND GRAPHICAL OPTIONS
 

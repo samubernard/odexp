@@ -118,6 +118,10 @@ int insert_endoflist ( dlist *list, nve *pex, nve *fcn, nve *ics, nve *psi)
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
 
+    death_rate = 0;
+    repli_rate = 0;
+    birth_rate = 0;
+
     p->sister = NULL; /* particle has no sister */
 
     p->nextel = NULL; /* p is at the end of the list */
