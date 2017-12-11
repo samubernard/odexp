@@ -42,7 +42,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"popsize","population_size", 'i', 0.0, 1, "", "population size for particle simulations", "population"},
     {"part","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
     {"seed","random_generator_seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
-    {"resetseed","reset_random_generator_seed", 'i', 0.0, 0, "", "reset seed for the random number generator at each run", "random"},
+    {"resetseed","reset_random_generator_seed", 'i', 0.0, 1, "", "reset rng seed at each run 0 | {1}", "random"},
     {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steadyStates"},  
     {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steadyStates"},  
     {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steadyStates"},  
@@ -1617,8 +1617,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
               }
               if ( plot3d == 0 )
               {
-                if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el) && 
-                     (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el) )
+                if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) && 
+                     (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) ) /* plot from idXX.dat */
                 {
                     snprintf(plot_cmd,EXPRLENGTH,\
                       "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
@@ -1649,9 +1649,9 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
               } 
               else /* plot3d == 1 */
               {
-                if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el) && 
-                     (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el) && 
-                     (gz <= ode_system_size + fcn.nbr_el + psi.nbr_el) )
+                if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) && 
+                     (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) && 
+                     (gz <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) ) /* plot from idXX.dat */
                 {
                     snprintf(plot_cmd,EXPRLENGTH,\
                       "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\

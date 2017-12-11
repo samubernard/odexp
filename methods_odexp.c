@@ -164,7 +164,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     }
 
     /* Initialize world SIM */
-    system("rm .odexp/id*.dat");
+    system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
     SIM->fid = fopen(SIM->stats_buffer, "w");
     for (i = 0; i < pop_size; i++)
     {
