@@ -117,10 +117,12 @@ int insert_endoflist ( dlist *list, nve *pex, nve *fcn, nve *ics, nve *psi)
     }
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
+    
+    p->fid = fopen(p->buffer,"w");
 
-    death_rate = 0;
-    repli_rate = 0;
-    birth_rate = 0;
+    p->death_rate = 0;
+    p->repli_rate = 0;
+    p->birth_rate = 0;
 
     p->sister = NULL; /* particle has no sister */
 
@@ -172,6 +174,8 @@ int replicate_endoflist ( dlist *list, par *mother)
     }
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
+
+    p->fid = fopen(p->buffer,"w");
 
     p->sister = mother; /* pointer to mother particle. 
                          * Warning: existence of mother not guarateed 
@@ -232,6 +236,8 @@ int delete_el( dlist *list, par *to_del)
     free(to_del->y);
     free(to_del->psi);
     free(to_del);
+
+    fclose(to_del->fid);
 
     list->size--;
 
@@ -319,10 +325,8 @@ par * getpar( size_t with_id )
     }
 }
 
-int fwrite_particle_state(const double *restrict t, par *p, const char *restrict mode)
+int fwrite_particle_state(const double *restrict t, par *p)
 {
-    p->fid = fopen(p->buffer, mode);
-
     if ( p->fid == NULL ) 
     {
         return -1;
@@ -333,8 +337,6 @@ int fwrite_particle_state(const double *restrict t, par *p, const char *restrict
     fwrite(p->aux,sizeof(double),p->nbr_aux,p->fid);
     fwrite(p->psi,sizeof(double),p->nbr_psi,p->fid);
     fwrite(p->expr,sizeof(double),p->nbr_expr,p->fid);
-
-    fclose(p->fid);
     
     return 0;
 
@@ -343,19 +345,17 @@ int fwrite_particle_state(const double *restrict t, par *p, const char *restrict
 
 int fwrite_SIM(const double *restrict t, char *restrict mode)
 {
-    FILE *fid;
     par *pars = SIM->pop->start;
     while ( pars != NULL )
     {
-        fwrite_particle_state(t, pars, mode);
+        fwrite_particle_state(t, pars);
         pars = pars->nextel;
     }
 
-    fid = fopen(SIM->stats_buffer, mode);
-    fwrite(t,sizeof(double),1,fid);
-    fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,fid);
-    fwrite(&(SIM->pop->size),sizeof(int),1,fid);
-    fwrite(SIM->event,sizeof(int),3,fid);
+    fwrite(t,sizeof(double),1,SIM->fid);
+    fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,SIM->fid);
+    fwrite(&(SIM->pop->size),sizeof(int),1,SIM->fid);
+    fwrite(SIM->event,sizeof(int),3,SIM->fid);
     
     if ( strncmp(mode,"w",1) == 0 ) /* write initial population */
     {
@@ -365,16 +365,15 @@ int fwrite_SIM(const double *restrict t, char *restrict mode)
             SIM->event[0] = -1;
             SIM->event[1] =  1;
             SIM->event[2] = pars->id;
-            fwrite(t,sizeof(double),1,fid);
-            fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,fid);
-            fwrite(&(SIM->pop->size),sizeof(int),1,fid);
-            fwrite(SIM->event,sizeof(int),3,fid);
+            fwrite(t,sizeof(double),1,SIM->fid);
+            fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,SIM->fid);
+            fwrite(&(SIM->pop->size),sizeof(int),1,SIM->fid);
+            fwrite(SIM->event,sizeof(int),3,SIM->fid);
             pars = pars->nextel;
         }
     }
 
     memset(SIM->event, 0, sizeof(SIM->event));
-    fclose(fid);
     
     return 0; 
 }

@@ -321,20 +321,20 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     ode_system_size = ics.nbr_el;
     total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; /* nbr of plottable elements */
     nbr_cols = 1 + ode_system_size + fcn.nbr_el + psi.nbr_el + pex.nbr_el;
-    DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x);
+    /* DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x); */
     lastinit = malloc(ode_system_size*sizeof(double));
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr + mfd.nbr_expr;
     dxv.nbr_el = total_nbr_x;
-    DBPRINT("alloc dxv");
+    /* DBPRINT("alloc dxv"); */
     alloc_namevalexp(&dxv);
     *dxv.max_name_length = max(*mfd.max_name_length,max(*psi.max_name_length, max(*ics.max_name_length, *fcn.max_name_length)));
-    DBPRINT("assign dxv");
+    /* DBPRINT("assign dxv"); */
     for (i = 0; i < ode_system_size; i++)
     {
         strcpy(dxv.name[i],ics.name[i]);
         strcpy(dxv.expression[i],ics.expression[i]);
     }
-    DBPRINT("dxv");
+    /* DBPRINT("dxv"); */
     for (i = ode_system_size; i < ode_system_size + fcn.nbr_el; i++)
     {
         strcpy(dxv.name[i],fcn.name[i-ode_system_size]);

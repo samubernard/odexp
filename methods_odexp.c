@@ -164,6 +164,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     }
 
     /* Initialize world SIM */
+    system("rm .odexp/id*.dat");
+    SIM->fid = fopen(SIM->stats_buffer, "w");
     for (i = 0; i < pop_size; i++)
     {
         insert_endoflist(SIM->pop,pex,fcn,ics,psi);
@@ -231,7 +233,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     /* DBPRINT("  after quick file"); */
 
     /* printf each particle in a binary file pars->buffer */
-    system("rm .odexp/id*.dat");
     fwrite_SIM(&t, "w");
 
     /* sigaction -- detect Ctrl-C during the simulation  */
@@ -398,6 +399,15 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     }
 
     fclose(quickfile);
+
+    fclose(SIM->fid);
+    pars = SIM->pop->start;
+    while ( pars != NULL )  
+    {
+        fclose(pars->fid);
+        pars = pars->nextel;
+    }
+
 
     gsl_odeiv2_evolve_free(e);
     gsl_odeiv2_control_free(c);

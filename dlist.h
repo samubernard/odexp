@@ -86,6 +86,7 @@ typedef struct system_state {
     int event[3]; /* IDParent event IDChild */
 
     char stats_buffer[NAMELENGTH];
+    FILE *fid;
 
 } world;
 
@@ -119,6 +120,6 @@ double getv(char *name, par *p);
 
 par * getpar( size_t with_id );
 
-int fwrite_particle_state(const double *restrict t, par *p, const char *restrict mode);
+int fwrite_particle_state(const double *restrict t, par *p);
 int fwrite_SIM(const double *restrict t, char *restrict mode);
 
