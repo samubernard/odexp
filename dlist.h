@@ -52,7 +52,6 @@ typedef struct particle_state {
 
     double death_rate;
     double repli_rate;
-    double birth_rate;
 
     size_t id;
 

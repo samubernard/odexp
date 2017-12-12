@@ -687,7 +687,7 @@ echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
 echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux, ->____rate  */" >>.odexp/model.c
 # POPULATION BIRTH RATE  =====================================
-gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "        SIM->pop_birth_rate += myself_->birth_rate;\n"}' $file >>.odexp/model.c
+gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "        SIM->pop_birth_rate += %s;\n", $2}' $file >>.odexp/model.c
 # END POPULATION BIRTH RATE  =================================
 # DEFINE THE COUPLINGS ====
 get_meanfields
@@ -889,11 +889,6 @@ gawk -F ' ' '$1 ~ /^%[dD][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->death_rat
 echo "" >>.odexp/model.c
 echo "    /* Initialization -  particle replication */" >>.odexp/model.c
 gawk -F ' ' '$1 ~ /^%[rR][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->repli_rate = %s;\n", $0}' $file >>.odexp/model.c
-
-# DEFINE birth_ 
-echo "" >>.odexp/model.c
-echo "    /* Initialization -  particle birth */" >>.odexp/model.c
-gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->birth_rate = %s;\n", $0}' $file >>.odexp/model.c
 
 echo "" >>.odexp/model.c
 echo "/*==== CHANGES CAN BE MADE ABOVE ====*/" >>.odexp/model.c

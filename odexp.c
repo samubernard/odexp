@@ -1480,12 +1480,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     nbr_read = sscanf(cmdline+1," %zu ",&i); 
                     if (nbr_read <= 0) /* list all */
                     {
-                       /* DBPRINT("nbr_read %d", nbr_read); */
-                       /* DBPRINT("pop size %zu", SIM->pop->size); */
-                       for(i=0;i<SIM->pop->size;i++)
-                       {
-                           printf_SIM(i);
-                       }
+                       printf_SIM();
                     }
                     break;
                 case 'Q' :  /* quit without saving */
@@ -2602,20 +2597,13 @@ void printf_list_str_val(char type, size_t print_index, size_t nve_index, int pa
 }
 
 
-void printf_SIM(size_t i)
+void printf_SIM( void )
 {
     par *p = SIM->pop->start;
-    size_t j = 0;
-    while ( p != NULL && j<i )
+    while ( p != NULL )
     {
-        p = p->nextel;
-        j++;
-    }
-    /* DBPRINT(" i=%zu, j=%zu",i,j); */
-    if ( j == i )
-    {
-        /* printf("  particle %zu\n", i); */
         printf_particle(p);
+        p = p->nextel;
     }
 }
 

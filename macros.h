@@ -34,6 +34,14 @@
 
 #define POP_SIZE SIM->pop->size
 
+#define MU(name)                                            \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->parnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_par;                    \
+       }                                                      \
+       SIM->mu[index];                                    \
+     })
 #define OA(name)                                            \
     ({ static size_t index = 0;                               \
        while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \

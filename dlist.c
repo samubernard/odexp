@@ -120,9 +120,8 @@ int insert_endoflist ( dlist *list, nve *pex, nve *fcn, nve *ics, nve *psi)
     
     p->fid = fopen(p->buffer,"w");
 
-    p->death_rate = 0;
-    p->repli_rate = 0;
-    p->birth_rate = 0;
+    p->death_rate = 0.0;
+    p->repli_rate = 0.0;
 
     p->sister = NULL; /* particle has no sister */
 
@@ -172,6 +171,8 @@ int replicate_endoflist ( dlist *list, par *mother)
     {
         p->psi[i]  = mother->psi[i]; 
     }
+    p->death_rate = mother->death_rate;
+    p->repli_rate = mother->repli_rate;
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
 
@@ -290,7 +291,6 @@ void printf_particle(par *p)
     }
     printf("  death_rate      = %g\n", p->death_rate);
     printf("  repli_rate      = %g\n", p->repli_rate);
-    printf("  birth_rate      = %g\n", p->birth_rate);
 
     printf("------------------------------\n");
 }

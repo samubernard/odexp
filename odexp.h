@@ -36,7 +36,7 @@ void printf_list_val(char type, size_t print_index, size_t nve_index, int paddin
 void printf_list_str(char type, size_t print_index, size_t nve_index, int padding, const nve *var);
 void printf_list_str_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var);
 
-void printf_SIM(size_t i);
+void printf_SIM( void );
 
 int plot_data(const size_t colx, const size_t coly, const char *datafile_plotted, FILE *gnuplot_pipe);
 
