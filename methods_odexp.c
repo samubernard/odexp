@@ -1647,6 +1647,7 @@ double SSA_timestep()
 void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi )
 {
     par *pars = (par *)NULL;
+    par **p;
     size_t i;
 
     double *r,
@@ -1658,12 +1659,14 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
 
     /* get the rates */
     r = malloc((2*POP_SIZE+1)*sizeof(double));
+    p = malloc(POP_SIZE*sizeof(par *));       
     pars = SIM->pop->start;
     i = 0;
     while ( pars != NULL )
     {
         r[i] = pars->death_rate;
         r[i+POP_SIZE] = pars->repli_rate;
+        p[i] = pars;
         pars = pars->nextel;
         i++;
     }
@@ -1701,35 +1704,24 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
 
     if ( die || repli )
     {
-        pars = SIM->pop->start;
-        i = 0;
-        while ( pars != NULL )
+        pars = p[choose_pars];
+        SIM->event[0] = (int)pars->id;
+        if ( die )
         {
-            if ( die && (choose_pars == i) )
-            {
-                /* DBPRINT("death: killing %zu'th part",choose_pars); */
-                SIM->event[0] = (int)pars->id;
-                SIM->event[1] = -1;
-                SIM->event[2] = -1;
-                delete_el(SIM->pop, pars);
-                break;
-            }
-            if ( repli && (choose_pars == i) )
-            {
-                /* DBPRINT("repli: adding particle"); */
-                SIM->event[0] = (int)pars->id;
-                SIM->event[1] = 1;
-                replicate_endoflist(SIM->pop, pars);
-                SIM->event[2] = (int)SIM->pop->end->id;
-                /* first update mother particle initial conditions and expr */
-                single_ic(t, pars->y, pars);
-                /* then update new particle initial conditions and expr */
-                single_ic(t, SIM->pop->end->y, SIM->pop->end);
-                SIM->pop->end->sister = NULL;
-                break;
-            }
-            pars = pars->nextel;
-            i++;
+            SIM->event[1] = -1;
+            SIM->event[2] = -1;
+            delete_el(SIM->pop, pars);
+        }
+        if ( repli )
+        {
+            SIM->event[1] = 1;
+            replicate_endoflist(SIM->pop, pars);
+            SIM->event[2] = (int)SIM->pop->end->id;
+            /* first update mother particle initial conditions and expr */
+            single_ic(t, pars->y, pars);
+            /* then update new particle initial conditions and expr */
+            single_ic(t, SIM->pop->end->y, SIM->pop->end);
+            SIM->pop->end->sister = NULL;
         }
 
     }
@@ -1745,6 +1737,7 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
 	}
 
     free(r);
+    free(p);
 
 }
 
