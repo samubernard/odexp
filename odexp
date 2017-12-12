@@ -943,7 +943,7 @@ define_parametric_expressions
 
 # DEFINE parametric_expression_pointer 
 echo "" >>.odexp/model.c
-echo "    /* initialization - expr_pointer */" >>.odexp/model.c
+echo "    /* initialization - expr pointer */" >>.odexp/model.c
 define_parametric_expression_pointer
 
 echo "" >>.odexp/model.c

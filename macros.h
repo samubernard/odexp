@@ -43,6 +43,24 @@
        other_->aux[index];                                    \
      })
 
+#define OE(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_expr;                    \
+       }                                                      \
+       other_->expr[index];                                             \
+     })                                                     
+
+#define OY(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_var;                    \
+       }                                                      \
+       other_->y[index];                                             \
+     })                                                     
+
 #define MA(name)                                            \
     ({ static size_t index = 0;                               \
        while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
@@ -61,15 +79,6 @@
        myself_->expr[index];                                             \
      })                                                     
 
-#define SE(name)                                          \
-    ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
-       {                                                      \
-           index++; index %= SIM->nbr_expr;                    \
-       }                                                      \
-       myself_->sister == NULL ? 0.0 : myself_->sister->expr[index]; \
-     })                                                     
-
 #define MY(name)                                          \
     ({ static size_t index = 0;                               \
        while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
@@ -77,6 +86,24 @@
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
        myself_->y[index];                                             \
+     })                                                     
+
+#define SA(name)                                            \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_aux;                    \
+       }                                                      \
+       myself_->sister == NULL ? 0.0 : myself_->sister->aux[index]; \
+     })
+
+#define SE(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_expr;                    \
+       }                                                      \
+       myself_->sister == NULL ? 0.0 : myself_->sister->expr[index]; \
      })                                                     
 
 #define SY(name)                                          \

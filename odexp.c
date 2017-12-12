@@ -39,7 +39,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance", "ode"},
     {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
     {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
-    {"popsize","population_size", 'i', 0.0, 1, "", "population size for particle simulations", "population"},
+    {"popsize","population_size", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
     {"part","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
     {"seed","random_generator_seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
     {"resetseed","reset_random_generator_seed", 'i', 0.0, 1, "", "reset rng seed at each run 0 | {1}", "random"},
@@ -244,7 +244,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     {
         printf("  no parametric expression found\n");
     } 
-    mu.expr_pointer = pex.value; /* pointer to parametric expression values */
+    /* mu.expr_pointer = pex.value; pointer to parametric expression values */
     LOGPRINT("found %zu parametric expressions",pex.nbr_el);
 
     /* get initial conditions */
@@ -275,7 +275,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     {
         printf("  no auxiliary function found\n");
     } 
-    mu.aux_pointer = fcn.value; /* pointer to fcn.value */
+    /* mu.aux_pointer = fcn.value; pointer to fcn.value */
     LOGPRINT("found %zu auxiliary variables",fcn.nbr_el);
 
     /* get equations */
