@@ -279,7 +279,7 @@ void printf_particle(par *p)
     }
     for (i=0;i<p->nbr_expr;i++)
     {
-        printf("  expr[%zu]         = %g\n", i, p->expr[i]);
+        printf("  %-15s = %g\n", SIM->exprnames[i], p->expr[i]);
     }
     for (i=0;i<p->nbr_aux;i++)
     {
