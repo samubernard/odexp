@@ -314,7 +314,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
         }
 
         update_SIM_y(y);
-        /* fprintf_SIM_y(file, t, y); */
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
         fwrite_SIM(&t, "a");
 
@@ -350,7 +349,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
             fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
             /* printf each particle in a binary file pars->buffer */
             fwrite_SIM(&t, "a");
-            bd_alert = 0;
             /* DBPRINT("SIM->stats_buffer = %s",SIM->stats_buffer); */
             /* DBPRINT("SIM->event %d %d %d",SIM->event[0], SIM->event[1], SIM->event[2]); */
             gsl_odeiv2_evolve_free(e);
@@ -388,6 +386,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
 
         hmin_alert = 0;
         disc_alert = 0;
+        bd_alert = 0;
     }
     if (status == GSL_SUCCESS)
     {
