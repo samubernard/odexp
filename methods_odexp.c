@@ -192,6 +192,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     SIM->event[0] = -1;
     SIM->event[1] =  1;
     ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
+    update_SIM_y(y);
     memset(SIM->event, 0, sizeof(SIM->event));
     ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
     /* DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate); */
@@ -342,6 +343,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
             }
             ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux 
                                      *              SIM->pop->psi 
+                                     *              SIM->pop->meanfield
                                      *              SIM->pop->death_rate
                                      *              SIM->pop->repli_rate 
                                      *              SIM->pop_birth_rate 
