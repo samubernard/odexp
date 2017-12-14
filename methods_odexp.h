@@ -56,7 +56,7 @@ typedef struct double_array
 
 
 int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
- nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan, FILE *gnuplot_pipe);
+ nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan);
 
 int parameter_range( oderhs ode_rhs, odeic ode_ic,\
  double *lasty, nve init, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe);
@@ -96,5 +96,5 @@ char*  get_str(const char *name);
 
 /* birth/death */
 double SSA_timestep();
-void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi );
+void apply_birthdeath(const double t, odeic single_ic );
 int ncumsum(double *x, size_t len, double *sumx);

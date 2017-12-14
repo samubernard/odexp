@@ -14,7 +14,8 @@ static char *cmdline  = (char *)NULL;
 
 /* log file */
 const char *logfilename = ".odexp/model.log";
-static FILE *logfr = (FILE *)NULL;
+FILE *logfr = (FILE *)NULL;
+FILE *GPLOTP = (FILE *)NULL;
 
 /* world */
 world *SIM = (world *)NULL;
@@ -83,7 +84,6 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
 
     /* commands and options */
     char    *extracmd = (char *)NULL;
-    FILE    *gnuplot_pipe = popen("gnuplot -persist","w");
     char    par_details[32];
     char    list_msg[EXPRLENGTH];
     char    plot_cmd[EXPRLENGTH];
@@ -167,6 +167,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     int             nbr_stst = 0;
     /* end variable declaration */
 
+
+    GPLOTP = popen("gnuplot -persist","w");
     logfr = fopen(logfilename, "w");
     if ( logfr != NULL ) 
     { 
@@ -415,19 +417,19 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     LOGPRINT("System init done. Running first simulation");
     if ( not_run == 0 )
     {    
-        status = odesolver(ode_rhs, ode_ic, single_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
+        status = odesolver(ode_rhs, ode_ic, single_ic, &ics, &mu, &pex, &fcn, &psi, &tspan);
     }
-    fprintf(gnuplot_pipe,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
-    fprintf(gnuplot_pipe,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
-    fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
+    fprintf(GPLOTP,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
+    fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
+    fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
     snprintf(plot_cmd,EXPRLENGTH,\
       "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
       "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
       get_int("pop_current_particle"), nbr_cols, gx, gy,\
       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
       get_int("pop_current_particle"));
-    fprintf(gnuplot_pipe,"plot %s", plot_cmd);
-    fflush(gnuplot_pipe);
+    fprintf(GPLOTP,"plot %s", plot_cmd);
+    fflush(GPLOTP);
 
     while(1)
     {
@@ -577,32 +579,32 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     sscanf(cmdline+1,"%c%c",&op,&op2);
                     if ( (op  == 'z' && op2 == 'l') || (op2  == 'z' && op == 'l') )
                     {
-                        /* fprintf(gnuplot_pipe,"set logscale z\n");   */
+                        /* fprintf(GPLOTP,"set logscale z\n");   */
                         set_str("plot_zscale","log");
                     }
                     if ( (op  == 'z' && op2 == 'n') || (op2  == 'z' && op == 'n') )
                     {
-                        /* fprintf(gnuplot_pipe,"set nologscale y\n");   */
+                        /* fprintf(GPLOTP,"set nologscale y\n");   */
                         set_str("plot_zscale","linear");
                     }
                     if ( (op  == 'y' && op2 == 'l') || (op2  == 'y' && op == 'l') )
                     {
-                        /* fprintf(gnuplot_pipe,"set logscale y\n");   */
+                        /* fprintf(GPLOTP,"set logscale y\n");   */
                         set_str("plot_yscale","log");
                     }
                     if ( (op  == 'y' && op2 == 'n') || (op2  == 'y' && op == 'n') )
                     {
-                        /* fprintf(gnuplot_pipe,"set nologscale y\n");   */
+                        /* fprintf(GPLOTP,"set nologscale y\n");   */
                         set_str("plot_yscale","linear");
                     }
                     if ( (op  == 'x' && op2 == 'l') || (op2  == 'x' && op == 'l') )
                     {
-                        /* fprintf(gnuplot_pipe,"set logscale x\n");   */
+                        /* fprintf(GPLOTP,"set logscale x\n");   */
                         set_str("plot_xscale","log");
                     }
                     if ( (op  == 'x' && op2 == 'n') || (op2  == 'x' && op == 'n') )
                     {
-                        /* fprintf(gnuplot_pipe,"set nologscale x\n");   */
+                        /* fprintf(GPLOTP,"set nologscale x\n");   */
                         set_str("plot_xscale","linear");
                     }
                     replot = 1;
@@ -1411,8 +1413,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     replot = 1;
                     break;
                 case 'g' : /* issue a gnuplot command */
-                    fprintf(gnuplot_pipe,"%s\n", cmdline+1);
-                    fflush(gnuplot_pipe);
+                    fprintf(GPLOTP,"%s\n", cmdline+1);
+                    fflush(GPLOTP);
                     break;
                 case 'm' :
                     sscanf(cmdline+1,"%c",&op);
@@ -1446,7 +1448,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     }
                     else if ( op == 'r' )
                     {
-                        status = parameter_range(ode_rhs, ode_ic, NULL, ics, mu, fcn, tspan, gnuplot_pipe);
+                        status = parameter_range(ode_rhs, ode_ic, NULL, ics, mu, fcn, tspan, GPLOTP);
                     }
                     break;
                 case '#' : /* add data from file to plot */
@@ -1494,11 +1496,11 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     nbr_read = sscanf(cmdline+1,"%s", svalue);
                     if ( nbr_read == 1 ) /* try saving plot with name given in svalue */
                     {
-                        fprintf(gnuplot_pipe,"set term postscript eps color\n");
-                        fprintf(gnuplot_pipe,"set output \"%s.eps\"\n",svalue);
-                        fprintf(gnuplot_pipe,"replot\n");
-                        fprintf(gnuplot_pipe,"set term aqua font \"Helvetica Neue Light,16\"\n");
-                        fflush(gnuplot_pipe);
+                        fprintf(GPLOTP,"set term postscript eps color\n");
+                        fprintf(GPLOTP,"set output \"%s.eps\"\n",svalue);
+                        fprintf(GPLOTP,"replot\n");
+                        fprintf(GPLOTP,"set term aqua font \"Helvetica Neue Light,16\"\n");
+                        fflush(GPLOTP);
                         printf("  wrote %s.eps in current directory\n",svalue);
                     }
                     else
@@ -1519,7 +1521,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 {
                     srand( (unsigned long)get_int("random_generator_seed") );
                 }
-                status = odesolver(ode_rhs, ode_ic, single_ic, &ics, &mu, &pex, &fcn, &psi, &tspan, gnuplot_pipe);
+                status = odesolver(ode_rhs, ode_ic, single_ic, &ics, &mu, &pex, &fcn, &psi, &tspan);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
@@ -1531,83 +1533,83 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
 
             if ( strncmp("log",get_str("plot_xscale"),3)==0 )
             {
-                fprintf(gnuplot_pipe,"set logscale x\n");   
+                fprintf(GPLOTP,"set logscale x\n");   
             }
             else
             {
-                fprintf(gnuplot_pipe,"set nologscale x\n");   
+                fprintf(GPLOTP,"set nologscale x\n");   
             }
             if ( strncmp("log",get_str("plot_yscale"),3)==0 )
             {
-                fprintf(gnuplot_pipe,"set logscale y\n");   
+                fprintf(GPLOTP,"set logscale y\n");   
             }
             else
             {
-                fprintf(gnuplot_pipe,"set nologscale y\n");   
+                fprintf(GPLOTP,"set nologscale y\n");   
             }
             if ( strncmp("log",get_str("plot_zscale"),3)==0 )
             {
-                fprintf(gnuplot_pipe,"set logscale z\n");   
+                fprintf(GPLOTP,"set logscale z\n");   
             }
             else
             {
-                fprintf(gnuplot_pipe,"set nologscale z\n");   
+                fprintf(GPLOTP,"set nologscale z\n");   
             }
-            fflush(gnuplot_pipe);
+            fflush(GPLOTP);
 
 
             if ( get_int("add_curves") & ( rerun | plotmode_normal ) )
             {
                 /* plot curve.0 to curve.nbr_hold-1 */
-                fprintf(gnuplot_pipe,\
+                fprintf(GPLOTP,\
                         "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"0\"\n",get_str("plot_with_style"));
                 for (i = 1; i < nbr_hold; i++)
                 {
-                    fprintf(gnuplot_pipe,\
+                    fprintf(GPLOTP,\
                             "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%d\"\n",\
                             (int)i,get_str("plot_with_style"),(int)i);
                 }
-                fflush(gnuplot_pipe);
+                fflush(GPLOTP);
             }
             else if (replot)    
             {
-                fprintf(gnuplot_pipe,"replot\n");
-                fflush(gnuplot_pipe);
+                fprintf(GPLOTP,"replot\n");
+                fflush(GPLOTP);
             }
             else if (plotmode_normal) /* normal plot mode */
                 /* This is where the plot is normally updated */
             {
               /* set axis labels and plot */
-              fprintf(gnuplot_pipe,"unset xrange\n");
-              fprintf(gnuplot_pipe,"unset yrange\n");
-              fprintf(gnuplot_pipe,"unset zrange\n");
+              fprintf(GPLOTP,"unset xrange\n");
+              fprintf(GPLOTP,"unset yrange\n");
+              fprintf(GPLOTP,"unset zrange\n");
               if ( get_int("freeze") == 0 )
               {
                   if (gx == 1) /* time evolution: xlabel = 'time' */
                   {
-                    fprintf(gnuplot_pipe,"set xlabel 'time'\n");
+                    fprintf(GPLOTP,"set xlabel 'time'\n");
                   }
                   else if ( (gx-2) < total_nbr_x ) /* xlabel = name of variable  */
                   {
-                    fprintf(gnuplot_pipe,"set xlabel '%s'\n",dxv.name[gx-2]);
+                    fprintf(GPLOTP,"set xlabel '%s'\n",dxv.name[gx-2]);
                   }
                   if ( (gy-2) < total_nbr_x ) /* variable */
                   {
-                    fprintf(gnuplot_pipe,"set ylabel '%s'\n",dxv.name[gy-2]);
+                    fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
                   }
                   if ( plot3d == 1 )
                   {
                     if ( (gz-2) < total_nbr_x ) /* variable */
                     {
-                      fprintf(gnuplot_pipe,"set zlabel '%s'\n",dxv.name[gz-2]);
+                      fprintf(GPLOTP,"set zlabel '%s'\n",dxv.name[gz-2]);
                     }
                   }
               }
               else if ( get_int("freeze") )  /* freeze is on - unset axis labels */
               {
-                  fprintf(gnuplot_pipe,"unset xlabel\n");
-                  fprintf(gnuplot_pipe,"unset ylabel\n");
-                  fprintf(gnuplot_pipe,"unset zlabel\n");
+                  fprintf(GPLOTP,"unset xlabel\n");
+                  fprintf(GPLOTP,"unset ylabel\n");
+                  fprintf(GPLOTP,"unset zlabel\n");
               }
               if ( plot3d == 0 )
               {
@@ -1634,11 +1636,11 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 }
                 if ( get_int("freeze") == 0 ) /* normal plot command: 2D, freeze=0, curves=0 */
                 {
-                    fprintf(gnuplot_pipe,"plot %s", plot_cmd);
+                    fprintf(GPLOTP,"plot %s", plot_cmd);
                 }
                 else if ( get_int("freeze") )
                 {
-                    fprintf(gnuplot_pipe,"replot %s", plot_cmd);
+                    fprintf(GPLOTP,"replot %s", plot_cmd);
                 }
               } 
               else /* plot3d == 1 */
@@ -1668,23 +1670,23 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 }
                 if ( get_int("freeze") == 0 )
                 {
-                    fprintf(gnuplot_pipe,"splot %s", plot_cmd);
+                    fprintf(GPLOTP,"splot %s", plot_cmd);
                 }
                 else
                 {
-                    fprintf(gnuplot_pipe,"replot %s", plot_cmd);
+                    fprintf(GPLOTP,"replot %s", plot_cmd);
                 }
               }
-              fflush(gnuplot_pipe);
+              fflush(GPLOTP);
 
 
             }
             else if ( plotmode_continuation ) /* try to plot continuation branch */
             {
-                fprintf(gnuplot_pipe,"set xlabel '%s'\n",mu.name[p]);
-                fprintf(gnuplot_pipe,"set xrange[%lf:%lf]\n",get_dou("range_par0"),get_dou("range_par1"));
-                fprintf(gnuplot_pipe,"plot \"stst_branches.tab\" u 2:%d w %s\n",gy+1,get_str("plot_with_style"));
-                fflush(gnuplot_pipe);
+                fprintf(GPLOTP,"set xlabel '%s'\n",mu.name[p]);
+                fprintf(GPLOTP,"set xrange[%lf:%lf]\n",get_dou("range_par0"),get_dou("range_par1"));
+                fprintf(GPLOTP,"plot \"stst_branches.tab\" u 2:%d w %s\n",gy+1,get_str("plot_with_style"));
+                fflush(GPLOTP);
             }
             else if ( plotmode_range ) /* try to plot range */
             {
@@ -1695,7 +1697,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
             /* plot data */
             if ( data_plotted ) 
             {
-                plot_data(colx, coly, data_fn, gnuplot_pipe);
+                gplot_data(colx, coly, data_fn);
             }    
 
             /* update option pl:x, pl:y, pl:z */
@@ -1733,7 +1735,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     
     printf("exiting...\n");
 
-    pclose(gnuplot_pipe);
+    pclose(GPLOTP);
 
     free_namevalexp( pex );
     free_namevalexp( mu );
@@ -2607,10 +2609,10 @@ void printf_SIM( void )
 }
 
 /* plot data from file 'data_fn', with column x as x-axis and column y as y-axis */
-int plot_data(const size_t x, const size_t y, const char *data_fn, FILE *gnuplot_pipe)
+int gplot_data(const size_t x, const size_t y, const char *data_fn)
 {
-    int success = fprintf(gnuplot_pipe,"replot \"%s\" u %zu:%zu w p title \"data\"\n",data_fn,x,y);
-    fflush(gnuplot_pipe);
+    int success = fprintf(GPLOTP,"replot \"%s\" u %zu:%zu w p title \"data\"\n",data_fn,x,y);
+    fflush(GPLOTP);
     return success;
 }
 

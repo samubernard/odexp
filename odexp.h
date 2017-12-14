@@ -38,7 +38,7 @@ void printf_list_str_val(char type, size_t print_index, size_t nve_index, int pa
 
 void printf_SIM( void );
 
-int plot_data(const size_t colx, const size_t coly, const char *datafile_plotted, FILE *gnuplot_pipe);
+int gplot_data(const size_t colx, const size_t coly, const char *datafile_plotted);
 
 /* readline */
 void initialize_readline(void);

@@ -38,7 +38,7 @@ static void set_abort_odesolver_flag(int sig)
 }
 
 int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
- nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan, FILE *gnuplot_pipe)
+ nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan)
 {
     /* time */
     clock_t start = clock();
@@ -168,7 +168,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     SIM->fid = fopen(SIM->stats_buffer, "w");
     for (i = 0; i < pop_size; i++)
     {
-        insert_endoflist(SIM->pop,pex,fcn,ics,psi);
+        par_birth();
     }
 
     /* check that pop_size == SIM->pop->size */
@@ -326,7 +326,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
              * death, replication or birth,
              * and updates SIM->pop.
              */
-            apply_birthdeath(t, single_ic, mu, pex, fcn, ics, psi ); 
+            apply_birthdeath(t, single_ic ); 
             sim_size = POP_SIZE*SIM->nbr_var;
             y = realloc(y,sim_size*sizeof(double));
             f = realloc(f,sim_size*sizeof(double));
@@ -422,7 +422,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
 }
 
 int parameter_range( oderhs ode_rhs, odeic ode_ic,\
- double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe)
+ double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *GNUPLOTPIPE)
 {
 
     clock_t start = clock();
@@ -1645,7 +1645,7 @@ double SSA_timestep()
 }
 
 
-void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *fcn, nve *ics, nve *psi )
+void apply_birthdeath(const double t, odeic single_ic )
 {
     par *pars = (par *)NULL;
     par **p;
@@ -1716,7 +1716,7 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
         if ( repli )
         {
             SIM->event[1] = 1;
-            replicate_endoflist(SIM->pop, pars);
+            par_repli(pars);
             SIM->event[2] = (int)SIM->pop->end->id;
             /* first update mother particle initial conditions and expr */
             single_ic(t, pars->y, pars);
@@ -1731,7 +1731,7 @@ void apply_birthdeath(const double t, odeic single_ic, nve *mu, nve *pex, nve *f
         /* DBPRINT("birth"); */
         SIM->event[0] = -1;
         SIM->event[1] = 1;
-        insert_endoflist(SIM->pop,pex,fcn,ics,psi);
+        par_birth();
         SIM->event[2] = (int)SIM->pop->end->id;
         /* TODO: initialize pop->expr and pop->y for the new particle only */
         single_ic(t, SIM->pop->end->y, SIM->pop->end);

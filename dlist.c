@@ -98,15 +98,32 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     init_dlist(s->pop);
 }
 
+int insert_endoflist( dlist *list, par *p )
+{
+    p->nextel = NULL; /* p is at the end of the list */
+    p->prevel = list->end;
+    if ( list->size > 0) /* list->end points to a cell */
+    {
+      list->end->nextel = p;
+    }
+    else /* there are no cells in the list, list->end points to NULL */ 
+    {
+      list->start = p;
+    }
+    list->end = p;
+    list->size++;
+    return 0;
+}
+
 /* insert at the end of the list (including an empty list) */
-int insert_endoflist ( dlist *list, nve *pex, nve *fcn, nve *ics, nve *psi)
+int par_birth ( void )
 {
     par *p = malloc(sizeof(par));
     size_t i;
-    p->nbr_expr = pex->nbr_el;
-    p->nbr_aux  = fcn->nbr_el;
-    p->nbr_y    = ics->nbr_el;
-    p->nbr_psi  = psi->nbr_el;
+    p->nbr_expr = SIM->pex_ptr->nbr_el;
+    p->nbr_aux  = SIM->fcn_ptr->nbr_el;
+    p->nbr_y    = SIM->ics_ptr->nbr_el;
+    p->nbr_psi  = SIM->psi_ptr->nbr_el;
     p->expr     = malloc(p->nbr_expr*sizeof(double));
     p->aux      = malloc(p->nbr_aux*sizeof(double));
     p->y        = malloc(p->nbr_y*sizeof(double));
@@ -115,15 +132,15 @@ int insert_endoflist ( dlist *list, nve *pex, nve *fcn, nve *ics, nve *psi)
 
     for (i=0;i<p->nbr_expr;i++)
     {
-        p->expr[i] = pex->value[i];
+        p->expr[i] = SIM->pex_ptr->value[i];
     }
     for (i=0;i<p->nbr_aux;i++)
     {
-        p->aux[i]  = fcn->value[i];
+        p->aux[i]  = SIM->fcn_ptr->value[i];
     }
     for (i=0;i<p->nbr_y;i++)
     {
-        p->y[i]    = ics->value[i];
+        p->y[i]    = SIM->ics_ptr->value[i];
     }
     for (i=0;i<p->nbr_psi;i++)
     {
@@ -139,23 +156,13 @@ int insert_endoflist ( dlist *list, nve *pex, nve *fcn, nve *ics, nve *psi)
 
     p->sister = NULL; /* particle has no sister */
 
-    p->nextel = NULL; /* p is at the end of the list */
-    p->prevel = list->end;
-    if ( list->size > 0) /* list->end points to a cell */
-    {
-      list->end->nextel = p;
-    }
-    else /* there are no cells in the list, list->end points to NULL */ 
-    {
-      list->start = p;
-    }
-    list->end = p;
-    list->size++;
+    insert_endoflist( SIM->pop, p );
 
     return 0;
 }
 
-int replicate_endoflist ( dlist *list, par *mother)
+
+int par_repli (par *mother)
 {
     par *p = malloc(sizeof(par));
     size_t i;
@@ -197,18 +204,7 @@ int replicate_endoflist ( dlist *list, par *mother)
                          * p->sister is reset to NULL after replication
                          * */
 
-    p->nextel = NULL; /* p is at the end of the list */
-    p->prevel = list->end;
-    if ( list->size > 0) /* list->end points to a cell */
-    {
-      list->end->nextel = p;
-    }
-    else /* there are no cells in the list, list->end points to NULL */ 
-    {
-      list->start = p;
-    }
-    list->end = p;
-    list->size++;
+    insert_endoflist( SIM->pop, p );
 
     return 0;
 }
