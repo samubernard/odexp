@@ -34,6 +34,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"zscale","plot_zscale", 's', 0.0, 0, "linear", "x-axis scale {linear} | log", "plot"},
     {"step","par_step", 'd', 1.1, 0, "", "par step increment", "par"},
     {"act","act_par", 's', 0.0, 0, "", "active parameter", "par"},
+    {"lasty","take_last_y",'i', 0.0, 0, "", "take last y as initial condition", "ode"},
     {"res","odesolver_output_resolution",'i', 201.0, 201, "", "nominal number of output time points", "ode"},
     {"minh","odesolver_min_h", 'd', 1e-5, 0, "", "minimal time step", "ode"},
     {"h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step", "ode"},
@@ -62,6 +63,7 @@ struct gen_option GOPTS[NBROPTS] = {
 
 /* what kind of initial conditions to take */
 int *NUM_IC;
+
 size_t ode_system_size;
 
 /* =================================================================
@@ -812,13 +814,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     {
                         if ( op == 'l' ) /* last simulation value */
                         {
-                            for ( i=0; i<ode_system_size; i++ )
-                            {
-                                lastinit[i] = ics.value[i];
-                                DBPRINT("Fix this");
-                                ics.value[i] = SIM->pop->start->y[i];
-                                NUM_IC[i] = 1;
-                            }
+                            set_int("take_last_y",1);
                         } 
                         else if ( op == 's') /* run from steady state */
                         {

@@ -86,8 +86,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
 
     /* world SIM */
     par *pars, *next_pars;
-    size_t pop_size = get_int("population_size");
-    size_t sim_size = ode_system_size*pop_size;
+    size_t pop_size;
+    size_t sim_size;
 
     /* iterators */
     size_t i,j;
@@ -146,29 +146,60 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
         nextstop = INFINITY; /* set nextstop outside the integration range */
     }
 
-    /* DBPRINT("reset SIM"); */
-    /* reset SIM with an empty pop */
-    pars = SIM->pop->start;
-    while ( pars != NULL )
-    {
-        next_pars = pars->nextel;
-        delete_el( SIM->pop, pars);
-        pars = next_pars;
-    }
-    SIM->max_id = 0;
-      
-    /* check that SIM->pop is empty */
-    if ( SIM->pop->size > 0 )
-    {
-        DBPRINT("SIM->pop not empty - error");
-    }
-
-    /* Initialize world SIM */
-    system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
+    /* Initialize SIM */
     SIM->fid = fopen(SIM->stats_buffer, "w");
-    for (i = 0; i < pop_size; i++)
+    /* DBPRINT("reset SIM"); */
+    /* reset SIM with an empty pop 
+     * If option lasty is on, first
+     * copy particle->y of the last simulation 
+     * into y, and update popsize.
+     * */
+    if ( get_int("take_last_y") )
     {
-        par_birth();
+        set_int("population_size",POP_SIZE);
+        printf("  Setting population size to %d\n",get_int("population_size"));
+    }
+    /* initial conditions */
+    pop_size = get_int("population_size");
+    sim_size = ode_system_size*pop_size; 
+    y = malloc(sim_size*sizeof(double));
+    if ( get_int("take_last_y") ) /* initialize y to pars->y */
+    {
+        pars = SIM->pop->start;
+        j = 0;
+        while ( pars != NULL )
+        {
+            for(i=0; i<ode_system_size; i++)
+            {
+                y[i+j] = pars->y[i];
+            }
+            j += ode_system_size;
+            pars = pars->nextel;
+        }
+    }
+    else                          /* reset SIM->pop */
+    {
+        system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
+        pars = SIM->pop->start;
+        while ( pars != NULL )
+        {
+            next_pars = pars->nextel;
+            delete_el( SIM->pop, pars);
+            pars = next_pars;
+        }
+        SIM->max_id = 0;
+      
+        /* check that SIM->pop is empty */
+        if ( SIM->pop->size > 0 )
+        {
+            DBPRINT("SIM->pop not empty - error");
+        }
+
+        /* Initialize world SIM */
+        for (i = 0; i < pop_size; i++)
+        {
+            par_birth();
+        }
     }
 
     /* check that pop_size == SIM->pop->size */
@@ -177,16 +208,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
         DBPRINT("pop_size = %zu, SIM->pop->size = %zu - error", pop_size, SIM->pop->size);
     }
 
-    /* DBPRINT("init cond");  */
-    /* initial conditions */
-    y = malloc(sim_size*sizeof(double));
-    /* DBPRINT("size y alloc: %zu",sim_size*sizeof(double)); */
-    /* DBPRINT("nbr bytes memset: %zu",sim_size*sizeof(double)/sizeof(char)); */
-
-    for ( i=0; i<sim_size; i++)
-    {
-        /* DBPRINT("y[%zu] = %g\n", i,y[i]); */
-    }
     memset(y, 0, sim_size*sizeof(double)/sizeof(char));
     f = malloc(sim_size*sizeof(double));
     SIM->event[0] = -1;
@@ -196,25 +217,6 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
     memset(SIM->event, 0, sizeof(SIM->event));
     ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
     /* DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate); */
-    pars = SIM->pop->start;
-    j = 0;
-    while ( pars != NULL )
-    {
-        for (i = 0; i < SIM->nbr_var; i++)
-        {
-            if (NUM_IC[i]) /* use ics.value as initial condition */
-            {
-                pars->y[i] = ics->value[i];
-                y[i+j] = ics->value[i];
-            }
-            else
-            {
-                ics->value[i] = y[i+j];
-            }
-        }
-        pars = pars->nextel;
-        j += ode_system_size;
-    }
    
     quickfile = fopen(quick_buffer,"w");
     

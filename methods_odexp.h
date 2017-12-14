@@ -4,7 +4,7 @@
 #include "dlist.h"
 
 /* number of global options */
-#define NBROPTS 37
+#define NBROPTS 38
 
 extern size_t ode_system_size;
 extern int *NUM_IC;
@@ -22,6 +22,13 @@ extern const char *HLINE;  /* horizontal line */
 typedef int (*oderhs)(double, const double *, double *, void *);
 typedef int (*odeic)(double, double *, void *);
 typedef int (*rootrhs)(const gsl_vector *, void *, gsl_vector *);
+
+typedef struct ode_functions {
+    oderhs pop_ode_rhs;
+    odeic  pop_ode_ic;
+    odeic  single_ic;
+    rootrhs root_rhs;
+} ode_funs;
 
 typedef struct gen_option
 {
