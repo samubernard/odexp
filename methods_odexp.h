@@ -81,7 +81,7 @@ int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double e
 int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, const double t, const double *y);
 
 /* print */
-void update_SIM_y(const double *y);
+void update_SIM_from_y(const double *y);
 void fprintf_SIM_y(FILE *file, double t, double *y);
 
 int name2index( const char *name, nve var, int *n);

@@ -156,7 +156,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     if ( get_int("take_last_y") )
     {
         set_int("population_size",POP_SIZE);
-        printf("  Setting population size to %d\n",get_int("population_size"));
+        printf("  Initial population size set to %d\n",get_int("population_size"));
     }
     /* initial conditions */
     pop_size = get_int("population_size");
@@ -199,6 +199,12 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
         {
             par_birth();
         }
+        /* memset(y, 0, sim_size*sizeof(double)/sizeof(char)); */
+        SIM->event[0] = -1;
+        SIM->event[1] =  1;
+        ode_ic(t, y, NULL); /* this updates SIM->pop->pars->expr and SIM->pop->pars->y */
+        update_SIM_from_y(y);
+        memset(SIM->event, 0, sizeof(SIM->event));
     }
 
     /* check that pop_size == SIM->pop->size */
@@ -207,15 +213,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
         DBPRINT("pop_size = %zu, SIM->pop->size = %zu - error", pop_size, SIM->pop->size);
     }
 
-    memset(y, 0, sim_size*sizeof(double)/sizeof(char));
     f = malloc(sim_size*sizeof(double));
-    SIM->event[0] = -1;
-    SIM->event[1] =  1;
-    ode_ic(t, y, NULL); /* this updates SIM->pop->expr and SIM->pop->y */
-    update_SIM_y(y);
-    memset(SIM->event, 0, sizeof(SIM->event));
-    ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi and SIM->pop->death_rate and repli_rate */
-    /* DBPRINT("SIM->pop_birth_rate = %g",SIM->pop_birth_rate); */
+    ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi, SIM->meanfield and SIM->pop->death_rate and repli_rate */
    
     quickfile = fopen(quick_buffer,"w");
     
@@ -315,7 +314,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
                 
         }
 
-        update_SIM_y(y);
+        update_SIM_from_y(y);
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
         fwrite_SIM(&t, "a");
 
@@ -1319,7 +1318,7 @@ int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, con
 }
 
 
-void update_SIM_y(const double *y)
+void update_SIM_from_y(const double *y)
 {
     par *pars = SIM->pop->start;
     size_t i,j = 0;

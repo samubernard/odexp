@@ -10,7 +10,7 @@
 
 
 /* function declaration */
-int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic,  rootrhs root_rhs, const char *odexp_filename );
+int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, const char *odexp_filename );
 
 int get_nbr_el(const char *filename, const char *sym, const size_t sym_len, size_t *nbr_el, size_t *nbr_epxr);
 int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim);
