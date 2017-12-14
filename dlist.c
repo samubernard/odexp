@@ -53,7 +53,9 @@ void init_dlist(dlist *list)
     list->size = 0;
 }
 
-void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi, nve *mfd )
+void init_world( world *s, nve *pex, nve *func, nve *mu,\
+        nve *ics, nve *fcn, nve *eqn, nve *psi, nve *mfd,\
+        nve *dxv, nve *cst, nve *dfl)
 {
     s->nbr_par = mu->nbr_el;
     s->nbr_var = ics->nbr_el;
@@ -67,6 +69,18 @@ void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi, nve 
     s->auxnames = fcn->name;
     s->psinames = psi->name;
     s->mfdnames = mfd->name;
+    
+    s->pex_ptr = pex;     /* parametric expressions */
+    s->func_ptr= func;    /* user-defined functions */
+    s->mu_ptr  = mu;      /* parameters */
+    s->ics_ptr = ics;     /* initial conditions */
+    s->fcn_ptr = fcn;     /* auxiliary functions */
+    s->eqn_ptr = eqn;;    /* dynamical equations */
+    s->psi_ptr = psi;     /* pop coupling terms */
+    s->mfd_ptr = mfd;     /* pop mean fields/stats */
+    s->dxv_ptr = dxv;     /* list of all Dynamical  + auXiliary Variables */
+    s->cst_ptr = cst;     /* constant arrays */
+    s->dfl_ptr = dfl;     /* data files */
 
     s->mu = mu->value;
     s->meanfield = mfd->value;

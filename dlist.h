@@ -88,6 +88,18 @@ typedef struct system_state {
     size_t nbr_psi;
     size_t nbr_mfd;
 
+    nve *pex_ptr;     /* parametric expressions */
+    nve *func_ptr;    /* user-defined functions */
+    nve *mu_ptr;      /* parameters */
+    nve *ics_ptr;     /* initial conditions */
+    nve *fcn_ptr;     /* auxiliary functions */
+    nve *eqn_ptr;     /* dynamical equations */
+    nve *psi_ptr;     /* pop coupling terms */
+    nve *mfd_ptr;     /* pop mean fields/stats */
+    nve *dxv_ptr;     /* list of all Dynamical  + auXiliary Variables */
+    nve *cst_ptr;     /* constant arrays */
+    nve *dfl_ptr;     /* data files */
+
     double *mu;   /* simulation parameter values */ 
     double *meanfield; /* meand fields */
 
@@ -111,7 +123,9 @@ void free_namevalexp( nve mu );
 void init_dlist(dlist *list );
 
 /* init world */
-void init_world( world *s, nve *mu, nve *ics, nve *pex, nve *fcn, nve *psi, nve *mfd );
+void init_world( world *s, nve *pex, nve *func, nve *mu,\
+        nve *ics, nve *fcn, nve *eqn, nve *psi, nve *mfd,\
+        nve *dxv, nve *cst, nve *dfl);
 
 /* insert at the end of the list */
 int insert_endoflist ( dlist *, nve *pex, nve *fcn, nve *ics, nve *psi);
