@@ -37,8 +37,7 @@ static void set_abort_odesolver_flag(int sig)
     abort_odesolver_flag = 1;
 }
 
-int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic,\
- nve *ics, nve *mu, nve *pex, nve *fcn, nve *psi, double_array *tspan)
+int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspan)
 {
     /* time */
     clock_t start = clock();
