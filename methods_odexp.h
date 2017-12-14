@@ -23,10 +23,11 @@ typedef int (*oderhs)(double, const double *, double *, void *);
 typedef int (*odeic)(double, double *, void *);
 typedef int (*rootrhs)(const gsl_vector *, void *, gsl_vector *);
 
+/* unused */
 typedef struct ode_functions {
-    oderhs pop_ode_rhs;
-    odeic  pop_ode_ic;
-    odeic  single_ic;
+    oderhs  pop_ode_rhs;
+    odeic   pop_ode_ic;
+    odeic   single_ic;
     rootrhs root_rhs;
 } ode_funs;
 

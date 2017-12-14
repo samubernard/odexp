@@ -146,6 +146,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     }
 
     /* Initialize SIM */
+    system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
     SIM->fid = fopen(SIM->stats_buffer, "w");
     /* DBPRINT("reset SIM"); */
     /* reset SIM with an empty pop 
@@ -162,7 +163,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     pop_size = get_int("population_size");
     sim_size = ode_system_size*pop_size; 
     y = malloc(sim_size*sizeof(double));
-    if ( get_int("take_last_y") ) /* initialize y to pars->y */
+    if ( get_int("take_last_y") ) /* initialize y to pars->y 
+                                   * Keep SIM->pop intact
+                                   * but fopen pars->buffer's  
+                                   * */
     {
         pars = SIM->pop->start;
         j = 0;
@@ -172,13 +176,18 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
             {
                 y[i+j] = pars->y[i];
             }
+            pars->fid = fopen(pars->buffer,"w"); /* dont forget to fopen buffers for existing particles */
             j += ode_system_size;
             pars = pars->nextel;
         }
     }
-    else                          /* reset SIM->pop */
+    else                          /* reset SIM->pop 
+                                   * Delete all particles
+                                   * and create new ones
+                                   * Initialize y from ode_ic
+                                   * and update SIM->pop from y
+                                   * */
     {
-        system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
         pars = SIM->pop->start;
         while ( pars != NULL )
         {
