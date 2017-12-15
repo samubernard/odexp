@@ -79,6 +79,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
             nextstop,
             nbr_stops,
             bd_dt,
+            sum_rates,
             bd_next,
            *tstops = NULL;
     size_t idx_stop = 0;
@@ -278,8 +279,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
          * compute the time of the next event 
          * Time to next event ~ exponential law, without memory
          *
-         * -|------------|-------|------------------> t
-         *  t0         tnext    bd_next
+         *  -|-----------|-------|------------------> t
+         *   t0        tnext    bd_next
          *
          *  If time to next birth death event is after tnext,
          *  advance to tnext and redraw bd_next. If time to next birth
@@ -294,7 +295,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
          *
          */
         /* DBPRINT("before SSA_timestep"); */
-        bd_dt = SSA_timestep(); /* compute time to next birth/death in all cases */
+        bd_dt = SSA_timestep(&sum_rates); /* compute time to next birth/death in all cases */
         bd_next = t+bd_dt;
         if ( bd_next < tnext ) /* birth/death will occur */
         {
@@ -1008,6 +1009,40 @@ int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double e
 
 }
 
+int ode_jac(double t, const double y[], double * dfdy, double dfdt[], void * params)
+{
+    const size_t dimension = ode_system_size*POP_SIZE;
+
+    double *f1[dimension];
+    double *y1[dimension];
+
+    double dy;
+
+    size_t i,j;
+
+    for(j=0;j<dimension;j++)
+    {
+        memcpy (y1, y, dimension*sizeof(double));
+        dx = eps_rel*y[j];
+        if (dx < eps_abs)
+        {
+            dx = eps_abs;
+        }
+        y1[j] = y[j]+dy; /* set y+dy */
+        for(i=0;i<dimension;i++)
+        {
+            ode_rhs(t,y1,f1,params); /* set f(x+dx) */
+            dfdx = (gsl_vector_get(f1,i)-gsl_vector_get(f,i))/dx;
+            /* printf("--ststsolver dx=%g, dfdx=%g, [i,j]=%ld,%ld\n",dx,dfdx,i,j); */
+            gsl_matrix_set(J,i,j,dfdx);
+            /* printf("--ststsolver %g\n",dfdx); */
+        }
+    }
+    
+
+    return GSL_SUCCESS;
+
+}
 
 int ststcont( rootrhs root_rhs, nve ics, nve mu)
 {
@@ -1636,7 +1671,7 @@ char * get_str(const char *name)
     }
 }
 
-double SSA_timestep()
+double SSA_timestep(double *sumr)
 {
     double dt = 0.0;
     double r  = SIM->pop_birth_rate;
@@ -1649,6 +1684,7 @@ double SSA_timestep()
     }
     /* DBPRINT("pop_death_rate = %g, pop_repli_rate = %g, pop_birth_rate = %g",pop_death_rate,pop_repli_rate,pop_birth_rate); */
     dt = exprand(r);
+    *sumr = r;
     /* DBPRINT("dt = %g (r = %g)", dt,r); */
     return dt;
 }

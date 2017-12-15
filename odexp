@@ -711,7 +711,7 @@ echo "        if ( myself_->nbr_psi )" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
 echo "            for(j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
 echo "            {" >>.odexp/model.c
-echo "                myself_->psi[j] = 0.0;" >>.odexp/model.c
+echo "                memset(myself_->psi[j] = 0.0;" >>.odexp/model.c
 echo "            }" >>.odexp/model.c
 echo "            other_ = SIM->pop->start;" >>.odexp/model.c
 echo "            while ( other_ != NULL )" >>.odexp/model.c
