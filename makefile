@@ -1,4 +1,5 @@
 CFLAGS=-Wall -g -I/usr/local/include -I/usr/local/opt/readline/include -std=c99
+#CFLAGS=-Wall -O3 -I/usr/local/include -I/usr/local/opt/readline/include -std=c99
 LDFLAGS=-L/usr/local/opt/readline/lib -lreadline -L/usr/local/lib -lgsl -lgslcblas -lm 
 
 current_dir = $(shell pwd)

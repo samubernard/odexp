@@ -379,7 +379,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     /* DBPRINT("init world SIM"); */
     SIM = malloc(sizeof(world));
     DBPRINT("sizeof(world) = %zu", sizeof(world));
-    init_world( SIM, &pex, &func, &mu, &ics, &fcn, &eqn, &psi, &mfd, &dxv, &cst, &dfl);
+    init_world( SIM, &pex, &func, &mu, &ics, &fcn, &eqn, &psi, &mfd, &dxv, &cst, &dfl, ode_rhs);
 
     /* seed random number generator */
     srand( (unsigned long)get_int("random_generator_seed") );

@@ -55,7 +55,7 @@ void init_dlist(dlist *list)
 
 void init_world( world *s, nve *pex, nve *func, nve *mu,\
         nve *ics, nve *fcn, nve *eqn, nve *psi, nve *mfd,\
-        nve *dxv, nve *cst, nve *dfl)
+        nve *dxv, nve *cst, nve *dfl, int (*ode_rhs)(double, const double *, double *, void *))
 {
     s->nbr_par = mu->nbr_el;
     s->nbr_var = ics->nbr_el;
@@ -93,6 +93,8 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     s->event[0] = -1;
     s->event[1] =  1;
     s->event[2] =  0;
+
+    s->time_in_ode_rhs = 0.0;
 
     s->pop = malloc(sizeof(dlist));
     init_dlist(s->pop);

@@ -41,6 +41,8 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
 {
     /* time */
     clock_t start = clock();
+    clock_t clock_odeiv;
+    double tot_odeiv = 0.0;
     
     /* gsl_odeiv */
     double *y,
@@ -149,6 +151,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     /* Initialize SIM */
     system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
     SIM->fid = fopen(SIM->stats_buffer, "w");
+    SIM->time_in_ode_rhs = 0.0;
     /* DBPRINT("reset SIM"); */
     /* reset SIM with an empty pop 
      * If option lasty is on, first
@@ -306,9 +309,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
         }
         
         /* ODE solver - time step */
+        clock_odeiv = clock();
+        sys = (gsl_odeiv2_system) {ode_rhs, NULL, sim_size, NULL};
         while ( t < tnext)
         {
-            sys = (gsl_odeiv2_system) {ode_rhs, NULL, sim_size, NULL};
             status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
             if ( h < hmin )
             {
@@ -322,9 +326,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
             if (status != GSL_SUCCESS)
                 break;
                 
+            update_SIM_from_y(y);
         }
+        tot_odeiv += (clock()-clock_odeiv)*1000.0 / CLOCKS_PER_SEC;
 
-        update_SIM_from_y(y);
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
         fwrite_SIM(&t, "a");
 
@@ -402,7 +407,9 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     }
     if (status == GSL_SUCCESS)
     {
-        printf("  %s(%g msec)%s\n", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
+        printf("  total time %s(%g msec)%s", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
+        printf("  odeiv time %s(%g msec)%s\n", T_DET,tot_odeiv, T_NOR);
+        printf("  ode_rhs time %s(%g msec)%s\n", T_DET,SIM->time_in_ode_rhs, T_NOR);
     }
     else
     {
@@ -1009,37 +1016,53 @@ int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double e
 
 }
 
+
 int ode_jac(double t, const double y[], double * dfdy, double dfdt[], void * params)
 {
     const size_t dimension = ode_system_size*POP_SIZE;
 
-    double *f1[dimension];
-    double *y1[dimension];
+    oderhs ode_rhs = SIM->ode_rhs; 
 
-    double dy;
+    double *f  = malloc(dimension*sizeof(double));
+    double *f1 = malloc(dimension*sizeof(double));
+    double *y1 = malloc(dimension*sizeof(double));
+    double t1;
+
+    double dy, dt;
+
+    const double eps_rel = 1e-6;
+    const double eps_abs = 1e-6;
 
     size_t i,j;
 
-    for(j=0;j<dimension;j++)
+    ode_rhs(t,y,f,params);         /* get f: dydt = f(t,y) */
+
+    /* dfdy */
+    for(j=0;j<dimension;j++)       /* compute J = dfdy */
     {
-        memcpy (y1, y, dimension*sizeof(double));
-        dx = eps_rel*y[j];
-        if (dx < eps_abs)
-        {
-            dx = eps_abs;
-        }
-        y1[j] = y[j]+dy; /* set y+dy */
+        memmove (y1, y, dimension*sizeof(double));
+        dy = max(eps_rel*y[j], eps_abs);
+        y1[j] += dy;
+        ode_rhs(t,y1,f1,params); 
         for(i=0;i<dimension;i++)
         {
-            ode_rhs(t,y1,f1,params); /* set f(x+dx) */
-            dfdx = (gsl_vector_get(f1,i)-gsl_vector_get(f,i))/dx;
-            /* printf("--ststsolver dx=%g, dfdx=%g, [i,j]=%ld,%ld\n",dx,dfdx,i,j); */
-            gsl_matrix_set(J,i,j,dfdx);
-            /* printf("--ststsolver %g\n",dfdx); */
+            dfdy[i*dimension + j] = (f1[i]-f[i])/dy;
         }
     }
-    
 
+    /* dfdt */
+    dt = max(eps_rel*t, eps_abs);
+    t1 = t + dt;
+    ode_rhs(t1,y,f1,params); 
+    for(j=0;j<dimension;j++)       /* compute dfdt */
+    {
+        dfdt[j] = (f1[j]-f[j])/dt;
+    }
+
+    free(y1);
+    free(f);
+    free(f1);
+    
     return GSL_SUCCESS;
 
 }

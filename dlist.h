@@ -109,6 +109,10 @@ typedef struct system_state {
 
     int event[3]; /* IDParent event IDChild */
 
+    double time_in_ode_rhs;
+
+    int (*ode_rhs)(double, const double *, double *, void *);
+
     char stats_buffer[NAMELENGTH];
     FILE *fid;
 
@@ -125,7 +129,7 @@ void init_dlist(dlist *list );
 /* init world */
 void init_world( world *s, nve *pex, nve *func, nve *mu,\
         nve *ics, nve *fcn, nve *eqn, nve *psi, nve *mfd,\
-        nve *dxv, nve *cst, nve *dfl);
+        nve *dxv, nve *cst, nve *dfl, int (*ode_rhs)(double, const double *, double *, void *));
 
 /* insert at the end of the list */
 int insert_endoflist( dlist *list, par *pars );

@@ -572,6 +572,7 @@ echo "#include <gsl/gsl_vector.h>" >>.odexp/model.c
 echo "#include <gsl/gsl_matrix.h>                              " >>.odexp/model.c
 echo "#include <string.h>                            " >>.odexp/model.c
 echo "#include <math.h>                              " >>.odexp/model.c
+echo "#include <time.h>                              " >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/* =================================================================" >>.odexp/model.c
@@ -675,6 +676,7 @@ echo "" >>.odexp/model.c
 echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */" >>.odexp/model.c
 echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
 echo "{" >>.odexp/model.c
+echo "    clock_t start = clock();" >>.odexp/model.c
 echo "    size_t i = 0, j;" >>.odexp/model.c
 echo "    par *myself_ = SIM->pop->start;" >>.odexp/model.c
 echo "    par *other_ = (par *)NULL;" >>.odexp/model.c
@@ -685,7 +687,8 @@ echo "        SIM->meanfield[j] = 0.0;" >>.odexp/model.c
 echo "    }" >>.odexp/model.c
 echo "    while ( myself_ != NULL )" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
-echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux, ->____rate  */" >>.odexp/model.c
+echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate  " >>.odexp/model.c
+echo "                                                                      * first update myself_->repli_rate       */" >>.odexp/model.c
 # POPULATION BIRTH RATE  =====================================
 gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "        SIM->pop_birth_rate += %s;\n", $2}' $file >>.odexp/model.c
 # END POPULATION BIRTH RATE  =================================
@@ -711,7 +714,7 @@ echo "        if ( myself_->nbr_psi )" >>.odexp/model.c
 echo "        {" >>.odexp/model.c
 echo "            for(j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
 echo "            {" >>.odexp/model.c
-echo "                memset(myself_->psi[j] = 0.0;" >>.odexp/model.c
+echo "                myself_->psi[j] = 0.0;" >>.odexp/model.c
 echo "            }" >>.odexp/model.c
 echo "            other_ = SIM->pop->start;" >>.odexp/model.c
 echo "            while ( other_ != NULL )" >>.odexp/model.c
@@ -736,6 +739,7 @@ echo "    }" >>.odexp/model.c
 # END LOOP ===================================================
 
 echo "" >>.odexp/model.c
+echo "    SIM->time_in_ode_rhs += (clock()-start)*1000.0 / CLOCKS_PER_SEC;" >>.odexp/model.c
 
 echo "    return GSL_SUCCESS;" >>.odexp/model.c
 echo "}" >>.odexp/model.c
