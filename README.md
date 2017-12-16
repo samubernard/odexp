@@ -206,17 +206,11 @@ The mean field term in an average over the population, and take a single value.
 
 * __POP_SIZE__ Total number of particles. Can be used anywhere.
 
-* __THEM("var")__ Used in __%C__ to iterate over all particles; var must be an auxiliary variable.
+* __OY("var")__ (__OE__, __OA__) Used in __%C__ to iterate over all particles; __var__ is a dynamical variable (Y), expression (E) or auxiliary variable (A).
 
-* __US("var")__ Used in __%C__ and __%M__ to denote the current particle; var must be an auxiliary variable.
+* __MY("var")__ (__ME__, __MA__) Used in __%C__ and __%M__ to denote the current particle; __var__ is a dynamical variable (Y), expression (E) or auxiliary variable (A).
 
-* __ME("var")__ Value of the current particle parametric expression named var.
-
-* __MY("var")__ Value of the current particle dynamical variable named var.
-
-* __SE("var")__ Value of the current particle's sister parametric expression named var. Useful to specify what happens when particle replicates.
-
-* __SY("var")__ Value of the current particle's sister dynamical variable named var. Useful to specify what happens when particle replicates.
+* __SY("var")__ (__SE__, __SA__) Value of the current particle's sister __var__. Useful to specify what happens when particle replicates. __var__ is a dynamical variable (Y), expression (E) or auxiliary variable (A).
 
 * __ATBIRTH__ logical variable indicating if the particle is just born.
 
