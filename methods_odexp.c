@@ -37,7 +37,11 @@ static void set_abort_odesolver_flag(int sig)
     abort_odesolver_flag = 1;
 }
 
-int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspan)
+int odesolver( oderhs pop_ode_rhs, 
+               oderhs single_rhs,
+               odeic pop_ode_ic, 
+               odeic single_ic, 
+               double_array *tspan)
 {
     /* time */
     clock_t start = clock();
@@ -57,6 +61,9 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     gsl_odeiv2_evolve * e;
     gsl_odeiv2_system sys; 
     int status;
+
+    oderhs ode_rhs = NULL;
+    odeic  ode_ic  = NULL;
     
     /* alerts and interrupt signals */
     struct sigaction abort_act;
@@ -152,6 +159,19 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
         nextstop = INFINITY; /* set nextstop outside the integration range */
     }
 
+
+    /* choose single or particle population simulation */
+    if ( strncmp( get_str("population_mode"), "single", 3) )
+    {
+        ode_rhs = pop_ode_rhs;
+        ode_ic  = pop_ode_ic;
+    }
+    else
+    {
+        ode_rhs = single_rhs;
+        ode_ic  = single_ic;
+    }
+
     /* Initialize SIM */
     system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
     SIM->fid = fopen(SIM->stats_buffer, "w");
@@ -166,6 +186,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     {
         set_int("population_size",POP_SIZE);
         printf("  Initial population size set to %d\n",get_int("population_size"));
+    }
+    if ( strncmp( get_str("population_mode"), "single", 3) == 0 )
+    {
+        set_int("population_size", 1);
     }
     /* initial conditions */
     pop_size = get_int("population_size");
@@ -216,10 +240,9 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
         {
             par_birth();
         }
-        /* memset(y, 0, sim_size*sizeof(double)/sizeof(char)); */
         SIM->event[0] = -1;
         SIM->event[1] =  1;
-        ode_ic(t, y, NULL); /* this updates SIM->pop->pars->expr and SIM->pop->pars->y */
+        ode_ic(t, y, SIM->pop->start); /* this updates SIM->pop->pars->expr and SIM->pop->pars->y */
         update_SIM_from_y(y);
         memset(SIM->event, 0, sizeof(SIM->event));
     }
@@ -231,7 +254,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     }
 
     f = malloc(sim_size*sizeof(double));
-    ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux and SIM->pop->psi, SIM->meanfield and SIM->pop->death_rate and repli_rate */
+    ode_rhs(t, y, f, SIM->pop->start); /* this updates SIM->pop->aux and SIM->pop->psi, SIM->meanfield and SIM->pop->death_rate and repli_rate */
    
     quickfile = fopen(quick_buffer,"w");
     
@@ -263,7 +286,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
          return 1;  
     }  
 
-    printf("  %sintegrating%s on T=[%.2f, %.2f]... ", T_BLD,T_NOR, t,t1);
+    printf("  %sintegrating%s on T=[%.2f, %.2f] (%s mode)... ", T_BLD,T_NOR, t, t1, get_str("population_mode") );
     fflush(stdout);
 
     s = gsl_odeiv2_step_alloc(odeT,sim_size);
@@ -314,7 +337,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
         
         /* ODE solver - time step */
         clock_odeiv = clock();
-        sys = (gsl_odeiv2_system) {ode_rhs, ode_jac, sim_size, NULL};
+        sys = (gsl_odeiv2_system) {ode_rhs, ode_jac, sim_size, SIM->pop->start};
         while ( t < tnext)
         {
             status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
@@ -360,7 +383,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
                 pars = pars->nextel;
                 j += ode_system_size;
             }
-            ode_rhs(t, y, f, NULL); /* this updates SIM->pop->aux 
+            ode_rhs(t, y, f, SIM->pop->start); /* this updates SIM->pop->aux 
                                      *              SIM->pop->psi 
                                      *              SIM->pop->meanfield
                                      *              SIM->pop->death_rate
@@ -381,9 +404,9 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
-          ode_ic(t, y, NULL);
+          ode_ic(t, y, SIM->pop->start);
           /* update auxiliary functions */
-          ode_rhs(t, y, f, NULL);
+          ode_rhs(t, y, f, SIM->pop->start);
 
           fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
           fwrite_SIM(&t, "a");
@@ -411,9 +434,9 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     }
     if (status == GSL_SUCCESS)
     {
-        printf("  total time %s(%g msec)%s", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
-        printf("  odeiv time %s(%g msec)%s\n", T_DET,tot_odeiv, T_NOR);
-        printf("  ode_rhs time %s(%g msec)%s\n", T_DET,SIM->time_in_ode_rhs, T_NOR);
+        printf("\n    total %s%g msec%s", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
+        printf(" odeiv2 %s%g msec%s", T_DET,tot_odeiv, T_NOR);
+        printf(" ode_rhs %s%g msec%s\n", T_DET,SIM->time_in_ode_rhs, T_NOR);
     }
     else
     {
@@ -442,7 +465,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
 
 }
 
-int parameter_range( oderhs ode_rhs, odeic ode_ic,\
+int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
  double *lasty, nve ics, nve mu, nve fcn, double_array tspan, FILE *GNUPLOTPIPE)
 {
 
@@ -573,7 +596,7 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
     }  
 
     /* initial condition */
-    ode_ic(tspan.array[0], y, &mu);
+    pop_ode_ic(tspan.array[0], y, &mu);
     for (i = 0; i < ode_system_size; i++)
     {
         if (NUM_IC[i]) /* use ics.value as initial condition */
@@ -601,13 +624,13 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
     dt = (t1-t)/(double)(nbr_out-1);
     nextstop = t;
     /* initial conditions */
-    if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_ic */
+    if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in pop_ode_ic */
     {
-        ode_ic(tspan.array[0], y, &mu); /* evaluate initial conditions in y */
+        pop_ode_ic(tspan.array[0], y, &mu); /* evaluate initial conditions in y */
     }
     for (i = 0; i < ode_system_size; i++)
     {
-        if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in ode_ic */
+        if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in pop_ode_ic */
         {
             if (NUM_IC[i]) /* use ics.value as initial condition */
             {
@@ -645,7 +668,7 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
         /* ODE solver - time step */
         while ( t < tnext)
         {
-            sys = (gsl_odeiv2_system) {ode_rhs, NULL, ode_system_size, &mu};
+            sys = (gsl_odeiv2_system) {pop_ode_rhs, NULL, ode_system_size, &mu};
             status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
             if ( h < hmin )
             {
@@ -664,9 +687,9 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
         if (disc_alert == 1)
         {
           /* reset dynamical variables */
-          ode_ic(t, y, &mu);
+          pop_ode_ic(t, y, &mu);
           /* update auxiliary functions */
-          ode_rhs(t, y, f, &mu);
+          pop_ode_rhs(t, y, f, &mu);
           /* calculating next stop */
           nextstop = tstops[idx_stop];
           idx_stop++;

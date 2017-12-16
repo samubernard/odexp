@@ -41,6 +41,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance", "ode"},
     {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
     {"meth","odesolver_step_method", 's', 0.0, 0, "rk8pd", "ode solver stepping method rk2 | rk4 | rkf45 | rkck | {rk8pd} | bsimp", "ode"},
+    {"popmode","population_mode", 's', 0.0, 0, "population", "population simulation mode single | {population}", "population"},
     {"popsize","population_size", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
     {"part","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
     {"seed","random_generator_seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
@@ -69,7 +70,7 @@ size_t ode_system_size;
 /* =================================================================
                              Main Function 
 ================================================================ */
-int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, const char *odexp_filename )
+int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single_ic, rootrhs root_rhs, const char *odexp_filename )
 {
 
     /* variable declaration */
@@ -265,8 +266,8 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
         LOGPRINT("Error: Initial conditions not found.");
         exit ( EXIT_FAILURE );
     } 
-    /* DBPRINT("before ode_ic"); */
-    /* ode_ic(tspan.array[0],ics.value,&mu); */
+    /* DBPRINT("before pop_ode_ic"); */
+    /* pop_ode_ic(tspan.array[0],ics.value,&mu); */
     LOGPRINT("found %zu variables",ics.nbr_el);
 
 
@@ -379,7 +380,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     /* DBPRINT("init world SIM"); */
     SIM = malloc(sizeof(world));
     DBPRINT("sizeof(world) = %zu", sizeof(world));
-    init_world( SIM, &pex, &func, &mu, &ics, &fcn, &eqn, &psi, &mfd, &dxv, &cst, &dfl, ode_rhs);
+    init_world( SIM, &pex, &func, &mu, &ics, &fcn, &eqn, &psi, &mfd, &dxv, &cst, &dfl, pop_ode_rhs);
 
     /* seed random number generator */
     srand( (unsigned long)get_int("random_generator_seed") );
@@ -419,7 +420,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
     LOGPRINT("System init done. Running first simulation");
     if ( not_run == 0 )
     {    
-        status = odesolver(ode_rhs, ode_ic, single_ic, &tspan);
+        status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
     }
     fprintf(GPLOTP,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
@@ -1361,7 +1362,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     /* reset parameter values */
                     load_nameval(parfilename, mu, "P", 1,exit_if_nofile);
                     /* reset initial conditions */
-                    ode_ic(tspan.array[0], ics.value, &mu);
+                    pop_ode_ic(tspan.array[0], ics.value, &mu);
                     rerun = 1;
                     replot = 1;
                     update_act_par_options(p, mu);
@@ -1444,7 +1445,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                     }
                     else if ( op == 'r' )
                     {
-                        status = parameter_range(ode_rhs, ode_ic, NULL, ics, mu, fcn, tspan, GPLOTP);
+                        status = parameter_range(pop_ode_rhs, pop_ode_ic, NULL, ics, mu, fcn, tspan, GPLOTP);
                     }
                     break;
                 case '#' : /* add data from file to plot */
@@ -1517,7 +1518,7 @@ int odexp( oderhs ode_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, cons
                 {
                     srand( (unsigned long)get_int("random_generator_seed") );
                 }
-                status = odesolver(ode_rhs, ode_ic, single_ic, &tspan);
+                status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
                 if ( get_int("add_curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);

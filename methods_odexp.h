@@ -4,7 +4,7 @@
 #include "dlist.h"
 
 /* number of global options */
-#define NBROPTS 38
+#define NBROPTS 39
 
 extern size_t ode_system_size;
 extern int *NUM_IC;
@@ -63,7 +63,11 @@ typedef struct double_array
 
 
 
-int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspan);
+int odesolver( oderhs pop_ode_rhs, 
+               oderhs single_rhs,
+               odeic pop_ode_ic, 
+               odeic single_ic, 
+               double_array *tspan);
 
 int parameter_range( oderhs ode_rhs, odeic ode_ic,\
  double *lasty, nve init, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe);
