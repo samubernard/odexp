@@ -114,6 +114,10 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
     {
         odeT = gsl_odeiv2_step_rk8pd;
     }
+    else if ( strncmp(get_str("odesolver_step_method"),"bsimp",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv2_step_bsimp;
+    }
     else
     {
         fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
@@ -310,7 +314,7 @@ int odesolver( oderhs ode_rhs, odeic ode_ic, odeic single_ic, double_array *tspa
         
         /* ODE solver - time step */
         clock_odeiv = clock();
-        sys = (gsl_odeiv2_system) {ode_rhs, NULL, sim_size, NULL};
+        sys = (gsl_odeiv2_system) {ode_rhs, ode_jac, sim_size, NULL};
         while ( t < tnext)
         {
             status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
@@ -500,6 +504,10 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
     else if ( strncmp(get_str("odesolver_step_method"),"rk8pd",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk8pd;
+    }
+    else if ( strncmp(get_str("odesolver_step_method"),"bsimp",NAMELENGTH) == 0 )
+    {
+        odeT = gsl_odeiv2_step_bsimp;
     }
     else
     {
@@ -1030,8 +1038,8 @@ int ode_jac(double t, const double y[], double * dfdy, double dfdt[], void * par
 
     double dy, dt;
 
-    const double eps_rel = 1e-6;
-    const double eps_abs = 1e-6;
+    const double eps_rel = 1e-12;
+    const double eps_abs = 1e-12;
 
     size_t i,j;
 

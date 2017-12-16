@@ -40,7 +40,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"h","odesolver_init_h", 'd', 1e-1, 0, "",  "initial time step", "ode"},
     {"abstol","odesolver_eps_abs", 'd', 1e-6, 0, "", "ode solver absolute tolerance", "ode"},
     {"reltol","odesolver_eps_rel", 'd', 0.0, 0, "", "ode solver relative tolerance", "ode"},
-    {"meth","odesolver_step_method", 's', 0.0, 0, "rk4", "ode solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd", "ode"},
+    {"meth","odesolver_step_method", 's', 0.0, 0, "rk8pd", "ode solver stepping method rk2 | rk4 | rkf45 | rkck | {rk8pd} | bsimp", "ode"},
     {"popsize","population_size", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
     {"part","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
     {"seed","random_generator_seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
