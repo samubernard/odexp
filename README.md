@@ -30,7 +30,7 @@ A command line tool for ODE-based population simulation.
 * ``I`` Set initial conditions to previous 
 * ``il`` Use the state of the system at t1 as initial conditions 
 * ``in`` Loop through initial conditions. Set to I to revert to expression, enter to keep current initial condition
-* ``is`` Set initial condition to steady state. Steady state must have been computed with `ms`
+* ``is`` Set initial condition to steady state. Steady state must have been computed with `ms` *not functional*
 * ``l@`` List all user-defined functions 
 * ``la`` List all auxiliary variables (can be plotted)
 * ``lc`` List all constant arrays

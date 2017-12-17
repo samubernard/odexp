@@ -99,6 +99,8 @@ void init_steady_state(steady_state *stst, int index);
 
 void free_steady_state(steady_state *stst, int nbr_stst);
 
+int set_num_ic( double *y );
+
 int set_dou(const char *name, const double val); 
 int set_int(const char *name, const int val); 
 int set_str(const char *name, const char * val); 

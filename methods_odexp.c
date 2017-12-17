@@ -243,6 +243,7 @@ int odesolver( oderhs pop_ode_rhs,
         SIM->event[0] = -1;
         SIM->event[1] =  1;
         ode_ic(t, y, SIM->pop->start); /* this updates SIM->pop->pars->expr and SIM->pop->pars->y */
+        set_num_ic(y);                 /* set initial conditions to values given by ics if NUM_IC == 1 */
         update_SIM_from_y(y);
         memset(SIM->event, 0, sizeof(SIM->event));
     }
@@ -288,7 +289,11 @@ int odesolver( oderhs pop_ode_rhs,
          return 1;  
     }  
 
-    printf("  %sintegrating%s on T=[%.2f, %.2f] (%s mode)... ", T_BLD,T_NOR, t, t1, get_str("population_mode") );
+    printf("  %sintegrating%s on T=[%.2f, %.2f] (%s mode) ", T_BLD,T_NOR, t, t1, get_str("population_mode") );
+    if ( get_int("take_last_y") )
+    {
+        printf("from previous state\n  %s(I to go back to default initial conditions)%s...",T_DET,T_NOR);
+    }
     fflush(stdout);
 
     s = gsl_odeiv2_step_alloc(odeT,sim_size);
@@ -1567,6 +1572,25 @@ void free_steady_state( steady_state *stst, int nbr_stst )
         free( stst[j].im );
     }
     free( stst );
+}
+
+int set_num_ic( double *y )
+{
+    size_t i, j = 0;
+    par *pars = SIM->pop->start;
+    while(pars != NULL)
+    {
+       for(i=0;i<ode_system_size;i++)
+       {
+            if(NUM_IC[i])
+            {
+                y[i+j] = SIM->ics_ptr->value[i];
+            }
+       }
+       pars = pars->nextel;
+       j += ode_system_size;
+    }
+    return 0;
 }
 
 int set_dou(const char *name, const double val) 

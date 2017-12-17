@@ -430,6 +430,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     fprintf(GPLOTP,"plot %s", plot_cmd);
     fflush(GPLOTP);
     sim_to_array(lastinit);
+    LOGPRINT("First simulation done.");
 
     while(1)
     {
@@ -579,32 +580,26 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     sscanf(cmdline+1,"%c%c",&op,&op2);
                     if ( (op  == 'z' && op2 == 'l') || (op2  == 'z' && op == 'l') )
                     {
-                        /* fprintf(GPLOTP,"set logscale z\n");   */
                         set_str("plot_zscale","log");
                     }
                     if ( (op  == 'z' && op2 == 'n') || (op2  == 'z' && op == 'n') )
                     {
-                        /* fprintf(GPLOTP,"set nologscale y\n");   */
                         set_str("plot_zscale","linear");
                     }
                     if ( (op  == 'y' && op2 == 'l') || (op2  == 'y' && op == 'l') )
                     {
-                        /* fprintf(GPLOTP,"set logscale y\n");   */
                         set_str("plot_yscale","log");
                     }
                     if ( (op  == 'y' && op2 == 'n') || (op2  == 'y' && op == 'n') )
                     {
-                        /* fprintf(GPLOTP,"set nologscale y\n");   */
                         set_str("plot_yscale","linear");
                     }
                     if ( (op  == 'x' && op2 == 'l') || (op2  == 'x' && op == 'l') )
                     {
-                        /* fprintf(GPLOTP,"set logscale x\n");   */
                         set_str("plot_xscale","log");
                     }
                     if ( (op  == 'x' && op2 == 'n') || (op2  == 'x' && op == 'n') )
                     {
-                        /* fprintf(GPLOTP,"set nologscale x\n");   */
                         set_str("plot_xscale","linear");
                     }
                     replot = 1;
@@ -816,17 +811,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         } 
                         else if ( op == 's') /* run from steady state */
                         {
-                            if ( nbr_stst > 0 )
-                            {
-                                for ( i=0; i<ode_system_size; i++ )
-                                {
-                                    lastinit[i] = ics.value[i];
-                                    ics.value[i] = stst->s[i];
-                                    NUM_IC[i] = 1;
-                                }
-                            }
+                            printf("  not functional\n");
                         }
-                        else if ( op == 'n' ) /* loop through initial conditions  */
+                        else if ( op == 'n' ) /* loop through initial conditions 
+                                               * This will be applied to all particles
+                                               *
+                                               */
                         {
                             for ( i=0; i<ode_system_size; i++ )
                             {
@@ -836,16 +826,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                                     nbr_read = sscanf(svalue,"%lf",&nvalue);
                                     if ( nbr_read == 1 )
                                     {
-                                        lastinit[i] = ics.value[i];
                                         ics.value[i] = nvalue; 
                                         NUM_IC[i] = 1;
                                     }
                                     else /* try to read a char */
                                     {
                                         sscanf(svalue,"%c",&op2);
-                                        if ( op2 == 'd' | op2 == 'I' )
+                                        if ( op2 == 'd' | op2 == 'I' ) /* set ic to default */
                                         {
-                                            lastinit[i] = ics.value[i];
                                             NUM_IC[i] = 0;
                                         }
                                     }
@@ -856,12 +844,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         replot = 1;
                     }
                     break;
-                case 'I' : /* set initial condition to previous ones */
+                case 'I' : /* set initial condition to defaults */
                     for ( i=0; i<ode_system_size; i++ )
                         {
-                            ics.value[i] = lastinit[i];
-                            NUM_IC[i] = 1;
-                            printf("  I[%s%zu%s] %-20s = %s%f%s\n",T_IND,i,T_NOR,ics.name[i],T_VAL,ics.value[i],T_NOR);
+                            NUM_IC[i] = 0;              /* no numerically set IC */
+                            set_int("take_last_y", 0);  /* no last y IC */
+                            strcat(cmdline," && li");
                         }
                     rerun = 1;
                     replot = 1;
@@ -956,7 +944,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             if ( strncmp(ics.attribute[i],"hidden",3) )
                             {
                                 padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                                DBPRINT("update initial condition values for pop_current_particle");
+                                /* DBPRINT("update initial condition values for pop_current_particle"); */
                                 if (NUM_IC[i] == 0)
                                 {
                                     printf_list_str('I',i,i,padding,&ics);
@@ -1192,7 +1180,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         {
                           if (i<ode_system_size)
                           {
-                            lastinit[i] = ics.value[i];
                             ics.value[i] = nvalue;
                             NUM_IC[i] = 1;
                           }
@@ -1218,7 +1205,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             {
                                 if ( name2index(svalue, ics,  (int *)&i) )
                                 {
-                                    lastinit[i] = ics.value[i];
                                     ics.value[i] = nvalue;
                                     NUM_IC[i] = 1;
                                     rerun = 1;
@@ -1237,7 +1223,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         sscanf(cmdline+2,"%zu",&i);
                         if (i<ode_system_size)
                         {
-                            lastinit[i] = ics.value[i];
                             NUM_IC[i] = 0;
                             rerun = 1;
                             replot = 1;
@@ -1252,9 +1237,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     {
                         for ( i=0; i<ode_system_size; i++ )
                         {
-                            lastinit[i] = ics.value[i];
-                            DBPRINT("Fix this");
-                            ics.value[i] = SIM->pop->start->y[i];
+                            set_int("take_last_y",1);
                         }
                     }
                     else if ( op == 't' )
@@ -1827,7 +1810,6 @@ int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
             index1;
     int     nbr_index;
     /* scan for two integers, index0, index1 in [iter=i0:i1] */
-    LOGPRINT("parsing line '%s'",line); 
     nbr_index = sscanf(line,"%*[^[] [ %*[^=] = %zu : %zu ]%n",&index0,&index1,&bracket1);
     *nbr_dim = 0;
     if ( nbr_index == 2 )
@@ -1835,7 +1817,6 @@ int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
         do 
         {
             *size_dim = realloc(*size_dim, ((*nbr_dim)+1)*sizeof(size_t));
-            LOGPRINT("realloc: nbr_dim=%zu (from %zu to %zu)", *nbr_dim,index0,index1);
             (*size_dim)[*nbr_dim] = index1 - index0; 
             (*nbr_dim)++;
             line+=bracket1;
@@ -1852,7 +1833,6 @@ int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
     else if ( nbr_index == 1 )
     {
         /* var[iter=0] found; equivalent to var[iter=0:1], size = 1 */ 
-        LOGPRINT("found index of type [iter=0:1]");
         **size_dim = 1; 
     }
     else
@@ -1861,7 +1841,6 @@ int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
         exit ( EXIT_FAILURE );
     }
     
-    LOGPRINT("expression has dim=%zu",*nbr_dim);
     if ( *nbr_dim > 0 )
     {
         fprintf(logfr,"    with size ");
@@ -2265,7 +2244,6 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             /* get the size of the expression */
             /* create a search pattern of the type A0:3 X[i=0:3] */
             get_multiindex(line, &nbr_dim, &size_dim);    
-            LOGPRINT("found %s of dim %zu",sym,nbr_dim);
             expr_size = 1;
             for ( j=0; j<nbr_dim; j++ )
             {
