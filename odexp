@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -693,7 +692,8 @@ echo "                                                                      * fi
 # POPULATION BIRTH RATE  =====================================
 gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "        SIM->pop_birth_rate += %s;\n", $2}' $file >>.odexp/model.c
 # END POPULATION BIRTH RATE  =================================
-# DEFINE THE COUPLINGS ====
+
+# DEFINE THE MEAN FIELDS ====
 get_meanfields
 # =========================
 echo "        i++;" >>.odexp/model.c
@@ -799,17 +799,12 @@ echo "" >>.odexp/model.c
 
 # ====================================================================================
 # DECLARE AND DEFINE PARAMETERS
-# Parameters cannot be vectors
+# Parameters are scalars only
 
 echo "" >>.odexp/model.c
 echo "    /* parameters */" >>.odexp/model.c
 declare_parameters
 echo "" >>.odexp/model.c
-# ====================================================================================
-
-# ====================================================================================
-# DECLARE AND DEFINE PARAMETERS 
-# system_defines
 # ====================================================================================
 
 # ====================================================================================
@@ -859,37 +854,44 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization - variables */" >>.odexp/model.c
 define_variables
 
+# ====================================================================================
 # DEFINE COUPLINGS 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - couplings */" >>.odexp/model.c
 define_couplings
 
+# ====================================================================================
 # DEFINE MEAN FIELDS 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - mean fields */" >>.odexp/model.c
 define_meanfields
 
+# ====================================================================================
 # DEFINE AUXILIARY FUNCTIONS
 echo "" >>.odexp/model.c
 echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
 # initialize auxiliary function 
 define_auxiliary_functions
 
+# ====================================================================================
 # DEFINE EQUATIONS 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - equations */" >>.odexp/model.c
 define_equations
 
+# ====================================================================================
 # DEFINE aux_pointer 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - aux_ */" >>.odexp/model.c
 define_aux_pointer
 
+# ====================================================================================
 # DEFINE death_ 
 echo "" >>.odexp/model.c
 echo "    /* Initialization -  particle death */" >>.odexp/model.c
 gawk -F ' ' '$1 ~ /^%[dD][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->death_rate = %s;\n", $0}' $file >>.odexp/model.c
 
+# ====================================================================================
 # DEFINE repli_ 
 echo "" >>.odexp/model.c
 echo "    /* Initialization -  particle replication */" >>.odexp/model.c
@@ -941,11 +943,14 @@ echo "" >>.odexp/model.c
 echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
 define_parametric_expressions
 
+# ====================================================================================
 # DEFINE parametric_expression_pointer 
 echo "" >>.odexp/model.c
 echo "    /* initialization - expr pointer */" >>.odexp/model.c
 define_parametric_expression_pointer
 
+# ====================================================================================
+# DEFINE initial conditions 
 echo "" >>.odexp/model.c
 echo "    /* Initialization - initial condition */" >>.odexp/model.c
 define_initial_conditions
@@ -956,11 +961,8 @@ echo "    return success_;" >>.odexp/model.c
 echo "}" >>.odexp/model.c
 # END ode_init_conditions =================================================================================
 
-
 cp "$ODEXPDIR"/help.txt .odexp/
 cp "$ODEXPDIR"/.inputrc .odexp/
-
-
 
 echo "CFLAGS= -I$ODEXPDIR -Wall -Wno-gnu-statement-expression -g `pkg-config --cflags gsl` -pedantic" >.odexp/makefile
 echo "LDFLAGS=-g `pkg-config --libs gsl` -lm -L$ODEXPDIR -lodexp" >>.odexp/makefile
@@ -981,8 +983,6 @@ echo "veryclean:" >>.odexp/makefile
 echo "		rm -f *.o; rm -f *.out; rm -rf *.out.dSYM" >>.odexp/makefile
 
 cd .odexp
-
-# rm model.op
 
 make && cp model.out .. && cd .. && ./model.out $1
 

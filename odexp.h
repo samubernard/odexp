@@ -21,6 +21,8 @@ int update_plot_index(int *ngx, int *ngy, int *ngz, int *gx, int *gy, int *gz, n
 int update_act_par_index(int *p, const nve mu);
 int update_act_par_options(const int p, const nve mu);
 
+int sim_to_array( double *y );
+
 int load_nameval(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile);
 int load_double_array(const char *filename, double_array *a,\
         const char *sym, size_t sym_len, int exit_if_nofile);

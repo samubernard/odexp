@@ -138,7 +138,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             quit                  = 0;
     
     /* odes */
-    double *lastinit;    /* last initial conditions */
+    double *lastinit = NULL;    /* last initial conditions */
     
     /* sizes */
     size_t total_nbr_x;  /* number of dependent and auxiliary variables */
@@ -249,7 +249,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no parametric expression found\n");
     } 
-    /* mu.expr_pointer = pex.value; pointer to parametric expression values */
     LOGPRINT("found %zu parametric expressions",pex.nbr_el);
 
     /* get initial conditions */
@@ -267,7 +266,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         exit ( EXIT_FAILURE );
     } 
     /* DBPRINT("before pop_ode_ic"); */
-    /* pop_ode_ic(tspan.array[0],ics.value,&mu); */
     LOGPRINT("found %zu variables",ics.nbr_el);
 
 
@@ -280,7 +278,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no auxiliary function found\n");
     } 
-    /* mu.aux_pointer = fcn.value; pointer to fcn.value */
     LOGPRINT("found %zu auxiliary variables",fcn.nbr_el);
 
     /* get equations */
@@ -327,7 +324,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; /* nbr of plottable elements */
     nbr_cols = 1 + ode_system_size + fcn.nbr_el + psi.nbr_el + pex.nbr_el;
     /* DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x); */
-    lastinit = malloc(ode_system_size*sizeof(double));
     dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr + mfd.nbr_expr;
     dxv.nbr_el = total_nbr_x;
     /* DBPRINT("alloc dxv"); */
@@ -433,6 +429,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       get_int("pop_current_particle"));
     fprintf(GPLOTP,"plot %s", plot_cmd);
     fflush(GPLOTP);
+    sim_to_array(lastinit);
 
     while(1)
     {
@@ -2112,6 +2109,21 @@ int update_act_par_options(const int p, const nve mu)
         set_str("act_par","no parameter defined");
     }
     return s;
+}
+
+int sim_to_array( double *y )
+{
+    size_t j = 0;
+    par *pars;
+    y = realloc(y, SIM->pop->size*ode_system_size*sizeof(double));
+    pars = SIM->pop->start;
+    while ( pars != NULL )  
+    {
+        memmove((y+j),pars->y,ode_system_size*sizeof(double));
+        pars = pars->nextel;
+        j += ode_system_size;
+    }
+    return 0;
 }
 
 int load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len, int exit_if_nofile)

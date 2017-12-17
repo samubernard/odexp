@@ -176,7 +176,7 @@ int odesolver( oderhs pop_ode_rhs,
     system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
     SIM->fid = fopen(SIM->stats_buffer, "w");
     SIM->time_in_ode_rhs = 0.0;
-    DBPRINT("set up SIM");
+    /* DBPRINT("set up SIM"); */
     /* reset SIM with an empty pop 
      * If option lasty is on, first
      * copy particle->y of the last simulation 
@@ -256,7 +256,7 @@ int odesolver( oderhs pop_ode_rhs,
     f = malloc(sim_size*sizeof(double));
     ode_rhs(t, y, f, SIM->pop->start); /* this updates SIM->pop->aux and SIM->pop->psi, SIM->meanfield and SIM->pop->death_rate and repli_rate */
     
-    DBPRINT("SIM set up done");
+    /* DBPRINT("SIM set up done"); */
 
     quickfile = fopen(quick_buffer,"w");
     
