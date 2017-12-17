@@ -421,15 +421,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     fprintf(GPLOTP,"set term aqua font \"%s,16\"\n", get_str("gnuplot_font"));
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
-    snprintf(plot_cmd,EXPRLENGTH,\
-      "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
-      "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
-      get_int("pop_current_particle"), nbr_cols, gx, gy,\
-      get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
-      get_int("pop_current_particle"));
-    fprintf(GPLOTP,"plot %s", plot_cmd);
-    fflush(GPLOTP);
     sim_to_array(lastinit);
+    extracmd = malloc(2*sizeof(char));
+    strncpy(extracmd,"0",1); /* start by refreshing the plot with command 0: normal plot 
+                              * this does not go into the history  
+                              */
     LOGPRINT("First simulation done.");
 
     while(1)
@@ -1089,6 +1085,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         printf("  Number of data files          = %s%zu%s\n",T_VAL,dfl.nbr_el,T_NOR);
                         printf("  Number of columns in id.dat   = %s%zu%s\n",T_VAL,nbr_cols,T_NOR);
                         printf("  Particle population size      = %s%zu%s\n",T_VAL,POP_SIZE,T_NOR);
+
+                        printf("  hexdump -e ''%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat", 1+mfd.nbr_el); 
                     }
                     else
                     {
