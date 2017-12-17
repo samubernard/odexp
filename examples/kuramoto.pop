@@ -1,0 +1,64 @@
+# KURAMOTO model
+# coupled particles
+
+# PARAMETERS are constant for all particles
+# Coupling strength
+P K 1.0
+
+# CONSTANT
+S PI 3.141592
+
+# EXPRESSIONS
+# set frequency to normal distribution.
+E omega randN(2*PI/10.0,0.1) 
+
+# COUPLING depends on other particles (O) and current particle (M)
+# Y: dynamical variable MY, OY
+# E: expression ME, OE
+# A: auxiliary variable MA, OA
+# MU: parameter
+# The coupling term is evaluated as 1/POP_SIZE*sum( expression )
+# For example PSI = 1/POP_SIZE * sum ( sin(OY("theta") - MY("theta")) )
+# In single particle mode (O popmode single), coupling terms are set to 0
+%C PSI sin(OY("theta") - MY("theta"))
+
+# MEAN FIELD depends on current particles only (M). (O)ther particles not allowed.
+# Mean field is evaluated as 1/POP_SIZE*sim( expression )
+# In single particle mode (O popmode single), mean fields are set to 0
+
+# MFY: mean value of y
+%M MFY    MA("y") 
+
+# MFX: mean value of x
+%M MFX    MA("x")
+
+# OMEGA: mean value of omega
+%M OMEGA  ME("omega") 
+
+# AUXILIARY VARIABLES
+A x cos(theta)
+A y sin(theta)
+
+# DYNAMICAL VARIABLES 
+dtheta/dt = omega + K*PSI 
+
+# INITIAL CONDITIONS
+I theta 2*PI*rand01() 
+
+# TIME SPAN
+tspan 0 40 
+
+# OPTIONS
+
+# initial population size
+O population_size 10
+
+# plot MFY at y-axis
+O plot_y MFY  
+
+# numerical method
+O meth rk2
+
+# output nominal number of points
+O res 101
+

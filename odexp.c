@@ -1085,8 +1085,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         printf("  Number of data files          = %s%zu%s\n",T_VAL,dfl.nbr_el,T_NOR);
                         printf("  Number of columns in id.dat   = %s%zu%s\n",T_VAL,nbr_cols,T_NOR);
                         printf("  Particle population size      = %s%zu%s\n",T_VAL,POP_SIZE,T_NOR);
-
-                        printf("  hexdump -e ''%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat", 1+mfd.nbr_el); 
+                        printf("\n  hexdump -e '%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
+                        printf("  hexdump -e '%zu \"%%5.2f \" \"\\n\"' idXX.dat\n", nbr_cols); 
                     }
                     else
                     {
