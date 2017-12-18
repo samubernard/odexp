@@ -6,7 +6,7 @@
 P K 1.0
 
 # CONSTANT
-S PI 3.141592
+S PI 3.141592653589793
 
 # EXPRESSIONS
 # set frequency to normal distribution.
