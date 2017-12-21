@@ -245,11 +245,13 @@ declare_auxiliary_functions () {
 
 define_functions () {
     # declare and define functions
-    gawk -F '=' '$1 ~ /^@/ {
-        expr=$2;
+    gawk -F " = " '$1 ~ /^@/ {
+        lhs=$1;
+        $1="";
+        expr=$0;
         gsub(/^[ ]*/,"",expr);
         gsub(/[ ]*$/,"",expr);
-        split($1,myfunc,/[@=]/);
+        split(lhs,myfunc,/[@=]/);
         split(myfunc[2],funcargs,/[()]/);
         funcname=funcargs[1];
         myargs=funcargs[2];
@@ -265,7 +267,7 @@ define_functions () {
         gsub(/^[ ]*/,"",myargs_list[nargs]);
         gsub(/[ ]*$/,"",myargs_list[nargs]);
         printf "double %s", myargs_list[nargs];
-        printf  ") { return %s; }\n", expr;
+        printf  ")\n{\n    return %s;\n}\n", expr;
     }' $file >>.odexp/model.c  
 }
 
