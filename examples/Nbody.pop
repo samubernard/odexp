@@ -1,0 +1,50 @@
+# N-body system
+
+_N 3
+
+P0 v0     0.0909091
+P1 x0     0.2
+P2 mass   1e+09
+
+# Gravitational constant in m^3 kg^-1 s^-2
+S G 6.674e-11
+
+@ normCube(x,y,z) = pow(x*x+y*y+z*z,1.5)
+@ grav(numx,numxi,x,y,z,xi,yi,zi) = (numx == numxi) ? 0 : (numx-numxi)/normCube(x-xi,y-yi,z-zi)
+
+
+%C GRAVITY_X  -G*MU("mass")*grav(MY("x"),OY("x"),MY("x"),MY("y"),MY("z"),OY("x"),OY("y"),OY("z"))
+%C GRAVITY_Y  -G*MU("mass")*grav(MY("y"),OY("y"),MY("x"),MY("y"),MY("z"),OY("x"),OY("y"),OY("z"))
+%C GRAVITY_Z  -G*MU("mass")*grav(MY("z"),OY("z"),MY("x"),MY("y"),MY("z"),OY("x"),OY("y"),OY("z"))
+
+dx/dt = vx 
+dy/dt = vy
+dz/dt = vz
+dvx/dt = GRAVITY_X
+dvy/dt = GRAVITY_Y
+dvz/dt = GRAVITY_Z
+
+I x x0*rand01()
+I y x0*rand01()
+I z x0*rand01()
+I vx v0*(rand01()-0.5)
+I vy v0*(rand01()-0.5)
+I vz v0*(rand01()-0.5)
+
+TIMESPAN 0 2.05e+04 
+
+O population_size _N
+O0 plot_x x
+O1 plot_y y
+O2 plot_z z
+O10 par_step 1.1
+O13 odesolver_output_resolution 401
+O14 odesolver_min_h 0
+O15 odesolver_init_h 0.1
+O16 odesolver_eps_abs 1e-08
+O17 odesolver_eps_rel 1e-08
+O18 odesolver_step_method bsimp
+O19 population_mode population
+O20 population_size _N 
+O22 random_generator_seed 3141592
+O23 reset_random_generator_seed 1
