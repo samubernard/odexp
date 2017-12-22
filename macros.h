@@ -128,5 +128,6 @@
 #define ATREPLI (SIM->event[0] >= 0 && SIM->event[1] == 1)
 #define ISDAUGHTER (myself_->sister != NULL)
 #define ISMOTHER   (myself_->sister == NULL)
+#define ID      (myself_->id)
 
 #endif /* !FILE_MACROS_SEEN */
