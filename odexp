@@ -27,11 +27,15 @@ echo "# In this file, all constant (variable starting with _)" >>.odexp/model.op
 echo "# are replaced with their value" >>.odexp/model.op
 echo "" >>.odexp/model.op
 
+# append next line to all lines terminating with \
 # replace all constants (variable starting with '_') by their value
 # remove all ending ;
 # replace all ; by \n 
-gawk '$1 !~ /#/ {gsub(";( )*$","",$0)};
-    $1 !~ /#/ {gsub(";","\n"$1,$0)};
+gawk '{gsub("^( )*","",$0)}; 
+       /\\$/ {gsub(/\\/," ",$0); 
+              printf "%s", $0; next};
+    $1 !~ /[#@]/ {gsub(";( )*$","",$0)};
+    $1 !~ /[#@]/ {gsub(";","\n"$1,$0)};
     $1 ~ /^( )*_/ {n++; name[n]=$1; val[n]=$2; };
     $1 !~ /^( )*_/ { 
         if(n>0) {
@@ -41,8 +45,6 @@ gawk '$1 !~ /#/ {gsub(";( )*$","",$0)};
         }
     };
     {print $0}' $1 >>.odexp/model.op
-
-
 
 file=.odexp/model.op
 
@@ -244,7 +246,7 @@ declare_auxiliary_functions () {
 }
 
 define_functions () {
-    # declare and define functions
+    # declare and define user-defined functions
     gawk -F " = " '$1 ~ /^@/ {
         lhs=$1;
         $1="";
