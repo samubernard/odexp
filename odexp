@@ -27,12 +27,15 @@ echo "# In this file, all constant (variable starting with _)" >>.odexp/model.op
 echo "# are replaced with their value" >>.odexp/model.op
 echo "" >>.odexp/model.op
 
+# strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
+# append next line to all lines terminating with ... followed by any number of whitespaces
 # replace all constants (variable starting with '_') by their value
 # remove all ending ;
-# replace all ; by \n 
+# replace all ; outside user-defined functions by \n 
 gawk '{gsub("^( )*","",$0)}; 
-       /\\$/ {gsub(/\\/," ",$0); 
+        /\\$|\.\.\.( )*$/ {gsub(/\\$/," ",$0); 
+              gsub(/\.\.\.( )*$/," ",$0);
               printf "%s", $0; next};
     $1 !~ /[#@]/ {gsub(";( )*$","",$0)};
     $1 !~ /[#@]/ {gsub(";","\n"$1,$0)};
