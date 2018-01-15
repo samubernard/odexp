@@ -570,9 +570,7 @@ echo "#ifndef __GNUC__ " >>.odexp/model.c
 echo "#  define  __attribute__(x)  /*NOTHING*/" >>.odexp/model.c
 echo "#endif" >>.odexp/model.c
 echo "" >>.odexp/model.c
-echo "/* =================================================================" >>.odexp/model.c
-echo "                              Libraries" >>.odexp/model.c
-echo "================================================================= */" >>.odexp/model.c
+echo "/* Libraries */" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "#include <gsl/gsl_errno.h>" >>.odexp/model.c
 echo "#include <gsl/gsl_vector.h>" >>.odexp/model.c
@@ -581,27 +579,20 @@ echo "#include <string.h>                            " >>.odexp/model.c
 echo "#include <math.h>                              " >>.odexp/model.c
 echo "#include <time.h>                              " >>.odexp/model.c
 echo "" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "/* =================================================================" >>.odexp/model.c
-echo "                              Header files" >>.odexp/model.c
-echo "================================================================= */" >>.odexp/model.c
+echo "/* Header files */" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "#include \"odexp.h\"" >>.odexp/model.c
 echo "#include \"utils_odexp.h\"" >>.odexp/model.c
 echo "#include \"rand_gen.h\"" >>.odexp/model.c
 echo "" >>.odexp/model.c
-echo "/* =================================================================" >>.odexp/model.c
-echo "                              Defines" >>.odexp/model.c
-echo "================================================================= */" >>.odexp/model.c
+echo "/* Defines */" >>.odexp/model.c
 echo "" >>.odexp/model.c
 set_defines
 echo "" >>.odexp/model.c
-echo "/* =================================================================" >>.odexp/model.c
-echo "                              Global variables" >>.odexp/model.c
-echo "================================================================= */" >>.odexp/model.c
+echo "/* Global variables */" >>.odexp/model.c
+echo "" >>.odexp/model.c
 # ====================================================================================
 # DECLARE AND DEFINE CONSTANT ARRAYS
-echo "" >>.odexp/model.c
 echo "/* Declaration and definition of constant arrays from files */" >>.odexp/model.c
 declare_array_from_file
 echo "" >>.odexp/model.c  
@@ -619,9 +610,7 @@ define_functions
 echo "" >>.odexp/model.c  
 # ====================================================================================
 
-echo "/* =================================================================" >>.odexp/model.c
-echo "                              Functions" >>.odexp/model.c
-echo "================================================================= */" >>.odexp/model.c
+echo "/* Functions */" >>.odexp/model.c
 echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
 echo "int pop_rhs(double t, const double y[], double f[], void *params);" >>.odexp/model.c
 echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
