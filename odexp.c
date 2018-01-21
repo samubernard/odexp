@@ -1463,6 +1463,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     nbr_read = sscanf(cmdline+1,"%zu",&i);
                     if ( nbr_read == 1 )
                         list_particle(i);
+                    else
+                        list_stats();
                     break;
                 case 'Q' :  /* quit without saving */
                     quit = 1;

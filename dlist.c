@@ -105,7 +105,6 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
      * stats.dat:
      *  time
      *  mean fields
-     *  number of particles
      *  parent id
      *  birth death
      *  child id
@@ -116,7 +115,7 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     {
        fprintf(s->fstats_varnames,"\t%s",s->mfdnames[i]);
     }
-    fprintf(s->fstats_varnames,"\tN\tPARENT_ID\tEVENT\tCHILD_ID\n");
+    fprintf(s->fstats_varnames,"\tPARENT_ID\tEVENT\tCHILD_ID\n");
     fclose(s->fstats_varnames); 
 
     /* write names of variables in separate file
@@ -457,7 +456,25 @@ int list_particle(size_t with_id)
     s = system(cmd_varnames); 
     s = system(cmd_data); 
     /* printf("  id%zu.dat:\n", with_id);  */
-    s = system("column -t .odexp/tmp.txt | less -S");
+    s = system("column -t .odexp/tmp.txt | less -s");
+
+    return s;
+}
+
+int list_stats( void )
+{
+    int s;
+    size_t nbr_cols = 1 + SIM->nbr_mfd; 
+    char cmd_varnames[EXPRLENGTH];
+    char cmd_data[EXPRLENGTH];
+    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/stats_varnames.txt > .odexp/tmp.txt");
+    snprintf(cmd_data,EXPRLENGTH-1,\
+            "hexdump -e '%zu \"%%5.2f\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/tmp.txt",\
+            nbr_cols);
+
+    s = system(cmd_varnames); 
+    s = system(cmd_data); 
+    s = system("column -t .odexp/tmp.txt | less -s");
 
     return s;
 }
