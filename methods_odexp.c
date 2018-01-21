@@ -173,7 +173,7 @@ int odesolver( oderhs pop_ode_rhs,
     }
 
     /* Initialize SIM */
-    system("rm .odexp/id*.dat"); /* remove files before fopen'ing again */
+    system("rm -f .odexp/id*.dat"); /* remove files before fopen'ing again */
     SIM->fid = fopen(SIM->stats_buffer, "w");
     SIM->time_in_ode_rhs = 0.0;
     /* DBPRINT("set up SIM"); */
@@ -256,6 +256,25 @@ int odesolver( oderhs pop_ode_rhs,
 
     f = malloc(sim_size*sizeof(double));
     ode_rhs(t, y, f, SIM->pop->start); /* this updates SIM->pop->aux and SIM->pop->psi, SIM->meanfield and SIM->pop->death_rate and repli_rate */
+    
+    /* write names of variables in separate file */
+    /* 
+     * time
+     * mean fields
+     * number of particles
+     * parent id
+     * birth death
+     * child id
+     *
+     */
+    SIM->fstats_varnames = fopen(SIM->stats_varnames, "w");
+    fprintf(SIM->fstats_varnames,"TIME");
+    for(i=0; i<SIM->nbr_mfd; i++)
+    {
+       fprintf(SIM->fstats_varnames,"\t%s",SIM->mfdnames[i]);
+    }
+    fprintf(SIM->fstats_varnames,"\tN\tPARENT_ID\tEVENT\tCHILD_ID\n");
+    fclose(SIM->fstats_varnames); 
     
     /* DBPRINT("SIM set up done"); */
 
@@ -441,9 +460,9 @@ int odesolver( oderhs pop_ode_rhs,
     }
     if (status == GSL_SUCCESS)
     {
-        printf("\n    total %s%g msec%s", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
-        printf(" odeiv2 %s%g msec%s", T_DET,tot_odeiv, T_NOR);
-        printf(" ode_rhs %s%g msec%s\n", T_DET,SIM->time_in_ode_rhs, T_NOR);
+        printf("\n  total: %s%g msec%s,", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
+        printf(" solver: %s%g msec%s,", T_DET,tot_odeiv, T_NOR);
+        printf(" function: %s%g msec%s\n", T_DET,SIM->time_in_ode_rhs, T_NOR);
     }
     else
     {

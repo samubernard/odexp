@@ -1734,8 +1734,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       fprintf(stderr, "\n  Error: could not write history\n");
     }
 
-    /* remove frozen curves */
+    /* try to remove frozen curves */
     system("rm -f .odexp/curve.*");
+    /* try to remove idXX curves */
+    system("rm -f .odexp/id*.dat");
 
     fclose(logfr);
 

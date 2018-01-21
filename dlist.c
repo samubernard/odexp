@@ -57,6 +57,8 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
         nve *ics, nve *fcn, nve *eqn, nve *psi, nve *mfd,\
         nve *dxv, nve *cst, nve *dfl, int (*ode_rhs)(double, const double *, double *, void *))
 {
+    size_t i;
+
     s->nbr_par = mu->nbr_el;
     s->nbr_var = ics->nbr_el;
     s->nbr_expr= pex->nbr_el;
@@ -89,6 +91,8 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
 
 
     strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH-1);
+    strncpy(s->stats_varnames,".odexp/stats_varnames.txt",MAXFILENAMELENGTH-1);
+    strncpy(s->particle_varnames,".odexp/particle_varnames.txt",MAXFILENAMELENGTH-1);
 
     s->event[0] = -1;
     s->event[1] =  1;
@@ -96,6 +100,53 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
 
     s->time_in_ode_rhs = 0.0;
     s->ode_rhs = ode_rhs;
+
+    /* write names of variables in separate file
+     * stats.dat:
+     *  time
+     *  mean fields
+     *  number of particles
+     *  parent id
+     *  birth death
+     *  child id
+     */
+    s->fstats_varnames = fopen(s->stats_varnames, "w");
+    fprintf(s->fstats_varnames,"TIME");
+    for(i=0; i<s->nbr_mfd; i++)
+    {
+       fprintf(s->fstats_varnames,"\t%s",s->mfdnames[i]);
+    }
+    fprintf(s->fstats_varnames,"\tN\tPARENT_ID\tEVENT\tCHILD_ID\n");
+    fclose(s->fstats_varnames); 
+
+    /* write names of variables in separate file
+     * idXX.dat:
+     *  t,sizeof(double),1,p->fid);
+     *  y,sizeof(double),p->nbr_y,p->fid);
+     *  aux,sizeof(double),p->nbr_aux,p->fid);
+     *  psi,sizeof(double),p->nbr_psi,p->fid);
+     *  expr,sizeof(double),p->nbr_expr,p->fid);
+     */
+    s->fparticle_varnames = fopen(s->particle_varnames, "w");
+    fprintf(s->fstats_varnames,"TIME");
+    for(i=0; i<s->nbr_var; i++)
+    {
+       fprintf(s->fparticle_varnames,"\t%s",s->varnames[i]);
+    }
+    for(i=0; i<s->nbr_aux; i++)
+    {
+       fprintf(s->fparticle_varnames,"\t%s",s->auxnames[i]);
+    }
+    for(i=0; i<s->nbr_psi; i++)
+    {
+       fprintf(s->fparticle_varnames,"\t%s",s->psinames[i]);
+    }
+    for(i=0; i<s->nbr_expr; i++)
+    {
+       fprintf(s->fparticle_varnames,"\t%s",s->exprnames[i]);
+    }
+    fprintf(s->fparticle_varnames,"\n");
+    fclose(s->fparticle_varnames); 
 
     s->pop = malloc(sizeof(dlist));
     init_dlist(s->pop);

@@ -113,8 +113,14 @@ typedef struct system_state {
 
     int (*ode_rhs)(double, const double *, double *, void *);
 
-    char stats_buffer[NAMELENGTH];
+    char stats_buffer[MAXFILENAMELENGTH];
     FILE *fid;
+    
+    char stats_varnames[MAXFILENAMELENGTH];
+    FILE *fstats_varnames;
+
+    char particle_varnames[MAXFILENAMELENGTH];
+    FILE *fparticle_varnames;
 
 } world;
 
