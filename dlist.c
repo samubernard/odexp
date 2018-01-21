@@ -441,3 +441,23 @@ int fwrite_SIM(const double *restrict t, char *restrict mode)
     
     return 0; 
 }
+
+
+int list_particle(size_t with_id)
+{
+    int s;
+    size_t nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+    char cmd_varnames[EXPRLENGTH];
+    char cmd_data[EXPRLENGTH];
+    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/tmp.txt");
+    snprintf(cmd_data,EXPRLENGTH-1,\
+            "hexdump -e '%zu \"%%5.2f\t\" \"\\n\"' .odexp/id%zu.dat >> .odexp/tmp.txt",\
+            nbr_cols, with_id);
+
+    s = system(cmd_varnames); 
+    s = system(cmd_data); 
+    /* printf("  id%zu.dat:\n", with_id);  */
+    s = system("column -t .odexp/tmp.txt | less -S");
+
+    return s;
+}

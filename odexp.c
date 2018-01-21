@@ -1459,6 +1459,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                        printf_SIM();
                     }
                     break;
+                case '$' :  /* list particle dataset */
+                    nbr_read = sscanf(cmdline+1,"%zu",&i);
+                    if ( nbr_read == 1 )
+                        list_particle(i);
+                    break;
                 case 'Q' :  /* quit without saving */
                     quit = 1;
                     break;
