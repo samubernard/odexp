@@ -9,7 +9,8 @@ A command line tool for ODE-based population simulation.
 * ``}``, ``C^}`` Plot next particle on the y-axis (cyclic)
 * ``{``, ``C^}`` Plot previous particle on the y-axis (cyclic)
 * ``>`` Double the number of time steps
-* ``<`` Halve the number of time steps 
+* ``<`` Halve the number of time steps
+* ``$`` [**id**] Print dataset for particle **id**, or print stats dataset if **id** is missing
 * ``!`` **filename** Save the current plot to **filename**. EPS format
 * ``0``, ``n`` Switch to/update normal plot 
 * ``9``, ``b`` Switch to continuation plot

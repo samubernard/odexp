@@ -845,8 +845,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         {
                             NUM_IC[i] = 0;              /* no numerically set IC */
                             set_int("take_last_y", 0);  /* no last y IC */
-                            strcat(cmdline," && li");
                         }
+                    strcat(cmdline," && li");
                     rerun = 1;
                     replot = 1;
                     break;
@@ -1334,13 +1334,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 case 'd' : /* reset parameters and initial cond to defaults */
                     for ( i=0; i<ode_system_size; i++ )
                         {
-                            lastinit[i] = ics.value[i];
                             NUM_IC[i] = 0;
                         }
                     /* reset parameter values */
                     load_nameval(parfilename, mu, "P", 1,exit_if_nofile);
-                    /* reset initial conditions */
-                    pop_ode_ic(tspan.array[0], ics.value, &mu);
                     rerun = 1;
                     replot = 1;
                     update_act_par_options(p, mu);

@@ -27,6 +27,9 @@ Halve the number of time steps
 .BR ! " " \fIfilename\fR   
 Try to save the current plot to \fIfilename\fR. EPS format
 .TP
+.BR $ " " \fIid\fR   
+Print dataset for particle \fIid\fR, or print stats dataset if \fIid\fR is missing
+.TP
 .BR 0 ", " n 
 Switch to/update normal plot 
 .TP
