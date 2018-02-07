@@ -255,7 +255,13 @@ int odesolver( oderhs pop_ode_rhs,
     }
 
     f = malloc(sim_size*sizeof(double));
-    ode_rhs(t, y, f, SIM->pop->start); /* this updates SIM->pop->aux and SIM->pop->psi, SIM->meanfield and SIM->pop->death_rate and repli_rate */
+    ode_rhs(t, y, f, SIM->pop->start); /* this updates 
+                                        * SIM->pop->aux 
+                                        * SIM->pop->psi
+                                        * SIM->meanfield 
+                                        * SIM->pop->death_rate 
+                                        * repli_rate 
+                                        */
     
     
     /* DBPRINT("SIM set up done"); */
@@ -1763,7 +1769,6 @@ double SSA_timestep(double *sumr)
         r += pars->repli_rate;
         pars = pars->nextel;
     }
-    /* DBPRINT("pop_death_rate = %g, pop_repli_rate = %g, pop_birth_rate = %g",pop_death_rate,pop_repli_rate,pop_birth_rate); */
     dt = exprand(r);
     *sumr = r;
     /* DBPRINT("dt = %g (r = %g)", dt,r); */

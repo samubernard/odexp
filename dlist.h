@@ -23,7 +23,7 @@ typedef struct namevalexp
     struct namevalexp *prevel;
 } nve;
 
-/* not used */
+/* NOT USED */
 typedef struct namevalexp_group
 {
     nve pex;     /* parametric expressions */
@@ -38,7 +38,7 @@ typedef struct namevalexp_group
     nve cst;     /* constant arrays */
     nve dfl;     /* data files */
 } nveg;
-
+/* END NOT USED */
 
 typedef struct particle_state {
     double *expr;
