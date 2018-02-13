@@ -19,8 +19,8 @@ typedef struct namevalexp
     size_t  *expr_index;       /* index of expression */
     int     *max_name_length;  /* length of longest name */
 
-    struct namevalexp *nextel;
-    struct namevalexp *prevel;
+    /* struct namevalexp *nextel; */
+    /* struct namevalexp *prevel; */
 } nve;
 
 /* NOT USED */
