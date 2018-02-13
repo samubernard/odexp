@@ -143,7 +143,8 @@ double sumxy(long len, double (*f)(double), double (*g)(double, double), const d
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len)
 {
     double beta = (double)len/delay;
-    return beta*((link==0 ? root : chain[link-1]) - chain[link]);
+    return beta*((link==0 ? root : chain[link-1]) - chain[link]); 
+    /* return beta*( ((link==0)*root + (link>0)*chain[link-1]) - chain[link]); */
 }
 
 
