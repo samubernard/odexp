@@ -1892,12 +1892,12 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
         while( (linelength = getline(&line, &linecap, fr)) > 0) /* get current line in string line */
         {
             has_read = sscanf(line,"%s%n",key,&k); /* try to read keyword string key and get its length k */ 
-            if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
+            if ( (strncasecmp(key,sym,sym_len) == 0) && (has_read == 1) ) /* keyword was found */
             {
                 success = 1;
                 /* try to read SYM0:N VAR VALUE ! OPTION */
                 snprintf(attribute,1,"");
-                has_read = sscanf(line,"%*s %s %lf ! %s ",var.name[var_index],&var.value[var_index],attribute);
+                has_read = sscanf(line,"%*s %s %lf ! %[^\n] ",var.name[var_index],&var.value[var_index],attribute);
                 /* if cannot read double, try to read SYM0:N VAR ~ RAND EXPRESSION */
                 if ( has_read < 2 )
                 {
@@ -2565,9 +2565,14 @@ int printf_option_line(size_t i)
 
 void printf_list_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var, char *descr)
 {
-    printf("  %c[%s%zu%s]%-*s %-*s = %s%14g%s   %s%s %s%s\n",\
+    char sep[2] = "";
+    if ( strlen(descr) > 0 )
+    {
+        strncpy(sep,";",1);
+    }
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%14g%s   %s%s%s %s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,var->name[nve_index],\
-            T_VAL,var->value[nve_index],T_NOR,T_DET,var->attribute[nve_index],descr,T_NOR);
+            T_VAL,var->value[nve_index],T_NOR,T_DET,var->attribute[nve_index],sep,descr,T_NOR);
  
 }
 

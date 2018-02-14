@@ -946,10 +946,10 @@ int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *sts
 
     printf("  Finding a steady state... ");
 
-    DBPRINT("initial guess");
+    printf("    initial guess:\n");
     for ( i=0; i<n; i++)
     {
-        DBPRINT("%f", guess[i]); 
+        printf("      %f\n", guess[i]); 
     }
 
     do 
