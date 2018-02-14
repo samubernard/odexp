@@ -916,7 +916,7 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
     return nbr_stst;
 }
 
-int ststsolver( rootrhs root_rhs, nve ics, nve mu, steady_state *stst)
+int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *stst)
 {
     
 
@@ -926,8 +926,8 @@ int ststsolver( rootrhs root_rhs, nve ics, nve mu, steady_state *stst)
     int status;
     size_t i, iter = 0;
 
-    const size_t n = ics.nbr_el;
-    gsl_multiroot_function f = {root_rhs, n, &mu};
+    const size_t n = ode_system_size;
+    gsl_multiroot_function f = {root_rhs, n, params};
 
     gsl_matrix *J = gsl_matrix_alloc(n,n);
 
@@ -937,7 +937,7 @@ int ststsolver( rootrhs root_rhs, nve ics, nve mu, steady_state *stst)
 
     for ( i=0; i<n; i++)
     {
-        gsl_vector_set(x,i,ics.value[i]);
+        gsl_vector_set(x,i,guess[i]);
     }
 
     T = gsl_multiroot_fsolver_hybrids;
@@ -945,6 +945,12 @@ int ststsolver( rootrhs root_rhs, nve ics, nve mu, steady_state *stst)
     gsl_multiroot_fsolver_set (s, &f, x);
 
     printf("  Finding a steady state... ");
+
+    DBPRINT("initial guess");
+    for ( i=0; i<n; i++)
+    {
+        DBPRINT("%f", guess[i]); 
+    }
 
     do 
     {
@@ -974,7 +980,7 @@ int ststsolver( rootrhs root_rhs, nve ics, nve mu, steady_state *stst)
      * gsl_matrix_fprintf(stdout,J,"%f");
      */
 
-    jac(root_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,&mu);
+    jac(root_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,params);
     /* printf("--Jacobian matrix with homemade numerical derivatives\n");  */
     /* gsl_matrix_fprintf(stdout,J,"%f"); */
 
@@ -1112,7 +1118,7 @@ int ode_jac(double t, const double y[], double * dfdy, double dfdt[], void * par
 
 }
 
-int ststcont( rootrhs root_rhs, nve ics, nve mu)
+int ststcont( rootrhs root_rhs, nve ics, void *params)
 {
     /* naive steady state continuation method */
     clock_t start = clock();
@@ -1152,13 +1158,13 @@ int ststcont( rootrhs root_rhs, nve ics, nve mu)
         x0[i] = ics.value[i];
     }
 
-    mu2 = mu.value[p];
-    mu1 = mu.value[p];
-    mu0 = mu.value[p];
+    mu2 = SIM->mu[p];
+    mu1 = SIM->mu[p];
+    mu0 = SIM->mu[p];
     init_steady_state(&stst, 0);
 
     br_file = fopen("stst_branches.tab","a");
-    fprintf(br_file,"n\t%s",mu.name[p]);
+    fprintf(br_file,"n\t%s",SIM->parnames[p]);
     for (i = 0; i < ode_system_size; i++)
     {
         fprintf(br_file,"\t%s",ics.name[i]);
@@ -1176,12 +1182,12 @@ int ststcont( rootrhs root_rhs, nve ics, nve mu)
          * for fixed parameter values mu
          * =============================*/
         printf("  *----------------------*\n");
-        printf("  %ld: %s = %g, s=%g\n",ntry,mu.name[p],mu.value[p],s);
-        status = ststsolver(root_rhs,ics,mu, &stst);
+        printf("  %ld: %s = %g, s=%g\n",ntry,SIM->parnames[p],SIM->mu[p],s);
+        status = ststsolver(root_rhs,ics.value, params, &stst);
         if ( status == GSL_SUCCESS ) /* then move to next point */
         {
             nstst++;
-            fprintf(br_file,"%ld\t%g",nstst,mu.value[p]);
+            fprintf(br_file,"%ld\t%g",nstst,SIM->mu[p]);
             /* print steady states */
             for (i=0; i<ode_system_size; i++)
             {
@@ -1201,7 +1207,7 @@ int ststcont( rootrhs root_rhs, nve ics, nve mu)
             }
             mu2 = mu1;
             mu1 = mu0;
-            mu0 = mu.value[p];
+            mu0 = SIM->mu[p];
 
             /* ============================================
              * try to detect turning-point 
@@ -1248,13 +1254,13 @@ int ststcont( rootrhs root_rhs, nve ics, nve mu)
                     }
                 }
             }
-            mu.value[p] += s; /* increment parameter */
+            SIM->mu[p] += s; /* increment parameter */
 
         }
         else /* a new steady state could not be found, reduce the parameter step */
         {
             s *= 0.5;
-            mu.value[p] = mu0 + s; 
+            SIM->mu[p] = mu0 + s; 
         }
 
 
@@ -1271,7 +1277,7 @@ int ststcont( rootrhs root_rhs, nve ics, nve mu)
             {
                 b = (-x1[i] + x0[i])/(-mu1 + mu0);
                 c = x1[i] - b*mu1;
-                ics.value[i] = b*mu.value[p]+c; /* next initial guess */
+                ics.value[i] = b*SIM->mu[p]+c; /* next initial guess */
             } 
         }
         if ( (nstst > 2) && turning_point_found) /* Turning point found: take initial guess symmetrical  */
@@ -1293,7 +1299,7 @@ int ststcont( rootrhs root_rhs, nve ics, nve mu)
                 /* ics.value[i] = b*mu.value[p]+c;  next initial guess  */
                 b = (x1[i]-x0[i])*(x1[i]-x0[i])/fabs(mu1-mu0);
                 c = -((x2[i]-x1[i])>0)+((x2[i]-x1[i])<0);
-                ics.value[i] = x1[i] + c*sqrt(b*fabs(mu1-mu.value[p]));
+                ics.value[i] = x1[i] + c*sqrt(b*fabs(mu1-SIM->mu[p]));
                 /* printf("--c=%g,x2=%g,x1=%g,x0=%g\n",c,x2[i],x1[i],x0[i]); */
             }
             turning_point_before = 0;
@@ -1319,8 +1325,8 @@ int ststcont( rootrhs root_rhs, nve ics, nve mu)
                 gsl_vector_set(vander_vect, 1, x1[i]); 
                 gsl_vector_set(vander_vect, 2, x2[i]); 
                 gsl_linalg_LU_solve(vanderm, perm, vander_vect, abc);
-                ics.value[i] = gsl_vector_get(abc,0)*mu.value[p]*mu.value[p]+\
-                               gsl_vector_get(abc,1)*mu.value[p]+\
+                ics.value[i] = gsl_vector_get(abc,0)*SIM->mu[p]*SIM->mu[p]+\
+                               gsl_vector_get(abc,1)*SIM->mu[p]+\
                                gsl_vector_get(abc,2);
                 /* printf("--ics.value=%g\n",ics.value[i]); */
             }

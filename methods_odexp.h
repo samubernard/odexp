@@ -74,9 +74,9 @@ int parameter_range( oderhs ode_rhs, odeic ode_ic,\
 
 int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst);
 
-int ststsolver( rootrhs root_rhs, nve ics, nve mu, steady_state *stst);
+int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *stst);
 
-int ststcont( rootrhs root_rhs, nve ics, nve mu);
+int ststcont( rootrhs root_rhs, nve ics, void *params);
 
 
 int eig(gsl_matrix *J, steady_state *stst);

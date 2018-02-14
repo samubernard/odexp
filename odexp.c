@@ -1403,7 +1403,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         stst = malloc(sizeof(steady_state));
                         init_steady_state( &(stst[0]), 0 );
                         nbr_stst = 1;
-                        status = ststsolver(root_rhs,ics,mu, stst);
+                        DBPRINT("finding steady state for particle %zu", SIM->pop->start->id);
+                        status = ststsolver(root_rhs,SIM->pop->start->y,SIM->pop->start,stst);
                     } 
                     else if ( op == 'm')
                     {
@@ -1415,7 +1416,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     } 
                     else if ( op == 'c' )
                     {
-                        status = ststcont(root_rhs,ics,mu);
+                        status = ststcont(root_rhs,ics,SIM->pop->start);
                         plotmode_continuation = 1;
                     }
                     else if ( op == 'r' )
