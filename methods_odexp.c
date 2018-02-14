@@ -185,7 +185,7 @@ int odesolver( oderhs pop_ode_rhs,
     if ( get_int("take_last_y") )
     {
         set_int("population_size",POP_SIZE);
-        printf("  Initial population size set to %d\n",get_int("population_size"));
+        /* printf("  Initial population size set to %d\n",get_int("population_size")); */
     }
     if ( strncmp( get_str("population_mode"), "single", 3) == 0 )
     {
@@ -296,10 +296,19 @@ int odesolver( oderhs pop_ode_rhs,
          return 1;  
     }  
 
-    printf("  %sintegrating%s on T=[%.2f, %.2f] (%s mode) ", T_BLD,T_NOR, t, t1, get_str("population_mode") );
+    /* print IVP parameters */
+    printf("  integrating on [%.2f, %.2f], %s mode, ", t, t1, get_str("population_mode") );
     if ( get_int("take_last_y") )
     {
-        printf("from previous state\n  %s(I to go back to default initial conditions)%s...",T_DET,T_NOR);
+        printf("from previous state %s(I to revert to default)%s...",T_DET,T_NOR);
+    }
+    else if ( any(NUM_IC, ode_system_size) )
+    {
+        printf("from numerically set initial conditions %s(I to revert to default)%s...",T_DET,T_NOR);
+    }
+    else 
+    {
+        printf("from default initial conditions");
     }
     fflush(stdout);
 
@@ -1893,4 +1902,14 @@ int ncumsum(double *x, size_t len, double *sumx)
         x[i] /= x[len-1];
     }
     return 0;
+}
+
+int any(int *y, size_t len)
+{
+    size_t i = 0;
+    while ( y[i] == 0 )
+    {
+        i++;
+    }
+    return (i<len);
 }

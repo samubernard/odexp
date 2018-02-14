@@ -113,5 +113,6 @@ double SSA_timestep(double *r);
 void apply_birthdeath(const double t, odeic single_ic );
 int ncumsum(double *x, size_t len, double *sumx);
 
-
+/* various */
+int any(int *, size_t len);
 
