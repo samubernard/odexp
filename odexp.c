@@ -1898,7 +1898,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
                 success = 1;
                 /* try to read SYM0:N VAR VALUE (OPTION) */
                 snprintf(attribute,1,"");
-                has_read = sscanf(line,"%*s %s %lf (%[^)])",\
+                has_read = sscanf(line,"%*s %s %lf {%[^}]}",\
                         var.name[var_index],&var.value[var_index],attribute);
                 /* try to read comments */
                 has_read = sscanf(line,"%*[^#] # %[^\n]",comment);
