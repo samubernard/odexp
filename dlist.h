@@ -14,6 +14,7 @@ typedef struct namevalexp
     double  *value;            /* numerical values */
     char   **expression;       /* expressions (only string, not evaluated) */
     char   **attribute;        /* attributes: to be better defined */
+    char   **comment;          /* comment: to be better defined */
     size_t   nbr_el;           /* nbr of elements */
     size_t   nbr_expr;         /* nbr of expression <= nbr_el */
     size_t  *expr_index;       /* index of expression */

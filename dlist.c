@@ -16,6 +16,7 @@ void alloc_namevalexp( nve *var )
     var->name = malloc(var->nbr_el*sizeof(char*));
     var->expression = malloc(var->nbr_el*sizeof(char*));
     var->attribute = malloc(var->nbr_el*sizeof(char*));
+    var->comment = malloc(var->nbr_el*sizeof(char*));
     var->expr_index = malloc(var->nbr_el*sizeof(size_t));
     var->max_name_length = malloc(sizeof(int));
     for (i = 0; i < var->nbr_el; i++)
@@ -23,6 +24,7 @@ void alloc_namevalexp( nve *var )
         var->name[i] = malloc(NAMELENGTH*sizeof(char));
         var->expression[i] = malloc(EXPRLENGTH*sizeof(char));
         var->attribute[i] = malloc(EXPRLENGTH*sizeof(char));
+        var->comment[i] = malloc(EXPRLENGTH*sizeof(char));
     }
 }
 
@@ -36,11 +38,13 @@ void free_namevalexp(nve var )
         free(var.name[i]);
         free(var.expression[i]);
         free(var.attribute[i]);
+        free(var.comment[i]);
     }
     free(var.value);
     free(var.name);
     free(var.expression);
     free(var.attribute);
+    free(var.comment);
     free(var.expr_index);
     free(var.max_name_length);
 }

@@ -1868,6 +1868,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
     char *line = NULL;
     char key[NAMELENGTH]; 
     char attribute[NAMELENGTH] = "";
+    char comment[EXPRLENGTH] = "";
     FILE *fr;
     int k = 0, has_read;
     int success = 0;
@@ -1895,16 +1896,15 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
             if ( (strncasecmp(key,sym,sym_len) == 0) && (has_read == 1) ) /* keyword was found */
             {
                 success = 1;
-                /* try to read SYM0:N VAR VALUE ! OPTION */
+                /* try to read SYM0:N VAR VALUE (OPTION) */
                 snprintf(attribute,1,"");
-                has_read = sscanf(line,"%*s %s %lf ! %[^\n] ",var.name[var_index],&var.value[var_index],attribute);
-                /* if cannot read double, try to read SYM0:N VAR ~ RAND EXPRESSION */
-                if ( has_read < 2 )
-                {
-                    has_read = sscanf(line,"%*s %s ~ %[^\n]",var.name[var_index],attribute);
-                }
+                has_read = sscanf(line,"%*s %s %lf (%[^)])",\
+                        var.name[var_index],&var.value[var_index],attribute);
+                /* try to read comments */
+                has_read = sscanf(line,"%*[^#] # %[^\n]",comment);
                 var.expr_index[var_index] = var_index;
                 strncpy(var.attribute[var_index],attribute,NAMELENGTH-1);
+                strncpy(var.comment[var_index],comment,NAMELENGTH-1);
 
                 length_name = strlen(var.name[var_index]);                       /* length of second word */
                 if (length_name > NAMELENGTH)
@@ -2259,11 +2259,11 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             if ( prefix ) /* prefix is something like A0, E10, expression, ... */
             {
                 /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep); */
-                snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^!\n] ! %%[^\n]", sep, sep);
+                snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^#\n] # %%[^\n]", sep, sep);
             }
             else /* prefix ==  0 */
             {
-                snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^!\n] ! %%[^\n]", sep); 
+                snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^#\n] # %%[^\n]", sep); 
                 /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%[^%c]%%n %c %%[^\n]", sep, sep); */
             }
             snprintf(attribute,1,"");
@@ -2565,14 +2565,12 @@ int printf_option_line(size_t i)
 
 void printf_list_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var, char *descr)
 {
-    char sep[2] = "";
-    if ( strlen(descr) > 0 )
-    {
-        strncpy(sep,";",1);
-    }
-    printf("  %c[%s%zu%s]%-*s %-*s = %s%14g%s   %s%s%s %s%s\n",\
-            type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,var->name[nve_index],\
-            T_VAL,var->value[nve_index],T_NOR,T_DET,var->attribute[nve_index],sep,descr,T_NOR);
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%10g%s %s%-16s %-8s # %s%s\n",\
+            type,T_IND,print_index,T_NOR, padding, "",\
+            *var->max_name_length,var->name[nve_index],\
+            T_VAL,var->value[nve_index],T_NOR,\
+            T_DET,descr,var->attribute[nve_index],var->comment[nve_index],\
+            T_NOR);
  
 }
 
