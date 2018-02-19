@@ -45,7 +45,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"popsize","population_size", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
     {"part","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
     {"seed","random_generator_seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
-    {"resetseed","reset_random_generator_seed", 'i', 0.0, 1, "", "reset rng seed at each run 0 | {1}", "random"},
+    {"reseed","reset_random_generator_seed", 'i', 0.0, 1, "", "reseed rng at each run 0 | {1}", "random"},
     {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steadyStates"},  
     {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steadyStates"},  
     {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steadyStates"},  
@@ -1896,8 +1896,9 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
             if ( (strncasecmp(key,sym,sym_len) == 0) && (has_read == 1) ) /* keyword was found */
             {
                 success = 1;
-                /* try to read SYM0:N VAR VALUE (OPTION) */
+                /* try to read SYM0:N VAR VALUE {ATTRIBUTE} */
                 snprintf(attribute,1,"");
+                snprintf(comment,1,"");
                 has_read = sscanf(line,"%*s %s %lf {%[^}]}",\
                         var.name[var_index],&var.value[var_index],attribute);
                 /* try to read comments */
@@ -2216,6 +2217,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     char rootvarname[NAMELENGTH];
     char extensionvarname[NAMELENGTH];
     char attribute[NAMELENGTH];
+    char comment[EXPRLENGTH];
     char iterator_str[NAMELENGTH];
     char index_str[NAMELENGTH];
     char new_index[NAMELENGTH];
@@ -2258,16 +2260,18 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             /* find the name root and expression */
             if ( prefix ) /* prefix is something like A0, E10, expression, ... */
             {
-                /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%*s %%n %%s%%n %c %%[^\n]", sep); */
-                snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^#\n] # %%[^\n]", sep, sep);
+                snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^#{\n] {%%[^}]}", sep, sep);
             }
-            else /* prefix ==  0 */
+            else /* prefix ==  0 is for dx/dt = [expression] */
             {
-                snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^#\n] # %%[^\n]", sep); 
-                /* snprintf(str2match,NAMELENGTH*sizeof(char),"%%n %%[^%c]%%n %c %%[^\n]", sep, sep); */
+                snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^#{\n] {%%[^}]}", sep); 
             }
             snprintf(attribute,1,"");
+            snprintf(comment,1,"");
+            /* scan something like A0 VAR EXPRESSION {attr} */
             sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression, attribute);
+            /* scan the comments */
+            sscanf(line,"%*[^#] # %[^\n]",comment);
             if( (namelen1-namelen0) > *var.max_name_length)
             {
                 *var.max_name_length = (namelen1-namelen0);
@@ -2334,9 +2338,11 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             }
 
             /* copy attribute into var.attribute */
+            /* copy comment into var.comment */
             for(j=0;j<expr_size;j++)
             {
                 strncpy(var.attribute[var_index+j], attribute,NAMELENGTH-1);
+                strncpy(var.comment[var_index+j], comment,EXPRLENGTH-1);
             }
 
             for (j=0;j<expr_size;j++)
@@ -2565,20 +2571,22 @@ int printf_option_line(size_t i)
 
 void printf_list_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var, char *descr)
 {
-    printf("  %c[%s%zu%s]%-*s %-*s = %s%10g%s %s%-16s %-8s # %s%s\n",\
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%10g%s %s%-16s %-8s %s# %s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "",\
             *var->max_name_length,var->name[nve_index],\
             T_VAL,var->value[nve_index],T_NOR,\
-            T_DET,descr,var->attribute[nve_index],var->comment[nve_index],\
+            T_OPT,descr,var->attribute[nve_index],T_DET,var->comment[nve_index],\
             T_NOR);
  
 }
 
 void printf_list_str(char type, size_t print_index, size_t nve_index, int padding, const nve *var)
 {
-    printf("  %c[%s%zu%s]%-*s %-*s = %s%s%s %s%s%s\n",\
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%s%s %s%s %s# %s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,var->name[nve_index],\
-            T_EXPR,var->expression[nve_index],T_NOR,T_DET,var->attribute[nve_index],T_NOR);
+            T_EXPR,var->expression[nve_index],T_NOR,\
+            T_OPT,var->attribute[nve_index],\
+            T_DET,var->comment[nve_index],T_NOR);
  
 }
 

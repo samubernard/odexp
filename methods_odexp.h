@@ -16,6 +16,7 @@ extern const char *T_EXPR; /* EXPRESSION */
 extern const char *T_NOR;  /* NORMAL */
 extern const char *T_ERR;  /* ERROR (non fatal) */
 extern const char *T_BLD;  /* BOLD */
+extern const char *T_OPT;  /* OPTION */
 extern const char *HLINE;  /* horizontal line */
 
 

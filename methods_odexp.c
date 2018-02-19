@@ -19,12 +19,13 @@
 #include "rand_gen.h"
 
 /* formatting strings */
-const char *T_IND = "\033[0;35m";  /* index */
-const char *T_DET = "\033[3;36m";  /* description */
-const char *T_VAL = "\033[0;32m";  /* values */
-const char *T_EXPR = "\033[0;33m"; /* expressions */
+const char *T_IND = "\033[38;5;130m";  /* index */
+const char *T_DET = "\033[0;36m";  /* description/comment/detail */
+const char *T_VAL = "\033[38;5;130m";  /* numerical values */
+const char *T_EXPR = "\033[0;37m"; /* expressions */
 const char *T_NOR = "\033[0m";     /* normal */
 const char *T_ERR = "\033[0;31m";  /* error */
+const char *T_OPT = "\033[0;32m";  /* option */
 const char *T_BLD = "\033[2;0m";   /* bold */
 const char *HLINE = "--------------------------";
 
@@ -457,9 +458,9 @@ int odesolver( oderhs pop_ode_rhs,
     }
     if (status == GSL_SUCCESS)
     {
-        printf("\n  total: %s%g msec%s,", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
-        printf(" solver: %s%g msec%s,", T_DET,tot_odeiv, T_NOR);
-        printf(" function: %s%g msec%s\n", T_DET,SIM->time_in_ode_rhs, T_NOR);
+        printf("\n  total: %s%g msec%s,", T_VAL,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
+        printf(" solver: %s%g msec%s,", T_VAL,tot_odeiv, T_NOR);
+        printf(" function: %s%g msec%s\n", T_VAL,SIM->time_in_ode_rhs, T_NOR);
     }
     else
     {
