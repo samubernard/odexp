@@ -2571,7 +2571,7 @@ int printf_option_line(size_t i)
 
 void printf_list_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var, char *descr)
 {
-    printf("  %c[%s%zu%s]%-*s %-*s = %s%10g%s %s%-16s %-8s %s# %s%s\n",\
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%10g%s %s%-16s %-8s %s%s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "",\
             *var->max_name_length,var->name[nve_index],\
             T_VAL,var->value[nve_index],T_NOR,\
@@ -2582,24 +2582,13 @@ void printf_list_val(char type, size_t print_index, size_t nve_index, int paddin
 
 void printf_list_str(char type, size_t print_index, size_t nve_index, int padding, const nve *var)
 {
-    printf("  %c[%s%zu%s]%-*s %-*s = %s%s%s %s%s %s# %s%s\n",\
+    printf("  %c[%s%zu%s]%-*s %-*s = %s%s%s %s%s %s%s%s\n",\
             type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,var->name[nve_index],\
             T_EXPR,var->expression[nve_index],T_NOR,\
             T_OPT,var->attribute[nve_index],\
             T_DET,var->comment[nve_index],T_NOR);
  
 }
-
-void printf_list_str_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var)
-{
-    printf("  %c[%s%zu%s]%-*s %-*s = %s%14g%s  %s%s%s %s%s%s\n",\
-            type,T_IND,print_index,T_NOR, padding, "", *var->max_name_length,\
-            var->name[nve_index],T_VAL,var->value[nve_index],\
-            T_NOR,T_EXPR,var->expression[nve_index],T_NOR,\
-            T_DET,var->attribute[nve_index],T_NOR);
- 
-}
-
 
 void printf_SIM( void )
 {

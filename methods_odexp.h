@@ -9,17 +9,6 @@
 extern size_t ode_system_size;
 extern int *NUM_IC;
 
-extern const char *T_IND; /* INDEX */
-extern const char *T_DET; /* DETAILS */
-extern const char *T_VAL; /* VALUE */
-extern const char *T_EXPR; /* EXPRESSION */
-extern const char *T_NOR;  /* NORMAL */
-extern const char *T_ERR;  /* ERROR (non fatal) */
-extern const char *T_BLD;  /* BOLD */
-extern const char *T_OPT;  /* OPTION */
-extern const char *HLINE;  /* horizontal line */
-
-
 typedef int (*oderhs)(double, const double *, double *, void *);
 typedef int (*odeic)(double, double *, void *);
 typedef int (*rootrhs)(const gsl_vector *, void *, gsl_vector *);

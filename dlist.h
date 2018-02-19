@@ -8,6 +8,17 @@
 
 #include "macros.h"
 
+extern const char *T_IND; /* INDEX */
+extern const char *T_DET; /* DETAILS */
+extern const char *T_VAL; /* VALUE */
+extern const char *T_EXPR; /* EXPRESSION */
+extern const char *T_NOR;  /* NORMAL */
+extern const char *T_ERR;  /* ERROR (non fatal) */
+extern const char *T_BLD;  /* BOLD */
+extern const char *T_OPT;  /* OPTION */
+extern const char *HLINE;  /* horizontal line */
+
+
 typedef struct namevalexp
 {
     char   **name;             /* names */

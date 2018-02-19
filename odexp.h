@@ -36,7 +36,6 @@ int printf_option_line(size_t i);
 
 void printf_list_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var, char *descr);
 void printf_list_str(char type, size_t print_index, size_t nve_index, int padding, const nve *var);
-void printf_list_str_val(char type, size_t print_index, size_t nve_index, int padding, const nve *var);
 
 void printf_SIM( void );
 

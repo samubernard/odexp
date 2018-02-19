@@ -18,17 +18,6 @@
 #include "methods_odexp.h"
 #include "rand_gen.h"
 
-/* formatting strings */
-const char *T_IND = "\033[38;5;130m";  /* index */
-const char *T_DET = "\033[0;36m";  /* description/comment/detail */
-const char *T_VAL = "\033[38;5;130m";  /* numerical values */
-const char *T_EXPR = "\033[0;33m"; /* expressions */
-const char *T_NOR = "\033[0m";     /* normal */
-const char *T_ERR = "\033[0;31m";  /* error */
-const char *T_OPT = "\033[0;32m";  /* option */
-const char *T_BLD = "\033[2;0m";   /* bold */
-const char *HLINE = "--------------------------";
-
 static int compare (void const *a, void const *b);
 
 static volatile sig_atomic_t abort_odesolver_flag;

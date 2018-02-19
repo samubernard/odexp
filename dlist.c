@@ -9,6 +9,17 @@
 
 #include "dlist.h"
 
+/* formatting strings */
+const char *T_IND = "\033[38;5;130m";  /* index */
+const char *T_DET = "\033[0;36m";  /* description/comment/detail */
+const char *T_VAL = "\033[38;5;130m";  /* numerical values */
+const char *T_EXPR = "\033[0;33m"; /* expressions */
+const char *T_NOR = "\033[0m";     /* normal */
+const char *T_ERR = "\033[0;31m";  /* error */
+const char *T_OPT = "\033[0;32m";  /* option */
+const char *T_BLD = "\033[2;0m";   /* bold */
+const char *HLINE = "--------------------------";
+
 void alloc_namevalexp( nve *var )
 {
     size_t i;
@@ -339,25 +350,25 @@ void printf_particle(par *p)
 {
     size_t i;
     printf("==============================\n");
-    printf("  id: %zu\n", p->id);
+    printf("  id              = %s%zu%s\n", T_VAL,p->id,T_NOR);
     for (i=0;i<p->nbr_y;i++)
     {
-        printf("  %-15s = %g\n", SIM->varnames[i], p->y[i]);
+        printf("  %-15s = %s%g%s\n", SIM->varnames[i], T_VAL,p->y[i],T_NOR);
     }
     for (i=0;i<p->nbr_expr;i++)
     {
-        printf("  %-15s = %g\n", SIM->exprnames[i], p->expr[i]);
+        printf("  %-15s = %s%g%s\n", SIM->exprnames[i],T_VAL,p->expr[i],T_NOR);
     }
     for (i=0;i<p->nbr_aux;i++)
     {
-        printf("  %-15s = %g\n", SIM->auxnames[i], p->aux[i]);
+        printf("  %-15s = %s%g%s\n", SIM->auxnames[i], T_VAL,p->aux[i],T_NOR);
     }
     for (i=0;i<p->nbr_psi;i++)
     {
-        printf("  %-15s = %g\n", SIM->psinames[i], p->psi[i]);
+        printf("  %-15s = %s%g%s\n", SIM->psinames[i], T_VAL,p->psi[i],T_NOR);
     }
-    printf("  death_rate      = %g\n", p->death_rate);
-    printf("  repli_rate      = %g\n", p->repli_rate);
+    printf("  death_rate      = %s%g%s\n", T_VAL,p->death_rate,T_NOR);
+    printf("  repli_rate      = %s%g%s\n", T_VAL,p->repli_rate,T_NOR);
 
     printf("------------------------------\n");
 }
