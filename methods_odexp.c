@@ -22,7 +22,7 @@
 const char *T_IND = "\033[38;5;130m";  /* index */
 const char *T_DET = "\033[0;36m";  /* description/comment/detail */
 const char *T_VAL = "\033[38;5;130m";  /* numerical values */
-const char *T_EXPR = "\033[0;37m"; /* expressions */
+const char *T_EXPR = "\033[0;33m"; /* expressions */
 const char *T_NOR = "\033[0m";     /* normal */
 const char *T_ERR = "\033[0;31m";  /* error */
 const char *T_OPT = "\033[0;32m";  /* option */
