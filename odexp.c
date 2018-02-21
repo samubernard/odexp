@@ -1070,9 +1070,18 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     else if (op == '%') /* list birth/repli/death rates */ 
                     {
                         padding = 0;
-                        printf_list_str('%',0,0,padding,&birth);
-                        printf_list_str('%',0,0,padding,&repli);
-                        printf_list_str('%',0,0,padding,&death);
+                        if ( birth.nbr_el > 0)
+                        {    
+                            printf_list_str('%',0,0,padding,&birth);
+                        }
+                        if ( repli.nbr_el > 0)
+                        {
+                            printf_list_str('%',0,0,padding,&repli);
+                        }
+                        if ( death.nbr_el > 0)
+                        {
+                            printf_list_str('%',0,0,padding,&death);
+                        }
                     }
                     else if (op == 't') /* list tspan */
                     {
