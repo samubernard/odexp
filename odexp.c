@@ -162,6 +162,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     nve cst;     /* constant arrays */
     nve dfl;     /* data files */
 
+    nve birth;   /* population birth rates */
+    nve repli;   /* particle replication rates */
+    nve death;   /* particle death rates */
+
     /* particle */
     par *pars = (par *)NULL;
 
@@ -317,6 +321,39 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         printf("  no population mean fields found\n");
     } 
     LOGPRINT("found %zu population mean fields",mfd.nbr_el);
+
+    /* define birth */
+    printf("\n%-25s%s\n", "population birth rates", HLINE);
+    get_nbr_el(odefilename,"%BIRTH",6, &birth.nbr_el, &birth.nbr_expr);
+    alloc_namevalexp(&birth);
+    success = load_strings(odefilename,birth,"%BIRTH",6,0,' ', exit_if_nofile);
+    if (!success)
+    {
+        printf("  no population birth rates found\n");
+    } 
+    LOGPRINT("found %zu population birth rates",birth.nbr_el);
+
+    /* define repli */
+    printf("\n%-25s%s\n", "population replication rates", HLINE);
+    get_nbr_el(odefilename,"%REPLI",6, &repli.nbr_el, &repli.nbr_expr);
+    alloc_namevalexp(&repli);
+    success = load_strings(odefilename,repli,"%REPLI",6,0,' ', exit_if_nofile);
+    if (!success)
+    {
+        printf("  no population replication rates found\n");
+    } 
+    LOGPRINT("found %zu population replication rates",repli.nbr_el);
+
+    /* define death */
+    printf("\n%-25s%s\n", "population death rates", HLINE);
+    get_nbr_el(odefilename,"%death",6, &death.nbr_el, &death.nbr_expr);
+    alloc_namevalexp(&death);
+    success = load_strings(odefilename,death,"%DEATH",6,0,' ', exit_if_nofile);
+    if (!success)
+    {
+        printf("  no population death rates found\n");
+    } 
+    LOGPRINT("found %zu population death rates",repli.nbr_el);
 
     /* define dxv */
     /* DBPRINT("define dxv"); */
@@ -1030,6 +1067,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             printf_list_str('@',i,i,padding,&func);
                         }
                     }
+                    else if (op == '%') /* list birth/repli/death rates */ 
+                    {
+                        padding = 0;
+                        printf_list_str('%',0,0,padding,&birth);
+                        printf_list_str('%',0,0,padding,&repli);
+                        printf_list_str('%',0,0,padding,&death);
+                    }
                     else if (op == 't') /* list tspan */
                     {
                         printf("  tspan = "); 
@@ -1724,6 +1768,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     free_namevalexp( fcn );
     free_namevalexp( psi );
     free_namevalexp( mfd );
+    free_namevalexp( birth );
     free_namevalexp( dxv );
     free_namevalexp( cst );
     free_namevalexp( dfl );

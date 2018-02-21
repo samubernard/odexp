@@ -367,8 +367,8 @@ void printf_particle(par *p)
     {
         printf("  %-15s = %s%g%s\n", SIM->psinames[i], T_VAL,p->psi[i],T_NOR);
     }
-    printf("  death_rate      = %s%g%s\n", T_VAL,p->death_rate,T_NOR);
-    printf("  repli_rate      = %s%g%s\n", T_VAL,p->repli_rate,T_NOR);
+    printf("  death rate      = %s%g%s\n", T_VAL,p->death_rate,T_NOR);
+    printf("  replic. rate    = %s%g%s\n", T_VAL,p->repli_rate,T_NOR);
 
     printf("------------------------------\n");
 }
