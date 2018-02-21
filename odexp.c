@@ -1079,7 +1079,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         printf("  tspan = "); 
                         for(i=0;i<tspan.length;i++)
                         {
-                          printf("%s%.2e%s ",T_VAL,tspan.array[i],T_NOR);
+                          printf("%s%g%s ",T_VAL,tspan.array[i],T_NOR);
                         }
                         printf("\n");
                     }
@@ -1097,12 +1097,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             }
                             printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
                         }
-                    }
-                    else if (op == 'n') /* list ode system size */
-                    {
-                        printf("  ODE system size               = %s%zu%s\n",T_VAL,ode_system_size,T_NOR);
-                        printf("  Number of auxiliary functions = %s%zu%s\n",T_VAL,fcn.nbr_el,T_NOR);
-                        printf("  Total number of variables     = %s%zu%s\n",T_VAL,total_nbr_x,T_NOR);
                     }
                     else if (op == 'o') /* list options */
                     {

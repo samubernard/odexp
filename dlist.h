@@ -8,7 +8,6 @@
 
 #include "macros.h"
 
-extern const char *T_IND; /* INDEX */
 extern const char *T_DET; /* DETAILS */
 extern const char *T_VAL; /* VALUE */
 extern const char *T_EXPR; /* EXPRESSION */

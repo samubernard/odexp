@@ -349,28 +349,27 @@ void free_world(world *s)
 void printf_particle(par *p)
 {
     size_t i;
-    printf("==============================\n");
-    printf("  id              = %s%zu%s\n", T_VAL,p->id,T_NOR);
+    printf("------------------------------\n");
+    printf("    particle id     = %s%zu%s\n", T_VAL,p->id,T_NOR);
     for (i=0;i<p->nbr_y;i++)
     {
-        printf("  %-15s = %s%g%s\n", SIM->varnames[i], T_VAL,p->y[i],T_NOR);
-    }
-    for (i=0;i<p->nbr_expr;i++)
-    {
-        printf("  %-15s = %s%g%s\n", SIM->exprnames[i],T_VAL,p->expr[i],T_NOR);
+        printf("  %sD%s %-15s = %s%g%s\n", T_DET,T_NOR,SIM->varnames[i], T_VAL,p->y[i],T_NOR);
     }
     for (i=0;i<p->nbr_aux;i++)
     {
-        printf("  %-15s = %s%g%s\n", SIM->auxnames[i], T_VAL,p->aux[i],T_NOR);
+        printf("  %sA%s %-15s = %s%g%s\n", T_DET,T_NOR,SIM->auxnames[i], T_VAL,p->aux[i],T_NOR);
+    }
+    for (i=0;i<p->nbr_expr;i++)
+    {
+        printf("  %sE%s %-15s = %s%g%s\n", T_DET,T_NOR,SIM->exprnames[i],T_VAL,p->expr[i],T_NOR);
     }
     for (i=0;i<p->nbr_psi;i++)
     {
-        printf("  %-15s = %s%g%s\n", SIM->psinames[i], T_VAL,p->psi[i],T_NOR);
+        printf("  %sM%s %-15s = %s%g%s\n", T_DET,T_NOR,SIM->psinames[i], T_VAL,p->psi[i],T_NOR);
     }
-    printf("  death rate      = %s%g%s\n", T_VAL,p->death_rate,T_NOR);
-    printf("  replic. rate    = %s%g%s\n", T_VAL,p->repli_rate,T_NOR);
+    printf("  %s%%%s death rate      = %s%g%s\n", T_DET,T_NOR,T_VAL,p->death_rate,T_NOR);
+    printf("  %s%%%s replic. rate    = %s%g%s\n", T_DET,T_NOR,T_VAL,p->repli_rate,T_NOR);
 
-    printf("------------------------------\n");
 }
 
 

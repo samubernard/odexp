@@ -95,6 +95,9 @@ Steady state must have been computed with \fBms\fR
 .BR l@            
 List all user-defined functions 
 .TP
+.BR l%            
+List population birth, replication and death rates 
+.TP
 .BR la            
 List all auxiliary variables (can be plotted)
 .TP 
@@ -112,9 +115,6 @@ List all variables with initial conditions
 .TP
 .BR ll          
 List file name and various information 
-.TP
-.BR ln            
-Display system size
 .TP
 .BR lo " " [\fIoptiontype\fR]         
 List options that match \fIoptiontype\fR, or all options if \fIoptiontype\fR is missing
