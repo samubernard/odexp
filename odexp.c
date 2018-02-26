@@ -1410,7 +1410,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             for ( i=0; i<ode_system_size; i++ )
                             {
                                 NUM_IC[i] = 1;
-                                lastinit[i] = ics.value[i];
                             }
                         }
                         else
