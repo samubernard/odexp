@@ -2443,8 +2443,8 @@ int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         len = *eqn.max_name_length;
     }
 
-    time_stamp = clock();
-    rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_-]",rootname);
+    time_stamp = clock(); /* get a time stamp */
+    rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_-]",rootname); /* get the first word after command s or q */
 
     /* printf("  rootname = %s\n", rootname); */
 

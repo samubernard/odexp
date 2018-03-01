@@ -172,6 +172,11 @@ int odesolver( oderhs pop_ode_rhs,
      * copy particle->y of the last simulation 
      * into y, and update popsize.
      * */
+    if ( POP_SIZE == 0 ) /* if POP_SIZE==0, cannot take last y */
+    {
+        set_int("take_last_y",0);
+    }
+
     if ( get_int("take_last_y") )
     {
         set_int("population_size",POP_SIZE);
