@@ -18,6 +18,7 @@ const char *T_NOR = "\033[0m";     /* normal */
 const char *T_ERR = "\033[0;31m";  /* error */
 const char *T_OPT = "\033[0;32m";  /* option */
 const char *T_BLD = "\033[2;0m";   /* bold */
+const char *BK7   = "\b\b\b\b\b\b\b";    /* 7 backspace */
 const char *HLINE = "--------------------------";
 
 void alloc_namevalexp( nve *var )

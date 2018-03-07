@@ -445,6 +445,7 @@ int odesolver( oderhs pop_ode_rhs,
           }
         }
        
+        printf("%s%7.2e",BK7,t);
 
         hmin_alert = 0;
         disc_alert = 0;
