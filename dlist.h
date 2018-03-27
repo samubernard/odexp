@@ -17,7 +17,7 @@ extern const char *T_ERR;  /* ERROR (non fatal) */
 extern const char *T_BLD;  /* BOLD */
 extern const char *T_OPT;  /* OPTION */
 extern const char *HLINE;  /* horizontal line */
-extern const char *BK7;    /* 7 backspace */
+extern const char *BK13;    /* 13 backspace */
 
 
 typedef struct namevalexp

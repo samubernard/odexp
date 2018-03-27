@@ -27,6 +27,15 @@ static void set_abort_odesolver_flag(int sig)
     abort_odesolver_flag = 1;
 }
 
+/* print progress */
+static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start )
+{
+    static const char *lineupandclear = "\033[F\033[J";
+    printf("\n%s",lineupandclear);  /* clear the line  */
+    printf("  %s%6.1f sec%s,", T_VAL,(clock()-start)*1.0 / CLOCKS_PER_SEC, T_NOR);
+    printf("  %s%6.2f%%%s",T_VAL,100*(tt-t0)/(tfinal-t0),T_NOR);
+}
+
 int odesolver( oderhs pop_ode_rhs, 
                oderhs single_rhs,
                odeic pop_ode_ic, 
@@ -295,15 +304,15 @@ int odesolver( oderhs pop_ode_rhs,
     printf("  integrating on [%.2f, %.2f], %s mode, ", t, t1, get_str("population_mode") );
     if ( get_int("take_last_y") )
     {
-        printf("from previous state %s(I to revert to default)%s...",T_DET,T_NOR);
+        printf("from previous state %s(I to revert to default)%s...\n",T_DET,T_NOR);
     }
     else if ( any(NUM_IC, ode_system_size) )
     {
-        printf("from numerically set initial conditions %s(I to revert to default)%s...",T_DET,T_NOR);
+        printf("from numerically set initial conditions %s(I to revert to default)%s...\n",T_DET,T_NOR);
     }
     else 
     {
-        printf("from default initial conditions");
+        printf("from default initial conditions\n");
     }
     fflush(stdout);
 
@@ -345,6 +354,7 @@ int odesolver( oderhs pop_ode_rhs,
         /* DBPRINT("before SSA_timestep"); */
         bd_dt = SSA_timestep(&sum_rates); /* compute time to next birth/death in all cases */
         bd_next = t+bd_dt;
+        /* DBPRINT("t %f, bd_next %f, tnext %f",t,bd_next,tnext); */
         if ( bd_next < tnext ) /* birth/death will occur */
         {
             tnext = bd_next; 
@@ -445,7 +455,7 @@ int odesolver( oderhs pop_ode_rhs,
           }
         }
        
-        printf("%s%7.2e",BK7,t);
+        printf_progress(t,tspan->array[0],t1, start);
 
         hmin_alert = 0;
         disc_alert = 0;
