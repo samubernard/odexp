@@ -1,60 +1,51 @@
 # KURAMOTO model
 # coupled particles
+# fast algorithm 
 
 # PARAMETERS are constant for all particles
 # Coupling strength
-P K 1.0
+P K 0.1
 
 # CONSTANT
-S PI 3.141592653589793
+S PI 3.141592
 
 # EXPRESSIONS
 # set frequency to normal distribution.
 E omega randN(2*PI/10.0,0.1) 
 
-# COUPLING depends on other particles (O) and current particle (M)
-# Y: dynamical variable MY, OY
-# E: expression ME, OE
-# A: auxiliary variable MA, OA
-# MU: parameter
-# The coupling term is evaluated as 1/POP_SIZE*sum( expression )
-# For example PSI = 1/POP_SIZE * sum ( sin(OY("theta") - MY("theta")) )
-# In single particle mode (O popmode single), coupling terms are set to 0
-%C PSI sin(OY("theta") - MY("theta"))
-
 # MEAN FIELD depends on current particles only (M). (O)ther particles not allowed.
 # Mean field is evaluated as 1/POP_SIZE*sim( expression )
 # In single particle mode (O popmode single), mean fields are set to 0
 
-# MFY: mean value of y
-%M MFY    MA("y") 
-
-# MFX: mean value of x
-%M MFX    MA("x")
+# The coupling function sin(v-u) = cos(u)sin(v) - sin(u)cos(v)
+# So sum(sin(v_j-u)) = cos(u)*sum(sin(v_j)) - sin(u)*sum(cos(v_j))
+#                    = cos(u)*A1 - sin(u)*A2
+%M A1     sin(MY("theta"))
+%M A2     cos(MY("theta"))
 
 # OMEGA: mean value of omega
 %M OMEGA  ME("omega") 
 
 # AUXILIARY VARIABLES
-A x cos(theta)
 A y sin(theta)
+A coupling ( A1*cos(theta) - A2*sin(theta) )
 
 # DYNAMICAL VARIABLES 
-dtheta/dt = omega + K*PSI 
+dtheta/dt = omega + K*coupling
 
 # INITIAL CONDITIONS
 I theta 2*PI*rand01() 
 
 # TIME SPAN
-tspan 0 40 
+tspan 0 160 
 
 # OPTIONS
 
 # initial population size
-O population_size 10
+O population_size 1000
 
 # plot MFY at y-axis
-O plot_y MFY  
+O plot_y A1  
 
 # numerical method
 O meth rk2
