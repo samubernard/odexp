@@ -65,7 +65,7 @@ struct gen_option GOPTS[NBROPTS] = {
 /* what kind of initial conditions to take */
 int *NUM_IC;
 
-size_t ode_system_size;
+/* size_t ode_system_size; */
 
 /* =================================================================
                              Main Function 
@@ -141,6 +141,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     double *lastinit = NULL;    /* last initial conditions */
     
     /* sizes */
+    size_t ode_system_size; /* number of dynamical variables */
     size_t total_nbr_x;  /* number of dependent and auxiliary variables */
     size_t nbr_cols;     /* number of columns written in particle files id.dat */
 
@@ -2147,13 +2148,13 @@ int sim_to_array( double *y )
 {
     size_t j = 0;
     par *pars;
-    y = realloc(y, SIM->pop->size*ode_system_size*sizeof(double));
+    y = realloc(y, SIM->pop->size*SIM->nbr_var*sizeof(double));
     pars = SIM->pop->start;
     while ( pars != NULL )  
     {
-        memmove((y+j),pars->y,ode_system_size*sizeof(double));
+        memmove((y+j),pars->y,SIM->nbr_var*sizeof(double));
         pars = pars->nextel;
-        j += ode_system_size;
+        j += SIM->nbr_var;
     }
     return 0;
 }
@@ -2518,7 +2519,7 @@ int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         {
             fprintf(fr,"# @ %s = %s\n",func.name[i],func.expression[i]);
         }
-        for(i=0;i<ode_system_size;i++)
+        for(i=0;i<SIM->nbr_var;i++)
         {
             fprintf(fr,"# d%s/dt = %s\n",init.name[i],eqn.expression[i]);
         }

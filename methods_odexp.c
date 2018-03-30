@@ -96,6 +96,7 @@ int odesolver( oderhs pop_ode_rhs,
     par *pars, *next_pars;
     size_t pop_size;
     size_t sim_size;
+    size_t ode_system_size = SIM->nbr_var;
 
     /* iterators */
     size_t i,j;
@@ -569,9 +570,9 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
         odeT = gsl_odeiv2_step_rk4;
     }
 
-    s = gsl_odeiv2_step_alloc(odeT,ode_system_size);
+    s = gsl_odeiv2_step_alloc(odeT,SIM->nbr_var);
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
-    e = gsl_odeiv2_evolve_alloc(ode_system_size);
+    e = gsl_odeiv2_evolve_alloc(SIM->nbr_var);
 
     /* discontinuities */
     if ( tspan.length > 2 )
@@ -590,11 +591,11 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     /* parameter range */
     name2index(get_str("act_par"), mu, &p);
     mu.value[p] = get_dou("range_par0");
-    ymin = malloc(ode_system_size*sizeof(double));
-    ymax = malloc(ode_system_size*sizeof(double));
+    ymin = malloc(SIM->nbr_var*sizeof(double));
+    ymax = malloc(SIM->nbr_var*sizeof(double));
 
     /* initial condition */
-    y = malloc(ode_system_size*sizeof(double));
+    y = malloc(SIM->nbr_var*sizeof(double));
    
     /* open output file */
     file = fopen(current_data_buffer,"w");
@@ -606,13 +607,13 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
 
     /* fill in the variable/function names MIN MAX */
     fprintf(file,"%s",mu.name[p]);
-    for (i = 0; i<ode_system_size; i++)
+    for (i = 0; i<SIM->nbr_var; i++)
     {
         fprintf(file,"\t%s_MIN\t%s_MAX",ics.name[i],ics.name[i]);
     }
     fprintf(file,"\n");
 
-    f = malloc(ode_system_size*sizeof(double));
+    f = malloc(SIM->nbr_var*sizeof(double));
 
     /* sigaction -- detect Ctrl-C during the simulation  */
     abort_odesolver_flag = 0;
@@ -626,7 +627,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
 
     /* initial condition */
     pop_ode_ic(tspan.array[0], y, &mu);
-    for (i = 0; i < ode_system_size; i++)
+    for (i = 0; i < SIM->nbr_var; i++)
     {
         if (NUM_IC[i]) /* use ics.value as initial condition */
         {
@@ -657,7 +658,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     {
         pop_ode_ic(tspan.array[0], y, &mu); /* evaluate initial conditions in y */
     }
-    for (i = 0; i < ode_system_size; i++)
+    for (i = 0; i < SIM->nbr_var; i++)
     {
         if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in pop_ode_ic */
         {
@@ -697,7 +698,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
         /* ODE solver - time step */
         while ( t < tnext)
         {
-            sys = (gsl_odeiv2_system) {pop_ode_rhs, NULL, ode_system_size, &mu};
+            sys = (gsl_odeiv2_system) {pop_ode_rhs, NULL, SIM->nbr_var, &mu};
             status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
             if ( h < hmin )
             {
@@ -727,7 +728,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
         /* updating ymin and ymax */
         if ( t > (t1 - tspan.array[0])/2 )
         {
-            for(i=0; i<ode_system_size; i++)
+            for(i=0; i<SIM->nbr_var; i++)
             {
                 if(y[i]>ymax[i])
                 {
@@ -756,7 +757,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     } /* END ODE SOLVER */
         /* write min max to file */
         fprintf(file,"%g",mu.value[p]);
-        for(i=0; i<ode_system_size; i++)
+        for(i=0; i<SIM->nbr_var; i++)
         {
            fprintf(file,"\t%g\t%g",ymin[i],ymax[i]);
         }
@@ -775,7 +776,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     }
 
     DBPRINT("Fix lasty");
-    for (i = 0; i < ode_system_size; i++)
+    for (i = 0; i < SIM->nbr_var; i++)
     {
         lasty[i] = y[i]; 
     } 
@@ -798,7 +799,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
 int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
 {
     int status, status_res, status_delta, newstst;
-    gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, ode_system_size);
+    gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, SIM->nbr_var);
     double *ics_min, /* lower bounds on steady state values */
           *ics_max; /* bounds on steady state values */
     size_t ntry = 0;
@@ -811,33 +812,33 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
            ststn1;
 
     /* stst solver */
-    gsl_matrix *J = gsl_matrix_alloc(ode_system_size,ode_system_size);
+    gsl_matrix *J = gsl_matrix_alloc(SIM->nbr_var,SIM->nbr_var);
 
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
     size_t iter = 0;
 
-    gsl_multiroot_function f = {root_rhs, ode_system_size, &mu};
+    gsl_multiroot_function f = {root_rhs, SIM->nbr_var, &mu};
 
-    gsl_vector *x = gsl_vector_alloc(ode_system_size);
+    gsl_vector *x = gsl_vector_alloc(SIM->nbr_var);
 
     double jac_rel_eps = 1e-6, jac_abs_eps = 1e-9;
 
     T = gsl_multiroot_fsolver_hybrids;
-    s = gsl_multiroot_fsolver_alloc(T,ode_system_size);
+    s = gsl_multiroot_fsolver_alloc(T,SIM->nbr_var);
     
 
     /* ics_min */
-    ics_min = malloc(ode_system_size*sizeof(double));
-    for ( i=0; i<ode_system_size; i++)
+    ics_min = malloc(SIM->nbr_var*sizeof(double));
+    for ( i=0; i<SIM->nbr_var; i++)
     {
         ics_min[i] = get_dou("phasespace_search_min")*ics.value[i];
     }
 
     /* ics_max */
-    ics_max = malloc(ode_system_size*sizeof(double));
-    for ( i=0; i<ode_system_size; i++)
+    ics_max = malloc(SIM->nbr_var*sizeof(double));
+    for ( i=0; i<SIM->nbr_var; i++)
     {
         ics_max[i] = get_dou("phasespace_search_range")*ics.value[i];
     }
@@ -847,12 +848,12 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
     {
         gsl_qrng_get (q, ics.value); /* new starting guess */
         /*printf("  Finding a steady with initial guess\n");*/
-        for ( i=0; i<ode_system_size; i++)
+        for ( i=0; i<SIM->nbr_var; i++)
         {
             ics.value[i] *= (ics_max[i] - ics_min[i]);
             ics.value[i] += ics_min[i];
         }
-        for ( i=0; i<ode_system_size; i++)
+        for ( i=0; i<SIM->nbr_var; i++)
         {
             gsl_vector_set(x,i,ics.value[i]);
         }
@@ -881,7 +882,7 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
         {
             err = 0.0;
             ststn1 = 0.0;
-            for ( j=0; j<ode_system_size; j++)
+            for ( j=0; j<SIM->nbr_var; j++)
             {
                 err += fabs( (gsl_vector_get(s->x, j) - (*stst)[i].s[j]) );
                 ststn1 += fabs((*stst)[i].s[j]);
@@ -898,7 +899,7 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
             nbr_stst++;
             (*stst) = realloc((*stst), nbr_stst*sizeof(steady_state));
             init_steady_state((*stst)+nbr_stst-1, nbr_stst-1);
-            for ( i=0; i<ode_system_size; i++)
+            for ( i=0; i<SIM->nbr_var; i++)
             {
                 (*stst)[nbr_stst-1].s[i] = gsl_vector_get(s->x,i);
                 (*stst)[nbr_stst-1].status = status;
@@ -941,7 +942,7 @@ int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *sts
     int status;
     size_t i, iter = 0;
 
-    const size_t n = ode_system_size;
+    const size_t n = SIM->nbr_var;
     gsl_multiroot_function f = {root_rhs, n, params};
 
     gsl_matrix *J = gsl_matrix_alloc(n,n);
@@ -1085,7 +1086,7 @@ int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double e
 
 int ode_jac(double t, const double y[], double * dfdy, double dfdt[], void * params)
 {
-    const size_t dimension = ode_system_size*POP_SIZE;
+    const size_t dimension = SIM->nbr_var*POP_SIZE;
 
     oderhs ode_rhs = SIM->ode_rhs; 
 
@@ -1162,11 +1163,11 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
     gsl_vector *abc = gsl_vector_alloc(3);
     int ss;
 
-    x2 =  malloc(ode_system_size*sizeof(double));
-    x1 =  malloc(ode_system_size*sizeof(double));
-    x0 =  malloc(ode_system_size*sizeof(double));
+    x2 =  malloc(SIM->nbr_var*sizeof(double));
+    x1 =  malloc(SIM->nbr_var*sizeof(double));
+    x0 =  malloc(SIM->nbr_var*sizeof(double));
 
-    for (i = 0; i < ode_system_size; i++)
+    for (i = 0; i < SIM->nbr_var; i++)
     {
         x2[i] = ics.value[i];
         x1[i] = ics.value[i];
@@ -1180,11 +1181,11 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
 
     br_file = fopen("stst_branches.tab","a");
     fprintf(br_file,"n\t%s",SIM->parnames[p]);
-    for (i = 0; i < ode_system_size; i++)
+    for (i = 0; i < SIM->nbr_var; i++)
     {
         fprintf(br_file,"\t%s",ics.name[i]);
     }
-    for (i = 0; i < ode_system_size; i++)
+    for (i = 0; i < SIM->nbr_var; i++)
     {
         fprintf(br_file,"\tRe_%ld\tIm_%ld\tNote",i,i);
     }
@@ -1204,17 +1205,17 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
             nstst++;
             fprintf(br_file,"%ld\t%g",nstst,SIM->mu[p]);
             /* print steady states */
-            for (i=0; i<ode_system_size; i++)
+            for (i=0; i<SIM->nbr_var; i++)
             {
                 fprintf(br_file,"\t%g",stst.s[i]);
             }
             /* print eigenvalues */
-            for (i=0; i<ode_system_size; i++)
+            for (i=0; i<SIM->nbr_var; i++)
             {
                 fprintf(br_file,"\t%g",stst.re[i]);
                 fprintf(br_file,"\t%g",stst.im[i]);
             }
-            for (i=0; i<ode_system_size; i++)
+            for (i=0; i<SIM->nbr_var; i++)
             {
                 x2[i] = x1[i];
                 x1[i] = x0[i];
@@ -1234,7 +1235,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
                     (((mu0>mu1) && (mu1>mu2)) || ((mu0<mu1) && (mu1<mu2))) && 
                     (nstst > 2) )  /* we are close to a turning point */
             {
-                for (i=0; i<ode_system_size; i++) 
+                for (i=0; i<SIM->nbr_var; i++) 
                 {
                     if ( fabs(stst.re[i]) < eig_tol ) /* test 3 */
                     {
@@ -1281,14 +1282,14 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
 
         if ( nstst == 1 ) /* 1 stst found. next initial guess based on this stst  */
         {
-            for (i=0; i<ode_system_size; i++)
+            for (i=0; i<SIM->nbr_var; i++)
             {
                 ics.value[i] = x0[i];   
             }
         } 
         if ( nstst == 2 ) /* two steady-states found. next initial guess linear extrapolation */
         {
-            for (i=0; i<ode_system_size; i++)
+            for (i=0; i<SIM->nbr_var; i++)
             {
                 b = (-x1[i] + x0[i])/(-mu1 + mu0);
                 c = x1[i] - b*mu1;
@@ -1297,7 +1298,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
         }
         if ( (nstst > 2) && turning_point_found) /* Turning point found: take initial guess symmetrical  */
         {
-            for (i=0; i<ode_system_size; i++)
+            for (i=0; i<SIM->nbr_var; i++)
             {
                 ics.value[i] = x0[i] + (x0[i]-x1[i]);
             }
@@ -1307,7 +1308,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
         }
         else if ( (nstst > 2) && turning_point_before )
         {
-            for (i=0; i<ode_system_size; i++)
+            for (i=0; i<SIM->nbr_var; i++)
             {
                 /* b = (-x1[i] + x0[i])/(-mu1 + mu0); */
                 /* c = x1[i] - b*mu1; */
@@ -1334,7 +1335,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
             
             gsl_linalg_LU_decomp(vanderm, perm, &ss);
             
-            for ( i=0; i<ode_system_size; i++)
+            for ( i=0; i<SIM->nbr_var; i++)
             {
                 gsl_vector_set(vander_vect, 0, x0[i]); 
                 gsl_vector_set(vander_vect, 1, x1[i]); 
@@ -1583,10 +1584,10 @@ void init_steady_state(steady_state *mystst, int index)
 {
     /* init steady state */
     mystst->index = index;
-    mystst->size = ode_system_size;
-    mystst->s  = malloc(ode_system_size*sizeof(double));
-    mystst->re = malloc(ode_system_size*sizeof(double));
-    mystst->im = malloc(ode_system_size*sizeof(double));
+    mystst->size = SIM->nbr_var;
+    mystst->s  = malloc(SIM->nbr_var*sizeof(double));
+    mystst->re = malloc(SIM->nbr_var*sizeof(double));
+    mystst->im = malloc(SIM->nbr_var*sizeof(double));
     mystst->status = 1;
 }
 
@@ -1608,7 +1609,7 @@ int set_num_ic( double *y )
     par *pars = SIM->pop->start;
     while(pars != NULL)
     {
-       for(i=0;i<ode_system_size;i++)
+       for(i=0;i<SIM->nbr_var;i++)
        {
             if(NUM_IC[i])
             {
@@ -1616,7 +1617,7 @@ int set_num_ic( double *y )
             }
        }
        pars = pars->nextel;
-       j += ode_system_size;
+       j += SIM->nbr_var;
     }
     return 0;
 }
