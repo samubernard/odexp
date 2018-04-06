@@ -6,7 +6,7 @@
 /* number of global options */
 #define NBROPTS 39
 
-extern size_t ode_system_size;
+/* extern size_t ode_system_size; */
 extern int *NUM_IC;
 
 typedef int (*oderhs)(double, const double *, double *, void *);
