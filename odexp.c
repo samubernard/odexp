@@ -1790,8 +1790,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     /* try to remove frozen curves */
     system("rm -f .odexp/curve.*");
     /* try to remove idXX curves */
-    system("rm -f .odexp/id*.dat");
-
+    success = remove_id_files();
+    DBPRINT("%d errors removing id files.", success);
     fclose(logfr);
 
     return status;

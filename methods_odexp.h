@@ -89,6 +89,8 @@ void init_steady_state(steady_state *stst, int index);
 
 void free_steady_state(steady_state *stst, int nbr_stst);
 
+int remove_id_files();
+
 int set_num_ic( double *y );
 
 int set_dou(const char *name, const double val); 

@@ -173,7 +173,8 @@ int odesolver( oderhs pop_ode_rhs,
     }
 
     /* Initialize SIM */
-    system("rm -f .odexp/id*.dat"); /* remove files before fopen'ing again */
+    /* system("rm -f .odexp/id*.dat"); */ /* remove files before fopen'ing again */
+    remove_id_files();
     SIM->fid = fopen(SIM->stats_buffer, "w");
     SIM->time_in_ode_rhs = 0.0;
     /* DBPRINT("set up SIM"); */
@@ -1601,6 +1602,21 @@ void free_steady_state( steady_state *stst, int nbr_stst )
         free( stst[j].im );
     }
     free( stst );
+}
+
+
+int remove_id_files()
+{
+    /* try to remove idXX curves */
+    int success = 0;
+    size_t i;
+    char pathtofile[EXPRLENGTH];
+    for (i = 0; i < SIM->max_id; i++)
+    {
+        snprintf(pathtofile,EXPRLENGTH-1,".odexp/id%zu.dat",i);
+        success -= remove(pathtofile);
+    }
+    return success;
 }
 
 int set_num_ic( double *y )
