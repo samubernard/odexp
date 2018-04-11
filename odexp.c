@@ -1126,13 +1126,16 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         printf("  ODE system size               = %s%zu%s\n",T_VAL,ode_system_size,T_NOR);
                         printf("  Number of auxiliary functions = %s%zu%s\n",T_VAL,fcn.nbr_el,T_NOR);
                         printf("  Number of couplings           = %s%zu%s\n",T_VAL,psi.nbr_el,T_NOR);
-                        printf("  Total number of variables     = %s%zu%s\n",T_VAL,total_nbr_x,T_NOR);
+                        printf("  Number of mean fields         = %s%zu%s\n",T_VAL,mfd.nbr_el,T_NOR);
+                        printf("  Number of variables           = %s%zu%s\n",T_VAL,total_nbr_x,T_NOR);
                         printf("  Number of parameters          = %s%zu%s\n",T_VAL,mu.nbr_el,T_NOR);
-                        printf("  Number of parametric expr     = %s%zu%s\n",T_VAL,pex.nbr_expr,T_NOR);
+                        printf("  Number of expressions         = %s%zu%s\n",T_VAL,pex.nbr_expr,T_NOR);
                         printf("  Number of constants           = %s%zu%s\n",T_VAL,cst.nbr_el,T_NOR);
                         printf("  Number of data files          = %s%zu%s\n",T_VAL,dfl.nbr_el,T_NOR);
                         printf("  Number of columns in id.dat   = %s%zu%s\n",T_VAL,nbr_cols,T_NOR);
-                        printf("  Particle population size      = %s%zu%s\n",T_VAL,POP_SIZE,T_NOR);
+                        printf("  Initial population size       = %s%zu%s\n",T_VAL,(size_t)get_int("population_size"),T_NOR);
+                        printf("  Final population size         = %s%zu%s\n",T_VAL,POP_SIZE,T_NOR);
+                        printf("  Number of particles           = %s%zu%s\n",T_VAL,SIM->max_id,T_NOR);
                         printf("\n  hexdump -e '%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
                         printf("  hexdump -e '%zu \"%%5.2f \" \"\\n\"' idXX.dat\n", nbr_cols); 
                     }
