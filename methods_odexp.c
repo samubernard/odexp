@@ -1391,62 +1391,80 @@ int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, con
     size_t tx = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
     par *pars = (par *)NULL;
     pars = getpar((size_t)cp);
-    if ( pars == NULL )
-    {
-        /* fprintf(stderr,"  %serror: pop_current_particle %d could not be found %s, in %s, %s, %d\n",\
-                T_ERR,cp,T_NOR, __FILE__, __FUNCTION__, __LINE__); */
-        /* do nothing, silent return--the particle could just be death or not born yet */
-        return -1;
-    }
+    double nan = NAN;
     if ( ngx == -1 )
     {
         fwrite(&t,sizeof(double),1,quickfile);
     }    
-    else if ( ngx < SIM->nbr_var)
+    else if ( ngx < SIM->nbr_var && pars != NULL )
     {
         fwrite(y+cp*tx+ngx,sizeof(double),1,quickfile);
     }
-    else if ( ngx < (SIM->nbr_var + SIM->nbr_aux) )
+    else if ( ngx < (SIM->nbr_var + SIM->nbr_aux) && pars != NULL )
     { 
         fwrite(pars->aux + ngx - SIM->nbr_var,sizeof(double),1,quickfile);
     }
-    else
+    else if ( ngx < tx && pars != NULL )
     { 
         fwrite(pars->psi + ngx - SIM->nbr_var - SIM->nbr_aux,sizeof(double),1,quickfile);
+    }
+    else if ( ngx >= tx )
+    {
+        fwrite(SIM->meanfield + ngx - SIM->nbr_var - SIM->nbr_aux - SIM->nbr_psi,sizeof(double),1,quickfile);
+    }
+    else 
+    {
+        fwrite(&nan,sizeof(double),1,quickfile);
     }
 
     if ( ngy == -1 )
     {
         fwrite(&t,sizeof(double),1,quickfile);
     }    
-    else if ( ngy < SIM->nbr_var)
+    else if ( ngy < SIM->nbr_var && pars != NULL )
     {
         fwrite(y+cp*tx+ngy,sizeof(double),1,quickfile);
     }
-    else if ( ngy < (SIM->nbr_var + SIM->nbr_aux) )
+    else if ( ngy < (SIM->nbr_var + SIM->nbr_aux) && pars != NULL )
     { 
         fwrite(pars->aux + ngy - SIM->nbr_var,sizeof(double),1,quickfile);
     }
-    else
+    else if ( ngy < tx  && pars != NULL )
     { 
         fwrite(pars->psi + ngy - SIM->nbr_var - SIM->nbr_aux,sizeof(double),1,quickfile);
+    }
+    else if ( ngy >= tx )
+    {
+        fwrite(SIM->meanfield + ngy - SIM->nbr_var - SIM->nbr_aux - SIM->nbr_psi,sizeof(double),1,quickfile);
+    }
+    else 
+    {
+        fwrite(&nan,sizeof(double),1,quickfile);
     }
 
     if ( ngz == -1 )
     {
         fwrite(&t,sizeof(double),1,quickfile);
     }    
-    else if ( ngz < SIM->nbr_var)
+    else if ( ngz < SIM->nbr_var && pars != NULL )
     {
         fwrite(y+cp*tx+ngz,sizeof(double),1,quickfile);
     }
-    else if ( ngz < (SIM->nbr_var + SIM->nbr_aux) )
+    else if ( ngz < (SIM->nbr_var + SIM->nbr_aux) && pars != NULL )
     { 
         fwrite(pars->aux + ngz - SIM->nbr_var,sizeof(double),1,quickfile);
     }
-    else
+    else if ( ngz < tx && pars != NULL )
     { 
         fwrite(pars->psi + ngz - SIM->nbr_var - SIM->nbr_aux,sizeof(double),1,quickfile);
+    }
+    else if (ngz >= tx )
+    {
+        fwrite(SIM->meanfield + ngz - SIM->nbr_var - SIM->nbr_aux - SIM->nbr_psi,sizeof(double),1,quickfile);
+    }
+    else 
+    {
+        fwrite(&nan,sizeof(double),1,quickfile);
     }
 
     return 0;
