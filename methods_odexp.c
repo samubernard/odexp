@@ -1608,15 +1608,19 @@ void free_steady_state( steady_state *stst, int nbr_stst )
 int remove_id_files()
 {
     /* try to remove idXX curves */
-    int success = 0;
+    int fail = 0;
     size_t i;
     char pathtofile[EXPRLENGTH];
     for (i = 0; i < SIM->max_id; i++)
     {
         snprintf(pathtofile,EXPRLENGTH-1,".odexp/id%zu.dat",i);
-        success -= remove(pathtofile);
+        fail -= remove(pathtofile);
     }
-    return success;
+    if ( fail ) 
+    {
+        DBPRINT("%d errors removing id files.", fail);
+    }
+    return fail;
 }
 
 int set_num_ic( double *y )
