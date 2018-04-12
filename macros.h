@@ -123,6 +123,14 @@
        myself_->sister == NULL ? 0.0 : myself_->sister->y[index];                                             \
      })                                                     
 
+#define MF(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(name, SIM->mfdnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_mfd;                    \
+       }                                                      \
+       SIM->meanfield[index];                                             \
+     })                                                     
 
 #define ATBIRTH (SIM->event[0] == -1)
 #define ATREPLI (SIM->event[0] >= 0 && SIM->event[1] == 1)

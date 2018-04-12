@@ -345,7 +345,14 @@ get_meanfields () {
       $1="";
       $2="";
       rhs=$0;
+      printf "    myself_ = SIM->pop->start;\n"
+      printf "    i = 0;\n"
+      printf "    while ( myself_ != NULL )\n"
+      printf "    {\n"
       printf "        SIM->meanfield[%d] += %s;\n", nv, rhs; nv++
+      printf "        i++;\n"
+      printf "        myself_ = myself_->nextel;\n"
+      printf "    }\n"
     }' $file >>.odexp/model.c
 }
 
@@ -688,13 +695,13 @@ echo "                                                                      * fi
 # POPULATION BIRTH RATE  =====================================
 gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "        SIM->pop_birth_rate += %s;\n", $2}' $file >>.odexp/model.c
 # END POPULATION BIRTH RATE  =================================
+echo "        i++;" >>.odexp/model.c
+echo "        myself_ = myself_->nextel;" >>.odexp/model.c
+echo "    }" >>.odexp/model.c
 
 # DEFINE THE MEAN FIELDS ====
 get_meanfields
 # =========================
-echo "        i++;" >>.odexp/model.c
-echo "        myself_ = myself_->nextel;" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
 echo "    for (j=0;j<SIM->nbr_mfd;j++)" >>.odexp/model.c
 echo "    {" >>.odexp/model.c
 echo "        SIM->meanfield[j] /= POP_SIZE;" >>.odexp/model.c
