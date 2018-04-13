@@ -442,10 +442,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* history - initialize session */
     using_history();
-    if ( read_history(".history") )
+    if ( read_history(".odexp/history.txt") )
     {
-      printf("\n  warning: history file .history not found\n");
-      LOGPRINT("warning: history file .history not found");
+      LOGPRINT("warning: history file .odexp/history.txt not found");
     }
     
     stifle_history( 200 );
@@ -1785,7 +1784,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     free_world(SIM);
 
     /* write history */
-    if ( write_history(".history") )
+    if ( write_history(".odexp/history.txt") )
+
     {
       fprintf(stderr, "\n  Error: could not write history\n");
     }
