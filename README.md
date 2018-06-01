@@ -132,21 +132,14 @@ O reltol 1e-3
 * __T__ Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times.
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
- 
-* __U__ Uniform random array. To generate an array of length 5 of pseudo-random numbers uniformly distbuted between -1 and 1
 
-```
-U r[i=0:5] 
-E rand_array[i=0:5] -1 + 2*r[i]
-```
-
-* __S__ Static variable. Must be numerical. Static variables cannot be modified.
+* __S__ Same as #define in C.
 
 ```
 S MY_PI 3.14
 ```
 
-* __C__ Constant array. Must be numerical array. Constant arrays cannot be modified.
+* __C__ Constant array of double. Must be numerical array. Constant arrays cannot be modified.
 Constant arrays can be of any dimensions. Useful for arrays of small sizes. 
 
 ```
@@ -174,6 +167,13 @@ is interpreted as
 /* double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X } */
 ```
 The function **sum** is a helper function (see below for a list of helper functions).
+More complex function can be created
+```
+@ my_weird_func(x) = ({ \
+                      double g=0.1; \
+                      -g*x; \
+                      })
+```
 
 ### POPULATION-SPECIFIC DECLARATIONS
 
@@ -224,6 +224,8 @@ The mean field term in an average over the population, and take a single value.
 
 * __ISMOTHER__ logical variable indicating if the particle is the mother. This is nonzero only at replication (ATREPLI = 1).
 
+* __ID__ is the particle ID
+
 ## NUMERICAL AND GRAPHICAL OPTIONS
 
 * ``x``, ``plot_x`` String. Name of the variable to plot on the x-axis (default T)
@@ -233,17 +235,26 @@ The mean field term in an average over the population, and take a single value.
 * ``curves``, ``add_curves`` Integer. Add (1) or replace ({0}) curves on plot
 * ``style``, ``plot_with_style`` String. One of the gnuplot styles: {lines} | points | dots | linespoints ...
 * ``realtime``, ``plot_realtime`` Integer. Plot in real time, {0} | 1 (not implemented)
+* ``xscale``, ``plot_xscale`` String. x-axis scale {linear} | log
+* ``yscale``, ``plot_yscale`` String. y-axis scale {linear} | log
+* ``zscale``, ``plot_zscale`` String. z-axis scale {linear} | log
 * ``step``, ``par_step`` Double. Parameter step increment (default 1.1)
 * ``act``, ``act_par`` String. Name of current parameter parameter (default parameter of index 0, the parameter first declared)
+* ``lasty``, ``take_last_y`` Integer. Take last y as initial condition
 * ``res``, ``odesolver_output_resolution`` Integer. Nominal number of output time points (default 201)
 * ``minh``, ``odesolver_min_h`` Double. Minimal ODE solver time step  (default 1e-5)
 * ``h``, ``odesolver_init_h`` Double. Initial time step (default 0.1)
 * ``abstol``, ``odesolver_eps_abs`` Double. ODE solver absolute tolerance (default 1e-6)
 * ``reltol``, ``odesolver_eps_rel`` Double, ODE solver relative tolerance (default 0.0)
-* ``meth``, ``odesolver_step_method`` Double. ODE solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd
+* ``meth``, ``odesolver_step_method`` Double. ODE solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd | bsimp
+* ``popmode``, ``population_mode`` String. Population simulation mode single | {population}
+``popsize``, ``population_size`` Integer. Initial population size for particle simulations
+``part``, ``pop_current_particle`` Integer. Current particle ID
+``seed``, ``random_generator_seed`` Integer. Seed for the random number generator {3141592}
+``reseed``, ``reset_random_generator_seed`` Integer.  Reset the seed of the rng at each run 0 | {1}. When set to 1, the same seed is used for each simulation.
 * ``m/maxfail``, ``phasespace_max_fail`` Integer. Max number of starting guesses for steady states (default 10000)
 * ``m/abstol``, ``phasespace_abs_tol`` Double. Absolute tolerance for finding steady states (default 1e-2)
-* ``m/reltol``, ``phasespace_rel_tol`` Double. relative tolerance for finding steady states (default 1e-2)
+* ``m/reltol``, ``phasespace_rel_tol`` Double. Relative tolerance for finding steady states (default 1e-2)
 * ``m/range``, ``phasespace_search_range`` Double. Phase-space search range 
 * ``m/min``, ``phasespace_search_min`` Double. Phase-space search min 
 * ``c/h``, ``cont_h`` Double. Initial parameter continuation step (default 0.1)
@@ -254,6 +265,8 @@ The mean field term in an average over the population, and take a single value.
 * ``r/astep``, ``range_add_step`` Double. Parameter step additive increment (default 0.1)
 * ``r/mic``, ``range_mult_ic`` Double. Initial condition multiplicative factor for range (default 1.0)
 * ``r/aic``, ``range_add_ic``  Double. Initial condition additive factor for range (default 0.0)
+``r/ric``, ``range_reset_ic`` Integer. Reset initial conditions at each iteration for range
+``g/font``, ``gnuplot_font`` String.  gnuplot font {Helvetica Neue Light} 
 
 ## FUNCTIONS ACTING ON ARRAYS
 
