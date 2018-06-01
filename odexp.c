@@ -550,11 +550,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     if ( get_int("freeze") )
                     {
                         set_int("add_curves",0); /* unset add_curves */
-                        printf("  %sfreeze is on (not working as expected)%s\n",T_DET,T_NOR);
+                        /* printf("  %sfreeze is on (not working as expected)%s\n",T_DET,T_NOR); */
                     }
                     else
                     {
-                        printf("  %sfreeze is off (not working as expected)%s\n",T_DET,T_NOR);
+                        /* printf("  %sfreeze is off (not working as expected)%s\n",T_DET,T_NOR); */
                         plotmode_normal = 1;
                     }
                     break;
@@ -1393,6 +1393,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     update_act_par_options(p, mu);
                     break;
                 case 'o' : /* open a parameter file */
+                    DBPRINT("Probably a lot to fix here");
                     nbr_read = sscanf(cmdline+2,"%s",par_filename);
                     if ( nbr_read < 1 )
                     {

@@ -2,16 +2,17 @@
 A command line tool for ODE-based population simulation.
 
 ## COMMANDS 
-* ``+``, ``=``,  C^g Increment current parameter by a multiplicative factor ``par_step`` 
-* ``-``, ``C^h`` Decrement current parameter by a multiplicative factor ``par_step``
+* ``+``, ``=``, ``C^g`` Increment current parameter by a multiplicative factor ``par_step``. Repeatable
+* ``-``, ``C^h`` Decrement current parameter by a multiplicative factor ``par_step``. Repeatable
 * ``]``, ``C^]`` Plot next variable on the y-axis (cyclic)
 * ``[``, ``C^[`` Plot previous variable on the y-axis (cyclic)
 * ``}``, ``C^}`` Plot next particle on the y-axis (cyclic)
 * ``{``, ``C^}`` Plot previous particle on the y-axis (cyclic)
-* ``>`` Double the number of time steps
-* ``<`` Halve the number of time steps
-* ``$`` [**id**] Print dataset for particle **id**, or print stats dataset if **id** is missing
-* ``!`` **filename** Save the current plot to **filename**. EPS format
+* ``>`` Increase output resolution (double the number of time steps)
+* ``<`` Decrease output resolution  (halve the number of time steps)
+* ``#`` **dataset** **colx** **coly** Add to plot **colx** and **coly** from **dataset**
+* ``$`` [**id**] List particle **id**, or print statistics if **id** is missing
+* ``!`` **filename** Save the current plot to **filename** in EPS format
 * ``0``, ``n`` Switch to/update normal plot 
 * ``9``, ``b`` Switch to continuation plot
 * ``8``, ``j`` Switch to range plot
@@ -25,22 +26,22 @@ A command line tool for ODE-based population simulation.
 * ``d`` Reload the parameter file 
 * ``E`` Decrease the time span by a factor 2
 * ``e`` Increase the time span by a factor 2
-* ``f`` Toggle plot freeze (on/off) 
-* ``g`` **cmd** Send the command **cmd** to gnuplot 
+* ``f`` Toggle plot freeze (on/off). When freeze is on, plot commands are replaced with replot.  
+* ``g`` **cmd** Send the **cmd** to gnuplot 
 * ``h`` Display help
-* ``I`` Set initial conditions to previous 
+* ``I`` Set initial conditions to previous, and list initial conditions 
 * ``il`` Use the state of the system at t1 as initial conditions 
 * ``in`` Loop through initial conditions. Set to I to revert to expression, enter to keep current initial condition
 * ``is`` Set initial condition to steady state. Steady state must have been computed with `ms` *not functional*
 * ``l@`` List all user-defined functions 
-* ``la`` List all auxiliary variables (can be plotted)
+* ``l%`` List replication/death/birth rates
+* ``la`` List all auxiliary variables
 * ``lc`` List all constant arrays
 * ``le`` List all parametric expressions
-* ``lf`` List all array files (nrows ncols filename)
+* ``lf`` List all data files (nrows ncols filename)
 * ``li`` List all variables with initial conditions 
 * ``ll`` List file name and various information 
-* ``lm`` List coupling and mean field variable
-* ``ln`` Display ODE system size
+* ``lm`` List coupling and mean field variables
 * ``lo`` [**optiontype**] List options that match **optiontype**, or all options if **optiontype** is missing
 * ``lp`` List all parameters and their values
 * ``ls`` List steady states *not functional*
@@ -58,22 +59,24 @@ otherwise, the initial conditions are set as usual
 When val is missing, the parameter value is unchanged
 * ``Q`` Quit without snapshot 
 * ``q`` [**msg**] Quit and snap with optional message **msg** 
-* ``R`` Rerun the ODE system and update plot
+* ``R`` Rerun the ODE system and replot
 * ``r`` Repeat the last gnuplot command (replot)
 * ``s`` [**msg**] Snapshot of current simulation and parameter values with optional **msg** 
 * ``t`` [**t0**] **t1** Set time span from **t0** to **t1**. By default t0 is not changed. 
 Final time **t1** must be larger than **t0**.
-* ``u`` Toggle add curves to plot (on/off) 
+* ``u`` Toggle add curves to plot (on/off). When curves is on, plotted datasets are saved and replotted at each new plot command. Set curves on to plot different solutions of the system. (To plot different variables of the same solutions, use freeze).
+* ``ur``, ``uc`` Removes all added curves and set curves off. 
 * ``v`` , 2 , 3 {**i**|**x**} {**j**|**y**} [{**k**|**z**}]      
 Set 2D/3D view, x-axis to index **i** (variable **x**), y-axis to **j** (variable **y**), 
-and z-axis to **k** (variable **z**). Set variable to T or index -1 for time.
+and z-axis to **k** (variable **z**). Set variable to T or index -1 for time
 `2` takes only the first two arguments, and `3` takes the three arguments
 * ``x`` {**ind**|**var**} Plot variable with index **ind** or name **var** on the x-axis
-* ``y`` {**ind**|**var**} Plot variable with index **ind** or name **var** on the y-axis
+* ``y`` {**ind**|**var**} Plot variable with index **ind** or name **var** on the y-axis and time on the x-axis
+* ``w`` List world
 
 ## ODEXP DECLARATIONS
-* __P__ Parameters. Must be numerical (double). Parameters appear in the list of parameters.
-They can be modified from within odexp and can be ranged over. Parameters are declared in name value pairs, separated with semicolumns (;), or one parameter per line.
+* __P__ Parameters. Must be numerical (double). Parameters appear in the list of parameters (odexp ``lp``).
+They can be modified and can be ranged over. Parameters are declared in name/value pairs, separated with semicolumns (;), or one parameter per line.
 
 ```
 P a 0.1; b 0.2
@@ -83,7 +86,7 @@ P b 0.1
 ```
 
 * __E__ Expressions. Expressions are function of the parameters. They cannot be modified.
-Expression are declared as Name Expression pairs.
+Expression are declared as name/expression pairs.
 
 ```
 E c a*a
