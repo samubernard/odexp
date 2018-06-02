@@ -112,7 +112,11 @@ set_defines () {
         $2="";
         ex=$0;
         printf "#define %s %s\n", var, ex;
-        }' $file >>.odexp/model.c
+        };
+				$1 ~ /^[sS][a-zA-Z0-9]*$/ && $2 ~ /\[.+:.+\]/ {
+				print "  " $0 "\n  Error: arrays not allowed in S, exiting..." > "/dev/stderr";
+				exit 1;
+				}' $file >>.odexp/model.c
 }
 
 declare_constant_array () {
