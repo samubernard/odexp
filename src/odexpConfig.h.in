@@ -1,0 +1,3 @@
+/* the configured options and settings for Tutorial */
+#define odexp_VERSION_MAJOR @odexp_VERSION_MAJOR@
+#define odexp_VERSION_MINOR @odexp_VERSION_MINOR@

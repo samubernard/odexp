@@ -7,6 +7,7 @@
 #include <readline/history.h>                             
 
 #include "odexp.h"
+#include "odexpConfig.h"
 
 /* static variable for holding the command line string */
 static char *rawcmdline = (char *)NULL;
