@@ -9,10 +9,6 @@
 /* extern size_t ode_system_size; */
 extern int *NUM_IC;
 
-typedef int (*oderhs)(double, const double *, double *, void *);
-typedef int (*odeic)(double, double *, void *);
-typedef int (*rootrhs)(const gsl_vector *, void *, gsl_vector *);
-
 /* unused */
 typedef struct ode_functions {
     oderhs  pop_ode_rhs;

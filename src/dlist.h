@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "macros.h"
+#include "odexp.h"
 
 extern const char *T_IND; /* INDEX */
 extern const char *T_DET; /* DETAILS */
@@ -18,22 +19,6 @@ extern const char *T_BLD;  /* BOLD */
 extern const char *T_OPT;  /* OPTION */
 extern const char *HLINE;  /* horizontal line */
 
-
-typedef struct namevalexp
-{
-    char   **name;             /* names */
-    double  *value;            /* numerical values */
-    char   **expression;       /* expressions (only string, not evaluated) */
-    char   **attribute;        /* attributes: to be better defined */
-    char   **comment;          /* comment: to be better defined */
-    size_t   nbr_el;           /* nbr of elements */
-    size_t   nbr_expr;         /* nbr of expression <= nbr_el */
-    size_t  *expr_index;       /* index of expression */
-    int     *max_name_length;  /* length of longest name */
-
-    /* struct namevalexp *nextel; */
-    /* struct namevalexp *prevel; */
-} nve;
 
 /* NOT USED */
 typedef struct namevalexp_group
@@ -51,92 +36,6 @@ typedef struct namevalexp_group
     nve dfl;     /* data files */
 } nveg;
 /* END NOT USED */
-
-typedef struct particle_state {
-    double *expr;
-    size_t nbr_expr;
-    double *aux;
-    size_t nbr_aux;
-    double *y;
-    size_t nbr_y;
-    double *psi;
-    size_t nbr_psi;
-
-    double death_rate;
-    double repli_rate;
-
-    size_t id;
-
-    FILE *fid;
-    char buffer[MAXFILENAMELENGTH];
-
-    struct particle_state *sister;
-
-    struct particle_state *nextel;
-    struct particle_state *prevel;
-} par;
-
-typedef struct dlist_struct {
-
-    par *start;
-    par *end;
-    size_t size;
-
-} dlist;
-
-typedef struct system_state {
-
-    dlist *pop;
-    char **parnames;
-    char **varnames;
-    char **exprnames;
-    char **auxnames;
-    char **psinames;
-    char **mfdnames;
-    size_t nbr_par;
-    size_t nbr_var;
-    size_t nbr_expr;
-    size_t nbr_aux;
-    size_t nbr_psi;
-    size_t nbr_mfd;
-
-    nve *pex_ptr;     /* parametric expressions */
-    nve *func_ptr;    /* user-defined functions */
-    nve *mu_ptr;      /* parameters */
-    nve *ics_ptr;     /* initial conditions */
-    nve *fcn_ptr;     /* auxiliary functions */
-    nve *eqn_ptr;     /* dynamical equations */
-    nve *psi_ptr;     /* pop coupling terms */
-    nve *mfd_ptr;     /* pop mean fields/stats */
-    nve *dxv_ptr;     /* list of all Dynamical  + auXiliary Variables */
-    nve *cst_ptr;     /* constant arrays */
-    nve *dfl_ptr;     /* data files */
-
-    double *mu;   /* simulation parameter values */ 
-    double *meanfield; /* meand fields */
-
-    size_t max_id;
-
-    double pop_birth_rate;
-
-    int event[3]; /* IDParent event IDChild */
-
-    double time_in_ode_rhs;
-
-    int (*ode_rhs)(double, const double *, double *, void *);
-
-    char stats_buffer[MAXFILENAMELENGTH];
-    FILE *fid;
-    
-    char stats_varnames[MAXFILENAMELENGTH];
-    FILE *fstats_varnames;
-
-    char particle_varnames[MAXFILENAMELENGTH];
-    FILE *fparticle_varnames;
-
-} world;
-
-extern world  *SIM;
 
 void alloc_namevalexp( nve *mu );
 void free_namevalexp( nve mu );

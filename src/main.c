@@ -8,7 +8,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "odexp.h"
+#include "main.h"
 #include "odexpConfig.h"
 
 /* static variable for holding the command line string */

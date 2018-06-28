@@ -40,8 +40,8 @@ find_package(GSL REQUIRED)
 # ============================================================================
 add_library(odexp SHARED
   src/dlist.c
+  src/main.c
   src/methods_odexp.c
-  src/odexp.c
   src/rand_gen.c
   src/utils_odexp.c
 )

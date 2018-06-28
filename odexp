@@ -593,8 +593,8 @@ echo "" >>.odexp/model.c
 echo "/* Header files */" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "#include \"odexp.h\"" >>.odexp/model.c
-echo "#include \"utils_odexp.h\"" >>.odexp/model.c
-echo "#include \"rand_gen.h\"" >>.odexp/model.c
+#echo "#include \"utils_odexp.h\"" >>.odexp/model.c
+#echo "#include \"rand_gen.h\"" >>.odexp/model.c
 echo "" >>.odexp/model.c
 echo "/* Defines */" >>.odexp/model.c
 echo "" >>.odexp/model.c
@@ -968,8 +968,8 @@ echo "    return success_;" >>.odexp/model.c
 echo "}" >>.odexp/model.c
 # END ode_init_conditions =================================================================================
 
-cp "$ODEXPDIR"/help.txt .odexp/
-cp "$ODEXPDIR"/.inputrc .odexp/
+cp "$ODEXPDIR"/src/help.txt .odexp/
+cp "$ODEXPDIR"/src/.inputrc .odexp/
 
 echo "CFLAGS= -I$ODEXPDIR -Wall -Wno-gnu-statement-expression -g `pkg-config --cflags gsl` -pedantic" >.odexp/makefile
 echo "LDFLAGS=-g `pkg-config --libs gsl` -lm -L$ODEXPDIR -lodexp" >>.odexp/makefile
