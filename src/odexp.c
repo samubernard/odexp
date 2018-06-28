@@ -5,6 +5,8 @@
 #include <gsl/gsl_eigen.h> 
 #include <readline/readline.h>
 #include <readline/history.h>                             
+#include <string.h>
+#include <time.h>
 
 #include "odexp.h"
 #include "odexpConfig.h"
