@@ -1,0 +1,116 @@
+#!/usr/bin/perl -w
+
+use warnings;
+use strict;
+
+# @ACEIFOPS 
+my $re_pace = qr/^
+  \s*([ACEIOPST])\w*    # type
+  \s+                   # whitespaces
+  (\w+)                 # varname 
+  (?:\s*\[.*?\])*       # any number of brackets do not capture
+  \s+                   # whitespace(s)
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;
+
+# @ myfunc(*x,y,z) = rhs # comment
+# @ my_weird_func( x ) = ({ \
+#                      double g=0.1; \
+#                      -g*x; \
+#                      })
+my $re_func = qr/^
+  \s*(@)                # type
+  \s*                   # whitespaces
+  (\w+)                 # funcname
+  (?:\s*\(.*?\))        # parentheses do not capture
+  \s*=\s*               # whitespace(s) equal whitespace(s)
+  ([^#\n]+)             # rhs until comment or newline 
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;
+
+my $re_iter = qr/
+  \s*                   # whitespaces
+  \[(\w+?)              # iterator
+  \s*                   
+  =               
+  \s*     
+  (\d+)                 # start
+  \s*:\s*
+  (\d+)                 # end
+  \]
+/x;
+
+my $re_funcarg = qr/^
+  \s*@                  # type
+  .*?\(                 # go to first opening parenthesis
+  ([^\)]*)             # arguments
+  \)                    # closing parenthesis
+/x;
+
+my $re_dxdt = qr/^
+  \s*(D)                # first derivative
+  (\w+)                 # var name
+  (?:\s*\[.*?\])?       # optional brackets do not capture
+  \/DT                  # second part of derivative
+  \s*=\s*               # equal
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;
+
+my $re_pop = qr/^
+  \s*%(BIRTH|DEATH|REPLI) # pop rate type
+  \s+                     # whitespace(s)
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;
+
+# F var nrow ncol filename
+my $re_file = qr/^
+  \s*(F)                # type file     
+  \s+                   # whitespace(s)
+  (\w+)                 # var name
+  \s+(\d+)              # nrow
+  \s+(\d+)              # ncol
+  \s+(\w+\.\w+)         # filename
+  \s+(|\#.*)?           # comment
+$/ix;
+
+while ( <STDIN> )
+{
+  
+  if ( my ($type, $varname, $rhs, $attr, $comment) = 
+    ( $_ =~ $re_pace ) )
+  {
+    print "type: $type, name: $varname, rhs: $rhs, " .
+          "attr: $attr, comment: $comment\n"; 
+  }
+  if ( my ($type, $varname, $rhs, $attr, $comment) = 
+    ( $_ =~ $re_dxdt ) )
+  {
+    print "type: $type, name: $varname, rhs: $rhs, " .
+          "attr: $attr, comment: $comment\n"; 
+  }
+  if ( my @it = ($_ =~ m/$re_iter/g) )
+  {
+    print "iters: " . join ' ' , @it;
+  }
+  if ( my ($type, $varname, $rhs, $comment) = 
+    ( $_ =~ $re_func ) )
+  {
+    print "type: $type, func name: $varname, rhs: $rhs, " .
+          "comment: $comment\n"; 
+  }
+  if ( my ($args) = ($_ =~ m/$re_funcarg/g) )
+  {
+    print "args: " . join ("|", split( /,/ , $args)) . "\n";
+  }
+
+}
