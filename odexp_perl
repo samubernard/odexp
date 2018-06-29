@@ -26,7 +26,7 @@ if ( $nbr_argv == 0 ) {
 # ---------------------------------------
 
 my $bname = fileparse($odefilename, qr/\.[^.]*/);
-my $odedir = "." . $bname;
+my $odedir = ".odexp";
 if ( !-d $odedir & !-e $odedir ) {
   make_path $odedir or die  "Could not create directory $odedir. $!";
 }
@@ -293,8 +293,9 @@ sub print_main
         status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,argv[1]);
     }
     else {
-        status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,"unkown");
+        status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,"unknown file name");
     }
+
 
     exit(EXIT_SUCCESS);
 }

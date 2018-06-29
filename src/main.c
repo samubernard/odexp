@@ -79,7 +79,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     /* variable declaration */
 
     /* files */
-    const char *odefilename = ".odexp/model.op";    /* */
+    const char *odefilename = ".odexp/model.ode";    /* */
     const char *parfilename = ".odexp/model.par";    /* */
     char       par_filename[MAXFILENAMELENGTH];
     char data_fn[NAMELENGTH]; /* dataset filename */
