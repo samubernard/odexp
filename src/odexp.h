@@ -7,6 +7,7 @@
 #include <gsl/gsl_vector.h>
 
 #define MAXFILENAMELENGTH 64
+#define NAMELENGTH        64
 
 /* size of history buffer */
 #define SIZEHIST 100

@@ -10,7 +10,6 @@ use File::Spec;
 use File::Temp qw/ tempfile tempdir /;
 
 my $odefilename;
-my $parfilename;
 # check the number of arguments, must be 1 or 2
 my $nbr_argv = @ARGV;
 if ( $nbr_argv == 0 ) {
@@ -18,12 +17,6 @@ if ( $nbr_argv == 0 ) {
 } else {
   $odefilename = $ARGV[0];
 }
-if ( $nbr_argv == 1 ) {
-  $parfilename = $ARGV[0];
-} else {
-  $parfilename = $ARGV[1];
-}
-
 
 # ---------------------------------------
 # Files created in .filebasename
@@ -42,16 +35,18 @@ my $modelode = $odedir . "/model.ode";
 my $modelc = $odedir . "/model.c";
 
 open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
-
 print_ode_header();
-
-my @attribute_keywords = qw(INITIAL UNUSED INEXPR POP);
-
-# clean up ode filename
-cleanup_file($odefilename);
-
+cleanup_file($odefilename); # clean up ode filename
 close $fodeh;
 
+if ( $nbr_argv > 1 )
+{
+  copy($ARGV[1],$odedir . "/model.par") or die "Could not copy file '$ARGV[1]'. $!";
+}
+else
+{
+  copy($odedir . "/model.ode", $odedir . "/model.par") or die "Could not copy file '$odedir/model.ode'. $!";
+}
 
 # ====================================================================================
 # Generate model.c
@@ -91,12 +86,6 @@ print_ode_rhs();
 # ====================================================================================
 # ODE INIT COND
 print_ode_init_cond();
-
-
-# ====================================================================================
-# MAKEFILE
-generate_makefile();
-
 
 close $fch;
 
@@ -167,8 +156,6 @@ sub print_c_header
 /* Header files */
 
 #include "odexp.h"
-#include "utils_odexp.h"
-#include "rand_gen.h"
 
 );
  
@@ -555,7 +542,7 @@ sub print_ode_init_cond
     double * pars_ __attribute__((unused)) = SIM->mu;
     double * aux_  __attribute__((unused)) = myself_->aux;
     double * expr_ __attribute__((unused)) = myself_->expr;
-    int success_ = 0;" >>.odexp/model.c
+    int success_ = 0;
 );
   print $fch $s;
   declare_iterators($modelode);
@@ -597,7 +584,11 @@ sub declare_iterators
 		$iter = shift @iterators;
 		push @unique_iters, $iter if $unique_iters[$#unique_iters] ne $iter;
 	}
-	print $fch "    size_t " . join(', ', @unique_iters) . ";\n\n";
+  if ( $#unique_iters )
+  {
+	  print $fch "    size_t " . join(', ', @unique_iters) . ";\n";
+  }
+  print $fch "\n";
 }
 
 
@@ -817,7 +808,7 @@ sub assign_output
     {
       $rhs2print = $name;
     }
-    if ($fields[0] =~ /\w+\s+(\w+)\s+\w+/)
+    if ($fields[0] =~ /\w+\s+(\w+)\s+\w+/) # scalar variable
     {
       print $fch "    ${lhs}[$ii] = " . $rhs2print;
       print $fch ";" if $assign_rhs !~ /rhs/;
@@ -825,22 +816,23 @@ sub assign_output
       ++$ii;
       next;
     }
-    shift @fields;
+    shift @fields;                         # array variable, process iterators
     my @iters;
     while ( @fields )
     {
       push @iters, $fields[0];
       shift @fields;
-      if ($fields[0] =~ /^\s*$/)  
+      if ($fields[0] =~ /^\s*$/)           # if field empty, then shift
       {
         shift @fields;
       }
-      else
+      else                                 # if field not empty, break out of while
       {
         last;
       }
     }
     my $offset = qq();
+    my $iter_increment = 1;
     foreach my $iter ( @iters )
     {
       $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
@@ -855,8 +847,10 @@ sub assign_output
       $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
       my ($i,$a,$b) = ($1,$2,$3);
       print $fch "+$i";
+      $iter_increment *= ($b-$a);
     }
     print $fch "] = $rhs2print"; 
+    $ii += $iter_increment;
     if ( $assign_rhs !~  /rhs/ )
     {
       foreach my $iters ( @iters )
@@ -895,8 +889,8 @@ sub assign_pop_rate
   close($fh);
 }
 
-sub generate_makefile
-{
+my $LDFLAGS = "-O3 -lgsl -lodexp";
+system("gcc $LDFLAGS $odedir/model.c -o model.out") == 0 
+              or die "compiling failed: $?";
+exec ("./model.out $odefilename") or print STDERR "couldn't exec model.out: $!";
 
-
-}
