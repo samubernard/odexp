@@ -1,997 +1,898 @@
-#!/bin/bash
+#!/usr/bin/perl -w
 
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-ODEXPDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+use warnings;
+use strict;
 
-set -eu # makes your program exit on error or unbound variable
+use File::Copy;
+use File::Basename qw( fileparse );
+use File::Path qw( make_path );
+use File::Spec;
+use File::Temp qw/ tempfile tempdir /;
 
-# require gawk
-hash gawk 2>/dev/null || { echo >&2 "I require gawk but it's not installed.  Aborting."; exit 1; }
-
-mkdir -p .odexp
+my $odefilename;
+# check the number of arguments, must be 1 or 2
+my $nbr_argv = @ARGV;
+if ( $nbr_argv == 0 ) {
+  die "Require a filename";  
+} else {
+  $odefilename = $ARGV[0];
+}
 
 # ---------------------------------------
-# Files created in .odexp
-# model.op: model file where all constants are replaced by their values
+# Files created in .filebasename
+# model.ode  model file where all constants are replaced by their values
 # model.par contains parameter, initial condition, tspan and options
 # model.c: C file implementation 
 # ---------------------------------------
 
-echo "# odexp file name: $1" >.odexp/model.op
-echo "# In this file, all constant (variable starting with _)" >>.odexp/model.op
-echo "# are replaced with their value" >>.odexp/model.op
-echo "" >>.odexp/model.op
+my $bname = fileparse($odefilename, qr/\.[^.]*/);
+my $odedir = ".odexp";
+if ( !-d $odedir & !-e $odedir ) {
+  make_path $odedir or die  "Could not create directory $odedir. $!";
+}
+
+my $modelode = $odedir . "/model.ode";
+my $modelc = $odedir . "/model.c";
+
+open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
+print_ode_header();
+cleanup_file($odefilename); # clean up ode filename
+close $fodeh;
+
+if ( $nbr_argv > 1 )
+{
+  copy($ARGV[1],$odedir . "/model.par") or die "Could not copy file '$ARGV[1]'. $!";
+}
+else
+{
+  copy($odedir . "/model.ode", $odedir . "/model.par") or die "Could not copy file '$odedir/model.ode'. $!";
+}
+
+# ====================================================================================
+# Generate model.c
+# ====================================================================================
+open(my $fch, '>', $modelc) or die "Could not open file '$modelc'. $!";
+
+print_c_header();
+print $fch "/* Defines */\n\n";
+set_defines($modelode);
+print $fch "\n/* Global variables */\n\n";
+# ====================================================================================
+# DECLARE AND DEFINE CONSTANT ARRAYS
+print $fch "/* Declaration and definition of constant arrays from files */\n";
+declare_array_from_file($modelode);
+declare_constant_array($modelode);
+# ====================================================================================
+# DECLARE AND DEFINE FUNCTIONS
+define_functions($modelode);
+# ====================================================================================
+# Functions
+declare_ode_functions();
+# ====================================================================================
+# Main 
+print_main();
+# ====================================================================================
+# multiroots 
+print_multiroots();
+# ====================================================================================
+# pop_rhs
+print_pop_rhs();
+# ====================================================================================
+# pop_init_conditions
+print_pop_init_conds();
+# ====================================================================================
+# ODE RHS
+print_ode_rhs();
+# ====================================================================================
+# ODE INIT COND
+print_ode_init_cond();
+
+close $fch;
+
+sub print_ode_header
+{
+  print $fodeh "# odexp file name: $ARGV[0]\n";
+  print $fodeh "# In this file, all constant (variable starting with _)\n";
+  print $fodeh "# are replaced with their value\n\n";
+}
 
 # strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
 # replace all constants (variable starting with '_') by their value
-# remove all ending ;
-# replace all ; outside user-defined functions by \n 
-gawk '{gsub("^( )*","",$0)}; 
-        /\\$|\.\.\.( )*$/ {gsub(/\\$/," ",$0); 
-              gsub(/\.\.\.( )*$/," ",$0);
-              printf "%s", $0; next};
-    $1 !~ /[#@]/ {gsub(";( )*$","",$0)};
-    $1 !~ /[#@]/ {gsub(";","\n"$1,$0)};
-    $1 ~ /^( )*_/ {n++; name[n]=$1; val[n]=$2; };
-    $1 !~ /^( )*_/ { 
-        if(n>0) {
-            for(i=1;i<=n;i++) {
-                gsub(name[i]"\\>",val[i],$0);
-            }
-        }
-    };
-    {print $0}' $1 >>.odexp/model.op
+# replace all , in parameters by \n 
+sub cleanup_file
+{
+  my @underscores;
+  my @usvals;
+  my @declarations;
+  my $tmpfh = tempfile(); # make a first pass in temp file to remove linebreaks
+                          # and find underscores
+  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  while ( <$fh> )    
+  {
+    my @fields = split; 
+    s/^[\ \t]+//;                     # trim space and tab at beginning of line
+    s/\\\n$|\.\.\.\s*$//;             # continue line after \ or ...
+    if ( /^_/ ) {
+      push @underscores, $fields[0];
+      push @usvals, join(' ',@fields[1..$#fields]);
+    }
+    chomp if /,\s*$/;
+    print $tmpfh "$_" ;
+  }
+  close($fh);
+  seek $tmpfh, 0, 0; # rewind temp file to rebreak lines and replace underscores
+  while ( <$tmpfh> )
+  {
+    my @fields = split; 
+    foreach my $i ( 0..$#underscores )
+    {
+         s/(?<!^)$underscores[$i]/$usvals[$i]/g; # replace underscores that don't start a line
+    }
+    s/,/\n$fields[0] /g if /^[pP]/;    # break lines at , and remove ,
+    print $fodeh "$_";
+  }
+}
 
-file=.odexp/model.op
+sub print_c_header 
+{
+  # Write C file header
+  my $heading = qq(/* function implementations */
 
-# if two input files, then second one should contain parameters
-if [ "$#" -eq 2 ]; then
-    parfile=$2    
-    #echo "warning: parameter file $parfile will not be taken into account"
-    cp $2 .odexp/model.par
-else # .odexp/model.op and /odexp.par are the same
-    parfile=$file   
-    cp $parfile .odexp/model.par
-fi
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*NOTHING*/
+#endif
+
+/* Libraries */
+
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+
+/* Header files */
+
+#include "odexp.h"
+
+);
+ 
+  print $fch $heading;
+
+}
+
+sub set_defines 
+{
+  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  while (<$fh>) 
+  {
+    my @fields = split; 
+    if ( /^[sS]/ )  
+    {
+      print $fch "#define " . join(' ',@fields[1..$#fields]) . "\n";       
+    }
+  }
+  close($fh);
+}
 
 
-
-declare_iterators () {
-    gawk -F ' ' -v i=1 '/(\[.+\])+/ && $1 !~ /#/ && $1 !~ /^[cC]/ { match($2,/(\[.+\])+/);
-        a=substr($2, RSTART, RLENGTH);
-        split(a,b,/[\[\]=:]/);
-        for(k=2;k<=length(b);k+=4) 
-        { 
-          iter[i]=b[k]; 
-          i++
-        }
-      }
-      END {
-        for(j=1;j<length(iter);j++) 
-        { 
-          for(k=j+1;k<=length(iter);k++)
+sub declare_array_from_file
+{
+  # expecting: F my_array_name nRow nCols filename.dat 
+  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  while (<$fh>) 
+  {
+    if ( /^[fF]/ )  
+    {
+      my @fields = split; 
+      if ( 0+@fields < 5 ) { die "missing something at line: $_" };
+      my ($var, $nbr_rows, $nbr_cols, $data_filename) = @fields[1..4];
+      print $fch "/* array from file: %s */\n";
+      print $fch "static const double ${var}[$nbr_rows][$nbr_cols] = {";
+      open(my $datafh, '<', $data_filename) or die "Could not open file '$data_filename'. $!";
+      while( <$datafh> )
+      {
+          my @datafields = split;
+          print $fch "{";
+          for( my $j = 0; $j<$nbr_cols-1; ++$j )
           {
-            if(iter[j]==iter[k])
-            {
-              iter[k]=""
-            }
+            print $fch "$datafields[$j], ";
           }
-        };
-        nu=1;
-        for(j=1;j<=length(iter);j++)
-        {
-          if(iter[j]!="")
+          if ( $. < $nbr_rows ) 
           {
-            uniq[nu]=iter[j];
-            nu++
+            printf $fch "$datafields[$#datafields]},\\\n        "; 
+          } else
+          {
+            printf $fch "$datafields[$#datafields]}}; /* source: $data_filename */\n\n";
           }
-        }
-        if(length(uniq)>0)
-        { 
-          printf "    size_t ";
-          for(k=1;k<length(uniq);k++)
-          {
-            printf "%s,", uniq[k] 
-          };
-          printf "%s;\n", uniq[length(uniq)]; 
-        };
-      }' $file >>.odexp/model.c
-}
-
-set_defines () {
-    gawk -F ' ' '$1 ~ /^[sS][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-        var=$2;
-        $1="";
-        $2="";
-        ex=$0;
-        printf "#define %s %s\n", var, ex;
-        };
-				$1 ~ /^[sS][a-zA-Z0-9]*$/ && $2 ~ /\[.+:.+\]/ {
-				print "  " $0 "\n  Error: arrays not allowed in S, exiting..." > "/dev/stderr";
-				exit 1;
-				}' $file >>.odexp/model.c
-}
-
-declare_constant_array () {
-    # declare and initialize constant array
-    gawk -F ' ' '$1 ~ /^[cC][a-zA-Z0-9]*$/ {
-        var=$2;
-        $1="";
-        $2="";
-        ex=$0;
-        printf "static const double %s = %s;\n", var, ex;
-    }' $file >>.odexp/model.c  
-}
-
-declare_array_from_file () {
-    # expecting: F my_array_name nRow nCols filename.dat 
-    gawk -F ' ' '$1 ~ /^[fF][a-zA-Z0-9]*$/ {
-        filename=$5;
-        nRow=$3;
-        nCol=$4;
-        var=$2;
-        printf "/* array from file: %s */\n", filename;
-        printf "static const double %s[%d][%d] = {", var, nRow, nCol;
-        i=0;
-        while(i<(nRow-1))
-        {
-            getline <filename;
-            printf "{";
-            for(j=1;j<nCol;j++)
-                {
-                    printf "%g, ", $j;
-                }
-            printf "%g},\\\n        ", $nCol; 
-            i++;
-        }
-        getline <filename
-        printf "{";
-        for(j=1;j<nCol;j++)
-            {
-                printf "%g, ", $j;
-            }
-        printf "%g}};\n\n", $nCol;
-    }' $file >>.odexp/model.c  
-}
-
-declare_parameters () {
-# find variable parameters and declare them in model.c 
-    gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {
-        split($0,a,/[{}]/);
-        switch (toupper(a[2])) {
-            case /INITIAL/ :
-            case /UNUSED/  :
-            case /INEXPR/  :
-            case /POP/  :
-                printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++;
-                break;
-            default :
-                printf "    double %s = pars_[%d];\n", $2, i++;
-        }
-    }' $file >>.odexp/model.c
-}
-
-declare_parameters_ic () {
-# find variable parameters and declare them in model.c 
-    gawk -F ' ' -v i=0 '$1 ~ /^[pP][a-zA-Z0-9]*$/ {
-        split($0,a,/[{}]/);
-        switch (toupper(a[2])) {
-            case /INITIAL/ :
-            case /INEXPR/  :
-                printf "    double %s = pars_[%d];\n", $2, i++;
-                break;
-            default :
-                printf "    double %s __attribute__((unused)) = pars_[%d];\n", $2, i++;
-        }
-    }' $file >>.odexp/model.c
-}
-
-declare_parametric_expressions () {
-    # find parametric expressions and declare them in .odexp/model.c
-    # find parametric expression vectors and declare them in .odexp/model.c
-    gawk -F ' ' '$1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      printf "    double %s;\n", $2 };
-      $1 ~ /^[eE]/ && $2 ~ /(\[.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myvar=c[1];
-      {printf "    double %s", myvar };
-      for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
-      {printf ";\n"} }' $file >>.odexp/model.c
-}
-
-declare_couplings () {
-    # find couplings and declare them in .odexp/model.c
-    # no vector allowed
-    gawk -F ' ' '$1 ~ /^%[cC][a-zA-Z0-9]*$/ {
-      printf "    double %s;\n", $2 
-    }' $file >>.odexp/model.c
-}
-
-declare_meanfields () {
-    # find mean fields and declare them in .odexp/model.c
-    # no vector allowed
-    gawk -F ' ' '$1 ~ /^%[mM][a-zA-Z0-9]*$/ {
-      printf "    double %s;\n", $2 
-    }' $file >>.odexp/model.c
-}
-
-declare_variables () {
-    # find variables and declare them to model.c
-    # find vector variables and declare them to model.c
-    gawk -F ' ' '$1 ~ /^[iI][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {printf "    double %s;\n", $2 };
-      $1 ~ /^[iI][a-zA-Z0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myvar=c[1];
-      {printf "    double %s", myvar };
-      for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
-      {printf ";\n"} }' $file >>.odexp/model.c
-}
-
-declare_auxiliary_functions () {
-    # find auxiliary variables and declare them to model.c
-    # find vector auxiliary function and declare them to model.c
-    gawk -F ' ' '$1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {printf "    double %s;\n", $2};
-      $1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myvar=c[1];
-      {printf "    double %s", myvar };
-      for (k=2; k<=length(b); k+=4) { printf "[%s]", b[k+2] }; 
-      {printf ";\n"} }' $file >>.odexp/model.c
-}
-
-define_functions () {
-    # declare and define user-defined functions
-    gawk -F " = " '$1 ~ /^@/ {
-        lhs=$1;
-        $1="";
-        expr=$0;
-        gsub(/^[ ]*/,"",expr);
-        gsub(/[ ]*$/,"",expr);
-        split(lhs,myfunc,/[@=]/);
-        split(myfunc[2],funcargs,/[()]/);
-        funcname=funcargs[1];
-        myargs=funcargs[2];
-        nargs=split(myargs,myargs_list,/,/);
-        gsub(/^[ ]*/,"",funcname);
-        gsub(/[ ]*$/,"",funcname);
-        printf "double %s(", funcname;
-        for(i=1;i<nargs;i++) {
-            gsub(/^[ ]*/,"",myargs_list[i]);
-            gsub(/[ ]*$/,"",myargs_list[i]);
-            printf "double %s, ", myargs_list[i]; 
-        }
-        gsub(/^[ ]*/,"",myargs_list[nargs]);
-        gsub(/[ ]*$/,"",myargs_list[nargs]);
-        printf "double %s", myargs_list[nargs];
-        printf  ")\n{\n    return %s;\n}\n", expr;
-    }' $file >>.odexp/model.c  
-}
-
-define_parametric_expressions () {
-    # define parametric expressions and declare them in .odexp/model.c
-    # define vector parametric expressions and declare them in .odexp/model.c
-    gawk -F ' ' '$1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      lhs=$2;
-      $1="";
-      $2="";
-      ex=$0;
-      printf "    %s = %s;\n", lhs, ex
-      };
-      $1 ~ /^[eE]/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myvar=c[1];
-      $1="";
-      $2="";
-      ex=$0;
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
-      };
-      {printf "%-*s%s", k+2, "", myvar};
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "[%s]", b[k] 
-      }; 
-      {printf " = %s; \n", ex};
-      for (k=length(b)-1; k>=2; k-=4)
-      {
-        printf "%-*s}\n", k, ""    
-      };
-      }' $file >>.odexp/model.c
-}
-
-define_couplings () {
-    # define couplings and declare them in .odexp/model.c
-    # No vectors allowed 
-    gawk -F ' ' -v nv=0 '$1 ~ /^%[cC][a-zA-Z0-9]*$/ {
-      lhs=$2;
-      printf "    %s = psi_[%d];\n", lhs, nv; nv++
-    }' $file >>.odexp/model.c
-}
-
-define_meanfields () {
-    # define mean fields and declare them in .odexp/model.c
-    # No vectors allowed 
-    gawk -F ' ' -v nv=0 '$1 ~ /^%[mM][a-zA-Z0-9]*$/ {
-      lhs=$2;
-      printf "    %s = mfd_[%d];\n", lhs, nv; nv++
-    }' $file >>.odexp/model.c
-}
-
-get_couplings () {
-    # 
-    gawk -F ' ' -v nv=0 '$1 ~ /^%[cC][a-zA-Z0-9]*$/ {
-      $1="";
-      $2="";
-      rhs=$0;
-      printf "                myself_->psi[%d] += %s;\n", nv, rhs; nv++
-    }' $file >>.odexp/model.c
-}
-
-get_meanfields () {
-    # 
-    gawk -F ' ' -v nv=0 '$1 ~ /^%[mM][a-zA-Z0-9]*$/ {
-      $1="";
-      $2="";
-      rhs=$0;
-      printf "    myself_ = SIM->pop->start;\n"
-      printf "    i = 0;\n"
-      printf "    while ( myself_ != NULL )\n"
-      printf "    {\n"
-      printf "        SIM->meanfield[%d] += %s;\n", nv, rhs; nv++
-      printf "        i++;\n"
-      printf "        myself_ = myself_->nextel;\n"
-      printf "    }\n"
-    }' $file >>.odexp/model.c
-}
-
-define_auxiliary_functions () {
-    # define auxiliary function to model.c
-    gawk -F ' ' '$1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      lhs=$2;
-      $1="";
-      $2="";
-      split($0,exa,/[{}#]/);
-      ex=exa[1];
-      printf "    %s = %s;\n", lhs, ex
-      };
-      
-      $1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myvar=c[1];
-      $1="";
-      $2="";
-      split($0,exa,/[{}#]/);
-      ex=exa[1];
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
-      };
-      {printf "%-*s%s", k+2, "", myvar};
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "[%s]", b[k] 
-      }; 
-      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $file >>.odexp/model.c
-}
-
-define_variables () {
-  gawk -F ' ' -v nv=0 '$1 ~ /^[dD][a-zA-Z0-9_]+(\[[^:]\])*\/[dD]{1}[tT]{1}/ {
-      match($1,/^[dD][a-zA-Z0-9_\[\]]+/);
-      lhs=substr($1, RSTART+1,RLENGTH-1);
-      printf "    %s = y_[%d];\n", lhs, nv; nv++};
-      
-      $1 ~ /^[dD][a-zA-Z0-9_]+(\[.+=.+:.+\])+\/[dD][tT]/ {  
-      match($1,/(\[.+\])+/);
-      a=substr($1, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      match($1,/^[dD][a-zA-Z0-9_]+/);
-      myvar=substr($1, RSTART+1,RLENGTH-1);
-      split($0,e,/=/);
-      myexpr=e[length(e)];
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
-      };
-      {printf "%-*s%s", k+2, "", myvar};
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "[%s]", b[k] 
-      }; 
-      {printf " = y_["};
-      for (k=2; k<=length(b); k+=4)
-      {
-        printf "%s+%d", b[k], nv-b[k+1];
-        nv+=b[k+2]-b[k+1]
       }
-      {  printf "];\n %-*s}\n", k-2, "" };  
-    }' $file >>.odexp/model.c
+      close($datafh);
+    }
+  }
+  close($fh);
 }
 
-define_equations () {
-    gawk -F ' ' -v nv=0 '$1 ~ /^[dD][a-zA-Z0-9_]+(\[[^:]\])*\/[dD]{1}[tT]{1}/ {
-      split($0,ex,/[={}#]/); 
-      printf "    f_[%d] = %s;\n", nv, ex[2]; nv++ };
+sub declare_constant_array
+{
+  # declare and initialize constant array
+  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  print $fch "/* Declaration and definition of constant arrays */\n\n";
+  while (<$fh>) 
+  {
+    if ( /^[cC]/ )  
+    {
+      my @fields = split; 
+      my $var = $fields[1];
+      print $fch "static const double $var = " . join(' ', @fields[2..$#fields]) . ";\n\n";
       
-      $1 ~ /^[dD][a-zA-Z0-9_]+(\[.+=.+:.+\])+\/[dD][tT]/ {
-      match($1,/(\[.+\])+/);
-      a=substr($1, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      myvar="f_";
-      split($0,e,/[^=]=[^=]/);
-      myrhs=e[length(e)];
-      split(myrhs,e2,/[{}#]/);
-      myexpr=e2[1];
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
-      };
-      {printf "%-*s%s", k+2, "", myvar};
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "[%s+%d]", b[k], nv-b[k+1]
-        nv+=b[k+2]-b[k+1] 
-      }; 
-      {printf " = %s;\n%-*s}\n", myexpr, k-2, ""}; }' $file >>.odexp/model.c
+    }
+  }
+  close($fh);
+
 }
 
-define_aux_pointer () {
-    gawk -F ' ' -v nv=0 '$1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      ex=$2;
-      printf "    aux_[%d] = %s;\n", nv, ex; nv++
-      };
-      
-      $1 ~ /^[aA][a-zA-Z0-9]*$/ && $2 ~ /(\[.+:.+\])+/ { match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      myvar="aux_";
-      split($2,c,/\[/);
-      ex=c[1];
-      printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", 4, "", b[2], b[3], b[2], b[4], b[2]; 
-      printf "%-*s%s[%s+%d]", 7, "", myvar, b[2], nv;
-      printf " = %s[%s];\n%-*s}\n", ex, b[2], 4, "";
-      nv+=b[4]-b[3]
-      }' $file >>.odexp/model.c
+sub define_functions
+{
+  # declare and define user-defined functions
+  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  print $fch "/* Declaration and definition user-defined functions */\n\n";
+  while (<$fh>) 
+  {
+    /^@/ or next;  
+    my @fields = split /=/; 
+    my @fs = split /[(,)@]/, shift(@fields);
+    @fs = grep /\S/, @fs; # remove empty elements
+    print $fch "double " . shift(@fs) . "(";
+    while( @fs )
+    {
+      my $s = shift(@fs); # get next argument 
+      $s =~ s/^\s*|\s*$//g; # trim whitespaces
+      print $fch "double " . $s; 
+      print $fch ", " if @fs;  # , only if not last argument
+    }
+    print $fch ")\n{\n";
+    my @rhs = split /;|\(\{|\}\)/ , join('=', @fields);
+    @rhs = grep /\S/, @rhs; # remove empty elements
+    while ( @rhs )
+    {
+      my $s = shift(@rhs); 
+      $s =~ s/^\s*|\s*$//g; # trim
+      print $fch "    " . $s . ";\n" if @rhs; 
+      print $fch "    return " . $s . ";\n" if not @rhs; 
+    }
+    print $fch "}\n\n";
+  }
+  close($fh);
+   
 }
 
-define_parametric_expression_pointer () {
-    gawk -F ' ' -v nv=0 '$1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      lhs=$2;
-      printf "    expr_[%d] = %s;\n", nv, lhs; nv++
-      };
-      $1 ~ /^[eE]/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myrhsvar=c[1];
-      $1="";
-      $2="";
-      ex=$0;
-      printf "    ii_ = 0;\n";
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
-      };
-      {printf "%-*sexpr_[%d+ii_++]", k+2, "", nv};
-      {printf " = %s", myrhsvar};
-      mm = 1;
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "[%s]", b[k] 
-        mm*=b[k+2]-b[k+1] 
-      }; 
-      nv+=mm;
-      {printf ";\n"};
-      for (k=length(b)-1; k>=2; k-=4)
+sub declare_ode_functions
+{
+	# DECLARE ODE FUNCTIONS
+  print $fch "/* Declaration and definition of functions */\n";
+	my $s = qq(/* Functions */
+int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);
+int pop_rhs(double t, const double y[], double f[], void *params);
+int ode_rhs(double t, const double y_[], double f_[], void *params);
+int pop_init_conditions(const double t, double y[], void *params);
+int ode_init_conditions(const double t, double y_[], void *params);
+
+);
+	print $fch $s;
+}
+
+sub print_main
+{
+	my $s = qq(int main ( int argc, char *argv[] )
+{
+    int status;
+
+    if ( argc == 2 ) {
+        status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,argv[1]);
+    }
+    else {
+        status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,"unknown file name");
+    }
+
+
+    exit(EXIT_SUCCESS);
+}
+
+);
+	print $fch $s;
+
+}
+
+sub print_multiroots
+{
+	my $s = qq(/* Wrapper function for ode_rhs. Modify at your own risks */
+int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f)
+{
+    double *y,*ff;
+    size_t i;
+    int ode_system_size = x->size;
+    y = malloc(ode_system_size*sizeof(double));
+    ff = malloc(ode_system_size*sizeof(double));
+    for ( i = 0; i<ode_system_size; i++ )
+    {
+        y[i] = gsl_vector_get(x, i);
+    }
+    ode_rhs(0.0,y,ff,params);
+
+    for ( i=0; i<ode_system_size; i++ )
+    {
+        gsl_vector_set(f, i, ff[i]);
+    }
+
+    free(y);
+    free(ff);
+
+    return GSL_SUCCESS;
+}
+
+);
+	print $fch $s; 
+}
+
+sub print_pop_rhs
+{
+	my $s = qq(/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */
+int pop_rhs(double t, const double y[], double f[], void *params)
+{
+    clock_t start = clock();
+    size_t i = 0, j;
+    par *myself_ = SIM->pop->start;
+    par *other_ = (par *)NULL;
+    SIM->pop_birth_rate=0.0;
+    for(j=0;j<SIM->nbr_mfd;j++)
+    {
+        SIM->meanfield[j] = 0.0;
+    }
+    while ( myself_ != NULL )
+    {
+        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate
+                                                                      * first update myself_->repli_rate       */
+);
+	print $fch $s;
+  set_population_birth_rate($modelode);
+  $s = qq(        i++;
+        myself_ = myself_->nextel;
+    }
+);
+	print $fch $s;	
+	set_population_meanfields($modelode);
+  $s = qq(    for (j=0;j<SIM->nbr_mfd;j++)
+    {
+        SIM->meanfield[j] /= POP_SIZE;
+    }
+    SIM->pop_birth_rate /= POP_SIZE;
+    myself_ = SIM->pop->start;
+    i = 0;
+    while ( myself_ != NULL )
+    {
+        /* update couplings if nbr_psi > 0 */
+        if ( myself_->nbr_psi )
+        {
+            for(j=0;j<myself_->nbr_psi;j++)
+            {
+                myself_->psi[j] = 0.0;
+            }
+            other_ = SIM->pop->start;
+            while ( other_ != NULL )
+            {
+);
+	print $fch $s;	
+	set_population_coupling($modelode);
+  $s = qq(                other_ = other_->nextel;
+            }
+            for (j=0;j<myself_->nbr_psi;j++)
+            {
+                myself_->psi[j] /= POP_SIZE;
+            }
+        }
+        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);
+        i++;
+        myself_ = myself_->nextel;
+    }
+
+    SIM->time_in_ode_rhs += (clock()-start)*1000.0 / CLOCKS_PER_SEC;
+    return GSL_SUCCESS;
+}
+
+);
+	print $fch $s;	
+}
+
+sub set_population_birth_rate
+{
+  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+	while ( <$fh> )    
+	{
+		/^%BIRTH/i or next;
+    my @fields = split;
+    shift(@fields);
+		print $fch "        SIM->pop_birth_date += " . join(' ', @fields) . ";\n";
+	}
+	close($fodeh);
+	
+}
+
+sub set_population_meanfields
+{
+	open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  my $nv=0;
+	while ( <$fh> )    
+	{
+		/^%M/i or next;
+    my @fields = split;
+    my $s = join(' ', @fields[2..$#fields]);
+		print $fch "        myself_ = SIM->pop->start;\n";
+		print $fch "        i = 0;\n";
+		print $fch "        while ( myself_ != NULL )\n";
+		print $fch "        {\n";
+		print $fch "            SIM->meanfield[$nv] += $s;\n"; 
+    ++$nv;
+		print $fch "            i++;\n";
+ 		print $fch "            myself_ = myself_->nextel;\n";
+ 		print $fch "        }\n";
+	}
+	close($fh);
+
+}
+
+sub set_population_coupling
+{
+
+  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  my $nv=0;
+	while ( <$fh> )    
+	{
+		/^%C/i or next;
+    my @fields = split;
+    my $s = join(' ', @fields[2..$#fields]);
+		print $fch "                myself_->psi[$nv] += $s;\n";
+		++$nv;
+	}
+	close($fodeh);
+	
+}
+
+sub print_pop_init_conds
+{
+	my $s = qq(/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is an array of size pop_size*ode_system_size */
+int pop_init_conditions(const double t, double y[], void *params)
+{
+    size_t i = 0, j;
+    par *myself_ = SIM->pop->start;
+    while ( myself_ != NULL )
+    {
+        ode_init_conditions(t, y+i*myself_->nbr_y, myself_);
+        for(j=0;j<myself_->nbr_y;j++)
+        {
+            myself_->y[j] = *(y+i*myself_->nbr_y);
+        }
+        i++;
+        myself_ = myself_->nextel;
+    }
+
+    return GSL_SUCCESS;
+}
+
+);
+	print $fch $s;	
+}
+
+sub print_ode_rhs
+{
+	my $s = qq(/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single node */
+int ode_rhs(double t, const double y_[], double f_[], void *params_)
+{
+    par *myself_ = (par *)params_;
+    double * pars_ __attribute__((unused)) = SIM->mu;
+    double * aux_  __attribute__((unused)) = myself_->aux;
+    double * expr_ __attribute__((unused)) = myself_->expr;
+    double * psi_  __attribute__((unused)) = myself_->psi;
+    double * mfd_  __attribute__((unused)) = SIM->meanfield;
+
+);
+  print $fch $s;	
+	declare_iterators($modelode);
+  declare_define_parameters($modelode,"ode");  
+  declare_scalar_or_array($modelode,"E","parametric expressions");
+  declare_scalar_or_array($modelode,"%C","couplings");
+  declare_scalar_or_array($modelode,"%M","mean fields");
+  declare_scalar_or_array($modelode,"A","auxiliary functions");
+  declare_scalar_or_array($modelode,"I","dynamical variables");
+  define_1d_array_from_input($modelode, "expr_", "E",
+    qr/\w+\s+(\w+)/, qr/\w+\s+(\w+)\s+[^\[]/,
+    "initialization parametric expressions");
+  define_1d_array_from_input($modelode, "y_", "D",
+    qr/[dD](\w+)/, qr/[dD](\w+)\/dt/,
+    "initialization dynamical variables");
+  define_1d_array_from_input($modelode, "psi_", "%C",
+    qr/\w+\s+(\w+)/, qr/\w+\s+(\w+)\s+[^\[]/,
+    "initialization couplings");
+  define_1d_array_from_input($modelode, "mfd_", "%M",
+    qr/\w+\s+(\w+)/, qr/\w+\s+(\w+)\s+[^\[]/,
+    "initialization meanfields");
+  define_array_functions($modelode,
+    "A", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "initialization auxiliary functions");
+  assign_output($modelode,
+    "D", "f_", qr/^[dD](\w+)(\[[^\[\]]+\])?\/dt\s?=\s?(.*)$/,
+    "assign equations FIXME", "rhs");
+  assign_output($modelode,
+    "A", "aux_", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "assign auxiliary array pointer", "pointer");
+  assign_pop_rate($modelode,
+    "%DEATH", "myself->death_rate",
+    "assign particle death rate");
+  assign_pop_rate($modelode,
+    "%REPLI", "myself->death_rate",
+    "assign particle replication rate");
+  print $fch "\n    return GSL_SUCCESS;\n}"
+}
+
+sub print_ode_init_cond
+{
+  my $s = qq(int ode_init_conditions(const double t, double y_[], void *params_)
+{
+    par *myself_ = (par *)params_;
+    double * pars_ __attribute__((unused)) = SIM->mu;
+    double * aux_  __attribute__((unused)) = myself_->aux;
+    double * expr_ __attribute__((unused)) = myself_->expr;
+    int success_ = 0;
+);
+  print $fch $s;
+  declare_iterators($modelode);
+  declare_define_parameters($modelode,"ic");  
+  declare_scalar_or_array($modelode,"E","parametric expressions");
+  define_array_functions($modelode,
+    "E", qr/^[eE]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "initialization parametric expressions");
+  assign_output($modelode,
+    "E", "expr_", qr/^[eE]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "assign parametric expression pointer", "rhs");
+  assign_output($modelode,
+    "I", "y_", qr/^[iI]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "assign initial conditions", "rhs");
+  print $fch "\n    return GSL_SUCCESS;\n}"
+}
+
+sub declare_iterators
+{
+	print $fch qq(    /* iterators */
+    size_t ii_ __attribute__((unused));
+);
+	open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  my @iterators;
+  my @unique_iters;
+	while ( <$fh> )    
+	{
+		!/^#/  or next; # ignore lines starting with '#'
+		!/^C/i or next;
+    /\[\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*\]+/ or next;
+    push @iterators, $1; # store iterator name
+	}
+	@iterators = sort @iterators;
+	my 
+	$iter = shift @iterators;
+  push @unique_iters, $iter;
+  while ( @iterators )
+ 	{
+		$iter = shift @iterators;
+		push @unique_iters, $iter if $unique_iters[$#unique_iters] ne $iter;
+	}
+  if ( $#unique_iters )
+  {
+	  print $fch "    size_t " . join(', ', @unique_iters) . ";\n";
+  }
+  print $fch "\n";
+}
+
+
+sub declare_define_parameters
+{
+  my ($fname,$func) = @_;
+  print $fch "    /* parameters */\n";
+	open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
+  my $i = 0;
+	while ( <$fh> )    
+	{
+  	/^P/i or next;
+    my @fields = split;
+		my $par_attribute = "";
+		$par_attribute = $1 if /{(\s*\w+\s*)+}/;
+    if ( $func =~ /ode/ )
+    {
+		  if (uc $par_attribute eq "INITIAL" or
+			    uc $par_attribute eq "UNUSED" or
+			    uc $par_attribute eq "INEXPR" or
+			    uc $par_attribute eq "POP")	
+		  {
+			  ++$i;
+		  } else
+		  {
+        print $fch "    double $fields[1] = pars_[$i];\n";
+			  ++$i;
+		  }
+    } else
+    {
+		  if (uc $par_attribute eq "INITIAL" or
+			    uc $par_attribute eq "INEXPR")	
+		  {
+        print $fch "    double $fields[1] = pars_[$i];\n";
+			  ++$i;
+		  } else
+		  {
+			  ++$i;
+		  }
+    }
+	}
+  print $fch "\n";
+  close($fh);
+}
+
+
+sub declare_scalar_or_array
+{
+  my ($fname,$character,$descr) = @_;
+  print $fch "    /* $descr */\n";
+  open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
+  while ( <$fh> )    
+ 	{
+		/^$character/i or next;
+    /\w+\s+(\w+)(.*)/;
+    print $fch "    double $1";
+		my @fields = split '[\[\]]';
+    if ($fields[0] =~ /\w+\s+\w+\s+\w+/)
+    {
+      print $fch ";\n";
+      next;
+    }
+    shift @fields;
+    my @iter_stat;
+    while ( @fields )
+    {
+      push @iter_stat, $fields[0];
+      shift @fields;
+      if ($fields[0] =~ /^\s*$/)  
       {
-        printf "%-*s}\n", k, ""    
-      };
-      }' $file >>.odexp/model.c
-}
-
-define_parametric_expressions_from_expr_pointer () {
-    gawk -F ' ' -v nv=0 '$1 ~ /^[eE][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      lhs=$2;
-      printf "    %s = expr_[%d];\n", lhs, nv; nv++
-      };
-      $1 ~ /^[eE]/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myrhsvar=c[1];
-      $1="";
-      $2="";
-      ex=$0;
-      printf "    ii_ = 0;\n";
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
-      };
-      {printf "%*s%s", k+2, "",  myrhsvar};
-      mm = 1;
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "[%s]", b[k] 
-        mm*=b[k+2]-b[k+1] 
-      }; 
-      {printf " = expr_[%d+ii_++]", nv};
-      nv+=mm;
-      {printf ";\n"};
-      for (k=length(b)-1; k>=2; k-=4)
+        shift @fields;
+      }
+      else
       {
-        printf "%-*s}\n", k, ""    
-      };
-      }' $file >>.odexp/model.c
+        last;
+      }
+    }
+    while( @iter_stat )
+    {
+      my $iters = shift @iter_stat;
+      $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+      my ($i,$a,$b) = ($1, $2, $3);
+      print $fch "[$b]";
+    }
+    print $fch ";\n";
+	}	
+  print $fch "\n";
+  close($fh);
 }
 
-define_initial_conditions () {
-    gawk -F ' ' -v nv=0 '$1 ~ /^[iI][a-zA-Z0-9]*$/ && $2 !~ /\[.+:.+\]/ {
-      $1="";
-      $2="";
-      split($0,exa,/[{}#]/);
-      ex=exa[1];
-      printf "    y_[%d] = %s;\n", nv, ex;
-      nv++
-      };
-      $1 ~ /^[iI][a-zA-Z0-9]*$/ && $2 ~ /(\[.+:.+\])+/ {match($2,/(\[.+:.+\])+/);
-      a=substr($2, RSTART, RLENGTH);
-      split(a,b,/[\[\]=:]/);
-      split($2,c,/\[/);
-      myvar="y_";
-      $1="";
-      $2="";
-      split($0,exa,/[{}#]/);
-      ex=exa[1];
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "%-*sfor(%s=%s;%s<%s;%s++) {\n", k+2, "", b[k], b[k+1], b[k], b[k+2], b[k] 
-      };
-      {printf "%-*s%s", k+2, "", myvar};
-      for (k=2; k<=length(b); k+=4) 
-      { 
-        printf "[%s+%d]", b[k], nv 
-        nv+=b[k+2]-b[k+1]
-      }; 
-      {printf " = %s;\n%-*s}\n", ex, k-2, ""}; }' $file >>.odexp/model.c
+sub define_1d_array_from_input
+{
+  my ($fname,$rhs,$pat_char,$pat_name,$pat_iter,$descr) = @_;
+  open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
+  print $fch "    /* $descr */\n";
+  my $ii = 0;
+  while ( <$fh> )    
+  {
+    /^$pat_char/i or next;
+    /$pat_name/;
+    my $name = $1;
+		my @fields = split '[\[\]]';
+    if ($fields[0] =~ /$pat_iter/)
+    {
+      print $fch "    $name = ${rhs}[$ii];\n";
+      ++$ii;
+      next;
+    }
+    shift @fields;
+    my $iter = $fields[0];
+    $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+    my ($i,$a,$b) = ($1,$2,$3);
+    print $fch "    for($i=$a;$i<$b;++$i)\n";
+    print $fch "    {\n";
+    print $fch "        $name";
+    my $i0 = $ii - $a;
+    print $fch "[$i] = ${rhs}[$i+$i0]" . ";\n"; 
+    $ii += ($b-$a);
+    print $fch "    }\n";
+
+  }
+  print $fch "\n";
+  close($fh);
 }
 
-# ==========================================================================================
-# Write C file
-# ==========================================================================================
-echo "/* function implementations */" >.odexp/model.c
-echo "" >>.odexp/model.c
-echo "#ifndef __GNUC__ " >>.odexp/model.c
-echo "#  define  __attribute__(x)  /*NOTHING*/" >>.odexp/model.c
-echo "#endif" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "/* Libraries */" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "#include <gsl/gsl_errno.h>" >>.odexp/model.c
-echo "#include <gsl/gsl_vector.h>" >>.odexp/model.c
-echo "#include <gsl/gsl_matrix.h>                              " >>.odexp/model.c
-echo "#include <string.h>                            " >>.odexp/model.c
-echo "#include <math.h>                              " >>.odexp/model.c
-echo "#include <time.h>                              " >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "/* Header files */" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "#include \"odexp.h\"" >>.odexp/model.c
-#echo "#include \"utils_odexp.h\"" >>.odexp/model.c
-#echo "#include \"rand_gen.h\"" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "/* Defines */" >>.odexp/model.c
-echo "" >>.odexp/model.c
-set_defines
-echo "" >>.odexp/model.c
-echo "/* Global variables */" >>.odexp/model.c
-echo "" >>.odexp/model.c
-# ====================================================================================
-# DECLARE AND DEFINE CONSTANT ARRAYS
-echo "/* Declaration and definition of constant arrays from files */" >>.odexp/model.c
-declare_array_from_file
-echo "" >>.odexp/model.c  
-# ====================================================================================
-# ====================================================================================
-# DECLARE AND DEFINE CONSTANT ARRAYS
-echo "/* Declaration and definition of constant arrays */" >>.odexp/model.c
-declare_constant_array
-echo "" >>.odexp/model.c  
-# ====================================================================================
-# ====================================================================================
-# DECLARE AND DEFINE FUNCTIONS
-echo "/* Declaration and definition of functions */" >>.odexp/model.c
-define_functions
-echo "" >>.odexp/model.c  
-# ====================================================================================
+sub define_array_functions
+{
+  my ($fname,$pat_char,$pat_nameiter,$descr) = @_;
+  open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
+  print $fch "    /* $descr */\n";
+  my $ii = 0;
+  while ( <$fh> )    
+  {
+    /^$pat_char/i or next;
+    /$pat_nameiter/;
+    my $name = $1;
+    my $rhs = $3;
+    $rhs =~ s/(.*?)(\s*([#{}]|$))/$1; $2/; # put ; at the correct place
+    $rhs =~ s|#\s?(.*)|/* $1 */|; # to C comments
+    $rhs =~ s|({.*?})|/* $1 */|; # to C comments
+		my @fields = split '[\[\]]';
+    if ($fields[0] =~ /\w+\s+(\w+)\s+\w+/)
+    {
+      print $fch "    $name = $rhs\n";
+      ++$ii;
+      next;
+    }
+    shift @fields;
+    my @iters;
+    while ( @fields )
+    {
+      push @iters, $fields[0];
+      shift @fields;
+      if ($fields[0] =~ /^\s*$/)  
+      {
+        shift @fields;
+      }
+      else
+      {
+        last;
+      }
+    }
+    my $offset = qq();
+    foreach my $iter ( @iters )
+    {
+      $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+      my ($i,$a,$b) = ($1,$2,$3);
+      $offset = $offset . qq(    ); 
+      print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
+      print $fch $offset . "{\n";
+    }
+    print $fch $offset . "    $name";
+    foreach my $iters ( @iters )
+    {
+      $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+      my ($i,$a,$b) = ($1,$2,$3);
+      print $fch "[$i]";
+    }
+    print $fch " = $rhs" . "\n"; 
+    foreach my $iters ( @iters )
+    {
+      print $fch $offset . "}\n";
+      $offset = substr $offset, 0, -4;
+    }
+    print $fch "\n";
 
-echo "/* Functions */" >>.odexp/model.c
-echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);" >>.odexp/model.c
-echo "int pop_rhs(double t, const double y[], double f[], void *params);" >>.odexp/model.c
-echo "int ode_rhs(double t, const double y_[], double f_[], void *params);" >>.odexp/model.c
-echo "int pop_init_conditions(const double t, double y[], void *params);" >>.odexp/model.c
-echo "int ode_init_conditions(const double t, double y_[], void *params);" >>.odexp/model.c
-echo "" >>.odexp/model.c
+  }
+  print $fch "\n";
+  close($fh);
+  
+}
 
-# ====================================================================================
-# BEGIN MAIN 
-echo "int main ( int argc, char *argv[] )" >>.odexp/model.c
-echo "{" >>.odexp/model.c
-echo "    int status;" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    if ( argc == 2 ) {" >>.odexp/model.c
-echo "        status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,argv[1]);" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "    else {" >>.odexp/model.c
-echo "        status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,\"unkown\");" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    exit(EXIT_SUCCESS);" >>.odexp/model.c
-echo "}" >>.odexp/model.c
-echo "" >>.odexp/model.c
-# END MAIN
-# ====================================================================================
 
-# ====================================================================================
-# BEGIN MULTIROOT_RHS
-echo "/* Wrapper function for ode_rhs. Modify at your own risks */" >>.odexp/model.c
-echo "int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f)" >>.odexp/model.c
-echo "{" >>.odexp/model.c
-echo "    double *y,*ff;" >>.odexp/model.c
-echo "    size_t i;" >>.odexp/model.c
-echo "    int ode_system_size = x->size;" >>.odexp/model.c
-echo "    y = malloc(ode_system_size*sizeof(double));" >>.odexp/model.c
-echo "    ff = malloc(ode_system_size*sizeof(double));" >>.odexp/model.c
-echo "    for ( i = 0; i<ode_system_size; i++ )" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        y[i] = gsl_vector_get(x, i);" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "    ode_rhs(0.0,y,ff,params);" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    for ( i=0; i<ode_system_size; i++ )" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        gsl_vector_set(f, i, ff[i]);" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    free(y);" >>.odexp/model.c
-echo "    free(ff);" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    return GSL_SUCCESS;" >>.odexp/model.c
-echo "}" >>.odexp/model.c
-echo "" >>.odexp/model.c
-# END MULTIROOT_RHS
-# ====================================================================================
+sub assign_output 
+{
 
-# ====================================================================================
-# BEGIN POP_RHS
-echo "/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */" >>.odexp/model.c
-echo "int pop_rhs(double t, const double y[], double f[], void *params)" >>.odexp/model.c
-echo "{" >>.odexp/model.c
-echo "    clock_t start = clock();" >>.odexp/model.c
-echo "    size_t i = 0, j;" >>.odexp/model.c
-echo "    par *myself_ = SIM->pop->start;" >>.odexp/model.c
-echo "    par *other_ = (par *)NULL;" >>.odexp/model.c
-echo "    SIM->pop_birth_rate=0.0;" >>.odexp/model.c
-echo "    for(j=0;j<SIM->nbr_mfd;j++)" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        SIM->meanfield[j] = 0.0;" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "    while ( myself_ != NULL )" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate  " >>.odexp/model.c
-echo "                                                                      * first update myself_->repli_rate       */" >>.odexp/model.c
-# POPULATION BIRTH RATE  =====================================
-gawk -F ' ' '$1 ~ /^%[bB][a-zA-Z0-9]*$/ {$1 = ""; printf "        SIM->pop_birth_rate += %s;\n", $2}' $file >>.odexp/model.c
-# END POPULATION BIRTH RATE  =================================
-echo "        i++;" >>.odexp/model.c
-echo "        myself_ = myself_->nextel;" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
+  my ($fname,$pat_char,$lhs,$pat_nameiter,
+    $descr,$assign_rhs) = @_;
+  open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
+  print $fch "    /* $descr */\n";
+  my $ii = 0;
+  while ( <$fh> )    
+  {
+    /^$pat_char/i or next;
+    /$pat_nameiter/;
+    my $name = $1;
+    my $rhs = $3;
+		my @fields = split '[\[\]]';
+    my $rhs2print;
+    if ($assign_rhs =~ /rhs/)
+    {
+      $rhs2print = $rhs;
+      $rhs2print =~ s/(.*?)(\s*([#{}]|$))/$1; $2/; # put ; at the correct place
+      $rhs2print =~ s|#\s?(.*)|/* $1 */|; # '#' to C comments
+      $rhs2print =~ s|({.*?})|/* $1 */|; # '{}' to C comments
+    } else 
+    {
+      $rhs2print = $name;
+    }
+    if ($fields[0] =~ /\w+\s+(\w+)\s+\w+/) # scalar variable
+    {
+      print $fch "    ${lhs}[$ii] = " . $rhs2print;
+      print $fch ";" if $assign_rhs !~ /rhs/;
+      print $fch "\n";
+      ++$ii;
+      next;
+    }
+    shift @fields;                         # array variable, process iterators
+    my @iters;
+    while ( @fields )
+    {
+      push @iters, $fields[0];
+      shift @fields;
+      if ($fields[0] =~ /^\s*$/)           # if field empty, then shift
+      {
+        shift @fields;
+      }
+      else                                 # if field not empty, break out of while
+      {
+        last;
+      }
+    }
+    my $offset = qq();
+    my $iter_increment = 1;
+    foreach my $iter ( @iters )
+    {
+      $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+      my ($i,$a,$b) = ($1,$2,$3);
+      $offset = $offset . qq(    ); 
+      print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
+      print $fch $offset . "{\n";
+    }
+    print $fch $offset . "    ${lhs}[$ii";
+    foreach my $iters ( @iters )
+    {
+      $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+      my ($i,$a,$b) = ($1,$2,$3);
+      print $fch "+$i";
+      $iter_increment *= ($b-$a);
+    }
+    print $fch "] = $rhs2print"; 
+    $ii += $iter_increment;
+    if ( $assign_rhs !~  /rhs/ )
+    {
+      foreach my $iters ( @iters )
+      {
+        $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+        my ($i,$a,$b) = ($1,$2,$3);
+        print $fch "[$i]";
+      }
+      print $fch ";"; 
+    }
+    print $fch "\n";
+    foreach my $iters ( @iters )
+    {
+      print $fch $offset . "}\n";
+      $offset = substr $offset, 0, -4;
+    }
+    print $fch "\n";
 
-# DEFINE THE MEAN FIELDS ====
-get_meanfields
-# =========================
-echo "    for (j=0;j<SIM->nbr_mfd;j++)" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        SIM->meanfield[j] /= POP_SIZE;" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "    SIM->pop_birth_rate /= POP_SIZE;" >>.odexp/model.c
+  }
+  print $fch "\n";
+  close($fh);
+}
 
-# LOOP THROUGH ALL PARTICLES TO COMPUTE COUPLINGS =========
-echo "    myself_ = SIM->pop->start;" >>.odexp/model.c
-echo "    i = 0;" >>.odexp/model.c
-echo "    while ( myself_ != NULL )" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        /* update couplings if nbr_psi > 0 */" >>.odexp/model.c
-echo "        if ( myself_->nbr_psi )" >>.odexp/model.c
-echo "        {" >>.odexp/model.c
-echo "            for(j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
-echo "            {" >>.odexp/model.c
-echo "                myself_->psi[j] = 0.0;" >>.odexp/model.c
-echo "            }" >>.odexp/model.c
-echo "            other_ = SIM->pop->start;" >>.odexp/model.c
-echo "            while ( other_ != NULL )" >>.odexp/model.c
-echo "            {" >>.odexp/model.c
+sub assign_pop_rate
+{
+  my ($fname,$pat_char,$lhs,$descr) = @_;
+  open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
+  print $fch "    /* $descr */\n";
+  while ( <$fh> )    
+  {
+    /^$pat_char/i or next;
+    my @fields = split;
+    shift @fields;
+    print $fch "    $lhs = " . join(' ', @fields) . ";\n"; 
+  }
+  close($fh);
+}
 
-                  # ======================
-                  # DEFINE THE COUPLINGS
-                  get_couplings
-                  # ======================
-
-echo "                other_ = other_->nextel;" >>.odexp/model.c
-echo "            }" >>.odexp/model.c
-echo "            for (j=0;j<myself_->nbr_psi;j++)" >>.odexp/model.c
-echo "            {" >>.odexp/model.c
-echo "                myself_->psi[j] /= POP_SIZE;" >>.odexp/model.c
-echo "            }" >>.odexp/model.c
-echo "        }" >>.odexp/model.c
-echo "        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);" >>.odexp/model.c
-echo "        i++;" >>.odexp/model.c
-echo "        myself_ = myself_->nextel;" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-# END LOOP ===================================================
-
-echo "" >>.odexp/model.c
-echo "    SIM->time_in_ode_rhs += (clock()-start)*1000.0 / CLOCKS_PER_SEC;" >>.odexp/model.c
-
-echo "    return GSL_SUCCESS;" >>.odexp/model.c
-echo "}" >>.odexp/model.c
-echo "" >>.odexp/model.c
-# END POP_RHS
-# ====================================================================================
-
-# ====================================================================================
-# BEGIN POP_INIT_CONDITIONS
-echo "/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is an array of size pop_size*ode_system_size */" >>.odexp/model.c
-echo "int pop_init_conditions(const double t, double y[], void *params)" >>.odexp/model.c
-echo "{" >>.odexp/model.c
-echo "    size_t i = 0, j;" >>.odexp/model.c
-echo "    par *myself_ = SIM->pop->start;" >>.odexp/model.c
-echo "    while ( myself_ != NULL )" >>.odexp/model.c
-echo "    {" >>.odexp/model.c
-echo "        ode_init_conditions(t, y+i*myself_->nbr_y, myself_);" >>.odexp/model.c
-echo "        for(j=0;j<myself_->nbr_y;j++)" >>.odexp/model.c
-echo "        {" >>.odexp/model.c
-echo "            myself_->y[j] = *(y+i*myself_->nbr_y);" >>.odexp/model.c
-echo "        }" >>.odexp/model.c
-echo "        i++;" >>.odexp/model.c
-echo "        myself_ = myself_->nextel;" >>.odexp/model.c
-echo "    }" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    return GSL_SUCCESS;" >>.odexp/model.c
-echo "}" >>.odexp/model.c
-echo "" >>.odexp/model.c
-# END POP_INIT_CONDITIONS
-# ====================================================================================
-
-# ====================================================================================
-echo "/* this is the right-hand side of ODE system dy/dt = f(y,mu) for a single node */" >>.odexp/model.c
-echo "int ode_rhs(double t, const double y_[], double f_[], void *params_)" >>.odexp/model.c
-echo "{" >>.odexp/model.c
-echo "    par *myself_ = (par *)params_;" >>.odexp/model.c
-echo "    double * pars_ __attribute__((unused)) = SIM->mu;" >>.odexp/model.c
-echo "    double * aux_  __attribute__((unused)) = myself_->aux;" >>.odexp/model.c
-echo "    double * expr_ __attribute__((unused)) = myself_->expr;" >>.odexp/model.c
-echo "    double * psi_  __attribute__((unused)) = myself_->psi;" >>.odexp/model.c
-echo "    double * mfd_  __attribute__((unused)) = SIM->meanfield;" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "/*==== CHANGES CAN BE MADE BELOW ====*/" >>.odexp/model.c
-echo "" >>.odexp/model.c
-# ====================================================================================
-
-# ====================================================================================
-# ITERATORS
-# find iterators in the source file and declare them 
-# find all unique iterators
-echo "    /* iterators */" >>.odexp/model.c
-declare_iterators
-echo "    long ii_ __attribute__((unused));" >>.odexp/model.c
-echo "" >>.odexp/model.c
-# ====================================================================================
-
-# ====================================================================================
-# DECLARE AND DEFINE PARAMETERS
-# Parameters are scalars only
-
-echo "" >>.odexp/model.c
-echo "    /* parameters */" >>.odexp/model.c
-declare_parameters
-echo "" >>.odexp/model.c
-# ====================================================================================
-
-# ====================================================================================
-# DECLARE PARAMETRIC EXPRESSIONS AND DEFINE NONVECTOR PARAMETRIC EXPRESSIONS
-echo "    /* parametric expressions */" >>.odexp/model.c
-declare_parametric_expressions
-echo "" >>.odexp/model.c  
-# ====================================================================================
-
-# ====================================================================================
-# DECLARE COUPLINGS 
-echo "    /* couplings */" >>.odexp/model.c
-declare_couplings
-echo "" >>.odexp/model.c
-# ====================================================================================
-
-# ====================================================================================
-# DECLARE MEAN FIELDS
-echo "    /* mean fields */" >>.odexp/model.c
-declare_meanfields
-echo "" >>.odexp/model.c
-# ====================================================================================
-
-# ====================================================================================
-# DECLARE VARIABLES and AUXILIARY VARIABLES
-echo "    /* Declaration - auxiliary functions */" >>.odexp/model.c
-# find vector variables and declare them to model.c
-declare_auxiliary_functions
-echo "" >>.odexp/model.c  
-
-echo "" >>.odexp/model.c
-echo "    /* Declaration - variables */" >>.odexp/model.c
-declare_variables
-# ====================================================================================
-
-# ====================================================================================
-# DEFINE PARAMETRIC EXPRESSIONS
-echo "" >>.odexp/model.c
-echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
-# initialize parametric expression vectors and write them in .odexp/model.c
-define_parametric_expressions_from_expr_pointer 
-# ====================================================================================
-
-# ====================================================================================
-# DEFINE DYNAMICAL VARIABLES
-echo "" >>.odexp/model.c
-echo "    /* Initialization - variables */" >>.odexp/model.c
-define_variables
-
-# ====================================================================================
-# DEFINE COUPLINGS 
-echo "" >>.odexp/model.c
-echo "    /* Initialization - couplings */" >>.odexp/model.c
-define_couplings
-
-# ====================================================================================
-# DEFINE MEAN FIELDS 
-echo "" >>.odexp/model.c
-echo "    /* Initialization - mean fields */" >>.odexp/model.c
-define_meanfields
-
-# ====================================================================================
-# DEFINE AUXILIARY FUNCTIONS
-echo "" >>.odexp/model.c
-echo "    /* Initialization - auxiliary functions */" >>.odexp/model.c
-# initialize auxiliary function 
-define_auxiliary_functions
-
-# ====================================================================================
-# DEFINE EQUATIONS 
-echo "" >>.odexp/model.c
-echo "    /* Initialization - equations */" >>.odexp/model.c
-define_equations
-
-# ====================================================================================
-# DEFINE aux_pointer 
-echo "" >>.odexp/model.c
-echo "    /* Initialization - aux_ */" >>.odexp/model.c
-define_aux_pointer
-
-# ====================================================================================
-# DEFINE death_ 
-echo "" >>.odexp/model.c
-echo "    /* Initialization -  particle death */" >>.odexp/model.c
-gawk -F ' ' '$1 ~ /^%[dD][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->death_rate = %s;\n", $0}' $file >>.odexp/model.c
-
-# ====================================================================================
-# DEFINE repli_ 
-echo "" >>.odexp/model.c
-echo "    /* Initialization -  particle replication */" >>.odexp/model.c
-gawk -F ' ' '$1 ~ /^%[rR][a-zA-Z0-9]*$/ {$1 = ""; printf "    myself_->repli_rate = %s;\n", $0}' $file >>.odexp/model.c
-
-echo "" >>.odexp/model.c
-echo "/*==== CHANGES CAN BE MADE ABOVE ====*/" >>.odexp/model.c
-echo "" >>.odexp/model.c
-echo "    return GSL_SUCCESS;" >>.odexp/model.c
-echo "}" >>.odexp/model.c
-echo "" >>.odexp/model.c
-
-# =================================================================================
-# ODE_INIT_CONDITIONS
-# =================================================================================
-# function ode_init_conditions
-echo "int ode_init_conditions(const double t, double y_[], void *params_)" >>.odexp/model.c
-echo "{" >>.odexp/model.c
-echo "    par *myself_ = (par *)params_;" >>.odexp/model.c
-echo "    double * pars_ __attribute__((unused)) = SIM->mu;" >>.odexp/model.c
-echo "    double * aux_  __attribute__((unused)) = myself_->aux;" >>.odexp/model.c
-echo "    double * expr_ __attribute__((unused)) = myself_->expr;" >>.odexp/model.c
-echo "    int success_ = 0;" >>.odexp/model.c
-# ITERATORS
-# find iterators in the source file and declare them 
-echo "    /* iterators */" >>.odexp/model.c
-declare_iterators
-echo "    long ii_ __attribute__((unused));" >>.odexp/model.c
-echo "" >>.odexp/model.c
-
-# ====================================================================================
-# DECLARE AND DEFINE PARAMETERS
-# Parameters cannot be vectors
-echo "" >>.odexp/model.c
-echo "    /* parameters */" >>.odexp/model.c
-# find variable parameters and declare them in model.c 
-declare_parameters_ic
-# ====================================================================================
-
-# ====================================================================================
-# DECLARE PARAMETRIC EXPRESSIONS AND DEFINE NONVECTOR PARAMETRIC EXPRESSIONS
-echo "    /* parametric expressions */" >>.odexp/model.c
-declare_parametric_expressions
-# ====================================================================================
-
-# ====================================================================================
-# DEFINE PARAMETRIC EXPRESSIONS
-echo "" >>.odexp/model.c
-echo "    /* Initialization - parametric expressions */" >>.odexp/model.c
-define_parametric_expressions
-
-# ====================================================================================
-# DEFINE parametric_expression_pointer 
-echo "" >>.odexp/model.c
-echo "    /* initialization - expr pointer */" >>.odexp/model.c
-define_parametric_expression_pointer
-
-# ====================================================================================
-# DEFINE initial conditions 
-echo "" >>.odexp/model.c
-echo "    /* Initialization - initial condition */" >>.odexp/model.c
-define_initial_conditions
-
-echo "    " >>.odexp/model.c
-echo "    success_ = 1;" >>.odexp/model.c
-echo "    return success_;" >>.odexp/model.c
-echo "}" >>.odexp/model.c
-# END ode_init_conditions =================================================================================
-
-cp "$ODEXPDIR"/src/help.txt .odexp/
-cp "$ODEXPDIR"/src/.inputrc .odexp/
-
-echo "CFLAGS= -I$ODEXPDIR -Wall -Wno-gnu-statement-expression -g `pkg-config --cflags gsl` -pedantic" >.odexp/makefile
-echo "LDFLAGS=-g `pkg-config --libs gsl` -lm -L$ODEXPDIR -lodexp" >>.odexp/makefile
-echo "" >>.odexp/makefile
-echo "all: model.out " >>.odexp/makefile
-echo "" >>.odexp/makefile
-echo "model.out: model.o " >>.odexp/makefile
-echo "		gcc -o model.out \$(LDFLAGS) model.o " >>.odexp/makefile
-echo "" >>.odexp/makefile
-echo "model.o: model.c " >>.odexp/makefile
-echo "		gcc -c -o model.o \$(CFLAGS) model.c " >>.odexp/makefile
-echo "" >>.odexp/makefile
-echo "" >>.odexp/makefile
-echo "clean:" >>.odexp/makefile
-echo "		rm -f *.o" >>.odexp/makefile
-echo "" >>.odexp/makefile
-echo "veryclean:" >>.odexp/makefile
-echo "		rm -f *.o; rm -f *.out; rm -rf *.out.dSYM" >>.odexp/makefile
-
-cd .odexp
-
-make && cp model.out .. && cd .. && ./model.out $1
-
+my $LDFLAGS = "-O3 -lgsl -lodexp";
+system("gcc $LDFLAGS $odedir/model.c -o model.out") == 0 
+              or die "compiling failed: $?";
+exec ("./model.out $odefilename") or print STDERR "couldn't exec model.out: $!";
 
 
