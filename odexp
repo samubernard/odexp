@@ -413,7 +413,7 @@ sub set_population_birth_rate
 		/^%BIRTH/i or next;
     my @fields = split;
     shift(@fields);
-		print $fch "        SIM->pop_birth_date += " . join(' ', @fields) . ";\n";
+		print $fch "        SIM->pop_birth_rate += " . join(' ', @fields) . ";\n";
 	}
 	close($fodeh);
 	
@@ -527,12 +527,12 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
     "A", "aux_", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
     "assign auxiliary array pointer", "pointer");
   assign_pop_rate($modelode,
-    "%DEATH", "myself->death_rate",
+    "%DEATH", "myself_->death_rate",
     "assign particle death rate");
   assign_pop_rate($modelode,
-    "%REPLI", "myself->death_rate",
+    "%REPLI", "myself_->death_rate",
     "assign particle replication rate");
-  print $fch "\n    return GSL_SUCCESS;\n}"
+  print $fch "\n    return GSL_SUCCESS;\n}\n\n";
 }
 
 sub print_ode_init_cond
@@ -543,7 +543,6 @@ sub print_ode_init_cond
     double * pars_ __attribute__((unused)) = SIM->mu;
     double * aux_  __attribute__((unused)) = myself_->aux;
     double * expr_ __attribute__((unused)) = myself_->expr;
-    int success_ = 0;
 );
   print $fch $s;
   declare_iterators($modelode);
@@ -558,7 +557,7 @@ sub print_ode_init_cond
   assign_output($modelode,
     "I", "y_", qr/^[iI]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
     "assign initial conditions", "rhs");
-  print $fch "\n    return GSL_SUCCESS;\n}"
+  print $fch "\n    return GSL_SUCCESS;\n}\n\n";
 }
 
 sub declare_iterators
@@ -609,8 +608,8 @@ sub declare_define_parameters
     {
 		  if (uc $par_attribute eq "INITIAL" or
 			    uc $par_attribute eq "UNUSED" or
-			    uc $par_attribute eq "INEXPR" or
-			    uc $par_attribute eq "POP")	
+			    uc $par_attribute eq "INEXPR" or 
+          uc $par_attribute eq "POP" )	
 		  {
 			  ++$i;
 		  } else
@@ -621,7 +620,7 @@ sub declare_define_parameters
     } else
     {
 		  if (uc $par_attribute eq "INITIAL" or
-			    uc $par_attribute eq "INEXPR")	
+			    uc $par_attribute eq "INEXPR" )	
 		  {
         print $fch "    double $fields[1] = pars_[$i];\n";
 			  ++$i;
@@ -891,7 +890,8 @@ sub assign_pop_rate
 }
 
 my $LDFLAGS = "-O3 -lgsl -lodexp";
-system("gcc $LDFLAGS $odedir/model.c -o model.out") == 0 
+my $CFLAGS =  "-Wall -Wno-gnu-statement-expression -pedantic";
+system("gcc $CFLAGS $LDFLAGS $odedir/model.c -o model.out") == 0 
               or die "compiling failed: $?";
 exec ("./model.out $odefilename") or print STDERR "couldn't exec model.out: $!";
 
