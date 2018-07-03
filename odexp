@@ -9,6 +9,34 @@ use File::Path qw( make_path );
 use File::Spec;
 use File::Temp qw/ tempfile tempdir /;
 
+# ---------------------------------------
+# regexp
+# ---------------------------------------
+my $re_iter = qr/
+  \s*                   # whitespaces
+  \[(\w+?)              # iterator
+  \s*                   
+  =               
+  \s*     
+  (\d+)                 # start
+  \s*:\s*
+  (\d+)                 # end
+  \]
+/x;
+
+my $re_pace = qr/^
+  \s*([ACEIOPST])\w*    # type
+  \s+                   # whitespaces
+  (\w+)                 # varname 
+  (?:\s*\[.*?\])*       # any number of brackets do not capture
+  \s+                   # whitespace(s)
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;
+# ---------------------------------------
+
 my $odefilename;
 # check the number of arguments, must be 1 or 2
 my $nbr_argv = @ARGV;
@@ -117,6 +145,7 @@ sub cleanup_file
     if ( /^_/ ) {
       push @underscores, $fields[0];
       push @usvals, join(' ',@fields[1..$#fields]);
+      $usvals[$#usvals] =~ s/\s*?#.*?$//;
     }
     chomp if /,\s*$/;
     print $tmpfh "$_" ;
@@ -168,10 +197,13 @@ sub set_defines
   open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while (<$fh>) 
   {
-    my @fields = split; 
-    if ( /^[sS]/ )  
+    if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
-      print $fch "#define " . join(' ',@fields[1..$#fields]) . "\n";       
+      $type =~ /S/i or next; 
+      $comment =~ s/#\s*//;
+      print $fch "#define " . $varname . " " . $rhs;       
+      print $fch " /* " . $comment . " */" if length $comment; 
+      print $fch "\n";
     }
   }
   close($fh);
@@ -189,7 +221,7 @@ sub declare_array_from_file
       my @fields = split; 
       if ( 0+@fields < 5 ) { die "missing something at line: $_" };
       my ($var, $nbr_rows, $nbr_cols, $data_filename) = @fields[1..4];
-      print $fch "/* array from file: %s */\n";
+      print $fch "/* array from file: $data_filename */\n";
       print $fch "static const double ${var}[$nbr_rows][$nbr_cols] = {";
       open(my $datafh, '<', $data_filename) or die "Could not open file '$data_filename'. $!";
       while( <$datafh> )
@@ -226,11 +258,9 @@ sub declare_constant_array
       my @fields = split; 
       my $var = $fields[1];
       print $fch "static const double $var = " . join(' ', @fields[2..$#fields]) . ";\n\n";
-      
     }
   }
   close($fh);
-
 }
 
 sub define_functions
@@ -563,7 +593,6 @@ sub print_ode_init_cond
 sub declare_iterators
 {
 	print $fch qq(    /* iterators */
-    size_t ii_ __attribute__((unused));
 );
 	open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   my @iterators;
@@ -571,13 +600,17 @@ sub declare_iterators
 	while ( <$fh> )    
 	{
 		!/^#/  or next; # ignore lines starting with '#'
-		!/^C/i or next;
-    /\[\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*\]+/ or next;
-    push @iterators, $1; # store iterator name
+		!/^C/i or next; # ignore lines starting with 'C'
+    if ( my @new_iter = (/\[\s*(\w+)\s*=\s*\d+\s*:\s*\d+\s*\]+/g)  )
+    {
+      push @iterators, @new_iter; # store iterator name
+    } else 
+    {
+      next;
+    }
 	}
 	@iterators = sort @iterators;
-	my 
-	$iter = shift @iterators;
+	my $iter = shift @iterators;
   push @unique_iters, $iter;
   while ( @iterators )
  	{
@@ -606,10 +639,10 @@ sub declare_define_parameters
 		$par_attribute = $1 if /{(\s*\w+\s*)+}/;
     if ( $func =~ /ode/ )
     {
-		  if (uc $par_attribute eq "INITIAL" or
-			    uc $par_attribute eq "UNUSED" or
-			    uc $par_attribute eq "INEXPR" or 
-          uc $par_attribute eq "POP" )	
+		  if ($par_attribute =~ /\bINIT/i or
+			    $par_attribute =~ /\bUNUSED/i or
+			    $par_attribute =~ /\bINEXPR/i or 
+          $par_attribute =~ /\bPOP/i )	
 		  {
 			  ++$i;
 		  } else
@@ -619,8 +652,9 @@ sub declare_define_parameters
 		  }
     } else
     {
-		  if (uc $par_attribute eq "INITIAL" or
-			    uc $par_attribute eq "INEXPR" )	
+		  if ($par_attribute =~ /\bINIT/i or
+			    $par_attribute =~ /\bINEXPR/i or
+          $par_attribute =~ /\bEVER/i )	
 		  {
         print $fch "    double $fields[1] = pars_[$i];\n";
 			  ++$i;
@@ -634,7 +668,7 @@ sub declare_define_parameters
   close($fh);
 }
 
-
+# TODO: handle definition of array in multiple declarations 
 sub declare_scalar_or_array
 {
   my ($fname,$character,$descr) = @_;
@@ -642,8 +676,8 @@ sub declare_scalar_or_array
   open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
   while ( <$fh> )    
  	{
-		/^$character/i or next;
-    /\w+\s+(\w+)(.*)/;
+		/^$character/i or next;   # match character or go to next line
+    /\w+\s+(\w+).*/ or next;  # match variable name
     print $fch "    double $1";
 		my @fields = split '[\[\]]';
     if ($fields[0] =~ /\w+\s+\w+\s+\w+/)
@@ -832,6 +866,7 @@ sub assign_output
       }
     }
     my $offset = qq();
+    my $starp = qq( + );
     my $iter_increment = 1;
     foreach my $iter ( @iters )
     {
@@ -842,13 +877,15 @@ sub assign_output
       print $fch $offset . "{\n";
     }
     print $fch $offset . "    ${lhs}[$ii";
-    foreach my $iters ( @iters )
+    foreach my $iter ( @iters )
     {
-      $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+      $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
       my ($i,$a,$b) = ($1,$2,$3);
-      print $fch "+$i";
+      print $fch "$starp$i";
       $iter_increment *= ($b-$a);
+      $starp = qq/*(1+/;
     }
+    print $fch qq/)/ x (@iters-1);
     print $fch "] = $rhs2print"; 
     $ii += $iter_increment;
     if ( $assign_rhs !~  /rhs/ )
