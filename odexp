@@ -641,8 +641,6 @@ sub declare_iterators
 		$iter = shift @iterators;
 		push @unique_iters, $iter if $unique_iters[$#unique_iters] ne $iter;
 	}
-
-  print join('|',@unique_iters) . "\n";
   if ( 0+@unique_iters )
   {
 	  print $fch "    size_t " . join(', ', @unique_iters) . ";\n";
@@ -753,7 +751,6 @@ sub define_1d_array_from_input
     # get left-hand-side
     /$pat_name((\s*\[.*?\])*)\s*(:?\/dt)?\s+[^\[]/;
     my $lhs = $1 . $2;
-    print $lhs . "\n";
     if ( my @it = ($lhs =~ m/$re_iter_scalar/g) )
     {
       if ( $it[0] =~ /\d+/ )
@@ -882,9 +879,9 @@ sub assign_output
     my $rhs2print;
     if ($assign_rhs =~ /rhs/)
     {
-      $rhs2print = $rhs . ";";
-      $rhs2print .= "/* $attr */" if length $attr;
-      $rhs2print .= "/* $comment */" if length $comment;
+      $rhs2print = strip_blanks($rhs) . ";";
+      $rhs2print .= " /* $attr */" if length $attr;
+      $rhs2print .= " /* $comment */" if length $comment;
     } else 
     {
       $rhs2print = $name;
@@ -911,13 +908,11 @@ sub assign_output
       my $starp = qq( + );
       my $iter_increment = 1;
       my $j = 0;
-      print $name . " " . join('|',@it) . "length=" . (0+@it) . "\n";
       while ( $j < (0+@it) )
       {
         # $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
         my ($i, $a, $b) = @it[$j..$j+2];
         $j += 3;
-        print $j . " " . (0+@it) . "\n";
         $offset = $offset . qq(    ); 
         print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
         print $fch $offset . "{\n";
@@ -974,6 +969,14 @@ sub assign_pop_rate
     print $fch "    $lhs = " . join(' ', @fields) . ";\n"; 
   }
   close($fh);
+}
+
+sub strip_blanks
+{
+  my ($str) = @_; 
+  $str =~ s/^\s*//;
+  $str =~ s/\s*$//;
+  return $str;
 }
 
 my $LDFLAGS = "-O3 -lgsl -lodexp";
