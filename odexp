@@ -37,7 +37,7 @@ my $re_iter = qr/
 /x;
 
 my $re_pace = qr/^
-  \s*([ACEIOPST])\w*    # type
+  \s*([%ACEIOPST])\w*   # type
   \s+                   # whitespaces
   (\w+)                 # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
@@ -700,36 +700,17 @@ sub declare_scalar_or_array
   while ( <$fh> )    
  	{
 		/^$character/i or next;   # match character or go to next line
-    /\w+\s+(\w+).*/ or next;  # match variable name
-    print $fch "    double $1";
-		my @fields = split '[\[\]]';
-    if ($fields[0] =~ /\w+\s+\w+\s+\w+/)
+    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
+    print $fch "    double $name";
+    if ( my @it = ($_ =~ m/$re_iter/g) )
     {
-      print $fch ";\n";
-      next;
-    }
-    shift @fields;
-    my @iter_stat;
-    while ( @fields )
-    {
-      push @iter_stat, $fields[0];
-      shift @fields;
-      if ($fields[0] =~ /^\s*$/)  
+      while ( @it )
       {
-        shift @fields;
+        shift @it; shift @it; 
+        my $b = shift @it;
+        print $fch "[$b]";
       }
-      else
-      {
-        last;
-      }
-    }
-    while( @iter_stat )
-    {
-      my $iters = shift @iter_stat;
-      $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
-      my ($i,$a,$b) = ($1, $2, $3);
-      print $fch "[$b]";
-    }
+    }     
     print $fch ";\n";
 	}	
   print $fch "\n";
@@ -747,8 +728,6 @@ sub define_1d_array_from_input
     /^$pat_char/i or next;
     /$pat_name/;
     my $name = $1;
-    # my @fields = split '[\[\]]';
-    # get left-hand-side
     /$pat_name((\s*\[.*?\])*)\s*(:?\/dt)?\s+[^\[]/;
     my $lhs = $1 . $2;
     if ( my @it = ($lhs =~ m/$re_iter_scalar/g) )
@@ -773,24 +752,6 @@ sub define_1d_array_from_input
       print $fch "    $name = ${rhs}[$ii];\n";
       ++$ii;
     }
-    # if ($fields[0] =~ /$pat_iter/)
-    # {
-    #   print $fch "    $name = ${rhs}[$ii];\n";
-    #   ++$ii;
-    #   next;
-    # }
-    # shift @fields;
-    # my $iter = $fields[0];
-    # $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
-    # my ($i,$a,$b) = ($1,$2,$3);
-    # print $fch "    for($i=$a;$i<$b;++$i)\n";
-    # print $fch "    {\n";
-    # print $fch "        $name";
-    # my $i0 = $ii - $a;
-    # print $fch "[$i] = ${rhs}[$i+$i0]" . ";\n"; 
-    # $ii += ($b-$a);
-    # print $fch "    }\n";
-
   }
   print $fch "\n";
   close($fh);
