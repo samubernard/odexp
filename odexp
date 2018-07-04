@@ -560,16 +560,16 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
   declare_scalar_or_array($modelode,"A","auxiliary functions");
   declare_scalar_or_array($modelode,"I","dynamical variables");
   define_1d_array_from_input($modelode, "expr_", "E",
-    qr/\w+\s+(\w+)/, qr/\w+\s+(\w+)\s+[^\[]/,
+    qr/\w+\s+(\w+)/, 
     "initialization parametric expressions");
   define_1d_array_from_input($modelode, "y_", "D",
-    qr/[dD](\w+)/, qr/[dD](\w+)\/dt/,
+    qr/[dD](\w+)/, 
     "initialization dynamical variables");
   define_1d_array_from_input($modelode, "psi_", "%C",
-    qr/\w+\s+(\w+)/, qr/\w+\s+(\w+)\s+[^\[]/,
+    qr/\w+\s+(\w+)/,
     "initialization couplings");
   define_1d_array_from_input($modelode, "mfd_", "%M",
-    qr/\w+\s+(\w+)/, qr/\w+\s+(\w+)\s+[^\[]/,
+    qr/\w+\s+(\w+)/,
     "initialization meanfields");
   define_array_functions($modelode,
     "A", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
@@ -719,7 +719,7 @@ sub declare_scalar_or_array
 
 sub define_1d_array_from_input
 {
-  my ($fname,$rhs,$pat_char,$pat_name,$pat_iter,$descr) = @_;
+  my ($fname,$rhs,$pat_char,$pat_name,$descr) = @_;
   open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
   print $fch "    /* $descr */\n";
   my $ii = 0;
