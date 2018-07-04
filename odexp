@@ -12,15 +12,27 @@ use File::Temp qw/ tempfile tempdir /;
 # ---------------------------------------
 # regexp
 # ---------------------------------------
+my $re_iter_scalar = qr/
+  \s*                   # whitespaces
+  \[(\w+)               # iterator
+  \s*                   
+  =?               
+  \s*     
+  (|\d+)                 # start
+  \s*:?\s*
+  (|\d+)                 # end
+  \]
+/x;
+
 my $re_iter = qr/
   \s*                   # whitespaces
-  \[(\w+?)              # iterator
+  \[(\w+)               # iterator - mandatory
   \s*                   
-  =               
+  =                     # mandatory
   \s*     
-  (\d+)                 # start
-  \s*:\s*
-  (\d+)                 # end
+  (\d+)                 # start - mandatory
+  \s*:?\s*              # : mandatory
+  (\d+)                 # end - mandatory
   \]
 /x;
 
@@ -30,6 +42,18 @@ my $re_pace = qr/^
   (\w+)                 # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
   \s+                   # whitespace(s)
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;
+
+my $re_dxdt = qr/^
+  \s*(D)                # first derivative
+  (\w+)                 # var name
+  (?:\s*\[.*?\])?       # optional brackets do not capture
+  \/DT                  # second part of derivative
+  \s*=\s*               # equal
   ([^\{#\n]+)           # rhs until bracket comment or newline 
   (|\{.*?\})?           # nothing or attribute
   \s*                   # whitespace(s)
@@ -551,10 +575,10 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
     "A", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
     "initialization auxiliary functions");
   assign_output($modelode,
-    "D", "f_", qr/^[dD](\w+)(\[[^\[\]]+\])?\/dt\s?=\s?(.*)$/,
+    "D", "f_", $re_dxdt,
     "assign equations FIXME", "rhs");
   assign_output($modelode,
-    "A", "aux_", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "A", "aux_", $re_pace, 
     "assign auxiliary array pointer", "pointer");
   assign_pop_rate($modelode,
     "%DEATH", "myself_->death_rate",
@@ -579,13 +603,13 @@ sub print_ode_init_cond
   declare_define_parameters($modelode,"ic");  
   declare_scalar_or_array($modelode,"E","parametric expressions");
   define_array_functions($modelode,
-    "E", qr/^[eE]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "E", qr/^[eE]\w*\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
     "initialization parametric expressions");
   assign_output($modelode,
-    "E", "expr_", qr/^[eE]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "E", "expr_", $re_pace,
     "assign parametric expression pointer", "rhs");
   assign_output($modelode,
-    "I", "y_", qr/^[iI]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "I", "y_", $re_pace,
     "assign initial conditions", "rhs");
   print $fch "\n    return GSL_SUCCESS;\n}\n\n";
 }
@@ -617,7 +641,9 @@ sub declare_iterators
 		$iter = shift @iterators;
 		push @unique_iters, $iter if $unique_iters[$#unique_iters] ne $iter;
 	}
-  if ( $#unique_iters )
+
+  print join('|',@unique_iters) . "\n";
+  if ( 0+@unique_iters )
   {
 	  print $fch "    size_t " . join(', ', @unique_iters) . ";\n";
   }
@@ -644,7 +670,6 @@ sub declare_define_parameters
 			    $par_attribute =~ /\bINEXPR/i or 
           $par_attribute =~ /\bPOP/i )	
 		  {
-			  ++$i;
 		  } else
 		  {
         print $fch "    double $fields[1] = pars_[$i];\n";
@@ -724,24 +749,50 @@ sub define_1d_array_from_input
     /^$pat_char/i or next;
     /$pat_name/;
     my $name = $1;
-		my @fields = split '[\[\]]';
-    if ($fields[0] =~ /$pat_iter/)
+    # my @fields = split '[\[\]]';
+    # get left-hand-side
+    /$pat_name((\s*\[.*?\])*)\s*(:?\/dt)?\s+[^\[]/;
+    my $lhs = $1 . $2;
+    print $lhs . "\n";
+    if ( my @it = ($lhs =~ m/$re_iter_scalar/g) )
+    {
+      if ( $it[0] =~ /\d+/ )
+      {
+        print $fch "    ${name}[" . $it[0] . "] = ${rhs}[$ii];\n";
+        ++$ii;
+      } else
+      {
+        my ($i, $a, $b) = ($it[0], $it[1], $it[2]);
+        print $fch "    for($i=$a;$i<$b;++$i)\n";
+        print $fch "    {\n";
+        print $fch "        $name";
+        my $i0 = $ii - $a;
+        print $fch "[$i] = ${rhs}[$i+$i0]" . ";\n"; 
+        $ii += ($b-$a);
+        print $fch "    }\n";
+      }
+    } else
     {
       print $fch "    $name = ${rhs}[$ii];\n";
       ++$ii;
-      next;
     }
-    shift @fields;
-    my $iter = $fields[0];
-    $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
-    my ($i,$a,$b) = ($1,$2,$3);
-    print $fch "    for($i=$a;$i<$b;++$i)\n";
-    print $fch "    {\n";
-    print $fch "        $name";
-    my $i0 = $ii - $a;
-    print $fch "[$i] = ${rhs}[$i+$i0]" . ";\n"; 
-    $ii += ($b-$a);
-    print $fch "    }\n";
+    # if ($fields[0] =~ /$pat_iter/)
+    # {
+    #   print $fch "    $name = ${rhs}[$ii];\n";
+    #   ++$ii;
+    #   next;
+    # }
+    # shift @fields;
+    # my $iter = $fields[0];
+    # $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+    # my ($i,$a,$b) = ($1,$2,$3);
+    # print $fch "    for($i=$a;$i<$b;++$i)\n";
+    # print $fch "    {\n";
+    # print $fch "        $name";
+    # my $i0 = $ii - $a;
+    # print $fch "[$i] = ${rhs}[$i+$i0]" . ";\n"; 
+    # $ii += ($b-$a);
+    # print $fch "    }\n";
 
   }
   print $fch "\n";
@@ -827,85 +878,84 @@ sub assign_output
   while ( <$fh> )    
   {
     /^$pat_char/i or next;
-    /$pat_nameiter/;
-    my $name = $1;
-    my $rhs = $3;
-		my @fields = split '[\[\]]';
+    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $pat_nameiter );
     my $rhs2print;
     if ($assign_rhs =~ /rhs/)
     {
-      $rhs2print = $rhs;
-      $rhs2print =~ s/(.*?)(\s*([#{}]|$))/$1; $2/; # put ; at the correct place
-      $rhs2print =~ s|#\s?(.*)|/* $1 */|; # '#' to C comments
-      $rhs2print =~ s|({.*?})|/* $1 */|; # '{}' to C comments
+      $rhs2print = $rhs . ";";
+      $rhs2print .= "/* $attr */" if length $attr;
+      $rhs2print .= "/* $comment */" if length $comment;
     } else 
     {
       $rhs2print = $name;
     }
-    if ($fields[0] =~ /\w+\s+(\w+)\s+\w+/) # scalar variable
+    if ( $_ =~ qr/^
+      (?:D|\w+\s)
+      \s*
+      \w+(?:\s*\[\s*\d+\s*\])*
+      \s*
+      (\/DT)?
+      \s*[^\[\S#\{]
+      /ix
+    ) # scalar variable
     {
       print $fch "    ${lhs}[$ii] = " . $rhs2print;
       print $fch ";" if $assign_rhs !~ /rhs/;
       print $fch "\n";
-      ++$ii;
+      ++$ii if /^(?:D|\w+\s)\s*(\w+\s*(\/DT)?\s*[^\[])/i;
       next;
     }
-    shift @fields;                         # array variable, process iterators
-    my @iters;
-    while ( @fields )
-    {
-      push @iters, $fields[0];
-      shift @fields;
-      if ($fields[0] =~ /^\s*$/)           # if field empty, then shift
+    if ( my @it = ($_ =~ m/$re_iter/g) )
+    { 
+      my $offset = qq();
+      my $starp = qq( + );
+      my $iter_increment = 1;
+      my $j = 0;
+      print $name . " " . join('|',@it) . "length=" . (0+@it) . "\n";
+      while ( $j < (0+@it) )
       {
-        shift @fields;
+        # $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
+        my ($i, $a, $b) = @it[$j..$j+2];
+        $j += 3;
+        print $j . " " . (0+@it) . "\n";
+        $offset = $offset . qq(    ); 
+        print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
+        print $fch $offset . "{\n";
       }
-      else                                 # if field not empty, break out of while
+      print $fch $offset . "    ${lhs}[$ii";
+      $j = 0;
+      while ( $j < 0+@it )
       {
-        last;
+        my ($i, $a, $b) = @it[$j..$j+2];
+        $j += 3;
+        print $fch "$starp$i";
+        $iter_increment *= ($b-$a);
+        $starp = qq/*(1+/;
       }
-    }
-    my $offset = qq();
-    my $starp = qq( + );
-    my $iter_increment = 1;
-    foreach my $iter ( @iters )
-    {
-      $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
-      my ($i,$a,$b) = ($1,$2,$3);
-      $offset = $offset . qq(    ); 
-      print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
-      print $fch $offset . "{\n";
-    }
-    print $fch $offset . "    ${lhs}[$ii";
-    foreach my $iter ( @iters )
-    {
-      $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
-      my ($i,$a,$b) = ($1,$2,$3);
-      print $fch "$starp$i";
-      $iter_increment *= ($b-$a);
-      $starp = qq/*(1+/;
-    }
-    print $fch qq/)/ x (@iters-1);
-    print $fch "] = $rhs2print"; 
-    $ii += $iter_increment;
-    if ( $assign_rhs !~  /rhs/ )
-    {
-      foreach my $iters ( @iters )
+      print $fch qq/)/ x (@it/3-1);
+      print $fch "] = $rhs2print"; 
+      $ii += $iter_increment;
+      if ( $assign_rhs !~  /rhs/ )
       {
-        $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
-        my ($i,$a,$b) = ($1,$2,$3);
-        print $fch "[$i]";
+        $j = 0;
+        while ( $j < 0+@it )
+        {
+          my ($i, $a, $b) = @it[$j..$j+2];
+          $j += 3;
+          print $fch "[$i]";
+        }
+        print $fch ";"; 
       }
-      print $fch ";"; 
+      print $fch "\n";
+      $j = 0;
+      while ( $j < 0+@it )
+      {
+        print $fch $offset . "}\n";
+        $offset = substr $offset, 0, -4;
+        $j += 3;
+      }
+      print $fch "\n";
     }
-    print $fch "\n";
-    foreach my $iters ( @iters )
-    {
-      print $fch $offset . "}\n";
-      $offset = substr $offset, 0, -4;
-    }
-    print $fch "\n";
-
   }
   print $fch "\n";
   close($fh);

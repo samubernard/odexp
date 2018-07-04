@@ -34,13 +34,13 @@ $/ix;
 
 my $re_iter = qr/
   \s*                   # whitespaces
-  \[(\w+?)              # iterator
+  \[(\w+)               # iterator
   \s*                   
-  =               
+  =?               
   \s*     
-  (\d+)                 # start
-  \s*:\s*
-  (\d+)                 # end
+  (|\d+)                 # start
+  \s*:?\s*
+  (|\d+)                 # end
   \]
 /x;
 
@@ -100,7 +100,7 @@ while ( <STDIN> )
   }
   if ( my @it = ($_ =~ m/$re_iter/g) )
   {
-    print "iters: " . join ' ' , @it;
+    print "iters: " . join '|' , @it;
   }
   if ( my ($type, $varname, $rhs, $comment) = 
     ( $_ =~ $re_func ) )
