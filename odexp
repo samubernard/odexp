@@ -762,62 +762,51 @@ sub define_array_functions
   my ($fname,$pat_char,$pat_nameiter,$descr) = @_;
   open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
   print $fch "    /* $descr */\n";
-  my $ii = 0;
   while ( <$fh> )    
   {
     /^$pat_char/i or next;
-    /$pat_nameiter/;
-    my $name = $1;
-    my $rhs = $3;
-    $rhs =~ s/(.*?)(\s*([#{}]|$))/$1; $2/; # put ; at the correct place
-    $rhs =~ s|#\s?(.*)|/* $1 */|; # to C comments
-    $rhs =~ s|({.*?})|/* $1 */|; # to C comments
-		my @fields = split '[\[\]]';
-    if ($fields[0] =~ /\w+\s+(\w+)\s+\w+/)
+    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
+    my $rhs2print;
+    $rhs2print = strip_blanks($rhs) . ";";
+    $rhs2print .= " /* $attr */" if length $attr;
+    $rhs2print .= " /* $comment */" if length $comment;
+    if ( my @it = ($_ =~ m/$re_iter/g) )
     {
-      print $fch "    $name = $rhs\n";
-      ++$ii;
-      next;
-    }
-    shift @fields;
-    my @iters;
-    while ( @fields )
-    {
-      push @iters, $fields[0];
-      shift @fields;
-      if ($fields[0] =~ /^\s*$/)  
+      my $offset = qq();
+      my $j = 0;
+      while ( $j < (0+@it) )
       {
-        shift @fields;
+        my ($i, $a, $b) = @it[$j..$j+2];
+        $j += 3;
+        $offset = $offset . qq(    ); 
+        print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
+        print $fch $offset . "{\n";
       }
-      else
+      print $fch $offset . "    $name";
+      $j = 0;
+      while ( $j < (0+@it) )
       {
-        last;
+        my ($i, $a, $b) = @it[$j..$j+2];
+        $j += 3;
+        print $fch "[$i]";
       }
-    }
-    my $offset = qq();
-    foreach my $iter ( @iters )
+      print $fch " = " . $rhs2print . "\n";
+      $j = 0;
+      while ( $j < (0+@it) )
+      {
+        $j += 3;
+      }
+      $j = 0;
+      while ( $j < 0+@it )
+      {
+        print $fch $offset . "}\n";
+        $offset = substr $offset, 0, -4;
+        $j += 3;
+      }
+    } else
     {
-      $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
-      my ($i,$a,$b) = ($1,$2,$3);
-      $offset = $offset . qq(    ); 
-      print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
-      print $fch $offset . "{\n";
+      print $fch "    $name = $rhs2print\n";
     }
-    print $fch $offset . "    $name";
-    foreach my $iters ( @iters )
-    {
-      $iters =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
-      my ($i,$a,$b) = ($1,$2,$3);
-      print $fch "[$i]";
-    }
-    print $fch " = $rhs" . "\n"; 
-    foreach my $iters ( @iters )
-    {
-      print $fch $offset . "}\n";
-      $offset = substr $offset, 0, -4;
-    }
-    print $fch "\n";
-
   }
   print $fch "\n";
   close($fh);
