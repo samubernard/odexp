@@ -792,11 +792,6 @@ sub define_array_functions
       }
       print $fch " = " . $rhs2print . "\n";
       $j = 0;
-      while ( $j < (0+@it) )
-      {
-        $j += 3;
-      }
-      $j = 0;
       while ( $j < 0+@it )
       {
         print $fch $offset . "}\n";
