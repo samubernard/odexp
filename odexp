@@ -723,8 +723,6 @@ sub define_array_from_input
   open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
   print $fch "    /* $descr */\n";
   my $ii = 0;
-
-
   while ( <$fh> )    
   {
     /^$pat_char/i or next;
@@ -780,39 +778,6 @@ sub define_array_from_input
       ++$ii;
     }
   }
-
-
-
-  # while ( <$fh> )    
-  # {
-  #   /^$pat_char/i or next;
-  #   /$pat_name/;
-  #   my $name = $1;
-  #   /$pat_name((\s*\[.*?\])*)\s*(:?\/dt)?\s+[^\[]/;
-  #   my $lhs = $1 . $2;
-  #   if ( my @it = ($lhs =~ m/$re_iter_scalar/g) )
-  #   {
-  #     if ( $it[0] =~ /\d+/ )
-  #     {
-  #       print $fch "    ${name}[" . $it[0] . "] = ${rhs}[$ii];\n";
-  #       ++$ii;
-  #     } else
-  #     {
-  #       my ($i, $a, $b) = ($it[0], $it[1], $it[2]);
-  #       print $fch "    for($i=$a;$i<$b;++$i)\n";
-  #       print $fch "    {\n";
-  #       print $fch "        $name";
-  #       my $i0 = $ii - $a;
-  #       print $fch "[$i] = ${rhs}[$i+$i0]" . ";\n"; 
-  #       $ii += ($b-$a);
-  #       print $fch "    }\n";
-  #     }
-  #   } else
-  #   {
-  #     print $fch "    $name = ${rhs}[$ii];\n";
-  #     ++$ii;
-  #   }
-  # }
   print $fch "\n";
   close($fh);
 }
