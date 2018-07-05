@@ -559,16 +559,16 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
   declare_scalar_or_array($modelode,"%M","mean fields");
   declare_scalar_or_array($modelode,"A","auxiliary functions");
   declare_scalar_or_array($modelode,"I","dynamical variables");
-  define_1d_array_from_input($modelode, "expr_", "E",
+  define_array_from_input($modelode, "expr_", "E",
     qr/\w+\s+(\w+)/, 
     "initialization parametric expressions");
-  define_1d_array_from_input($modelode, "y_", "D",
-    qr/[dD](\w+)/, 
+  define_array_from_input($modelode, "y_", "I",
+    qr/\w+\s+(\w+)/, 
     "initialization dynamical variables");
-  define_1d_array_from_input($modelode, "psi_", "%C",
+  define_array_from_input($modelode, "psi_", "%C",
     qr/\w+\s+(\w+)/,
     "initialization couplings");
-  define_1d_array_from_input($modelode, "mfd_", "%M",
+  define_array_from_input($modelode, "mfd_", "%M",
     qr/\w+\s+(\w+)/,
     "initialization meanfields");
   define_array_functions($modelode,
@@ -717,42 +717,102 @@ sub declare_scalar_or_array
   close($fh);
 }
 
-sub define_1d_array_from_input
+sub define_array_from_input
 {
   my ($fname,$rhs,$pat_char,$pat_name,$descr) = @_;
   open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
   print $fch "    /* $descr */\n";
   my $ii = 0;
+
+
   while ( <$fh> )    
   {
     /^$pat_char/i or next;
-    /$pat_name/;
-    my $name = $1;
-    /$pat_name((\s*\[.*?\])*)\s*(:?\/dt)?\s+[^\[]/;
-    my $lhs = $1 . $2;
-    if ( my @it = ($lhs =~ m/$re_iter_scalar/g) )
+    my ($type, $name, $dummy, $attr, $comment) = ( $_ =~ $re_pace ) or print "no pace found";  
+    if ( my @it = ($_ =~ m/$re_iter/g) )
     {
-      if ( $it[0] =~ /\d+/ )
+      my $offset = qq();
+      my $j = 0;
+      while ( $j < (0+@it) )
       {
-        print $fch "    ${name}[" . $it[0] . "] = ${rhs}[$ii];\n";
-        ++$ii;
-      } else
+        my ($i, $a, $b) = @it[$j..$j+2];
+        $j += 3;
+        $offset = $offset . qq(    ); 
+        print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
+        print $fch $offset . "{\n";
+      }
+      print $fch $offset . "    $name";
+      $j = 0;
+      while ( $j < (0+@it) )
       {
-        my ($i, $a, $b) = ($it[0], $it[1], $it[2]);
-        print $fch "    for($i=$a;$i<$b;++$i)\n";
-        print $fch "    {\n";
-        print $fch "        $name";
-        my $i0 = $ii - $a;
-        print $fch "[$i] = ${rhs}[$i+$i0]" . ";\n"; 
-        $ii += ($b-$a);
-        print $fch "    }\n";
+        my ($i, $a, $b) = @it[$j..$j+2];
+        $j += 3;
+        print $fch "[$i]";
+      }
+      print $fch " = " . $rhs. "[$ii";
+      my $starp = qq( + );
+      my $iter_increment = 1;
+      $j = 0;
+      while ( $j < 0+@it )
+      {
+        my ($i, $a, $b) = @it[$j..$j+2];
+        $j += 3;
+        print $fch "$starp$i";
+        $iter_increment *= ($b-$a);
+        $starp = qq/*(1+/;
+      }
+      print $fch qq/)/ x (@it/3-1);
+      print $fch "];"; 
+      print $fch " /* $attr */" if length $attr;
+      print $fch " /* $comment */" if length $comment;
+      print $fch "\n";
+      $ii += $iter_increment;
+      $j = 0;
+      while ( $j < 0+@it )
+      {
+        print $fch $offset . "}\n";
+        $offset = substr $offset, 0, -4;
+        $j += 3;
       }
     } else
     {
-      print $fch "    $name = ${rhs}[$ii];\n";
+      print $fch "    $name = $rhs" . "[$ii];\n";
       ++$ii;
     }
   }
+
+
+
+  # while ( <$fh> )    
+  # {
+  #   /^$pat_char/i or next;
+  #   /$pat_name/;
+  #   my $name = $1;
+  #   /$pat_name((\s*\[.*?\])*)\s*(:?\/dt)?\s+[^\[]/;
+  #   my $lhs = $1 . $2;
+  #   if ( my @it = ($lhs =~ m/$re_iter_scalar/g) )
+  #   {
+  #     if ( $it[0] =~ /\d+/ )
+  #     {
+  #       print $fch "    ${name}[" . $it[0] . "] = ${rhs}[$ii];\n";
+  #       ++$ii;
+  #     } else
+  #     {
+  #       my ($i, $a, $b) = ($it[0], $it[1], $it[2]);
+  #       print $fch "    for($i=$a;$i<$b;++$i)\n";
+  #       print $fch "    {\n";
+  #       print $fch "        $name";
+  #       my $i0 = $ii - $a;
+  #       print $fch "[$i] = ${rhs}[$i+$i0]" . ";\n"; 
+  #       $ii += ($b-$a);
+  #       print $fch "    }\n";
+  #     }
+  #   } else
+  #   {
+  #     print $fch "    $name = ${rhs}[$ii];\n";
+  #     ++$ii;
+  #   }
+  # }
   print $fch "\n";
   close($fh);
 }
