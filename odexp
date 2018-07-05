@@ -482,15 +482,13 @@ sub set_population_meanfields
 		/^%M/i or next;
     my @fields = split;
     my $s = join(' ', @fields[2..$#fields]);
-		print $fch "        myself_ = SIM->pop->start;\n";
-		print $fch "        i = 0;\n";
-		print $fch "        while ( myself_ != NULL )\n";
-		print $fch "        {\n";
-		print $fch "            SIM->meanfield[$nv] += $s;\n"; 
+		print $fch "    myself_ = SIM->pop->start;\n";
+		print $fch "    while ( myself_ != NULL )\n";
+		print $fch "    {\n";
+		print $fch "        SIM->meanfield[$nv] += $s;\n"; 
     ++$nv;
-		print $fch "            i++;\n";
- 		print $fch "            myself_ = myself_->nextel;\n";
- 		print $fch "        }\n";
+ 		print $fch "        myself_ = myself_->nextel;\n";
+ 		print $fch "    }\n";
 	}
 	close($fh);
 
