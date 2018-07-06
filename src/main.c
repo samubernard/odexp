@@ -2671,6 +2671,8 @@ char **
 completion_list_completion(const char *text, int start, int end)
 {
     rl_attempted_completion_over = 1;
+    (void)start;
+    (void)end;
     return rl_completion_matches(text, completion_list_generator);
 }
 
