@@ -670,6 +670,7 @@ sub declare_define_parameters
 			    $par_attribute =~ /\bINEXPR/i or 
           $par_attribute =~ /\bPOP/i )	
 		  {
+        ++$i;
 		  } else
 		  {
         print $fch "    double $fields[1] = pars_[$i];\n";
