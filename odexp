@@ -663,31 +663,40 @@ sub declare_define_parameters
     my @fields = split;
 		my $par_attribute = "";
 		$par_attribute = $1 if /{(\s*\w+\s*)+}/;
-    if ( $func =~ /ode/ )
+    if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
-		  if ($par_attribute =~ /\bINIT/i or
-			    $par_attribute =~ /\bUNUSED/i or
-			    $par_attribute =~ /\bINEXPR/i or 
-          $par_attribute =~ /\bPOP/i )	
-		  {
-        ++$i;
-		  } else
-		  {
-        print $fch "    double $fields[1] = pars_[$i];\n";
-			  ++$i;
-		  }
-    } else
-    {
-		  if ($par_attribute =~ /\bINIT/i or
-			    $par_attribute =~ /\bINEXPR/i or
-          $par_attribute =~ /\bEVER/i )	
-		  {
-        print $fch "    double $fields[1] = pars_[$i];\n";
-			  ++$i;
-		  } else
-		  {
-			  ++$i;
-		  }
+      if ( $func =~ /ode/ )
+      {
+        if ($par_attribute =~ /\bINIT/i or
+            $par_attribute =~ /\bUNUSED/i or
+            $par_attribute =~ /\bINEXPR/i or 
+            $par_attribute =~ /\bPOP/i )	
+        {
+          ++$i;
+        } else
+        {
+          print $fch "    double $varname = pars_[$i];";
+          print $fch " /* $attr */" if length $attr;
+          print $fch " /* $comment */" if length $comment; 
+          print $fch "\n";
+          ++$i;
+        }
+      } else
+      {
+        if ($par_attribute =~ /\bINIT/i or
+            $par_attribute =~ /\bINEXPR/i or
+            $par_attribute =~ /\bEVER/i )	
+        {
+          print $fch "    double $varname = pars_[$i];";
+          print $fch " /* $attr */" if length $attr;
+          print $fch " /* $comment */" if length $comment; 
+          print $fch "\n";
+          ++$i;
+        } else
+        {
+          ++$i;
+        }
+      }
     }
 	}
   print $fch "\n";
