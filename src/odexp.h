@@ -104,6 +104,8 @@ typedef struct system_state {
 
     double time_in_ode_rhs;
 
+    double *h;     /* current time step */
+
     int (*ode_rhs)(double, const double *, double *, void *);
 
     char stats_buffer[MAXFILENAMELENGTH];
@@ -261,5 +263,6 @@ double linchaindelay(const double root, const double *chain, const size_t link, 
 #define ISMOTHER   (myself_->sister == NULL)
 #define ID      (myself_->id)
 
+#define DWDT (randN(0,1)/sqrt(*SIM->h))        
 
 #endif

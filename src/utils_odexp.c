@@ -147,5 +147,12 @@ double linchaindelay(const double root, const double *chain, const size_t link, 
     /* return beta*( ((link==0)*root + (link>0)*chain[link-1]) - chain[link]); */
 }
 
-
-
+/* 
+ * dW
+ * returns a scaled differential of a Wiener process
+ */
+/*double dW(void)
+ *{
+ *  return randN(0,1)/sqrt(*SIM->h);
+ *}
+ */

@@ -3,7 +3,6 @@
 /* includes */
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_matrix.h>
-#include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_eigen.h> 
@@ -59,6 +58,10 @@ int odesolver( oderhs pop_ode_rhs,
     gsl_odeiv2_control * c;
     gsl_odeiv2_evolve * e;
     gsl_odeiv2_system sys; 
+
+    /* create a dummy step type fe that is a copy of rk2 */
+    const gsl_odeiv2_step_type *gsl_odeiv2_step_fe = gsl_odeiv2_step_rk2;
+
     int status;
 
     oderhs ode_rhs = NULL;
@@ -125,6 +128,11 @@ int odesolver( oderhs pop_ode_rhs,
     {
         odeT = gsl_odeiv2_step_bsimp;
     }
+    else if ( strncmp(get_str("odesolver_step_method"),"fe",NAMELENGTH) == 0 )
+    {
+        /* see fe_apply below */
+        odeT = gsl_odeiv2_step_fe;
+    }
     else
     {
         fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
@@ -177,6 +185,7 @@ int odesolver( oderhs pop_ode_rhs,
     remove_id_files();
     SIM->fid = fopen(SIM->stats_buffer, "w");
     SIM->time_in_ode_rhs = 0.0;
+    SIM->h = &h;
     /* DBPRINT("set up SIM"); */
     /* reset SIM with an empty pop 
      * If option lasty is on, first
@@ -370,7 +379,15 @@ int odesolver( oderhs pop_ode_rhs,
         sys = (gsl_odeiv2_system) {ode_rhs, ode_jac, sim_size, SIM->pop->start};
         while ( t < tnext)
         {
-            status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+            if ( odeT == gsl_odeiv2_step_fe )
+            {
+              status = fe_apply(&sys,&t,tnext,&h,y);
+              h = get_dou("odesolver_init_h"); /* reset h */
+            }
+            else
+            {
+              status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+            }
             if ( h < hmin )
             {
               h = hmin;
@@ -392,7 +409,7 @@ int odesolver( oderhs pop_ode_rhs,
 
         if ( bd_alert == 1 )
         {
-            /* DBPRINT("birth/death"); */
+            /* DBPRINT("birth/death");  */
             /* delete or insert particle 
              * apply_birthdeath computes which event is realized:
              * death, replication or birth,
@@ -1958,3 +1975,27 @@ int any(int *y, size_t len)
     }
     return (i<len);
 }
+
+
+int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, double y[] )
+{
+  /* this is just a Forward-Euler step */
+  size_t i;
+  double *f;
+  static int call_to_fe_apply = 0;
+  f = malloc(sys->dimension * sizeof(double));
+  if ( *h > (tnext - *t) )
+  {
+    *h = min(*h, tnext-*t);
+  }
+  sys->function(*t, y, f, sys->params);
+  for ( i=0; i<sys->dimension; ++i)
+  {
+    y[i] = y[i] + (*h)*f[i];
+  }
+  *t += *h;
+
+  free(f);
+  return GSL_SUCCESS;
+}
+

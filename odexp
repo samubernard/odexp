@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -sw
 
 use warnings;
 use strict;
@@ -480,12 +480,14 @@ sub set_population_meanfields
 	while ( <$fh> )    
 	{
 		/^%M/i or next;
-    my @fields = split;
-    my $s = join(' ', @fields[2..$#fields]);
+    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
+    my $s = strip_blanks($rhs) . ";";
+    $s .= " /* $attr */" if length $attr;
+    $s .= " /* $comment */" if length $comment;
 		print $fch "    myself_ = SIM->pop->start;\n";
 		print $fch "    while ( myself_ != NULL )\n";
 		print $fch "    {\n";
-		print $fch "        SIM->meanfield[$nv] += $s;\n"; 
+		print $fch "        SIM->meanfield[$nv] += $s\n"; 
     ++$nv;
  		print $fch "        myself_ = myself_->nextel;\n";
  		print $fch "    }\n";
@@ -502,9 +504,11 @@ sub set_population_coupling
 	while ( <$fh> )    
 	{
 		/^%C/i or next;
-    my @fields = split;
-    my $s = join(' ', @fields[2..$#fields]);
-		print $fch "                myself_->psi[$nv] += $s;\n";
+    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
+    my $s = strip_blanks($rhs) . ";";
+    $s .= " /* $attr */" if length $attr;
+    $s .= " /* $comment */" if length $comment;
+		print $fch "                myself_->psi[$nv] += $s\n";
 		++$nv;
 	}
 	close($fodeh);
@@ -633,7 +637,7 @@ sub declare_iterators
 	}
 	@iterators = sort @iterators;
 	my $iter = shift @iterators;
-  push @unique_iters, $iter;
+  push @unique_iters, $iter if length $iter;
   while ( @iterators )
  	{
 		$iter = shift @iterators;
@@ -947,8 +951,8 @@ sub strip_blanks
   return $str;
 }
 
-my $LDFLAGS = "-O3 -lgsl -lodexp";
-my $CFLAGS =  "-Wall -Wno-gnu-statement-expression -pedantic";
+my $LDFLAGS = "-lgsl -lodexp";
+my $CFLAGS =  "-Wall -Wno-gnu-statement-expression -pedantic -g";
 system("gcc $CFLAGS $LDFLAGS $odedir/model.c -o model.out") == 0 
               or die "compiling failed: $?";
 exec ("./model.out $odefilename") or print STDERR "couldn't exec model.out: $!";

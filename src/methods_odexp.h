@@ -2,6 +2,7 @@
 
 /* includes */
 #include "dlist.h"
+#include <gsl/gsl_odeiv2.h>
 
 /* number of global options */
 #define NBROPTS 39
@@ -104,3 +105,5 @@ int ncumsum(double *x, size_t len, double *sumx);
 /* various */
 int any(int *, size_t len);
 
+/* stochastic differential equation solver */
+int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, double y[] );
