@@ -21,8 +21,9 @@ static int compare (void const *a, void const *b);
 
 static volatile sig_atomic_t abort_odesolver_flag;
 
-static void set_abort_odesolver_flag(int sig)
+static void set_abort_odesolver_flag( int sig )
 {
+    (void)sig;
     abort_odesolver_flag = 1;
 }
 
@@ -555,6 +556,12 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     gsl_odeiv2_evolve * e;
     gsl_odeiv2_system sys; 
     int status;
+
+    /* These parameters are not used 
+     * but they may in the future?
+     */
+    (void)fcn;
+    (void)GNUPLOTPIPE;
 
     if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
     {
@@ -1157,7 +1164,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
     /* naive steady state continuation method */
     clock_t start = clock();
     long p = get_int("act_par"); 
-    long i;
+    size_t i;
     long ntry = 0;
     long max_fail = get_int("phasespace_max_fail");
     int status;
@@ -1982,7 +1989,6 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
   /* this is just a Forward-Euler step */
   size_t i;
   double *f;
-  static int call_to_fe_apply = 0;
   f = malloc(sys->dimension * sizeof(double));
   if ( *h > (tnext - *t) )
   {

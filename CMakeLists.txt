@@ -64,6 +64,14 @@ target_include_directories(odexp PRIVATE src)
 # ============================================================================
 include(GNUInstallDirs)
 
+
+# ============================================================================
+# Set compilation flags (general and then build-type specific)
+# ============================================================================
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Wno-sign-compare -O0")
+set(CMAKE_BUILD_TYPE Debug)
+
+
 # ============================================================================
 # declare files to install
 # ============================================================================
