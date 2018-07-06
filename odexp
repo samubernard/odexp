@@ -152,7 +152,7 @@ sub print_ode_header
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
 # replace all constants (variable starting with '_') by their value
-# replace all , in parameters by \n 
+# replace all , in PIO by \n 
 sub cleanup_file
 {
   my @underscores;
@@ -183,7 +183,7 @@ sub cleanup_file
     {
          s/(?<!^)$underscores[$i]/$usvals[$i]/g; # replace underscores that don't start a line
     }
-    s/,/\n$fields[0] /g if /^[pP]/;    # break lines at , and remove ,
+    s/,/\n$fields[0] /g if /^[PIO]/i;    # break lines at , and remove ,
     print $fodeh "$_";
   }
 }

@@ -3,11 +3,10 @@
 _N 3
 
 # Parameters
-P0 v0     1 ! initial
+P0 v0     1 {initial}
 P2 mass   1e+09
 
-# Gravitational constant in m^3 kg^-1 s^-2
-S G 6.674e-11
+S G 6.674e-11 # Gravitational constant in m^3 kg^-1 s^-2
 
 # User-defined functions
 @ normCube(x,y,z) = pow(x*x+y*y+z*z,1.5)
