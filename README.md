@@ -26,6 +26,7 @@ A command line tool for ODE-based population simulation.
 * ``d`` Reload the parameter file 
 * ``E`` Decrease the time span by a factor 2
 * ``e`` Extend the time span by a factor 2
+* ``f`` Fit data *not implemented*
 * ``h`` Toggle plot hold (on/off). When hold is on, plot commands are replaced with replot.
 * ``g`` **cmd** Send the **cmd** to gnuplot 
 * ``?`` Display help *not fully functional*
