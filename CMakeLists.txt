@@ -64,6 +64,14 @@ target_include_directories(odexp PRIVATE src)
 # ============================================================================
 include(GNUInstallDirs)
 
+# ============================================================================
+# Manual (documentation) 
+# ============================================================================
+
+IF ( NOT DEFINED MANDIR )
+  set( MANDIR ${CMAKE_INSTALL_PREFIX}/share/man/man3 )
+ENDIF ( NOT DEFINED MANDIR )
+message( "** Manual files will be installed in ${MANDIR}" )
 
 # ============================================================================
 # Set compilation flags (general and then build-type specific)
@@ -85,10 +93,26 @@ install(TARGETS odexp
 # ============================================================================
 configure_file(src/odexp.pc.in odexp.pc @ONLY)
 
+
+# ============================================================================
+# Add custom command for manpage
+# ============================================================================
+ADD_CUSTOM_TARGET( MANPAGES ALL )
+ADD_CUSTOM_COMMAND( TARGET MANPAGES
+  COMMAND cp ${PROJECT_SOURCE_DIR}/src/help.txt ${CMAKE_BINARY_DIR}/odexp.3
+  OUTPUTS ${CMAKE_BINARY_DIR}/odexp.3
+)
+
+ADD_CUSTOM_COMMAND(
+  TARGET MANPAGES
+  DEPENDS ${CMAKE_BINARY_DIR}/odexp.3
+)
+
 # ============================================================================
 # install generated files
 # ============================================================================
 install(FILES ${CMAKE_BINARY_DIR}/odexp.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 
+install(FILES ${CMAKE_BINARY_DIR}/odexp.3 DESTINATION ${MANDIR}) 
 
 

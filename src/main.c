@@ -85,7 +85,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     char data_fn[NAMELENGTH]; /* dataset filename */
 
     /* system commands */
-    const char *helpcmd = "man .odexp/help.txt";
+    const char *helpcmd = "man odexp";
     char mv_plot_cmd[EXPRLENGTH];
 
     /* commands and options */

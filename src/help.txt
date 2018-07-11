@@ -69,14 +69,14 @@ Decrease the time span by a factor 2
 .BR e
 Increase the time span by a factor 2
 .TP
-.BR f              
+.BR ?              
 Toggle plot hold (on/off) 
 .TP
 .BR g " " \fIcmd\fR        
 Send the command \fIcmd\fR to gnuplot 
 .TP
-.BR h              
-Display this help
+.BR h       
+Fit data (not implemented)
 .TP
 .BR I              
 Set initial conditions to previous 
