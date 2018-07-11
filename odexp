@@ -1,7 +1,16 @@
-#!/usr/bin/perl -sw
+#!/usr/bin/perl -w
+#------------------------------------------------------------------------------
+# File:         odexp
+#
+# Description:  parse/run a population dynamical system file   
+#
+# Revisions:    07/2018 - Samuel Bernard
+#------------------------------------------------------------------------------
 
 use warnings;
 use strict;
+
+my $version = '1.0';
 
 use File::Copy;
 use File::Basename qw( fileparse );

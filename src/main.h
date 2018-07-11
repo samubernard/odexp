@@ -39,7 +39,7 @@ void printf_list_str(char type, size_t print_index, size_t nve_index, int paddin
 
 void printf_SIM( void );
 
-int gplot_data(const size_t colx, const size_t coly, const char *datafile_plotted);
+int gplot_data(const size_t colx, const size_t coly, const char *datafile_plotted );
 
 /* readline */
 void initialize_readline(void);

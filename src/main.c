@@ -35,6 +35,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"xscale","plot_xscale", 's', 0.0, 0, "linear", "x-axis scale {linear} | log", "plot"},
     {"yscale","plot_yscale", 's', 0.0, 0, "linear", "x-axis scale {linear} | log", "plot"},
     {"zscale","plot_zscale", 's', 0.0, 0, "linear", "x-axis scale {linear} | log", "plot"},
+    {"data","plot_data", 's', 0.0, 0, "", "plot data from datafile", "plot"},
     {"step","par_step", 'd', 1.1, 0, "", "par step increment", "par"},
     {"act","act_par", 's', 0.0, 0, "", "active parameter", "par"},
     {"lasty","take_last_y",'i', 0.0, 0, "", "take last y as initial condition", "ode"},
@@ -48,7 +49,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"popsize","population_size", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
     {"part","pop_current_particle", 'i', 0.0, 0, "", "current particle id", "population"},
     {"seed","random_generator_seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
-    {"reseed","reset_random_generator_seed", 'i', 0.0, 1, "", "reseed rng at each run 0 | {1}", "random"},
+    {"reset","reset_random_generator_seed", 'i', 0.0, 1, "", "reset rng to SEED at each run 0 | {1}", "random"},
     {"m/maxfail","phasespace_max_fail", 'i', 10000.0, 10000, "", "max number if starting guesses for steady states", "steadyStates"},  
     {"m/abstol","phasespace_abs_tol", 'd', 1e-2, 0, "", "absolute tolerance for finding steady states", "steadyStates"},  
     {"m/reltol","phasespace_rel_tol", 'd', 1e-2, 0, "", "relative tolerance for finding steady states", "steadyStates"},  
@@ -1493,6 +1494,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             {
                                 /* DBPRINT("data_fn=%s\n", data_fn); */
                                 data_plotted = 1;
+                                set_str("plot_data", dfl.name[i]);
+                                set_int("plot_data", i);
                             }
                         }
                     }
@@ -1728,7 +1731,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
 
             /* plot data */
-            if ( data_plotted ) 
+            if ( data_plotted && plotmode_normal ) 
             {
                 gplot_data(colx, coly, data_fn);
             }    
@@ -2658,7 +2661,9 @@ void printf_SIM( void )
 /* plot data from file 'data_fn', with column x as x-axis and column y as y-axis */
 int gplot_data(const size_t x, const size_t y, const char *data_fn)
 {
-    int success = fprintf(GPLOTP,"replot \"%s\" u %zu:%zu w p title \"data\"\n",data_fn,x,y);
+    int success = fprintf(GPLOTP,\
+        "replot \"%s\" u %zu:%zu w p pt \"#\" title \"%s\"\n",\
+        data_fn,x,y,get_str("plot_data"));
     fflush(GPLOTP);
     return success;
 }

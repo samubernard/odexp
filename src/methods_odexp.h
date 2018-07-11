@@ -5,7 +5,7 @@
 #include <gsl/gsl_odeiv2.h>
 
 /* number of global options */
-#define NBROPTS 39
+#define NBROPTS 40
 
 /* extern size_t ode_system_size; */
 extern int *NUM_IC;
