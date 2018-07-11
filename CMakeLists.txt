@@ -26,7 +26,7 @@ configure_file (
  )
 
 # ============================================================================
-# add the binary tree to the search path for include files so that we will find TutorialConfig.h
+# add the binary tree to the search path for include files so that we will find odexpConfig.h
 # ============================================================================
 include_directories("${PROJECT_BINARY_DIR}")
 
@@ -65,13 +65,18 @@ target_include_directories(odexp PRIVATE src)
 include(GNUInstallDirs)
 
 # ============================================================================
-# Manual (documentation) 
+# Installation dirs 
 # ============================================================================
 
 IF ( NOT DEFINED MANDIR )
   set( MANDIR ${CMAKE_INSTALL_PREFIX}/share/man/man3 )
 ENDIF ( NOT DEFINED MANDIR )
 message( "** Manual files will be installed in ${MANDIR}" )
+
+IF ( NOT DEFINED BINDIR )
+  set( BINDIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}  )
+ENDIF ( NOT DEFINED BINDIR )
+message( "** Executable files will be installed in ${BINDIR}" )
 
 # ============================================================================
 # Set compilation flags (general and then build-type specific)
@@ -93,18 +98,13 @@ install(TARGETS odexp
 # ============================================================================
 configure_file(src/odexp.pc.in odexp.pc @ONLY)
 
-
 # ============================================================================
 # Add custom command for manpage
 # ============================================================================
-ADD_CUSTOM_TARGET( MANPAGES ALL )
-ADD_CUSTOM_COMMAND( TARGET MANPAGES
+ADD_CUSTOM_TARGET( manpages ALL )
+ADD_CUSTOM_COMMAND( TARGET manpages
   COMMAND cp ${PROJECT_SOURCE_DIR}/src/odexp.man ${CMAKE_BINARY_DIR}/odexp.3
   OUTPUTS ${CMAKE_BINARY_DIR}/odexp.3
-)
-
-ADD_CUSTOM_COMMAND(
-  TARGET MANPAGES
   DEPENDS ${CMAKE_BINARY_DIR}/odexp.3
 )
 
@@ -115,4 +115,5 @@ install(FILES ${CMAKE_BINARY_DIR}/odexp.pc DESTINATION ${CMAKE_INSTALL_DATAROOTD
 
 install(FILES ${CMAKE_BINARY_DIR}/odexp.3 DESTINATION ${MANDIR}) 
 
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/odexp DESTINATION ${BINDIR} )
 
