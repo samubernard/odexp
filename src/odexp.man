@@ -1,6 +1,12 @@
-.TH ODEXP 1
+.TH ODEXP 3 
 .SH NAME
 odexp \- fast ODE solver with gnuplot graphical output
+.SH SYNOPSIS
+.B odexp 
+.I file
+.SH SYNOPSIS
+.B odexp 
+.I file
 .SH DESCRIPTION
 .B odexp 
 command line tool for ODE simulation.
@@ -262,12 +268,7 @@ Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
 
-.TP 
-.BR U
-Uniform random array. To generate an array of length 5 of pseudo-random numbers uniformly distbuted between -1 and 1 
-
 .nf
-U r[i=0:5] 
 E rand_array[i=0:5] -1 + 2*r[i]
 .fi
 
@@ -404,7 +405,7 @@ Double. Initial condition additive factor for range (default 0.0)
 .SH FUNCTIONS ACTING ON ARRAYS
 .TP
 .BR \fIdouble\fR " " sum\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR)
-Sum the elements of the array \fIarrayfR of length \fIlen\fR.
+Sum the elements of the array \fIarray\fR of length \fIlen\fR.
 Return the sum of the array
 .TP
 .BR \fIdouble\fR " " sumstep\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR, " " \fIlong " " \fIstep\fR)

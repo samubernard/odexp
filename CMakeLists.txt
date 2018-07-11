@@ -99,7 +99,7 @@ configure_file(src/odexp.pc.in odexp.pc @ONLY)
 # ============================================================================
 ADD_CUSTOM_TARGET( MANPAGES ALL )
 ADD_CUSTOM_COMMAND( TARGET MANPAGES
-  COMMAND cp ${PROJECT_SOURCE_DIR}/src/help.txt ${CMAKE_BINARY_DIR}/odexp.3
+  COMMAND cp ${PROJECT_SOURCE_DIR}/src/odexp.man ${CMAKE_BINARY_DIR}/odexp.3
   OUTPUTS ${CMAKE_BINARY_DIR}/odexp.3
 )
 
