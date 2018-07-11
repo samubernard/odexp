@@ -28,7 +28,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"x","plot_x",'s',0.0,0, "", "variable to plot on the x-axis (default T)", "plot"},
     {"y","plot_y",'s',0.0,0, "", "variable to plot on the y-axis (default x0)", "plot"},
     {"z","plot_z",'s',0.0,0, "", "variable to plot on the z-axis (default x1)", "plot"},
-    {"freeze","freeze", 'i', 0.0, 0, "", "add (1) or replace ({0}) variable on plot", "plot"},
+    {"hold","hold", 'i', 0.0, 0, "", "add (1) or replace ({0}) variable on plot", "plot"},
     {"curves","add_curves", 'i', 0.0, 0, "", "add (1) or replace ({0}) curves on plot", "plot"},
     {"style","plot_with_style", 's', 0.0, 0, "lines", "{lines} | points | dots | linespoints ...", "plot"},
     {"realtime","plot_realtime", 'i', 0.0, 0, "", "plot in real time | {0} | 1 (not implemented)", "plot"},
@@ -538,26 +538,26 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     rerun = 1;
                     plotmode_normal = 1;
                     break;
-                case 'f' : /* toggle freeze */
-                    /* TODO freeze to freeze the current plot 
+                case 'f' : /* toggle hold */
+                    /* TODO hold to hold the current plot 
                      * and keep the same simulation
                      * and add another 'add_curves' option
                      * to keep track of the last simulations
                      * with curve.0, curve.1 etc.
                      *
-                     * freeze and add_curves are mutually exclusive
-                     * freeze is meant not to run the simulation again while
+                     * hold and add_curves are mutually exclusive
+                     * hold is meant not to run the simulation again while
                      * add_curves is. 
                      */
-                    set_int("freeze",1-get_int("freeze"));
-                    if ( get_int("freeze") )
+                    set_int("hold",1-get_int("hold"));
+                    if ( get_int("hold") )
                     {
                         set_int("add_curves",0); /* unset add_curves */
-                        printf("  %sfreeze is on%s\n",T_DET,T_NOR);
+                        printf("  %shold is on%s\n",T_DET,T_NOR);
                     }
                     else
                     {
-                        printf("  %sfreeze is off%s\n",T_DET,T_NOR);
+                        printf("  %shold is off%s\n",T_DET,T_NOR);
                         plotmode_normal = 1;
                     }
                     break;
@@ -568,7 +568,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         set_int("add_curves",1-get_int("add_curves"));
                         if ( get_int("add_curves") )
                         {
-                            set_int("freeze",0); /* unset freeze */
+                            set_int("hold",0); /* unset hold */
                             printf("  %sadd curves is on (not working so well)%s\n",T_DET,T_NOR);
                         }
                         else
@@ -1616,7 +1616,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               fprintf(GPLOTP,"unset xrange\n");
               fprintf(GPLOTP,"unset yrange\n");
               fprintf(GPLOTP,"unset zrange\n");
-              if ( get_int("freeze") == 0 )
+              if ( get_int("hold") == 0 )
               {
                   if (gx == 1) /* time evolution: xlabel = 'time' */
                   {
@@ -1638,7 +1638,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                   }
               }
-              else if ( get_int("freeze") )  /* freeze is on - unset axis labels */
+              else if ( get_int("hold") )  /* hold is on - unset axis labels */
               {
                   fprintf(GPLOTP,"unset xlabel\n");
                   fprintf(GPLOTP,"unset ylabel\n");
@@ -1667,11 +1667,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                       get_str("plot_with_style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time");
 
                 }
-                if ( get_int("freeze") == 0 ) /* normal plot command: 2D, freeze=0, curves=0 */
+                if ( get_int("hold") == 0 ) /* normal plot command: 2D, hold=0, curves=0 */
                 {
                     fprintf(GPLOTP,"plot %s", plot_cmd);
                 }
-                else if ( get_int("freeze") )
+                else if ( get_int("hold") )
                 {
                     fprintf(GPLOTP,"replot %s", plot_cmd);
                 }
@@ -1701,7 +1701,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                       get_str("plot_with_style") );
 
                 }
-                if ( get_int("freeze") == 0 )
+                if ( get_int("hold") == 0 )
                 {
                     fprintf(GPLOTP,"splot %s", plot_cmd);
                 }

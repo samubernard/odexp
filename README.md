@@ -26,7 +26,7 @@ A command line tool for ODE-based population simulation.
 * ``d`` Reload the parameter file 
 * ``E`` Decrease the time span by a factor 2
 * ``e`` Extend the time span by a factor 2
-* ``f`` Toggle plot freeze (on/off). When freeze is on, plot commands are replaced with replot.  
+* ``h`` Toggle plot hold (on/off). When hold is on, plot commands are replaced with replot.
 * ``g`` **cmd** Send the **cmd** to gnuplot 
 * ``?`` Display help *not fully functional*
 * ``I`` Set initial conditions to previous, and list initial conditions 
@@ -64,7 +64,7 @@ When val is missing, the parameter value is unchanged
 * ``s`` [**msg**] Snapshot of current simulation and parameter values with optional **msg** 
 * ``t`` [**t0**] **t1** Set time span from **t0** to **t1**. By default t0 is not changed. 
 Final time **t1** must be larger than **t0**.
-* ``u`` Toggle add curves to plot (on/off). When curves is on, plotted datasets are saved and replotted at each new plot command. Set curves on to plot different solutions of the system. (To plot different variables of the same solutions, use freeze).
+* ``u`` Toggle add curves to plot (on/off). When curves is on, plotted datasets are saved and replotted at each new plot command. Set curves on to plot different solutions of the system. (To plot different variables of the same solutions, use hold).
 * ``ur``, ``uc`` Removes all added curves and set curves off. 
 * ``v`` , 2 , 3 {**i**|**x**} {**j**|**y**} [{**k**|**z**}]      
 Set 2D/3D view, x-axis to index **i** (variable **x**), y-axis to **j** (variable **y**), 
@@ -232,7 +232,7 @@ The mean field term in an average over the population, and take a single value.
 * ``x``, ``plot_x`` String. Name of the variable to plot on the x-axis (default T)
 * ``y``, ``plot_y`` String. Name of the variable to plot on the y-axis (default variable of index 0)
 * ``z``, ``plot_z`` String. Name of the variable to plot on the z-axis (default variable of index 1)
-* ``freeze``, ``freeze`` Integer. Add (1) or replace ({0}) variables on plot
+* ``hold``, ```` Integer. Add (1) or replace ({0}) variables on plot
 * ``curves``, ``add_curves`` Integer. Add (1) or replace ({0}) curves on plot
 * ``style``, ``plot_with_style`` String. One of the gnuplot styles: {lines} | points | dots | linespoints ...
 * ``realtime``, ``plot_realtime`` Integer. Plot in real time, {0} | 1 (not implemented)

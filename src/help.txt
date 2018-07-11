@@ -70,7 +70,7 @@ Decrease the time span by a factor 2
 Increase the time span by a factor 2
 .TP
 .BR f              
-Toggle plot freeze (on/off) 
+Toggle plot hold (on/off) 
 .TP
 .BR g " " \fIcmd\fR        
 Send the command \fIcmd\fR to gnuplot 
@@ -326,7 +326,7 @@ String. Name of the variable to plot on the y-axis (default variable of index 0)
 .BR z ", " plot_z
 String. Name of the variable to plot on the z-axis (default variable of index 1)
 .TP
-.BR freeze ", " freeze
+.BR hold ", " hold 
 Integer. Add (1) or replace ({0}) variables on plot
 .TP
 .BR curves ", " add_curves
