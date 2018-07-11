@@ -2491,7 +2491,8 @@ int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
         fprintf(fr,"\n# parameters/values\n");
         for(i=0;i<mu.nbr_el;i++)
         {
-            fprintf(fr,"P%zu %-*s %g\n",i,len,mu.name[i],mu.value[i]);
+            fprintf(fr,"P%zu %-*s %g {%s} # %s\n",\
+                i,len,mu.name[i],mu.value[i],mu.attribute[i],mu.comment[i]);
         }
 
         fprintf(fr,"\n# dynamical variables/initial conditions\n");
