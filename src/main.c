@@ -538,7 +538,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     rerun = 1;
                     plotmode_normal = 1;
                     break;
-                case 'f' : /* toggle hold */
+                case 'h' : /* toggle hold */
                     /* TODO hold to hold the current plot 
                      * and keep the same simulation
                      * and add another 'add_curves' option
