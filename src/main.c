@@ -402,7 +402,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     update_act_par_index(&p, mu);
     update_act_par_options(p, mu);
     /* printf_options(""); */
-    printf("  options loaded. Type 'lo' to see options\n");
+    printf("  options loaded (type 'lo' to see all options)\n");
     LOGPRINT("Options loaded");
 
     /* set IC to their numerical values */
@@ -2043,6 +2043,7 @@ int load_options(const char *filename, int exit_if_nofile)
                             break;
                     }
                   success = 1;
+                  printf_option_line(idx_opt);
                 }
                 else
                 {

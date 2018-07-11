@@ -59,6 +59,16 @@ my $re_dxdt = qr/^
   \s*                   # whitespace(s)
   (|\#.*)?              # nothing or comment
 $/ix;
+
+my $re_scalar = qr/^
+      (?:D|\w+\s)               # starts with D or else
+      \s*                       # whitespaces
+      \w+(?:\s*\[\s*\d+\s*\])*  # varname followed by [0] optionally
+      \s*                       # whitespaces
+      (\/DT)?                   # followed by DT optionally
+      \s*[^\[\S#\{]             # followed by something else that [, { or #
+/ix;
+
 # ---------------------------------------
 
 my $odefilename;
@@ -616,6 +626,10 @@ sub print_ode_init_cond
   print $fch "\n    return GSL_SUCCESS;\n}\n\n";
 }
 
+# declare_iterators
+# search for iterators [i=0:10]
+# and declare a list of unique iterators
+#   size_t i,j,k;
 sub declare_iterators
 {
 	print $fch qq(    /* iterators */
@@ -654,7 +668,7 @@ sub declare_iterators
 # take a line of the form 
 #   P mu VAL {attr} # comment
 # and write model.c 
-#   double mu = VAL; /* attr */ /* comment */
+#   double mu = par_[<i>]; /* attr */ /* comment */
 sub declare_define_parameters
 {
   my ($fname,$func) = @_;
@@ -705,6 +719,10 @@ sub declare_define_parameters
 }
 
 # TODO: handle definition of array in multiple declarations 
+# declare_scalar_or_array
+# takes a line E array[i=0:10][j=0:15]
+# and declare
+#   double array[10][15];
 sub declare_scalar_or_array
 {
   my ($fname,$character,$descr) = @_;
@@ -712,7 +730,7 @@ sub declare_scalar_or_array
   open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
   while ( <$fh> )    
  	{
-		/^$character/i or next;   # match character or go to next line
+		/^$character/i or next;   # match character or go to next line of file
     my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
     print $fch "    double $name";
     if ( my @it = ($_ =~ m/$re_iter/g) )
@@ -869,15 +887,7 @@ sub assign_output
     {
       $rhs2print = $name;
     }
-    if ( $_ =~ qr/^
-      (?:D|\w+\s)
-      \s*
-      \w+(?:\s*\[\s*\d+\s*\])*
-      \s*
-      (\/DT)?
-      \s*[^\[\S#\{]
-      /ix
-    ) # scalar variable
+    if ( $_ =~ m/$re_scalar/ ) # scalar variable
     {
       print $fch "    ${lhs}[$ii] = " . $rhs2print;
       print $fch ";" if $assign_rhs !~ /rhs/;
@@ -947,9 +957,13 @@ sub assign_pop_rate
   while ( <$fh> )    
   {
     /^$pat_char/i or next;
-    my @fields = split;
-    shift @fields;
-    print $fch "    $lhs = " . join(' ', @fields) . ";\n"; 
+    if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
+    {
+      print $fch "    $lhs = " . $rhs . ";"; 
+      print $fch " /* $attr */" if length $attr;
+      print $fch " /* $comment */" if length $comment;
+      print $fch "\n";
+    }
   }
   close($fh);
 }
