@@ -1381,7 +1381,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         }
                     }
                     break;
-                case 'h' : /* help */
+                case '?' : /* help */
                     system(helpcmd);
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */

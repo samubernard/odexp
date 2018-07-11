@@ -25,10 +25,10 @@ A command line tool for ODE-based population simulation.
 * ``ct`` **ti** **val**  Set value of **ti** to **val** (**i** = 0 or 1) 
 * ``d`` Reload the parameter file 
 * ``E`` Decrease the time span by a factor 2
-* ``e`` Increase the time span by a factor 2
+* ``e`` Extend the time span by a factor 2
 * ``f`` Toggle plot freeze (on/off). When freeze is on, plot commands are replaced with replot.  
 * ``g`` **cmd** Send the **cmd** to gnuplot 
-* ``h`` Display help
+* ``?`` Display help *not fully functional*
 * ``I`` Set initial conditions to previous, and list initial conditions 
 * ``il`` Use the state of the system at t1 as initial conditions 
 * ``in`` Loop through initial conditions. Set to I to revert to expression, enter to keep current initial condition
@@ -70,9 +70,10 @@ Final time **t1** must be larger than **t0**.
 Set 2D/3D view, x-axis to index **i** (variable **x**), y-axis to **j** (variable **y**), 
 and z-axis to **k** (variable **z**). Set variable to T or index -1 for time
 `2` takes only the first two arguments, and `3` takes the three arguments
+* ``w`` List world
 * ``x`` {**ind**|**var**} Plot variable with index **ind** or name **var** on the x-axis
 * ``y`` {**ind**|**var**} Plot variable with index **ind** or name **var** on the y-axis and time on the x-axis
-* ``w`` List world
+
 
 ## ODEXP DECLARATIONS
 * __P__ Parameters. Must be numerical (double). Parameters appear in the list of parameters (odexp ``lp``).
