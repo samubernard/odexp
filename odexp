@@ -650,7 +650,11 @@ sub declare_iterators
   print $fch "\n";
 }
 
-
+# declare_define_parameters
+# take a line of the form 
+#   P mu VAL {attr} # comment
+# and write model.c 
+#   double mu = VAL; /* attr */ /* comment */
 sub declare_define_parameters
 {
   my ($fname,$func) = @_;
@@ -660,17 +664,14 @@ sub declare_define_parameters
 	while ( <$fh> )    
 	{
   	/^P/i or next;
-    my @fields = split;
-		my $par_attribute = "";
-		$par_attribute = $1 if /{(\s*\w+\s*)+}/;
     if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
       if ( $func =~ /ode/ )
       {
-        if ($par_attribute =~ /\bINIT/i or
-            $par_attribute =~ /\bUNUSED/i or
-            $par_attribute =~ /\bINEXPR/i or 
-            $par_attribute =~ /\bPOP/i )	
+        if ($attr =~ /\bINIT/i or
+            $attr =~ /\bUNUSED/i or
+            $attr =~ /\bINEXPR/i or 
+            $attr =~ /\bPOP/i )	
         {
           ++$i;
         } else
@@ -683,9 +684,9 @@ sub declare_define_parameters
         }
       } else
       {
-        if ($par_attribute =~ /\bINIT/i or
-            $par_attribute =~ /\bINEXPR/i or
-            $par_attribute =~ /\bEVER/i )	
+        if ($attr =~ /\bINIT/i or
+            $attr =~ /\bINEXPR/i or
+            $attr =~ /\bEVER/i )	
         {
           print $fch "    double $varname = pars_[$i];";
           print $fch " /* $attr */" if length $attr;
