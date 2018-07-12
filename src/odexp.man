@@ -1,9 +1,6 @@
-.TH ODEXP 3 
+.TH ODEXP 3 "odexp" 
 .SH NAME
 odexp \- fast ODE solver with gnuplot graphical output
-.SH SYNOPSIS
-.B odexp 
-.I file
 .SH SYNOPSIS
 .B odexp 
 .I file
@@ -13,10 +10,10 @@ command line tool for ODE simulation.
 .SH COMMANDS 
 .TP
 .BR + ", " = ", " C^g 
-Increment current parameter by a multiplicative factor \fBpar_step\fR 
+Increment current parameter by a multiplicative factor \fBparstep\fR 
 .TP 
 .BR - ", " C^h
-Decrement current parameter by a multiplicative factor \fBpar_step\fR
+Decrement current parameter by a multiplicative factor \fBparstep\fR
 .TP
 .BR ] ", " C^]    
 Plot next variable on the y-axis (cyclic)
@@ -317,90 +314,8 @@ is interpreted as
 The function \fIsum\fR is a helper function (see below for a list of helper functions). 
 
 .SH NUMERICAL AND GRAPHICAL OPTIONS
-.TP
-.BR x ", " plot_x
-String. Name of the variable to plot on the x-axis (default T)
-.TP
-.BR y ", " plot_y
-String. Name of the variable to plot on the y-axis (default variable of index 0)
-.TP
-.BR z ", " plot_z
-String. Name of the variable to plot on the z-axis (default variable of index 1)
-.TP
-.BR hold ", " hold 
-Integer. Add (1) or replace ({0}) variables on plot
-.TP
-.BR curves ", " add_curves
-Integer. Add (1) or replace ({0}) curves on plot
-.TP
-.BR style ", " plot_with_style
-String. One of the gnuplot styles: {lines} | points | dots | linespoints ...
-.TP
-.BR realtime ", " plot_realtime
-Integer. Plot in real time, {0} | 1 (not implemented)
-.TP
-.BR step ", " par_step
-Double. Parameter step increment (default 1.1)
-.TP
-.BR act ", " act_par
-String. Name of current parameter parameter (default parameter of index 0, the parameter first declared)
-.TP
-.BR res ", " odesolver_output_resolution
-Integer. Nominal number of output time points (default 201)
-.TP
-.BR minh ", " odesolver_min_h
-Double. Minimal ODE solver time step  (default 1e-5)
-.TP
-.BR h ", " odesolver_init_h
-Double. Initial time step (default 0.1)
-.TP
-.BR abstol ", " odesolver_eps_abs
-Double. ODE solver absolute tolerance (default 1e-6)
-.TP
-.BR reltol ", " odesolver_eps_rel
-Double, ODE solver relative tolerance (default 0.0)
-.TP
-.BR meth ", " odesolver_step_method
-Double. ODE solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd
-.TP
-.BR m/maxfail ", " phasespace_max_fail
-Integer. Max number of starting guesses for steady states (default 10000)
-.TP
-.BR m/abstol ", " phasespace_abs_tol
-Double. Absolute tolerance for finding steady states (default 1e-2)
-.TP
-.BR m/reltol ", " phasespace_rel_tol
-Double. relative tolerance for finding steady states (default 1e-2)
-.TP
-.BR m/range ", " phasespace_search_range
-Double. Phase-space search range 
-.TP
-.BR m/min ", " phasespace_search_min
-Double. Phase-space search min 
-.TP
-.BR  c/h ", " cont_h
-Double. Initial parameter continuation step (default 0.1)
-.TP
-.BR  c/maxh ", " cont_maxh
-Double. Maximal parameter continuation step (default 0.1)
-.TP
-.BR  r/par0 ", " range_par0
-Double. Initial parameter value for range (default 0.0)
-.TP
-.BR  r/par1 ", " range_par1
-Double. Final parameter value for rangei (default 1.0)
-.TP
-.BR r/mstep ", " range_mult_step
-Double. Parameter step multiplicative increment (default 1.0, no increment)
-.TP
-.BR r/astep ", " range_add_step
-Double. Parameter step additive increment (default 0.1)
-.TP
-.BR r/mic ", " range_mult_ic
-Double. Initial condition multiplicative factor for range (default 1.0)
-.TP
-.BR r/aic ", " range_add_ic 
-Double. Initial condition additive factor for range (default 0.0)
+
+See the list of options with 'lo'
 
 .SH FUNCTIONS ACTING ON ARRAYS
 .TP

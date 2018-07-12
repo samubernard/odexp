@@ -50,10 +50,10 @@ int odesolver( oderhs pop_ode_rhs,
     /* gsl_odeiv */
     double *y,
            *f;
-    double hmin     = get_dou("odesolver_min_h"),
-           h        = get_dou("odesolver_init_h"),
-           eps_abs  = get_dou("odesolver_eps_abs"),
-           eps_rel  = get_dou("odesolver_eps_rel");
+    double hmin     = get_dou("hmin"),
+           h        = get_dou("h0"),
+           eps_abs  = get_dou("abstol"),
+           eps_rel  = get_dou("reltol");
     const gsl_odeiv2_step_type * odeT;
     gsl_odeiv2_step * s;
     gsl_odeiv2_control * c;
@@ -74,7 +74,7 @@ int odesolver( oderhs pop_ode_rhs,
         bd_alert                = 0,
         disc_alert              = 0,
         abort_odesolver_alert   = 0;
-    int nbr_out = get_int("odesolver_output_resolution");
+    int nbr_out = get_int("res");
 
     /* output files */
     FILE *quickfile;
@@ -105,31 +105,31 @@ int odesolver( oderhs pop_ode_rhs,
     /* iterators */
     size_t i,j;
 
-    if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
+    if ( strncmp(get_str("solver"),"rk4",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk4;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"rk2",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"rk2",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk2;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"rkf45",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"rkf45",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rkf45;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"rkck",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"rkck",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rkck;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"rk8pd",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"rk8pd",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk8pd;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"bsimp",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"bsimp",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_bsimp;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"fe",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"fe",NAMELENGTH) == 0 )
     {
         /* see fe_apply below */
         odeT = gsl_odeiv2_step_fe;
@@ -137,7 +137,7 @@ int odesolver( oderhs pop_ode_rhs,
     else
     {
         fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
-                T_ERR,get_str("odesolver_step_method"),T_NOR);
+                T_ERR,get_str("solver"),T_NOR);
         fprintf(stderr,"         %swill use 'rk4' as a default step method%s\n",T_ERR,T_NOR);
         odeT = gsl_odeiv2_step_rk4;
     }
@@ -170,7 +170,7 @@ int odesolver( oderhs pop_ode_rhs,
 
 
     /* choose single or particle population simulation */
-    if ( strncmp( get_str("population_mode"), "single", 3) )
+    if ( strncmp( get_str("popmode"), "single", 3) )
     {
         ode_rhs = pop_ode_rhs;
         ode_ic  = pop_ode_ic;
@@ -195,23 +195,23 @@ int odesolver( oderhs pop_ode_rhs,
      * */
     if ( POP_SIZE == 0 ) /* if POP_SIZE==0, cannot take last y */
     {
-        set_int("take_last_y",0);
+        set_int("lasty",0);
     }
 
-    if ( get_int("take_last_y") )
+    if ( get_int("lasty") )
     {
-        set_int("population_size",POP_SIZE);
-        /* printf("  Initial population size set to %d\n",get_int("population_size")); */
+        set_int("popsize",POP_SIZE);
+        /* printf("  Initial population size set to %d\n",get_int("popsize")); */
     }
-    if ( strncmp( get_str("population_mode"), "single", 3) == 0 )
+    if ( strncmp( get_str("popmode"), "single", 3) == 0 )
     {
-        set_int("population_size", 1);
+        set_int("popsize", 1);
     }
     /* initial conditions */
-    pop_size = get_int("population_size");
+    pop_size = get_int("popsize");
     sim_size = ode_system_size*pop_size; 
     y = malloc(sim_size*sizeof(double));
-    if ( get_int("take_last_y") ) /* initialize y to pars->y 
+    if ( get_int("lasty") ) /* initialize y to pars->y 
                                    * Keep SIM->pop intact
                                    * but fopen pars->buffer's  
                                    * */
@@ -284,17 +284,17 @@ int odesolver( oderhs pop_ode_rhs,
 
     quickfile = fopen(quick_buffer,"w");
     
-    /* current.plot binary file with three columns: plot_x, plot_y, plot_z */
+    /* current.plot binary file with three columns: x, y, z */
     /* use hexdump to see the file content:
      * hexdump -e '"%f " "%f " "%f " "\n"' current.plot
      */
-    ngx = get_int("plot_x");
-    ngy = get_int("plot_y");
-    ngz = get_int("plot_z");
+    ngx = get_int("x");
+    ngy = get_int("y");
+    ngz = get_int("z");
     /* DBPRINT("  quick file"); */
-    if ( get_int("pop_current_particle") >= SIM->max_id )
+    if ( get_int("particle") >= SIM->max_id )
     {
-        printf("  warning, pop_current_particle is too large\n");
+        printf("  warning, particle is too large\n");
     }
     fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
     /* DBPRINT("  after quick file"); */
@@ -313,8 +313,8 @@ int odesolver( oderhs pop_ode_rhs,
     }  
 
     /* print IVP parameters */
-    printf("  integrating on [%.2f, %.2f], %s mode, ", t, t1, get_str("population_mode") );
-    if ( get_int("take_last_y") )
+    printf("  integrating on [%.2f, %.2f], %s mode, ", t, t1, get_str("popmode") );
+    if ( get_int("lasty") )
     {
         printf("from previous state %s(I to revert to default)%s...\n",T_DET,T_NOR);
     }
@@ -383,7 +383,7 @@ int odesolver( oderhs pop_ode_rhs,
             if ( odeT == gsl_odeiv2_step_fe )
             {
               status = fe_apply(&sys,&t,tnext,&h,y);
-              h = get_dou("odesolver_init_h"); /* reset h */
+              h = get_dou("h0"); /* reset h */
             }
             else
             {
@@ -394,7 +394,7 @@ int odesolver( oderhs pop_ode_rhs,
               h = hmin;
               if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
               {
-                printf("\n  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e\n",t, hmin);
+                printf("\n  Warning: hmin reached at t = %f. Continuing with h = %e\n",t, hmin);
                 hmin_alert = 1; 
               }
             }
@@ -523,14 +523,14 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
            *ymin,
            *ymax,
            *f;
-    double hmin     = get_dou("odesolver_min_h"),
-           h        = get_dou("odesolver_init_h"),
-           eps_abs  = get_dou("odesolver_eps_abs"),
-           eps_rel  = get_dou("odesolver_eps_rel");
+    double hmin     = get_dou("hmin"),
+           h        = get_dou("h0"),
+           eps_abs  = get_dou("abstol"),
+           eps_rel  = get_dou("reltol");
     int hmin_alert              = 0,
         disc_alert              = 0,
         abort_odesolver_alert   = 0;
-    long nbr_out = (long)get_int("odesolver_output_resolution");
+    long nbr_out = (long)get_int("res");
     FILE *file;
     const char current_data_buffer[] = "range.tab";
     size_t i;
@@ -563,34 +563,34 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     (void)fcn;
     (void)GNUPLOTPIPE;
 
-    if ( strncmp(get_str("odesolver_step_method"),"rk4",NAMELENGTH) == 0 )
+    if ( strncmp(get_str("solver"),"rk4",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk4;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"rk2",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"rk2",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk2;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"rkf45",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"rkf45",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rkf45;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"rkck",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"rkck",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rkck;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"rk8pd",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"rk8pd",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk8pd;
     }
-    else if ( strncmp(get_str("odesolver_step_method"),"bsimp",NAMELENGTH) == 0 )
+    else if ( strncmp(get_str("solver"),"bsimp",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_bsimp;
     }
     else
     {
         fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
-                T_ERR,get_str("odesolver_step_method"),T_NOR);
+                T_ERR,get_str("solver"),T_NOR);
         fprintf(stderr,"         %swill use 'rk4' as a default step method%s\n",T_ERR,T_NOR);
         odeT = gsl_odeiv2_step_rk4;
     }
@@ -615,7 +615,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
 
     /* parameter range */
     name2index(get_str("act_par"), mu, &p);
-    mu.value[p] = get_dou("range_par0");
+    mu.value[p] = get_dou("par0");
     ymin = malloc(SIM->nbr_var*sizeof(double));
     ymax = malloc(SIM->nbr_var*sizeof(double));
 
@@ -665,12 +665,12 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     }
 
 
-    while (  ((get_dou("range_par1") > get_dou("range_par0")) &&  /* range with increasing values */
-              (mu.value[p] <= get_dou("range_par1")) && 
-              (mu.value[p] >= get_dou("range_par0"))) ||
-             ((get_dou("range_par0") > get_dou("range_par1")) &&  /* range with decreasing values */
-              (mu.value[p] >= get_dou("range_par1")) && 
-              (mu.value[p] <= get_dou("range_par0"))) )
+    while (  ((get_dou("par1") > get_dou("par0")) &&  /* range with increasing values */
+              (mu.value[p] <= get_dou("par1")) && 
+              (mu.value[p] >= get_dou("par0"))) ||
+             ((get_dou("par0") > get_dou("par1")) &&  /* range with decreasing values */
+              (mu.value[p] >= get_dou("par1")) && 
+              (mu.value[p] <= get_dou("par0"))) )
     {
     /* tspan */
     /* it is assumed that the first and last values of tspan are t0 and t1 */
@@ -679,13 +679,13 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     dt = (t1-t)/(double)(nbr_out-1);
     nextstop = t;
     /* initial conditions */
-    if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in pop_ode_ic */
+    if ( get_int("rric") ) /* set initial conditions to those specified in pop_ode_ic */
     {
         pop_ode_ic(tspan.array[0], y, &mu); /* evaluate initial conditions in y */
     }
     for (i = 0; i < SIM->nbr_var; i++)
     {
-        if ( get_int("range_reset_ic") ) /* set initial conditions to those specified in pop_ode_ic */
+        if ( get_int("rric") ) /* set initial conditions to those specified in pop_ode_ic */
         {
             if (NUM_IC[i]) /* use ics.value as initial condition */
             {
@@ -698,7 +698,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
         }
         else /* keep state of previous run as initial conditions and perturb them */
         {
-            y[i] = get_dou("range_mult_ic")*y[i]+get_dou("range_add_ic");
+            y[i] = get_dou("rmic")*y[i]+get_dou("raic");
         }
         ymin[i] = INFINITY;
         ymax[i] = -INFINITY;
@@ -730,7 +730,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
               h = hmin;
               if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
               {
-                printf("\n  Warning: odesolver_min_h reached at t = %f. Continuing with h = %e\n",t, hmin);
+                printf("\n  Warning: hmin reached at t = %f. Continuing with h = %e\n",t, hmin);
                 hmin_alert = 1; 
               }
             }
@@ -787,7 +787,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
            fprintf(file,"\t%g\t%g",ymin[i],ymax[i]);
         }
         fprintf(file,"\n");
-        mu.value[p] = get_dou("range_mult_step")*mu.value[p]+get_dou("range_add_step");
+        mu.value[p] = get_dou("rmstep")*mu.value[p]+get_dou("rastep");
 
     } /* END WHILE PARAMETER RANGE */
 
@@ -828,11 +828,11 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
     double *ics_min, /* lower bounds on steady state values */
           *ics_max; /* bounds on steady state values */
     size_t ntry = 0;
-    size_t max_fail = get_int("phasespace_max_fail"); /* max number of iteration without finding a new steady state */
+    size_t max_fail = get_int("maxfail"); /* max number of iteration without finding a new steady state */
     size_t nbr_stst = 0; /* number of steady state found so far */
     size_t i,j;
-    double rel_tol = get_dou("phasespace_abs_tol"), 
-           abs_tol = get_dou("phasespace_rel_tol"), 
+    double rel_tol = get_dou("nlabstol"), 
+           abs_tol = get_dou("nlreltol"), 
            err, 
            ststn1;
 
@@ -858,14 +858,14 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
     ics_min = malloc(SIM->nbr_var*sizeof(double));
     for ( i=0; i<SIM->nbr_var; i++)
     {
-        ics_min[i] = get_dou("phasespace_search_min")*ics.value[i];
+        ics_min[i] = get_dou("nlminr")*ics.value[i];
     }
 
     /* ics_max */
     ics_max = malloc(SIM->nbr_var*sizeof(double));
     for ( i=0; i<SIM->nbr_var; i++)
     {
-        ics_max[i] = get_dou("phasespace_search_range")*ics.value[i];
+        ics_max[i] = get_dou("nlrange")*ics.value[i];
     }
 
     /* search for steady states */
@@ -1166,16 +1166,16 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
     long p = get_int("act_par"); 
     size_t i;
     long ntry = 0;
-    long max_fail = get_int("phasespace_max_fail");
+    long max_fail = get_int("maxfail");
     int status;
     steady_state stst;
-    double h = get_dou("cont_h"),
-           maxh = get_dou("cont_maxh");
+    double h = get_dou("hc0"),
+           maxh = get_dou("hcmax");
     FILE *br_file;
     double *x2, *x1, *x0;
     double mu2, mu1, mu0;
     double b, c, s=h;
-    double eig_tol = get_dou("phasespace_abs_tol"); 
+    double eig_tol = get_dou("nlabstol"); 
     long nstst = 0;
 
     int turning_point_found = 0;
@@ -1256,7 +1256,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
              * 2. One (pair) eigenvalue close to zero
              * 3. 3 steady states or more already computed
              * ============================================*/
-            if ( (fabs(mu0 - mu1) < fabs(maxh*get_dou("phasespace_rel_tol"))) && 
+            if ( (fabs(mu0 - mu1) < fabs(maxh*get_dou("nlreltol"))) && 
                     (((mu0>mu1) && (mu1>mu2)) || ((mu0<mu1) && (mu1<mu2))) && 
                     (nstst > 2) )  /* we are close to a turning point */
             {
@@ -1378,7 +1378,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
     fprintf(br_file,"\n");
 
     /* set c/h to the sign of the last value of s */
-    set_dou("cont_h",s);
+    set_dou("hc0",s);
     
     printf("  %s(%g msec)%s\n", T_DET,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
 
@@ -1411,7 +1411,7 @@ static int compare (void const *a, void const *b)
 
 int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, const double t, const double *y)
 {
-    int cp = get_int("pop_current_particle");
+    int cp = get_int("particle");
     size_t tx = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
     par *pars = (par *)NULL;
     pars = getpar((size_t)cp);

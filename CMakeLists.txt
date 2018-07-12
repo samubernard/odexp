@@ -46,7 +46,8 @@ add_library(odexp SHARED
   src/utils_odexp.c
 )
 target_link_libraries(odexp GSL::gsl GSL::gslcblas)
-target_link_libraries(odexp readline)
+target_link_libraries(odexp /usr/local/opt/readline/lib/libreadline.dylib)
+target_link_libraries(odexp /usr/local/opt/readline/lib/libhistory.dylib)
 set_target_properties(odexp PROPERTIES VERSION ${PROJECT_VERSION})
 
 # ============================================================================
