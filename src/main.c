@@ -2694,8 +2694,7 @@ void initialize_readline()
     rl_readline_name = "Odexp";
 }
 
-char **
-completion_list_completion(const char *text, int start, int end)
+char ** completion_list_completion(const char *text, int start, int end)
 {
     rl_attempted_completion_over = 1;
     (void)start;
@@ -2703,11 +2702,11 @@ completion_list_completion(const char *text, int start, int end)
     return rl_completion_matches(text, completion_list_generator);
 }
 
-char *
-completion_list_generator(const char *text, int state)
+char * completion_list_generator(const char *text, int state)
 {
     static int list_index, len;
     char *name;
+    int list_len = 0;
 
     if (!state) {
         list_index = 0;
@@ -2725,6 +2724,47 @@ completion_list_generator(const char *text, int state)
             return strdup(name);
         }
         name = GOPTS[list_index].optiontype;
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+    }
+    list_len += NBROPTS;
+
+    while (list_index++<list_len+SIM->nbr_par) 
+    {
+        name = SIM->parnames[list_index-list_len];
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+    }
+    list_len += SIM->nbr_par;
+    while (list_index++<list_len+SIM->nbr_var) 
+    {
+        name = SIM->varnames[list_index-list_len];
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+    }
+    list_len += SIM->nbr_var;
+    while (list_index++<list_len+SIM->nbr_aux) 
+    {
+        name = SIM->auxnames[list_index-list_len];
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+    }
+    list_len += SIM->nbr_aux;
+    while (list_index++<list_len+SIM->nbr_psi) 
+    {
+        name = SIM->psinames[list_index-list_len];
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+    }
+    list_len += SIM->nbr_psi;
+    while (list_index++<list_len+SIM->nbr_mfd) 
+    {
+        name = SIM->mfdnames[list_index-list_len];
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }

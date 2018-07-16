@@ -29,8 +29,8 @@ A command line tool for ODE-based population simulation.
 * ``f`` Fit data *not implemented*
 * ``h`` Toggle plot hold (on/off). When hold is on, plot commands are replaced with replot.
 * ``g`` **cmd** Send the **cmd** to gnuplot 
-* ``?`` Display help *not fully functional*
-* ``I`` Set initial conditions to previous, and list initial conditions 
+* ``?`` Display help
+* ``I`` Set initial conditions to previous, and list initial conditions
 * ``il`` Use the state of the system at t1 as initial conditions 
 * ``in`` Loop through initial conditions. Set to I to revert to expression, enter to keep current initial condition
 * ``is`` Set initial condition to steady state. Steady state must have been computed with `ms` *not functional*
@@ -230,45 +230,45 @@ The mean field term in an average over the population, and take a single value.
 
 ## NUMERICAL AND GRAPHICAL OPTIONS
 
-* ``x``, ``plot_x`` String. Name of the variable to plot on the x-axis (default T)
-* ``y``, ``plot_y`` String. Name of the variable to plot on the y-axis (default variable of index 0)
-* ``z``, ``plot_z`` String. Name of the variable to plot on the z-axis (default variable of index 1)
-* ``hold``, ```` Integer. Add (1) or replace ({0}) variables on plot
-* ``curves``, ``add_curves`` Integer. Add (1) or replace ({0}) curves on plot
-* ``style``, ``plot_with_style`` String. One of the gnuplot styles: {lines} | points | dots | linespoints ...
-* ``realtime``, ``plot_realtime`` Integer. Plot in real time, {0} | 1 (not implemented)
-* ``xscale``, ``plot_xscale`` String. x-axis scale {linear} | log
-* ``yscale``, ``plot_yscale`` String. y-axis scale {linear} | log
-* ``zscale``, ``plot_zscale`` String. z-axis scale {linear} | log
-* ``step``, ``par_step`` Double. Parameter step increment (default 1.1)
-* ``act``, ``act_par`` String. Name of current parameter parameter (default parameter of index 0, the parameter first declared)
-* ``lasty``, ``take_last_y`` Integer. Take last y as initial condition
-* ``res``, ``odesolver_output_resolution`` Integer. Nominal number of output time points (default 201)
-* ``minh``, ``odesolver_min_h`` Double. Minimal ODE solver time step  (default 1e-5)
-* ``h``, ``odesolver_init_h`` Double. Initial time step (default 0.1)
-* ``abstol``, ``odesolver_eps_abs`` Double. ODE solver absolute tolerance (default 1e-6)
-* ``reltol``, ``odesolver_eps_rel`` Double, ODE solver relative tolerance (default 0.0)
-* ``meth``, ``odesolver_step_method`` Double. ODE solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd | bsimp
-* ``popmode``, ``population_mode`` String. Population simulation mode single | {population}
-``popsize``, ``population_size`` Integer. Initial population size for particle simulations
-``part``, ``pop_current_particle`` Integer. Current particle ID
-``seed``, ``random_generator_seed`` Integer. Seed for the random number generator {3141592}
-``reseed``, ``reset_random_generator_seed`` Integer.  Reset the seed of the rng at each run 0 | {1}. When set to 1, the same seed is used for each simulation.
-* ``m/maxfail``, ``phasespace_max_fail`` Integer. Max number of starting guesses for steady states (default 10000)
-* ``m/abstol``, ``phasespace_abs_tol`` Double. Absolute tolerance for finding steady states (default 1e-2)
-* ``m/reltol``, ``phasespace_rel_tol`` Double. Relative tolerance for finding steady states (default 1e-2)
-* ``m/range``, ``phasespace_search_range`` Double. Phase-space search range 
-* ``m/min``, ``phasespace_search_min`` Double. Phase-space search min 
-* ``c/h``, ``cont_h`` Double. Initial parameter continuation step (default 0.1)
-* ``c/maxh``, ``cont_maxh`` Double. Maximal parameter continuation step (default 0.1)
-* ``r/par0``, ``range_par0`` Double. Initial parameter value for range (default 0.0)
-* ``r/par1``, ``range_par1`` Double. Final parameter value for rangei (default 1.0)
-* ``r/mstep``, ``range_mult_step`` Double. Parameter step multiplicative increment (default 1.0, no increment)
-* ``r/astep``, ``range_add_step`` Double. Parameter step additive increment (default 0.1)
-* ``r/mic``, ``range_mult_ic`` Double. Initial condition multiplicative factor for range (default 1.0)
-* ``r/aic``, ``range_add_ic``  Double. Initial condition additive factor for range (default 0.0)
-``r/ric``, ``range_reset_ic`` Integer. Reset initial conditions at each iteration for range
-``g/font``, ``gnuplot_font`` String.  gnuplot font {Helvetica Neue Light} 
+* ``x``,  String. Name of the variable to plot on the x-axis (default T)
+* ``y``,  String. Name of the variable to plot on the y-axis (default variable of index 0)
+* ``z``,  String. Name of the variable to plot on the z-axis (default variable of index 1)
+* ``hold``, Integer. Add (1) or replace ({0}) variables on plot
+* ``curves``, Integer. Add (1) or replace ({0}) curves on plot
+* ``style``, String. One of the gnuplot styles: {lines} | points | dots | linespoints ...
+* ``realtime``, Integer. Plot in real time, {0} | 1 (not implemented)
+* ``xscale``, String. x-axis scale {linear} | log
+* ``yscale``, String. y-axis scale {linear} | log
+* ``zscale``,  String. z-axis scale {linear} | log
+* ``parstep``, Double. Parameter step increment (default 1.1)
+* ``actpar``, String. Name of current parameter parameter (default parameter of index 0, the parameter first declared)
+* ``lasty``, Integer. Take last y as initial condition
+* ``res``, Integer. Nominal number of output time points (default 201)
+* ``hmin``, Double. Minimal ODE solver time step  (default 1e-5)
+* ``h0``, Double. Initial time step (default 0.1)
+* ``abstol``, Double. ODE solver absolute tolerance (default 1e-6)
+* ``reltol``, Double, ODE solver relative tolerance (default 0.0)
+* ``solver``, Double. ODE solver stepping method rk2 | {rk4} | rkf45 | rkck | rk8pd | bsimp
+* ``popmode``, String. Population simulation mode single | {population}
+* ``popsize``,  Integer. Initial population size for particle simulations
+* ``particle``, Integer. Current particle ID
+* ``seed``, Integer. Seed for the random number generator {3141592}
+* ``reseed``, Integer.  Reset the seed of the rng at each run 0 | {1}. When set to 1, the same seed is used for each simulation.
+* ``nlmaxfail``, Integer. Max number of starting guesses for steady states (default 10000)
+* ``nlabstol``, Double. Absolute tolerance for finding steady states (default 1e-2)
+* ``nlreltol``, Double. Relative tolerance for finding steady states (default 1e-2)
+* ``nlrange``, Double. Phase-space search range
+* ``nlminr``, Double. Phase-space search min
+* ``hc0``, Double. Initial parameter continuation step (default 0.1)
+* ``hcmax``, Double. Maximal parameter continuation step (default 0.1)
+* ``par0``, Double. Initial parameter value for range (default 0.0)
+* ``par1``, Double. Final parameter value for rangei (default 1.0)
+* ``rmstep``, Double. Parameter step multiplicative increment (default 1.0, no increment)
+* ``rastep``, Double. Parameter step additive increment (default 0.1)
+* ``rmic``, Double. Initial condition multiplicative factor for range (default 1.0)
+* ``raic``, Double. Initial condition additive factor for range (default 0.0)
+``rric``, Integer. Reset initial conditions at each iteration for range
+``font``, String.  gnuplot font {Helvetica Neue Light} 
 
 ## FUNCTIONS ACTING ON ARRAYS
 

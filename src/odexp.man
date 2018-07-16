@@ -9,6 +9,9 @@ odexp \- fast ODE solver with gnuplot graphical output
 command line tool for ODE simulation.
 .SH COMMANDS 
 .TP
+.BR ?              
+Display this help
+.TP
 .BR + ", " = ", " C^g 
 Increment current parameter by a multiplicative factor \fBparstep\fR 
 .TP 
@@ -21,14 +24,23 @@ Plot next variable on the y-axis (cyclic)
 .BR [ ", " C^[ 
 Plot previous variable on the y-axis (cyclic)
 .TP
+.BR } ", " C^}
+Plot next particle on the y-axis (cyclic)
+.TP
+.BR { ", " C^{
+Plot previous particle on the y-axis (cyclic)
+.TP
 .BR >
 Double the number of time steps 
 .TP
 .BR <
 Halve the number of time steps 
 .TP
+.BR # " " \fIdataset\fR " " \fIcolx\fR  " " \fIcoly\fR 
+Add to plot \fIcolx\fR and \fIcoly\fR from \fIdataset\fR
+.TP
 .BR ! " " \fIfilename\fR   
-Try to save the current plot to \fIfilename\fR. EPS format
+Save the current plot to \fIfilename\fR. EPS format
 .TP
 .BR $ " " \fIid\fR   
 Print dataset for particle \fIid\fR, or print stats dataset if \fIid\fR is missing
@@ -72,14 +84,14 @@ Decrease the time span by a factor 2
 .BR e
 Increase the time span by a factor 2
 .TP
-.BR ?              
-Toggle plot hold (on/off) 
+.BR f       
+Fit data (not implemented)
 .TP
 .BR g " " \fIcmd\fR        
 Send the command \fIcmd\fR to gnuplot 
 .TP
-.BR h       
-Fit data (not implemented)
+.BR h              
+Toggle plot hold (on/off) 
 .TP
 .BR I              
 Set initial conditions to previous 
@@ -177,11 +189,17 @@ Final time \fIt1\fR must be larger than \fIt0\fR.
 .BR u              
 Toggle add curves to plot (on/off) 
 .TP
+.BR ur              
+Removes all added curves and set curves off.
+.TP
 .BR v ", " 2 ", " 3 " " \fR{\fIi\fR|\fIx\fR} " " \fR{\fIj\fR|\fIy\fR} " " \fR[{\fIk\fR|\fIz\fR}]      
 Set 2D/3D view, x-axis to index \fIi\fR (variable \fIx\fR), y-axis to \fIj\fR (variable \fIy\fR), 
 and z-axis to \fIk\fR (variable \fIz\fR). 
 Set variable to T or index -1 for time.
 \fB2\fR takes only the first two arguments, and the \fB3\fR takes the three arguments
+.TP
+.BR w 
+List all particles 
 .TP
 .BR x " " \fR{\fIind\fR| \fIvar\fR}
 Plot variable with index \fIind\fR or name \fIvar\fR on the x-axis
