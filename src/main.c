@@ -2715,56 +2715,62 @@ char * completion_list_generator(const char *text, int state)
 
     while (list_index++<NBROPTS) 
     {
-        name = GOPTS[list_index].name;
+        name = GOPTS[list_index-1].name;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
-        name = GOPTS[list_index].abbr;
+        name = GOPTS[list_index-1].abbr;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
-        name = GOPTS[list_index].optiontype;
+        name = GOPTS[list_index-1].optiontype;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
     }
+    --list_index;
     list_len += NBROPTS;
 
-    while (list_index++<list_len+SIM->nbr_par) 
+    while (list_index<list_len+SIM->nbr_par) 
     {
         name = SIM->parnames[list_index-list_len];
+        ++list_index;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
     }
     list_len += SIM->nbr_par;
-    while (list_index++<list_len+SIM->nbr_var) 
+    while (list_index<list_len+SIM->nbr_var) 
     {
         name = SIM->varnames[list_index-list_len];
+        ++list_index;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
     }
     list_len += SIM->nbr_var;
-    while (list_index++<list_len+SIM->nbr_aux) 
+    while (list_index<list_len+SIM->nbr_aux) 
     {
         name = SIM->auxnames[list_index-list_len];
+        ++list_index;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
     }
     list_len += SIM->nbr_aux;
-    while (list_index++<list_len+SIM->nbr_psi) 
+    while (list_index<list_len+SIM->nbr_psi) 
     {
         name = SIM->psinames[list_index-list_len];
+        ++list_index;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
     }
     list_len += SIM->nbr_psi;
-    while (list_index++<list_len+SIM->nbr_mfd) 
+    while (list_index<list_len+SIM->nbr_mfd) 
     {
         name = SIM->mfdnames[list_index-list_len];
+        ++list_index;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
