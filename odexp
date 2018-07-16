@@ -614,7 +614,7 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
     "%DEATH", "myself_->death_rate",
     "assign particle death rate");
   assign_pop_rate($modelode,
-    "%REPLI", "myself_->death_rate",
+    "%REPLI", "myself_->repli_rate",
     "assign particle replication rate");
   print $fch "\n    return GSL_SUCCESS;\n}\n\n";
 }
