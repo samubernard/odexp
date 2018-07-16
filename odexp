@@ -69,6 +69,15 @@ my $re_dxdt = qr/^
   (|\#.*)?              # nothing or comment
 $/ix;
 
+my $re_pop = qr/^
+  \s*(%\w*)             # type
+  \s+                   # whitespace(s)
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;
+
 my $re_scalar = qr/^
       (?:D|\w+\s)               # starts with D or else
       \s*                       # whitespaces
@@ -966,7 +975,7 @@ sub assign_pop_rate
   while ( <$fh> )    
   {
     /^$pat_char/i or next;
-    if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
+    if ( my ($type, $rhs, $attr, $comment) = ( /$re_pop/ ) )
     {
       print $fch "    $lhs = " . $rhs . ";"; 
       print $fch " /* $attr */" if length $attr;

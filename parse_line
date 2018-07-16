@@ -5,7 +5,7 @@ use strict;
 
 # @ACEIFOPS 
 my $re_pace = qr/^
-  \s*([ACEIOPST])\w*    # type
+  \s*([%ACEIOPST])\w*    # type
   \s+                   # whitespaces
   (\w+)                 # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
