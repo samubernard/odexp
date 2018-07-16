@@ -65,7 +65,8 @@ struct gen_option GOPTS[NBROPTS] = {
     {"rmic","rmic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameterRange"},
     {"raic","raic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
-    {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"} };
+    {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"},
+    {"ld","loudness", 's', 0.0, 0, "loud", "loudness mode silent | quiet | {loud}", "generalSettings"} };
 
 /* what kind of initial conditions to take */
 int *NUM_IC;
@@ -460,6 +461,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {    
         status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
     }
+    LOGPRINT("First simulation done.");
+
     fprintf(GPLOTP,"set term aqua font \"%s,16\"\n", get_str("font"));
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
@@ -468,10 +471,17 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     strncpy(extracmd,"0",1); /* start by refreshing the plot with command 0: normal plot 
                               * this does not go into the history  
                               */
-    LOGPRINT("First simulation done.");
 
     while(1)
     {
+        if ( strncmp(get_str("loudness"),"quiet",3) == 0 ) /* run quiet mode, break out of while loop  */
+        {
+          printf("\n  %syou are in quiet mode (option loudness quiet),\n"
+                 "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
+          printf("  hexdump -e '%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
+          printf("  hexdump -e '%zu \"%%5.2f \" \"\\n\"' idXX.dat\n\n", nbr_cols); 
+          break;
+        }
         printf("%s",T_NOR);
         if ( extracmd != NULL )
         {
@@ -1802,8 +1812,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* try to remove frozen curves */
     system("rm -f .odexp/curve.*");
-    /* try to remove idXX curves */
-    remove_id_files();
+    if ( strncmp(get_str("loudness"),"loud",3) == 0 ) /* run loud mode  */
+    { 
+      /* try to remove idXX curves */
+      remove_id_files();
+    }
     fclose(logfr);
 
     return status;
