@@ -7,6 +7,10 @@
 
 *.o
 
+Session.vim
+
+.odexp
+
 .DS_Store
 
 build/
