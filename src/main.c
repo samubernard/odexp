@@ -186,7 +186,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     logfr = fopen(logfilename, "w");
     if ( logfr != NULL ) 
     { 
-        LOGPRINT("Log file for %s\n", odexp_filename); 
+        LOGPRINT("Log file for %s", odexp_filename); 
     }
 
     /* begin */
@@ -204,7 +204,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         exit ( EXIT_FAILURE );
     }
     printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
-    LOGPRINT("Found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
+    LOGPRINT("Found %zu time points, of which %zu stopping points", tspan.length, tspan.length - 2);
 
     /* get constant arrays */
     printf("\n%-25s%s\n", "constant arrays", HLINE);
@@ -424,6 +424,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* seed random number generator */
     srand( (unsigned long)get_int("seed") );
+    LOGPRINT("Rand seed: %d",get_int("seed"));
     /* test rng */
     printf("\nrandom number generator %s\n", HLINE);
     printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR);
@@ -456,9 +457,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     stifle_history( 200 );
 
     /* first run after system init */
-    LOGPRINT("System init done. Running first simulation");
+    LOGPRINT("System init done.");
     if ( not_run == 0 )
     {    
+        LOGPRINT("Running first simulation");
         status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
     }
     LOGPRINT("First simulation done.");
@@ -472,6 +474,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                               * this does not go into the history  
                               */
 
+    LOGPRINT("Main loop");
     while(1)
     {
         if ( strncmp(get_str("loudness"),"quiet",3) == 0 ) /* run quiet mode, break out of while loop  */
@@ -480,6 +483,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                  "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
           printf("  hexdump -e '%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
           printf("  hexdump -e '%zu \"%%5.2f \" \"\\n\"' idXX.dat\n\n", nbr_cols); 
+          LOGPRINT("Quiet mode, will exit");
           break;
         }
         printf("%s",T_NOR);
@@ -1783,6 +1787,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     }
     
     printf("exiting...\n");
+    LOGPRINT("Exiting");
 
     pclose(GPLOTP);
 
@@ -1803,6 +1808,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     free(lastinit);
     free_world(SIM);
 
+    LOGPRINT("Memory freed");
+
     /* write history */
     if ( write_history(".odexp/history.txt") )
 
@@ -1810,13 +1817,17 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       fprintf(stderr, "\n  Error: could not write history\n");
     }
 
+    LOGPRINT("History written");
+
     /* try to remove frozen curves */
     system("rm -f .odexp/curve.*");
     if ( strncmp(get_str("loudness"),"loud",3) == 0 ) /* run loud mode  */
     { 
       /* try to remove idXX curves */
       remove_id_files();
+      LOGPRINT("id files removed");
     }
+    LOGPRINT("Closing log file");
     fclose(logfr);
 
     return status;
