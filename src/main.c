@@ -66,7 +66,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"raic","raic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
     {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"},
-    {"ld","loudness", 's', 0.0, 0, "loud", "loudness mode silent | quiet | {loud}", "generalSettings"} };
+    {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"} };
 
 /* what kind of initial conditions to take */
 int *NUM_IC;
