@@ -700,7 +700,6 @@ sub declare_define_parameters
     {
       my ( $ctype ) = ( $attr =~ m/\btype\b:(int|long|double)/ );
       $ctype = "double" if not length $ctype;
-      print $varname . " " . $ctype . "\n";
       if ( $func =~ /ode/ )
       {
         if ($attr =~ /\bINIT/i or
