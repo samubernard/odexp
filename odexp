@@ -274,7 +274,7 @@ sub declare_array_from_file
       if ( 0+@fields < 5 ) { die "missing something at line: $_" };
       my ($var, $nbr_rows, $nbr_cols, $data_filename) = @fields[1..4];
       print $fch "/* array from file: $data_filename */\n";
-      print $fch "static const double ${var}[$nbr_rows][$nbr_cols] = {";
+      print $fch "static const double ${var}[$nbr_rows][$nbr_cols] __attribute__((unused)) = {\n        ";
       open(my $datafh, '<', $data_filename) or die "Could not open file '$data_filename'. $!";
       while( <$datafh> )
       {
@@ -369,15 +369,7 @@ sub print_main
 {
 	my $s = qq(int main ( int argc, char *argv[] )
 {
-    int status;
-
-    if ( argc == 2 ) {
-        status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,argv[1]);
-    }
-    else {
-        status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,"unknown file name");
-    }
-
+    int status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,"$odefilename");
 
     exit(EXIT_SUCCESS);
 }
@@ -1000,6 +992,6 @@ my $LDFLAGS = "-lgsl -lodexp";
 my $CFLAGS =  "-Wall -Wno-gnu-statement-expression -pedantic -g";
 system("gcc $CFLAGS $LDFLAGS $odedir/model.c -o model.out") == 0 
               or die "compiling failed: $?";
-exec ("./model.out $odefilename") or print STDERR "couldn't exec model.out: $!";
+exec ("./model.out") or print STDERR "couldn't exec model.out: $!";
 
 
