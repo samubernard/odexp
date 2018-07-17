@@ -61,7 +61,24 @@ int odesolver( oderhs pop_ode_rhs,
     gsl_odeiv2_system sys; 
 
     /* create a dummy step type fe that is a copy of rk2 */
-    const gsl_odeiv2_step_type *gsl_odeiv2_step_fe = gsl_odeiv2_step_rk2;
+    gsl_odeiv2_step_type *gsl_odeiv2_step_fe = malloc( sizeof(gsl_odeiv2_step_type) );
+    *gsl_odeiv2_step_fe = (gsl_odeiv2_step_type) { "fe", 0, 0, 
+                            gsl_odeiv2_step_rk2->alloc,
+                            gsl_odeiv2_step_rk2->apply,
+                            gsl_odeiv2_step_rk2->set_driver,
+                            gsl_odeiv2_step_rk2->reset,
+                            gsl_odeiv2_step_rk2->order,
+                            gsl_odeiv2_step_rk2->free };
+
+    /* create a dummy step type dde that is a copy of rk2 */
+    gsl_odeiv2_step_type *gsl_odeiv2_step_dde = malloc( sizeof(gsl_odeiv2_step_type) );
+    *gsl_odeiv2_step_dde = (gsl_odeiv2_step_type) { "fe", 0, 0, 
+                            gsl_odeiv2_step_rk2->alloc,
+                            gsl_odeiv2_step_rk2->apply,
+                            gsl_odeiv2_step_rk2->set_driver,
+                            gsl_odeiv2_step_rk2->reset,
+                            gsl_odeiv2_step_rk2->order,
+                            gsl_odeiv2_step_rk2->free };
 
     int status;
 
@@ -133,6 +150,11 @@ int odesolver( oderhs pop_ode_rhs,
     {
         /* see fe_apply below */
         odeT = gsl_odeiv2_step_fe;
+    }
+    else if ( strncmp(get_str("solver"),"dde",NAMELENGTH) == 0 )
+    {
+        /* see dde_apply below */
+        odeT = gsl_odeiv2_step_dde;
     }
     else
     {
@@ -385,6 +407,10 @@ int odesolver( oderhs pop_ode_rhs,
               status = fe_apply(&sys,&t,tnext,&h,y);
               h = get_dou("h0"); /* reset h */
             }
+            else if ( odeT == gsl_odeiv2_step_dde )
+            {
+              status = dde_apply(&sys,&t,tnext,&h,y);
+            }
             else
             {
               status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
@@ -398,11 +424,15 @@ int odesolver( oderhs pop_ode_rhs,
                 hmin_alert = 1; 
               }
             }
-            if (status != GSL_SUCCESS)
-                break;
+            if (status != GSL_SUCCESS) 
+                break; /* break out of inner loop */
                 
             update_SIM_from_y(y);
         }
+        
+        if (status != GSL_SUCCESS)
+            break;    /* break out of main loop */
+                
         tot_odeiv += (clock()-clock_odeiv)*1000.0 / CLOCKS_PER_SEC;
 
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
@@ -2005,3 +2035,14 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
   return GSL_SUCCESS;
 }
 
+int dde_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, double y[] )
+{
+  
+  (void)sys;
+  (void)t;
+  (void)tnext;
+  (void)h;
+  (void)y;
+  fprintf(stderr,"  %serror: dde solver not implemented%s\n",T_ERR,T_NOR);
+  return GSL_FAILURE;
+}

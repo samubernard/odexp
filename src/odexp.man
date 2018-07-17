@@ -45,6 +45,9 @@ Save the current plot to \fIfilename\fR. EPS format
 .BR $ " " \fIid\fR   
 Print dataset for particle \fIid\fR, or print stats dataset if \fIid\fR is missing
 .TP
+.BR * " " \fR[\fImsg\fR]        
+Snapshot of current simulation and parameter values with optional \fImsg\fR 
+.TP
 .BR 0 ", " n 
 Switch to/update normal plot 
 .TP
@@ -59,21 +62,6 @@ Reset all axes to linear scale
 .TP
 .BR a\fIu\fR\fIs\fR ", " a\fIs\fR\fIu\fR
 Set axis \fIu\fR={x|y} to scale \fIs\fR={l|n}, n for linear (normal) scale and l for log scale 
-.TP
-.BR ci " " \fI{\fIind\fR|\fIvar\fR} " " \fIval\fR   
-Set value of initial condition of variable with index  \fIi\fR or name \fIvar\fR to \fIval\fR
-.TP
-.BR cI " " \fIind\fR         
-Revert variable \fIind\fR to expression
-.TP
-.BR cl            
-Change to last initial conditions, same as \fBil\fR
-.TP
-.BR co " " \fR{\fIind\fR|\fIvar\fR} " " \fIval\fR   
-Set value of option with index \fIind\fR or name \fIvar\fR to \fIval\fR
-.TP
-.BR ct " " \fIti\fR " " \fIval\fR   
-Set value of \fIti\fR to v (\fIti\fR = 0 or 1) 
 .TP
 .BR d              
 Reload the parameter file 
@@ -178,8 +166,20 @@ Rerun the ODE system and update plot
 .BR r
 Repeat the last gnuplot command (replot)
 .TP
-.BR s " " \fR[\fImsg\fR]        
-Snapshot of current simulation and parameter values with optional \fImsg\fR 
+.BR si " " \fI{\fIind\fR|\fIvar\fR} " " \fIval\fR   
+Set value of initial condition of variable with index  \fIi\fR or name \fIvar\fR to \fIval\fR
+.TP
+.BR sI " " \fIind\fR         
+Revert variable \fIind\fR to expression
+.TP
+.BR sl            
+Change to last initial conditions, same as \fBil\fR
+.TP
+.BR so ", " set " " \fR{\fIind\fR|\fIvar\fR} " " \fIval\fR   
+Set value of option with index \fIind\fR or name \fIvar\fR to \fIval\fR
+.TP
+.BR st " " \fIti\fR " " \fIval\fR   
+Set value of \fIti\fR to v (\fIti\fR = 0 or 1) 
 .TP
 .BR t " " \fR[\fIt0\fR] " " \fIt1\fR
 Set time span from \fIt0\fR to \fIt1\fR. 

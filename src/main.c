@@ -1229,7 +1229,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     update_act_par_options(p, mu);
                     break;
-               case 'c' : /* change parameter/init values/options */
+               case 's' : /* set/change parameter/init values/options */
                     sscanf(cmdline+1,"%c",&op);
                     if ( op == 'i' ) 
                     {
@@ -1320,9 +1320,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             replot = 0;
                         }
                     }
-                    else if ( op == 'o' ) /* change options */
+                    else if ( op == 'o'  || op == 'e' ) /* change options */
                     {
-                        nbr_read = sscanf(cmdline+2,"%zu %s",&i,svalue);
+                        nbr_read = sscanf(cmdline,"%*s %zu %s",&i,svalue);
                         
                         if ( nbr_read >= 1) /* get option number and value */
                         {
@@ -1358,7 +1358,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         }
                         else /* get option name or abbr and value */
                         {
-                            nbr_read = sscanf(cmdline+2,"%s %[^\n]", svalue, svalue2); /* try reading a string and a double */
+                            nbr_read = sscanf(cmdline,"%*s %s %[^\n]", svalue, svalue2); /* try reading a string and a double */
                             if ( nbr_read == 1 )
                             {
                                 /* only printf option line */
@@ -1542,7 +1542,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     break;
                 case 'q' :  /* quit with save */
                     quit = 1;
-                case 's' : /* save file */
+                case '*' : /* save file */
                     file_status = save_snapshot(ics,pex,mu,fcn,eqn,cst,dfl,func,psi,tspan, odexp_filename);
                     break;
                 case '!' : /* print ! */
@@ -1786,7 +1786,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         }
     }
     
-    printf("exiting...\n");
+    printf("exiting...");
     LOGPRINT("Exiting");
 
     pclose(GPLOTP);
@@ -1829,6 +1829,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     }
     LOGPRINT("Closing log file");
     fclose(logfr);
+
+    printf(" done\n");
 
     return status;
 
@@ -2490,7 +2492,7 @@ int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
     }
 
     time_stamp = clock(); /* get a time stamp */
-    rootnamescanned = sscanf(cmdline,"%*[qs] %[a-zA-Z0-9_-]",rootname); /* get the first word after command s or q */
+    rootnamescanned = sscanf(cmdline,"%*[q*] %[a-zA-Z0-9_-]",rootname); /* get the first word after command s or q */
 
     /* printf("  rootname = %s\n", rootname); */
 
