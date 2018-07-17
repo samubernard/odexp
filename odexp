@@ -698,6 +698,9 @@ sub declare_define_parameters
   	/^P/i or next;
     if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
+      my ( $ctype ) = ( $attr =~ m/\btype\b:(int|long|double)/ );
+      $ctype = "double" if not length $ctype;
+      print $varname . " " . $ctype . "\n";
       if ( $func =~ /ode/ )
       {
         if ($attr =~ /\bINIT/i or
@@ -708,7 +711,7 @@ sub declare_define_parameters
           ++$i;
         } else
         {
-          print $fch "    double $varname = pars_[$i];";
+          print $fch "    $ctype $varname = pars_[$i];";
           print $fch " /* $attr */" if length $attr;
           print $fch " /* $comment */" if length $comment; 
           print $fch "\n";
@@ -720,7 +723,7 @@ sub declare_define_parameters
             $attr =~ /\bINEXPR/i or
             $attr =~ /\bEVER/i )	
         {
-          print $fch "    double $varname = pars_[$i];";
+          print $fch "    $ctype $varname = pars_[$i];";
           print $fch " /* $attr */" if length $attr;
           print $fch " /* $comment */" if length $comment; 
           print $fch "\n";
