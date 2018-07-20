@@ -168,6 +168,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     nve dxv;     /* list of all Dynamical  + auXiliary Variables */
     nve cst;     /* constant arrays */
     nve dfl;     /* data files */
+    nve dsc;     /* short description */
 
     nve birth;   /* population birth rates */
     nve repli;   /* particle replication rates */
@@ -191,6 +192,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* begin */
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
+
+    /* get short description */
+    printf("\n%-25s%s\n", "model description", HLINE);
+    get_nbr_el(odefilename,"###",3, &dsc.nbr_el, NULL);
+    alloc_namevalexp(&dsc);
+    success = load_strings(odefilename,dsc,"###",3,1,' ', exit_if_nofile);
+    LOGPRINT("found %zu description",dsc.nbr_el);
 
     /* get tspan */
     printf("\n%-25s%s\n","time span",HLINE);
@@ -1802,6 +1810,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     free_namevalexp( dxv );
     free_namevalexp( cst );
     free_namevalexp( dfl );
+    free_namevalexp( dsc );
     free_steady_state( stst, nbr_stst );
     free_double_array( tspan );
     free(NUM_IC);

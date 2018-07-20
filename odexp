@@ -128,10 +128,16 @@ else
   copy($odedir . "/model.ode", $odedir . "/model.par") or die "Could not copy file '$odedir/model.ode'. $!";
 }
 
+
 # ====================================================================================
 # Generate model.c
 # ====================================================================================
 open(my $fch, '>', $modelc) or die "Could not open file '$modelc'. $!";
+
+# ====================================================================================
+# Try to find author information 
+# ====================================================================================
+#find_authors($modelode);
 
 print_c_header();
 print $fch "/* Defines */\n\n";
@@ -185,25 +191,24 @@ sub cleanup_file
 {
   my @underscores;
   my @usvals;
-  my @declarations;
   my $tmpfh = tempfile(); # make a first pass in temp file to remove linebreaks
                           # and find underscores
   open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while ( <$fh> )    
   {
+    s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
+    s/^[^#].*?(\\\n$|\.\.\.\s*$)//;    # join line after \ or ... if they are not only comments
     my @fields = split; 
-    s/^[\ \t]+//;                     # trim space and tab at beginning of line
-    s/\\\n$|\.\.\.\s*$//;             # continue line after \ or ...
     if ( /^_/ ) {
       push @underscores, $fields[0];
       push @usvals, join(' ',@fields[1..$#fields]);
       $usvals[$#usvals] =~ s/\s*?#.*?$//;
     }
-    chomp if /,\s*$/;
+    chomp if /^[^#].*?,\s*$/;                 # join lines if line ends with ,
     print $tmpfh "$_" ;
   }
   close($fh);
-  seek $tmpfh, 0, 0; # rewind temp file to rebreak lines and replace underscores
+  seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace underscores
   while ( <$tmpfh> )
   {
     my @fields = split; 
@@ -211,7 +216,7 @@ sub cleanup_file
     {
          s/(?<!^)$underscores[$i]/$usvals[$i]/g; # replace underscores that don't start a line
     }
-    s/,/\n$fields[0] /g if /^[PO]/i;    # break lines at , and remove ,
+    s/,/\n$fields[0] /g if /^[PO]/i;    # break lines at , and remove , if line starts with P or O
     print $fodeh "$_";
   }
 }
@@ -219,7 +224,9 @@ sub cleanup_file
 sub print_c_header 
 {
   # Write C file header
-  my $heading = qq(/* function implementations */
+  my $heading = qq(/* function implementations from file 
+ * $odefilename 
+ */
 
 #ifndef __GNUC__
 #  define  __attribute__(x)  /*NOTHING*/
@@ -369,7 +376,7 @@ sub print_main
 {
 	my $s = qq(int main ( int argc, char *argv[] )
 {
-    int status = odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,"$odefilename");
+    odexp(pop_rhs, ode_rhs, pop_init_conditions, ode_init_conditions, multiroot_rhs,"$odefilename");
 
     exit(EXIT_SUCCESS);
 }
@@ -978,6 +985,52 @@ sub assign_pop_rate
     }
   }
   close($fh);
+}
+
+# try to parse author information
+# Author: J K Roller, George R R Martinet
+#
+# or
+# 
+# (not implemented)
+# Author: JK Roller
+#         GRR Martinet
+sub find_authors
+{
+  my $re_author_keyword = qr/
+  (?: Author|AUTHOR|author)s?      # word author(s)
+  \s*:?\s+                         # followed by perhaps : 
+  (.*)                             # followed by anything
+  /x;
+  my $re_fullname = qr/
+  \G(\p{Lu}\p{Ll}+\b)[,.;]?\s* 
+  /x;
+  my $re_email = qr/
+  \G([\w.]+@\w+\.[\w.]+\b)[;,]\s*   
+  /x;
+  my @authors;
+  my @emails;
+  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  while ( <$fh> )    
+  {
+    my $author_line;
+    if ( ( $author_line ) =  /$re_author_keyword/ )
+    {
+      while ( ( $author_line =~ m/$re_fullname/g ) ) 
+      {
+        push @authors, $1;
+      }
+      while ( ( $author_line =~ m/$re_email/g ) ) 
+      {
+        push @emails, $1;
+      }
+    }
+  }
+  close($fh);
+ 
+  print $fch "/* Authors: " . join(' ', @authors) .  " */\n"; 
+  print $fch "/* Emails: " . join(' ', @emails) .  " */\n"; 
+
 }
 
 sub strip_blanks
