@@ -195,9 +195,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* get short description */
     printf("\n%-25s%s\n", "model description", HLINE);
-    get_nbr_el(odefilename,"###",3, &dsc.nbr_el, NULL);
+    get_nbr_el(odefilename,"#-",2, &dsc.nbr_el, NULL);
     alloc_namevalexp(&dsc);
-    success = load_strings(odefilename,dsc,"###",3,1,' ', exit_if_nofile);
+    success = load_strings(odefilename,dsc,"#-",2,1,' ', exit_if_nofile);
     LOGPRINT("found %zu description",dsc.nbr_el);
 
     /* get tspan */
@@ -1165,7 +1165,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         printf("\n  hexdump -e '%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
                         printf("  hexdump -e '%zu \"%%5.2f \" \"\\n\"' idXX.dat\n", nbr_cols); 
                     }
-                    else
+                    else if (op == 'd') /* list descriptions */ 
+                    {
+                        for (i=0; i<dsc.nbr_el; i++)
+                        {
+                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
+                            printf_list_str('#',i,i,padding,&dsc);
+                        }
+                    }
+                    else 
                     {
                         fprintf(stderr,"  %sError: Unknown option. Cannot list '%c' %s\n",T_ERR,op,T_NOR);
                     }
