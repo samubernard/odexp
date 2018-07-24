@@ -1174,7 +1174,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     else 
                     {
-                        fprintf(stderr,"  %sError: Unknown option. Cannot list '%c' %s\n",T_ERR,op,T_NOR);
+                        fprintf(stderr,"  %sError: Unknown command. Cannot list '%c' %s\n",T_ERR,op,T_NOR);
                     }
                     break;
                 case 'p' : /* change current parameter */
