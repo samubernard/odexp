@@ -195,9 +195,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* get short description */
     printf("\n%-25s%s\n", "model description", HLINE);
-    get_nbr_el(odefilename,"#-",2, &dsc.nbr_el, NULL);
+    get_nbr_el(odefilename,"##",2, &dsc.nbr_el, NULL);
     alloc_namevalexp(&dsc);
-    success = load_strings(odefilename,dsc,"#-",2,1,' ', exit_if_nofile);
+    success = load_line(odefilename,dsc,"##",2, exit_if_nofile);
     LOGPRINT("found %zu description",dsc.nbr_el);
 
     /* get tspan */
@@ -1169,8 +1169,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     {
                         for (i=0; i<dsc.nbr_el; i++)
                         {
-                            padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                            printf_list_str('#',i,i,padding,&dsc);
+                            printf("  %s%s%s\n", T_DET, dsc.comment[i], T_NOR);
                         }
                     }
                     else 
@@ -2471,6 +2470,56 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     fclose(fr);
 
     free(size_dim);
+
+    return success;
+}
+
+
+int load_line(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
+{
+    size_t  var_index = 0,
+            linecap = 0;
+    ssize_t linelength;
+    char *line = NULL;
+    char key[NAMELENGTH]; 
+    FILE *fr;
+    int k = 0, has_read;
+    int success = 0;
+    fr = fopen (filename, "rt");
+
+    if ( fr == NULL )
+    {
+        if ( exit_if_nofile )
+        {
+            fprintf(stderr,"  %sFile %s not found, exiting...%s\n",T_ERR,filename,T_NOR);
+            exit ( EXIT_FAILURE );
+        }
+        else
+        {
+            fprintf(stderr,"  %sError: Could not open file %s%s\n", T_ERR,filename,T_NOR);
+            return 0;
+        }
+    }
+ 
+    *var.max_name_length = 0;
+    while( (linelength = getline(&line, &linecap, fr)) > 0)
+    {
+        has_read = sscanf(line,"%s%n",key,&k);                       /* read the first word of the line */
+        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found based on the sym_len first characters */
+        {
+            success = 1;
+            sscanf(line,"%*s %[^\n]",var.comment[var_index]);
+            snprintf(var.attribute[var_index],1,"");
+            snprintf(var.name[var_index],1,"");
+            snprintf(var.expression[var_index],1,"");
+            var.value[var_index] = 0.0;
+
+            printf("  %s %s%s%s\n", sym,T_DET,var.comment[var_index],T_NOR);
+            ++var_index;
+        }
+        k = 0; /* reset k */
+    }
+    fclose(fr);
 
     return success;
 }
