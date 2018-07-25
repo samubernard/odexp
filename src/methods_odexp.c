@@ -323,7 +323,8 @@ int odesolver( oderhs pop_ode_rhs,
 
     if ( quickfile == NULL )
     {
-      PRINTERR("error: could not open file '%s', exiting",quick_buffer);
+      PRINTERR("error: could not open file '%s', exiting...\n",quick_buffer);
+      exit ( EXIT_FAILURE );
     }
     
     /* current.plot binary file with three columns: x, y, z */
