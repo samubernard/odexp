@@ -30,10 +30,14 @@ static void set_abort_odesolver_flag( int sig )
 /* print progress */
 static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start )
 {
-    static const char *lineupandclear = "\033[F\033[J";
-    printf("\n%s",lineupandclear);  /* clear the line  */
+    printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line  */
     printf("  %s%6.1f sec%s,", T_VAL,(clock()-start)*1.0 / CLOCKS_PER_SEC, T_NOR);
     printf("  %s%6.2f%%%s",T_VAL,100*(tt-t0)/(tfinal-t0),T_NOR);
+}
+
+static inline void place_printf ( )
+{ 
+  /* nothing at the moment */
 }
 
 int odesolver( oderhs pop_ode_rhs, 
@@ -420,7 +424,7 @@ int odesolver( oderhs pop_ode_rhs,
               h = hmin;
               if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
               {
-                printf("\n  Warning: hmin reached at t = %f. Continuing with h = %e\n",t, hmin);
+                printf("\n  Warning: hmin reached at t = %f. Continuing with h = %e",t, hmin);
                 hmin_alert = 1; 
               }
             }
