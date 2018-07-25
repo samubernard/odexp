@@ -4,9 +4,6 @@
 #include "dlist.h"
 #include <gsl/gsl_odeiv2.h>
 
-/* number of global options */
-#define NBROPTS 43
-
 /* extern size_t ode_system_size; */
 extern int *NUM_IC;
 
@@ -17,20 +14,6 @@ typedef struct ode_functions {
     odeic   single_ic;
     rootrhs root_rhs;
 } ode_funs;
-
-typedef struct gen_option
-{
-    char    abbr[NAMELENGTH];
-    char    name[NAMELENGTH];
-    char    valtype; /* d: double; i: int; s: string */
-    double  numval;
-    int     intval;
-    char    strval[NAMELENGTH];
-    char    descr[EXPRLENGTH];
-    char    optiontype[NAMELENGTH];
-} gopt;
-
-extern struct gen_option GOPTS[NBROPTS];
 
 typedef struct steady_state
 {
@@ -77,9 +60,6 @@ int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, con
 void update_SIM_from_y(const double *y);
 void fprintf_SIM_y(FILE *file, double t, double *y);
 
-int name2index( const char *name, nve var, int *n);
-int option_name2index( const char *name, int *n);
-
 void free_double_array( double_array var );
 
 void init_steady_state(steady_state *stst, int index);
@@ -89,13 +69,6 @@ void free_steady_state(steady_state *stst, int nbr_stst);
 int remove_id_files();
 
 int set_num_ic( double *y );
-
-int set_dou(const char *name, const double val); 
-int set_int(const char *name, const int val); 
-int set_str(const char *name, const char * val); 
-double get_dou(const char *name);
-int    get_int(const char *name);
-char*  get_str(const char *name);
 
 /* birth/death */
 double SSA_timestep(double *r);

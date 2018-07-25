@@ -21,6 +21,245 @@ const char *T_BLD = "\033[2;0m";   /* bold */
 const char *HLINE = "--------------------------";
 const char *LINEUP_AND_CLEAR = "\033[F\033[J";
 
+int set_dou(const char *name, const double val) 
+{
+    size_t idx_opt = 0;
+    int success = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      GOPTS[idx_opt].numval = val;
+      success = 1;
+    }
+    else
+    {
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+    }
+
+    return success;
+}
+
+int set_int(const char *name, const int val) 
+{
+    size_t idx_opt = 0;
+    int success = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      GOPTS[idx_opt].intval = val;
+      success = 1;
+    }
+    else
+    {
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+    }
+
+    return success;
+}
+
+int set_str(const char *name, const char * val) 
+{
+    size_t idx_opt = 0;
+    int success = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      strncpy(GOPTS[idx_opt].strval,val,NAMELENGTH-1);
+      success = 1;
+    }
+    else
+    {
+      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+    }
+
+    return success;
+}
+
+
+double get_dou(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return GOPTS[idx_opt].numval;
+    }
+    else
+    {  
+      return -1.0;
+    }
+}
+
+int get_int(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return GOPTS[idx_opt].intval;
+    }
+    else
+    {  
+      return -1;
+    }
+}
+
+
+char * get_str(const char *name)
+{
+    size_t idx_opt = 0;
+    while ( idx_opt < NBROPTS)
+    {
+        if ( strcmp(name, GOPTS[idx_opt].name) )
+        {
+            idx_opt++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (idx_opt < NBROPTS)
+    {
+      return GOPTS[idx_opt].strval;
+    }
+    else
+    {  
+      return NULL;
+    }
+}
+
+int name2index( const char *name, nve var, int *n) /* get index of var.name == name */
+{
+    size_t i = 0;
+    int s = 0;
+
+    if ( (strcmp(name,"T") == 0) | (strcmp(name,"t") == 0) )
+    {
+        *n = -1;
+        s = 1;
+    }
+    else if ( strcmp(name,"") == 0 )
+    {
+        fprintf(stderr,"  %swarning: empty variable%s\n",T_ERR,T_NOR);
+    }
+    else
+    {
+        while (  i < var.nbr_el )
+        {
+            if ( strcmp(name, var.name[i]) )
+            {
+                i++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if ( i < var.nbr_el )
+        {
+            *n =  i;
+            s = 1;
+        }
+        else
+        {
+            fprintf(stderr,"  %sError: Unknown variable name: %s. List variables with 'lx'.%s\n",T_ERR,name,T_NOR);
+        }
+        /* else do not change *n */
+    }
+
+    return s;
+
+}
+
+int option_name2index( const char *name, int *n) /* get index of option.name == name or option.abbr == name */
+{
+    size_t i = 0;
+    int s = 0;
+
+    if ( strcmp(name,"") == 0 )
+    {
+        fprintf(stderr,"  %swarning: empty option%s\n",T_ERR,T_NOR);
+    }
+    else
+    {
+        while (  i < NBROPTS )
+        {
+            if ( strcmp(name, GOPTS[i].name)
+                 && strcmp(name, GOPTS[i].abbr))
+            {
+                i++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if ( i < NBROPTS )
+        {
+            *n =  i;
+            s = 1;
+        }
+        else
+        {
+            fprintf(stderr,"  %sError: Unknown option '%s' %s\n",T_ERR,name,T_NOR);
+        }
+        /* else do not change *n */
+    }
+
+    return s;
+}
+
 void alloc_namevalexp( nve *var )
 {
     size_t i;
@@ -125,7 +364,12 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
      *  birth death
      *  child id
      */
-    s->fstats_varnames = fopen(s->stats_varnames, "w");
+    if ( ( s->fstats_varnames = fopen(s->stats_varnames, "w") ) == NULL )
+    {
+      PRINTERR("error: could not open file '%s', exiting...\n",s->stats_varnames);
+      exit ( EXIT_FAILURE );
+    }
+
     fprintf(s->fstats_varnames,"TIME");
     for(i=0; i<s->nbr_mfd; i++)
     {
@@ -142,7 +386,11 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
      *  psi,sizeof(double),p->nbr_psi,p->fid);
      *  expr,sizeof(double),p->nbr_expr,p->fid);
      */
-    s->fparticle_varnames = fopen(s->particle_varnames, "w");
+    if ( ( s->fparticle_varnames = fopen(s->particle_varnames, "w") ) == NULL )
+    {
+      PRINTERR("error: could not open file '%s', exiting...\n",s->particle_varnames);
+      exit ( EXIT_FAILURE );
+    }
     fprintf(s->fstats_varnames,"TIME");
     for(i=0; i<s->nbr_var; i++)
     {
@@ -218,7 +466,14 @@ int par_birth ( void )
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
     
-    p->fid = fopen(p->buffer,"w");
+    if ( get_int("closefiles") == 0 )
+    {
+      if ( (p->fid = fopen(p->buffer,"w") ) == NULL )
+      {
+        PRINTERR("error: could not open file '%s', exiting...\n",p->buffer);
+        exit ( EXIT_FAILURE );
+      }
+    }
 
     p->death_rate = 0.0;
     p->repli_rate = 0.0;
@@ -266,7 +521,11 @@ int par_repli (par *mother)
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
 
-    p->fid = fopen(p->buffer,"w");
+    if ( ( p->fid = fopen(p->buffer,"w") ) == NULL )
+    {
+      PRINTERR("error: could not open file '%s', exiting...\n",p->buffer);
+      exit ( EXIT_FAILURE );
+    }
 
     p->sister = mother; /* pointer to mother particle. 
                          * Warning: existence of mother not guarateed 
@@ -405,6 +664,15 @@ par * getpar( size_t with_id )
 
 int fwrite_particle_state(const double *restrict t, par *p)
 {
+    if ( get_int("closefiles") )
+    {
+      if ( (p->fid = fopen(p->buffer,"a") ) == NULL )
+      {
+        PRINTERR("error: could not open file '%s', exiting...\n",p->buffer);
+        exit ( EXIT_FAILURE );
+      }
+    }
+
     if ( p->fid == NULL ) 
     {
         return -1;
@@ -415,6 +683,11 @@ int fwrite_particle_state(const double *restrict t, par *p)
     fwrite(p->aux,sizeof(double),p->nbr_aux,p->fid);
     fwrite(p->psi,sizeof(double),p->nbr_psi,p->fid);
     fwrite(p->expr,sizeof(double),p->nbr_expr,p->fid);
+
+    if ( get_int("closefiles") )
+    {
+      fclose(p->fid);
+    }
     
     return 0;
 

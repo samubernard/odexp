@@ -20,6 +20,8 @@ extern const char *T_OPT;  /* OPTION */
 extern const char *HLINE;  /* horizontal line */
 extern const char *LINEUP_AND_CLEAR; /* go up one line and clear it */
 
+/* number of global options */
+#define NBROPTS 44
 
 /* NOT USED */
 typedef struct namevalexp_group
@@ -37,6 +39,30 @@ typedef struct namevalexp_group
     nve dfl;     /* data files */
 } nveg;
 /* END NOT USED */
+
+typedef struct gen_option
+{
+    char    abbr[NAMELENGTH];
+    char    name[NAMELENGTH];
+    char    valtype; /* d: double; i: int; s: string */
+    double  numval;
+    int     intval;
+    char    strval[NAMELENGTH];
+    char    descr[EXPRLENGTH];
+    char    optiontype[NAMELENGTH];
+} gopt;
+
+extern struct gen_option GOPTS[NBROPTS];
+
+int set_dou(const char *name, const double val); 
+int set_int(const char *name, const int val); 
+int set_str(const char *name, const char * val); 
+double get_dou(const char *name);
+int    get_int(const char *name);
+char*  get_str(const char *name);
+
+int name2index( const char *name, nve var, int *n);
+int option_name2index( const char *name, int *n);
 
 void alloc_namevalexp( nve *mu );
 void free_namevalexp( nve mu );
@@ -73,3 +99,6 @@ int fwrite_particle_state(const double *restrict t, par *p);
 int fwrite_SIM(const double *restrict t, char *restrict mode);
 int list_particle( size_t with_id );
 int list_stats( void );
+
+
+

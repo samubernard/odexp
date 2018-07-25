@@ -221,7 +221,12 @@ int odesolver( oderhs pop_ode_rhs,
     /* Initialize SIM */
     /* system("rm -f .odexp/id*.dat"); */ /* remove files before fopen'ing again */
     remove_id_files();
-    SIM->fid = fopen(SIM->stats_buffer, "w");
+    if ( ( SIM->fid = fopen(SIM->stats_buffer, "w") ) == NULL )
+    {
+      PRINTERR("error: could not open file '%s', exiting...\n",SIM->stats_buffer);
+      exit ( EXIT_FAILURE );
+    }
+
     SIM->time_in_ode_rhs = 0.0;
     SIM->h = &h;
     /* DBPRINT("set up SIM"); */
@@ -261,7 +266,15 @@ int odesolver( oderhs pop_ode_rhs,
             {
                 y[i+j] = pars->y[i];
             }
-            pars->fid = fopen(pars->buffer,"w"); /* dont forget to fopen buffers for existing particles */
+            if ( get_int("closefiles") == 0 )
+            {
+              if ( ( pars->fid = fopen(pars->buffer,"w") ) == NULL ) /* dont forget to fopen buffers for existing particles */
+              {
+                PRINTERR("error: could not open file '%s', exiting...\n",pars->buffer);
+                exit ( EXIT_FAILURE );
+              }
+            }
+
             j += ode_system_size;
             pars = pars->nextel;
         }
@@ -319,9 +332,7 @@ int odesolver( oderhs pop_ode_rhs,
     
     /* DBPRINT("SIM set up done"); */
 
-    quickfile = fopen(quick_buffer,"w");
-
-    if ( quickfile == NULL )
+    if ( ( quickfile = fopen(quick_buffer,"w") ) == NULL )
     {
       PRINTERR("error: could not open file '%s', exiting...\n",quick_buffer);
       exit ( EXIT_FAILURE );
@@ -674,11 +685,10 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     y = malloc(SIM->nbr_var*sizeof(double));
    
     /* open output file */
-    file = fopen(current_data_buffer,"w");
-    
-    if( file == NULL )
+    if ( ( file = fopen(current_data_buffer,"w") ) == NULL )
     {
         fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,current_data_buffer,T_NOR);
+        exit ( EXIT_FAILURE );
     }
 
     /* fill in the variable/function names MIN MAX */
@@ -1255,7 +1265,11 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
     mu0 = SIM->mu[p];
     init_steady_state(&stst, 0);
 
-    br_file = fopen("stst_branches.tab","a");
+    if ( ( br_file = fopen("stst_branches.tab","a") ) == NULL )
+    {
+      PRINTERR("error: could not open file '%s', exiting...\n","stst_branches.tab");
+      exit ( EXIT_FAILURE );
+    }
     fprintf(br_file,"n\t%s",SIM->parnames[p]);
     for (i = 0; i < SIM->nbr_var; i++)
     {
@@ -1588,87 +1602,6 @@ void fprintf_SIM_y(FILE *file, double t, double *y)
 
 }
 
-int name2index( const char *name, nve var, int *n) /* get index of var.name == name */
-{
-    size_t i = 0;
-    int s = 0;
-
-    if ( (strcmp(name,"T") == 0) | (strcmp(name,"t") == 0) )
-    {
-        *n = -1;
-        s = 1;
-    }
-    else if ( strcmp(name,"") == 0 )
-    {
-        fprintf(stderr,"  %swarning: empty variable%s\n",T_ERR,T_NOR);
-    }
-    else
-    {
-        while (  i < var.nbr_el )
-        {
-            if ( strcmp(name, var.name[i]) )
-            {
-                i++;
-            }
-            else
-            {
-                break;
-            }
-        }
-        if ( i < var.nbr_el )
-        {
-            *n =  i;
-            s = 1;
-        }
-        else
-        {
-            fprintf(stderr,"  %sError: Unknown variable name: %s. List variables with 'lx'.%s\n",T_ERR,name,T_NOR);
-        }
-        /* else do not change *n */
-    }
-
-    return s;
-
-}
-
-int option_name2index( const char *name, int *n) /* get index of option.name == name or option.abbr == name */
-{
-    size_t i = 0;
-    int s = 0;
-
-    if ( strcmp(name,"") == 0 )
-    {
-        fprintf(stderr,"  %swarning: empty option%s\n",T_ERR,T_NOR);
-    }
-    else
-    {
-        while (  i < NBROPTS )
-        {
-            if ( strcmp(name, GOPTS[i].name)
-                 && strcmp(name, GOPTS[i].abbr))
-            {
-                i++;
-            }
-            else
-            {
-                break;
-            }
-        }
-        if ( i < NBROPTS )
-        {
-            *n =  i;
-            s = 1;
-        }
-        else
-        {
-            fprintf(stderr,"  %sError: Unknown option '%s' %s\n",T_ERR,name,T_NOR);
-        }
-        /* else do not change *n */
-    }
-
-    return s;
-}
-
 void free_double_array(double_array var)
 {
     free(var.array);
@@ -1735,163 +1668,6 @@ int set_num_ic( double *y )
     return 0;
 }
 
-int set_dou(const char *name, const double val) 
-{
-    size_t idx_opt = 0;
-    int success = 0;
-    while ( idx_opt < NBROPTS)
-    {
-        if ( strcmp(name, GOPTS[idx_opt].name) )
-        {
-            idx_opt++;
-        }
-        else
-        {
-            break;
-        }
-    }
-    if (idx_opt < NBROPTS)
-    {
-      GOPTS[idx_opt].numval = val;
-      success = 1;
-    }
-    else
-    {
-      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
-    }
-
-    return success;
-}
-
-int set_int(const char *name, const int val) 
-{
-    size_t idx_opt = 0;
-    int success = 0;
-    while ( idx_opt < NBROPTS)
-    {
-        if ( strcmp(name, GOPTS[idx_opt].name) )
-        {
-            idx_opt++;
-        }
-        else
-        {
-            break;
-        }
-    }
-    if (idx_opt < NBROPTS)
-    {
-      GOPTS[idx_opt].intval = val;
-      success = 1;
-    }
-    else
-    {
-      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
-    }
-
-    return success;
-}
-
-int set_str(const char *name, const char * val) 
-{
-    size_t idx_opt = 0;
-    int success = 0;
-    while ( idx_opt < NBROPTS)
-    {
-        if ( strcmp(name, GOPTS[idx_opt].name) )
-        {
-            idx_opt++;
-        }
-        else
-        {
-            break;
-        }
-    }
-    if (idx_opt < NBROPTS)
-    {
-      strncpy(GOPTS[idx_opt].strval,val,NAMELENGTH-1);
-      success = 1;
-    }
-    else
-    {
-      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
-    }
-
-    return success;
-}
-
-
-double get_dou(const char *name)
-{
-    size_t idx_opt = 0;
-    while ( idx_opt < NBROPTS)
-    {
-        if ( strcmp(name, GOPTS[idx_opt].name) )
-        {
-            idx_opt++;
-        }
-        else
-        {
-            break;
-        }
-    }
-    if (idx_opt < NBROPTS)
-    {
-      return GOPTS[idx_opt].numval;
-    }
-    else
-    {  
-      return -1.0;
-    }
-}
-
-int get_int(const char *name)
-{
-    size_t idx_opt = 0;
-    while ( idx_opt < NBROPTS)
-    {
-        if ( strcmp(name, GOPTS[idx_opt].name) )
-        {
-            idx_opt++;
-        }
-        else
-        {
-            break;
-        }
-    }
-    if (idx_opt < NBROPTS)
-    {
-      return GOPTS[idx_opt].intval;
-    }
-    else
-    {  
-      return -1;
-    }
-}
-
-
-char * get_str(const char *name)
-{
-    size_t idx_opt = 0;
-    while ( idx_opt < NBROPTS)
-    {
-        if ( strcmp(name, GOPTS[idx_opt].name) )
-        {
-            idx_opt++;
-        }
-        else
-        {
-            break;
-        }
-    }
-    if (idx_opt < NBROPTS)
-    {
-      return GOPTS[idx_opt].strval;
-    }
-    else
-    {  
-      return NULL;
-    }
-}
 
 double SSA_timestep(double *sumr)
 {

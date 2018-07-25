@@ -48,6 +48,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"meth","solver", 's', 0.0, 0, "rk8pd", "ode solver stepping METHod rk2 | rk4 | rkf45 | rkck | {rk8pd} | bsimp", "ode"},
     {"pm","popmode", 's', 0.0, 0, "population", "Population simulation Mode single | {population}", "population"},
     {"ps","popsize", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
+    {"cf","closefiles", 'i', 0.0, 0, "", "close particle files between writes (slow when on)", "population"},
     {"p","particle", 'i', 0.0, 0, "", "current Particle id", "population"},
     {"seed","seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
     {"rs","reseed", 'i', 0.0, 1, "", "Reset rng to Seed at each run 0 | {1}", "random"},
@@ -185,11 +186,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
 
     GPLOTP = popen("gnuplot -persist","w");
-    logfr = fopen(logfilename, "w");
-    if ( logfr != NULL ) 
-    { 
-        LOGPRINT("Log file for %s", odexp_filename); 
+    if ( ( logfr = fopen(logfilename, "w") ) == NULL )
+    {
+      PRINTERR("error: could not open file '%s', exiting...\n",logfilename);;
+      exit ( EXIT_FAILURE );
     }
+    LOGPRINT("Log file for %s", odexp_filename); 
 
     /* begin */
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
