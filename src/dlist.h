@@ -18,7 +18,7 @@ extern const char *T_ERR;  /* ERROR (non fatal) */
 extern const char *T_BLD;  /* BOLD */
 extern const char *T_OPT;  /* OPTION */
 extern const char *HLINE;  /* horizontal line */
-extern const char *LINEUP_AND_CLEAR = "\033[F\033[J";
+extern const char *LINEUP_AND_CLEAR; /* go up one line and clear it */
 
 
 /* NOT USED */

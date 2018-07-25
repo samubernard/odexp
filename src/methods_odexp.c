@@ -35,11 +35,6 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     printf("  %s%6.2f%%%s",T_VAL,100*(tt-t0)/(tfinal-t0),T_NOR);
 }
 
-static inline void place_printf ( )
-{ 
-  /* nothing at the moment */
-}
-
 int odesolver( oderhs pop_ode_rhs, 
                oderhs single_rhs,
                odeic pop_ode_ic, 
@@ -424,7 +419,7 @@ int odesolver( oderhs pop_ode_rhs,
               h = hmin;
               if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
               {
-                printf("\n  Warning: hmin reached at t = %f. Continuing with h = %e",t, hmin);
+                PRINTWARNING("\n%s  warning: hmin reached at t = %f. Continuing with h = %e\n",LINEUP_AND_CLEAR,t, hmin);
                 hmin_alert = 1; 
               }
             }

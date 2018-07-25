@@ -205,7 +205,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     success = load_double_array(parfilename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
-        fprintf(stderr,"\n  Error: time span not found.\n"
+        PRINTERR("\n  Error: time span not found.\n"
                 "  One line in file %s should be of the form\n"
                 "  TIMESPAN 0 100\n  Exiting...\n\n", odexp_filename);
         LOGPRINT("Error: time span not found.");
@@ -443,13 +443,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     
     if (strcmp("EditLine wrapper",rl_library_version) == 0)
     {
-        printf("warning: You are using the EditLine wrapper of the readline library.\n");    
-        printf("         inputrc will not work and you will not be able to use the keyboard shortcuts\n\n");
+        PRINTWARNING("warning: You are using the EditLine wrapper of the readline library.\n");    
+        PRINTWARNING("         inputrc will not work and you will not be able to use the keyboard shortcuts\n\n");
         LOGPRINT("warning: You are using the EditLine wrapper of the readline library.");    
     }
     else if ( rl_read_init_file (".odexp/.inputrc") ) /* readline init file */
     {
-      printf("\n  warning: inputrc file for readline not found\n");
+      PRINTWARNING("\n  warning: inputrc file for readline not found\n");
       LOGPRINT("warning: inputrc file for readline not found");
     }
     initialize_readline();
@@ -612,7 +612,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         }
                         else
                         {
-                            fprintf(stderr,"  %sUnknown command%s\n",T_ERR,T_NOR);
+                            fprintf(stderr,"  %sUnknown command %s\n",T_ERR,T_NOR);
                         }
                     }
                     break;
@@ -1174,7 +1174,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     else 
                     {
-                        fprintf(stderr,"  %sError: Unknown command. Cannot list '%c' %s\n",T_ERR,op,T_NOR);
+                        PRINTERR("  Error: Unknown command. Cannot list '%c'\n",op);
                     }
                     break;
                 case 'p' : /* change current parameter */
@@ -1356,7 +1356,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                                     strncpy(GOPTS[i].strval,svalue,NAMELENGTH-1);
                                     break;
                                   default:
-                                    printf("  Warning: option not defined\n");
+                                    PRINTWARNING("  warning: option not defined\n");
                                 }
                                 /* rerun = 1; */
                                 /* plotmode_normal = 1; */
@@ -1441,7 +1441,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         success = load_nameval(par_filename, mu, "P", 1,no_exit);
                         if ( success == 0 )
                         {
-                            printf("  warning: could not load parameters.\n");
+                            PRINTWARNING("  warning: could not load parameters.\n");
                         }
                         success = load_nameval(par_filename, ics, "I", 1,no_exit); /* load initial conditions value from file */
                         if ( success == 1)
@@ -1454,17 +1454,17 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         }
                         else
                         {
-                            printf("  warning: could not load initial conditions.\n");
+                            PRINTWARNING("  warning: could not load initial conditions.\n");
                         }
                         success = load_double_array(par_filename, &tspan, ts_string, ts_len, no_exit); 
                         if ( success == 0 )
                         {
-                            printf("  warning: could not load tspan.\n");
+                            PRINTWARNING("  warning: could not load tspan.\n");
                         }
                         success = load_options(par_filename, no_exit);
                         if ( success == 0 )
                         {
-                            printf("  warning: could not load options.\n");
+                            PRINTWARNING("  warning: could not load options.\n");
                         }
                     }
                     rerun = 1;
@@ -2095,7 +2095,7 @@ int load_options(const char *filename, int exit_if_nofile)
                 }
                 else
                 {
-                    fprintf(stderr,"  %swarning: could not assign option %s%s\n", T_ERR,opt_name,T_NOR);
+                    PRINTWARNING("  warning: could not assign option %s\n", opt_name);
 
                 }
             }
