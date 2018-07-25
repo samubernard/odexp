@@ -1527,8 +1527,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             {
                                 /* DBPRINT("data_fn=%s\n", data_fn); */
                                 data_plotted = 1;
-                                set_str("plot_data", dfl.name[i]);
-                                set_int("plot_data", i);
+                                set_str("data2plot", dfl.name[i]);
+                                set_int("data", i);
                             }
                         }
                     }
@@ -2777,7 +2777,7 @@ int gplot_data(const size_t x, const size_t y, const char *data_fn)
 {
     int success = fprintf(GPLOTP,\
         "replot \"%s\" u %zu:%zu w p pt \"#\" title \"%s\"\n",\
-        data_fn,x,y,get_str("plot_data"));
+        data_fn,x,y,get_str("data2plot"));
     fflush(GPLOTP);
     return success;
 }

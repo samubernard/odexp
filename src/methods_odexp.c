@@ -33,7 +33,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
 {
     struct winsize w;    
     double fcmpl = (tt-t0)/(tfinal-t0);
-    size_t i;
+    int i;
     char * arrow = "``'-.,_,.-'"; /* a wave */
     if ( get_int("progress")>0 )
     {
@@ -44,7 +44,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     if ( get_int("progress")>1 )
     {
       ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-      for ( i = 0; i<(size_t)(fcmpl*(w.ws_col-25));++i)
+      for ( i = 0; i<(int)(fcmpl*(w.ws_col-25));++i)
       {
         putchar(arrow[i % 11]);
       }
