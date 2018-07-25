@@ -1068,6 +1068,41 @@ sub strip_blanks
   return $str;
 }
 
+# -----------------------------------------------------------------
+# SETTINGS/COMPILE/RUN
+# -----------------------------------------------------------------
+
+
+my $inputrcfile = $odedir . "/.inputrc";
+open(my $finputrc, '>', $inputrcfile) or die "Could not open file '$inputrcfile'. $!";
+
+print $finputrc q(# Key binding for readline
+TAB: complete
+
+# use a visible bell if one is available
+set bell-style visible
+
+# if there are more than 150 possible completions for
+# a word, ask the user if he wants to see all of them
+set completion-query-items 150
+
+# Odexp specific 
+# increment parameter value and run
+"\C-g": "+\C-j"
+# decrement parameter value and run
+"\C-h": "-\C-j"
+# plot next variable
+"\C-]": "]\C-j"
+# plot previous variable
+"\C-[": "[\C-j"
+# extend 
+"\C-e": "e\C-j"
+# repeat last command (\e[A history-search-backward arrow up)
+"\C-r": "\e[A\C-j"
+);
+
+close($finputrc);
+
 my $LDFLAGS = "-lgsl -lodexp";
 my $CFLAGS =  "-Wall -Wno-gnu-statement-expression -pedantic -g";
 system("gcc $CFLAGS $LDFLAGS $odedir/model.c -o model.out") == 0 
