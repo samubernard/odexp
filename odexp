@@ -221,6 +221,27 @@ sub cleanup_file
   }
 }
 
+sub guess_single_popmode
+{
+  open(my $fh, '<', @_) or die "could not open file '@_'. $!";
+  my $pop_parameter_found = 0;
+  my $popmode_option_found = 0;
+  while (<$fh>) 
+  {
+    if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
+    {
+      $pop_parameter_found = 1 if $type =~ /%/i;
+      if ( $type =~ /o/i and $varname =~ /(?:pm|popmode)/ )
+      {
+        $popmode_option_found = 1;
+      }
+    }
+  }
+  close($fh);
+
+  $pop_parameter_found and $popmode_option_found;
+}
+
 sub print_c_header 
 {
   # Write C file header
@@ -253,12 +274,12 @@ sub print_c_header
 
 sub set_defines 
 {
-  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  open(my $fh, '<', @_) or die "could not open file '@_'. $!";
   while (<$fh>) 
   {
     if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
-      $type =~ /S/i or next; 
+      $type =~ /s/i or next; 
       $comment =~ s/#\s*//;
       print $fch "#define " . $varname . " " . $rhs;       
       print $fch " /* " . $comment . " */" if length $comment; 
