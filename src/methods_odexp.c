@@ -320,6 +320,11 @@ int odesolver( oderhs pop_ode_rhs,
     /* DBPRINT("SIM set up done"); */
 
     quickfile = fopen(quick_buffer,"w");
+
+    if ( quickfile == NULL )
+    {
+      PRINTERR("error: could not open file '%s', exiting",quick_buffer);
+    }
     
     /* current.plot binary file with three columns: x, y, z */
     /* use hexdump to see the file content:
