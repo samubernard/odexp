@@ -210,6 +210,7 @@ sub cleanup_file
   }
   close($fh);
   seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace underscores
+  print $fodeh "# begin of pop file entries\n\n"
   while ( <$tmpfh> )
   {
     my @fields = split; 
@@ -220,6 +221,7 @@ sub cleanup_file
     s/,/\n$fields[0] /g if /^[PO]/i;    # break lines at , and remove , if line starts with P or O
     print $fodeh "$_";
   }
+  print $fodeh "# end of pop file entries\n\n";
 }
 
 sub guess_single_popmode
