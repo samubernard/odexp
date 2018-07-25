@@ -117,6 +117,7 @@ my $modelc = $odedir . "/model.c";
 open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
 print_ode_header();
 cleanup_file($odefilename); # clean up ode filename
+guess_single_popmode($odefilename);
 close $fodeh;
 
 if ( $nbr_argv > 1 )
@@ -239,7 +240,10 @@ sub guess_single_popmode
   }
   close($fh);
 
-  $pop_parameter_found and $popmode_option_found;
+  if ( ( $pop_parameter_found == 0 ) and ( $popmode_option_found == 0 ) )
+  {
+    print $fodeh "O popmode single # single mode looks appropriate here; option added automatically\n\n";
+  }
 }
 
 sub print_c_header 
