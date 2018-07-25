@@ -1086,7 +1086,8 @@ set bell-style visible
 # a word, ask the user if he wants to see all of them
 set completion-query-items 150
 
-# Odexp specific 
+$if odexp 
+# odexp specific 
 # increment parameter value and run
 "\C-g": "+\C-j"
 # decrement parameter value and run
@@ -1103,6 +1104,7 @@ set completion-query-items 150
 "\C-e": "e\C-j"
 # repeat last command (\e[A history-search-backward arrow up)
 "\C-r": "\e[A\C-j"
+$endif
 );
 
 close($finputrc);

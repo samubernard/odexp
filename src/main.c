@@ -66,7 +66,8 @@ struct gen_option GOPTS[NBROPTS] = {
     {"raic","raic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
     {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"},
-    {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"} };
+    {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
+    {"pr","progress", 'i', 0.0, 2, "", "print PRogress 0 | 1 | {2}", "generalSettings"} };
 
 /* what kind of initial conditions to take */
 int *NUM_IC;
@@ -2783,7 +2784,7 @@ int gplot_data(const size_t x, const size_t y, const char *data_fn)
 
 void initialize_readline()
 {
-    rl_readline_name = "Odexp";
+    rl_readline_name = "odexp";
 }
 
 char ** completion_list_completion(const char *text, int start, int end)

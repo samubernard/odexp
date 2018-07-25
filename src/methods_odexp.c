@@ -13,6 +13,7 @@
 #include <string.h>
 #include <signal.h>                          
 #include <unistd.h>
+#include <sys/ioctl.h>
 
 #include "methods_odexp.h"
 #include "rand_gen.h"
@@ -30,9 +31,24 @@ static void set_abort_odesolver_flag( int sig )
 /* print progress */
 static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start )
 {
-    printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line  */
-    printf("  %s%6.1f sec%s,", T_VAL,(clock()-start)*1.0 / CLOCKS_PER_SEC, T_NOR);
-    printf("  %s%6.2f%%%s",T_VAL,100*(tt-t0)/(tfinal-t0),T_NOR);
+    struct winsize w;    
+    double fcmpl = (tt-t0)/(tfinal-t0);
+    size_t i;
+    char * arrow = "``'-.,_,.-'"; /* a wave */
+    if ( get_int("progress")>0 )
+    {
+      printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line  */
+      printf("  %s%6.1f sec%s,", T_VAL,(clock()-start)*1.0 / CLOCKS_PER_SEC, T_NOR);
+      printf("  %s%6.2f%%%s  ",T_VAL,100*fcmpl,T_NOR);
+    }
+    if ( get_int("progress")>1 )
+    {
+      ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+      for ( i = 0; i<(size_t)(fcmpl*(w.ws_col-25));++i)
+      {
+        putchar(arrow[i % 11]);
+      }
+    }
 }
 
 int odesolver( oderhs pop_ode_rhs, 
