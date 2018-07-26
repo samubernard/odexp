@@ -1602,7 +1602,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     break;
                 default :
                     printf("  Unknown command '%c'. Type q to quit, h for help\n", c);
-            }  
+            } /* end switch command */ 
             if (quit)
             {
                 break;
@@ -1655,6 +1655,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               case PM_UNDEFINED:
                 /* do nothing */
                 break;
+
               case PM_CURVES:
                 /* plot curve.0 to curve.nbr_hold-1 */
                 fprintf(GPLOTP,\
@@ -1667,10 +1668,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 }
                 fflush(GPLOTP);
                 break;
+
               case PM_REPLOT:
                 fprintf(GPLOTP,"replot\n");
                 fflush(GPLOTP);
                 break;
+
               case PM_NORMAL: /* normal plot mode */
                 /* This is where the plot is normally updated */
                 /* set axis labels and plot */
@@ -1773,17 +1776,41 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 }
                 fflush(GPLOTP);
                 break;
+
               case PM_CONTINUATION: /* try to plot continuation branch */
                 fprintf(GPLOTP,"set xlabel '%s'\n",mu.name[p]);
                 fprintf(GPLOTP,"set xrange[%lf:%lf]\n",get_dou("par0"),get_dou("par1"));
                 fprintf(GPLOTP,"plot \"stst_branches.tab\" u 2:%d w %s\n",gy+1,get_str("style"));
                 fflush(GPLOTP);
                 break;
+
               case PM_RANGE: /* try to plot range */
                 /* */
                 break;
+
               case PM_PARTICLES:
+                fprintf(GPLOTP,"unset xrange\n");
+                fprintf(GPLOTP,"unset yrange\n");
+                fprintf(GPLOTP,"unset zrange\n");
+                if (gx == 1) /* time evolution: xlabel = 'time' */
+                {
+                  fprintf(GPLOTP,"set xlabel 'time'\n");
+                }
+                else if ( (gx-2) < total_nbr_x ) /* xlabel = name of variable  */
+                {
+                  fprintf(GPLOTP,"set xlabel '%s'\n",dxv.name[gx-2]);
+                }
+                if ( (gy-2) < total_nbr_x ) /* variable */
+                {
+                  fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
+                }
+                if ( (gx <= ode_system_size + fcn.nbr_el + expr.nbr_el + 1) && 
+                   (gy <= ode_system_size + fcn.nbr_el + expr.nbr_el + 1) ) /* plot from idXX.dat */
+                {
+                  gplot_particles( );
+                }
                 break;
+
               default: 
                 break;
             }
@@ -2803,6 +2830,29 @@ int gplot_data(const size_t x, const size_t y, const char *data_fn)
         data_fn,x,y,get_str("data2plot"));
     fflush(GPLOTP);
     return success;
+}
+
+int gplot_particles( void )
+{
+    par *p = SIM->pop->start;
+    FILE *fid;
+    size_t tot = SIM->nbr_y + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+    if ( ( fid = fopen(".odexp/particle_states.dat","w") ) )
+    {
+      PRINTERR("error: could not open file 'particle_states.txt', exiting...\n");;
+    }
+    while ( p != NULL )
+    {
+      fwrite(p->y,sizeof(double),p->nbr_y,fid);
+      fwrite(p->aux,sizeof(double),p->nbr_aux,fid);
+      fwrite(p->psi,sizeof(double),p->nbr_psi,fid);
+      fwrite(p->expr,sizeof(double),p->nbr_expr,fid);
+      p = p->nextel;
+    }
+    fclose(fid);
+    fprintf(GPLOTP, "plot \".odexp/particle_states.dat\" "
+            "binary format=\"%%%zulf\" using %d:%d with pt \n",tot,1,2);
+    fflush(GPLOTP);
 }
 
 void initialize_readline()

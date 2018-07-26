@@ -44,6 +44,8 @@ void printf_SIM( void );
 
 int gplot_data(const size_t colx, const size_t coly, const char *datafile_plotted );
 
+int gplot_particles( void );
+
 /* readline */
 void initialize_readline(void);
 /* readline completion list */
