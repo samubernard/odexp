@@ -733,13 +733,14 @@ int fwrite_SIM(const double *restrict t, char *restrict mode)
 int list_particle(size_t with_id)
 {
     int s;
+    int fix = get_int("fix");
     size_t nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
     snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/tmp.txt");
     snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '%zu \"%%5.4f\t\" \"\\n\"' .odexp/id%zu.dat >> .odexp/tmp.txt",\
-            nbr_cols, with_id);
+            "hexdump -e '%zu \"%%5.%df\t\" \"\\n\"' .odexp/id%zu.dat >> .odexp/tmp.txt",\
+            nbr_cols, fix,  with_id);
 
     s = system(cmd_varnames); 
     s = system(cmd_data); 

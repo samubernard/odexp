@@ -68,6 +68,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
     {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"},
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
+    {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
     {"pr","progress", 'i', 0.0, 2, "", "print PRogress 0 | 1 | {2}", "generalSettings"} };
 
 /* what kind of initial conditions to take */
