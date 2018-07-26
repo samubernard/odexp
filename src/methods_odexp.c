@@ -564,13 +564,14 @@ int odesolver( oderhs pop_ode_rhs,
         pars = pars->nextel;
     }
 
-
     gsl_odeiv2_evolve_free(e);
     gsl_odeiv2_control_free(c);
     gsl_odeiv2_step_free(s);
     
     free(y);
     free(tstops);
+
+    fwrite_final_particle_state();
 
     return status;
 

@@ -481,7 +481,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {    
         LOGPRINT("Running first simulation");
         status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
-        status = fwrite_final_particle_state();
     }
     LOGPRINT("First simulation done.");
 
@@ -1615,9 +1614,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     srand( (unsigned long)get_int("seed") );
                 }
                 status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
-                
-                status = fwrite_final_particle_state();
-
                 if ( get_int("curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
