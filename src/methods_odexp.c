@@ -35,13 +35,13 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     double fcmpl = (tt-t0)/(tfinal-t0);
     int i;
     char * arrow = "``'-.,_,.-'"; /* a wave */
-    if ( get_int("progress")>0 )
+    if ( get_int("progress")>0 )  /* level 1: print time elapsed and percent complete */
     {
       printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line  */
       printf("  %s%6.1f sec%s,", T_VAL,(clock()-start)*1.0 / CLOCKS_PER_SEC, T_NOR);
       printf("  %s%6.2f%%%s  ",T_VAL,100*fcmpl,T_NOR);
     }
-    if ( get_int("progress")>1 )
+    if ( get_int("progress")>1 ) /* level 2: print wave progress bar */
     {
       ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
       for ( i = 0; i<(int)(fcmpl*(w.ws_col-25));++i)
@@ -183,9 +183,11 @@ int odesolver( oderhs pop_ode_rhs,
     /* it is assumed that the first and last values of tspan are t0 and t1 */
     t = tspan->array[0];
     t1 = tspan->array[tspan->length-1];
-    dt = (t1-t)/(double)(nbr_out-1);
+    dt = (t1-t)/(double)(nbr_out-1); /* time interval at which the solution if recorded 
+                                      * in addition to stopping times, if any
+                                      */ 
 
-    /* discontinuities */
+    /* stopping time (discontinuities for example) */
     /* printf("--tspan->length=%ld\n",tspan->length); */
     if ( tspan->length > 2 )
     {
@@ -229,46 +231,45 @@ int odesolver( oderhs pop_ode_rhs,
 
     SIM->time_in_ode_rhs = 0.0;
     SIM->h = &h;
-    /* DBPRINT("set up SIM"); */
-    /* reset SIM with an empty pop 
+    /* Set up SIM 
+     * reset SIM with an empty pop 
      * If option lasty is on, first
      * copy particle->y of the last simulation 
      * into y, and update popsize.
-     * */
+     */
     if ( POP_SIZE == 0 ) /* if POP_SIZE==0, cannot take last y */
     {
         set_int("lasty",0);
     }
 
-    if ( get_int("lasty") )
+    if ( get_int("lasty") )  /* set popsize to size at the end of the previous simulation */
     {
         set_int("popsize",POP_SIZE);
         /* printf("  Initial population size set to %d\n",get_int("popsize")); */
     }
-    if ( strncmp( get_str("popmode"), "single", 3) == 0 )
+    if ( strncmp( get_str("popmode"), "single", 3) == 0 ) /* single mode must have popsize = 1 */
     {
         set_int("popsize", 1);
     }
     /* initial conditions */
-    pop_size = get_int("popsize");
-    sim_size = ode_system_size*pop_size; 
+    pop_size = get_int("popsize");        /* pop_size: local variable for convenience */
+    sim_size = ode_system_size*pop_size;  /* sim_size: local variable for convenience */
     y = malloc(sim_size*sizeof(double));
     if ( get_int("lasty") ) /* initialize y to pars->y 
-                                   * Keep SIM->pop intact
-                                   * but fopen pars->buffer's  
-                                   * */
+                             * Keep SIM->pop intact
+                             */
     {
         pars = SIM->pop->start;
         j = 0;
         while ( pars != NULL )
         {
-            for(i=0; i<ode_system_size; i++)
+            for(i=0; i<ode_system_size; i++)  /* set the local dynamical state y to pars->y[i] */
             {
                 y[i+j] = pars->y[i];
             }
-            if ( get_int("closefiles") == 0 )
-            {
-              if ( ( pars->fid = fopen(pars->buffer,"w") ) == NULL ) /* dont forget to fopen buffers for existing particles */
+            if ( get_int("closefiles") == 0 ) /* try to fopen all existing particle buffers */
+             {
+              if ( ( pars->fid = fopen(pars->buffer,"w") ) == NULL ) /* fopen buffers for existing particles */
               {
                 PRINTERR("error: could not open file '%s', exiting...\n",pars->buffer);
                 exit ( EXIT_FAILURE );
@@ -287,7 +288,7 @@ int odesolver( oderhs pop_ode_rhs,
                                    * */
     {
         pars = SIM->pop->start;
-        while ( pars != NULL )
+        while ( pars != NULL )    /* delete all particles from SIM */  
         {
             next_pars = pars->nextel;
             delete_el( SIM->pop, pars);
@@ -295,14 +296,14 @@ int odesolver( oderhs pop_ode_rhs,
         }
         SIM->max_id = 0;
       
-        /* check that SIM->pop is empty */
-        if ( SIM->pop->size > 0 )
+        
+        if ( SIM->pop->size > 0 ) /* check that SIM->pop is empty */
         {
             DBPRINT("SIM->pop not empty - error");
         }
 
-        /* Initialize world SIM */
-        for (i = 0; i < pop_size; i++)
+        
+        for (i = 0; i < pop_size; i++) /* Add pop_size particles to SIM */
         {
             par_birth();
         }
@@ -314,8 +315,7 @@ int odesolver( oderhs pop_ode_rhs,
         memset(SIM->event, 0, sizeof(SIM->event));
     }
 
-    /* check that pop_size == SIM->pop->size */
-    if ( pop_size != SIM->pop->size )
+    if ( pop_size != SIM->pop->size ) /* check that pop_size == SIM->pop->size */
     {
         DBPRINT("pop_size = %zu, SIM->pop->size = %zu - error", pop_size, SIM->pop->size);
     }
@@ -348,7 +348,7 @@ int odesolver( oderhs pop_ode_rhs,
     /* DBPRINT("  quick file"); */
     if ( get_int("particle") >= SIM->max_id )
     {
-        printf("  warning, particle is too large\n");
+        PRINTWARNING("  warning, particle id is too large\n");
     }
     fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
     /* DBPRINT("  after quick file"); */
@@ -367,7 +367,7 @@ int odesolver( oderhs pop_ode_rhs,
     }  
 
     /* print IVP parameters */
-    printf("  integrating on [%.2f, %.2f], %s mode, ", t, t1, get_str("popmode") );
+    printf("  integrating on [%s%g%s, %s%g%s], in %s mode, ", T_VAL, t, T_NOR, T_VAL, t1, T_NOR, get_str("popmode") );
     if ( get_int("lasty") )
     {
         printf("from previous state %s(I to revert to default)%s...\n",T_DET,T_NOR);
@@ -378,7 +378,7 @@ int odesolver( oderhs pop_ode_rhs,
     }
     else 
     {
-        printf("from default initial conditions\n");
+        printf("from default initial conditions...\n");
     }
     fflush(stdout);
 
@@ -480,8 +480,8 @@ int odesolver( oderhs pop_ode_rhs,
              */
             apply_birthdeath(t, single_ic ); 
             sim_size = POP_SIZE*SIM->nbr_var;
-            y = realloc(y,sim_size*sizeof(double));
-            f = realloc(f,sim_size*sizeof(double));
+            y = realloc(y,sim_size*sizeof(double));  /* reallocate state y */
+            f = realloc(f,sim_size*sizeof(double));  /* reallocate rhs   f */
             pars = SIM->pop->start;
             j = 0;
             while ( pars != NULL )   /* fill in the new y from existing state */
@@ -494,12 +494,12 @@ int odesolver( oderhs pop_ode_rhs,
                 j += ode_system_size;
             }
             ode_rhs(t, y, f, SIM->pop->start); /* this updates SIM->pop->aux 
-                                     *              SIM->pop->psi 
-                                     *              SIM->pop->meanfield
-                                     *              SIM->pop->death_rate
-                                     *              SIM->pop->repli_rate 
-                                     *              SIM->pop_birth_rate 
-                                     */
+                                                *              SIM->pop->psi 
+                                                *              SIM->pop->meanfield
+                                                *              SIM->pop->death_rate
+                                                *              SIM->pop->repli_rate 
+                                                *              SIM->pop_birth_rate 
+                                                */
             fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
             /* printf each particle in a binary file pars->buffer */
             fwrite_SIM(&t, "a");
@@ -1698,7 +1698,7 @@ void apply_birthdeath(const double t, odeic single_ic )
 			choose_event;
     size_t  event_index = 0,
             choose_pars;
-	int die = 0, repli = 0, birth = 0;
+	  int die = 0, repli = 0, birth = 0;
 
     /* get the rates */
     r = malloc((2*POP_SIZE+1)*sizeof(double));
@@ -1715,11 +1715,11 @@ void apply_birthdeath(const double t, odeic single_ic )
     }
     r[2*POP_SIZE] = SIM->pop_birth_rate;
 	
-	/* cumsum and normalize r */
-	ncumsum(r,(2*POP_SIZE+1),&sumr);
+    /* cumsum and normalize r */
+    ncumsum(r,(2*POP_SIZE+1),&sumr);
 
-	/* choose wich event takes place */
-	choose_event = rand01();
+    /* choose wich event takes place */
+    choose_event = rand01();
     while(choose_event>r[event_index])
     {
         event_index++; /* index of the event.

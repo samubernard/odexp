@@ -93,16 +93,23 @@ typedef struct system_state {
     nve *cst_ptr;     /* constant arrays */
     nve *dfl_ptr;     /* data files */
 
-    double *mu;   /* simulation parameter values */ 
-    double *meanfield; /* meand fields */
+    double *mu;        /* simulation parameter values; common to all particles */ 
+    double *meanfield; /* meand fields; common to all particles */
 
     size_t max_id;
 
-    double pop_birth_rate;
+    double pop_birth_rate; /* this is the computed population birth rate (=0 if no birth rate set) */
 
-    int event[3]; /* IDParent event IDChild */
+    /* event[3] describes birth/death event 
+     * IDParent event IDChild
+     * event[0]: id of the mother particle (-1 if no mother cell, or 0 if event[1]==0)
+     * event[1]: event occurring +1 if birth, -1 if death, 0 if nothing happens
+     * event[2]: id of the daughter particle, or 0 if event[1]==0
+     * When nothing happens, on a regular time step, event is set to 0 everywhere
+     */
+    int event[3]; 
 
-    double time_in_ode_rhs;
+    double time_in_ode_rhs; /* time spent in ode_rhs so far */
 
     double *h;     /* current time step */
 
