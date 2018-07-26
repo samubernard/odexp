@@ -693,6 +693,34 @@ int fwrite_particle_state(const double *restrict t, par *p)
 
 }
 
+int fwrite_final_particle_state( void )
+{
+    par *p = SIM->pop->start;
+    FILE *fid;
+    if ( ( fid = fopen(".odexp/particle_states.dat","w") ) == NULL )
+    {
+      PRINTERR("error: could not open file 'particle_states.txt', exiting...\n");;
+      exit ( EXIT_FAILURE );
+    }
+    /* variables that can plotted
+     * type   length    where
+     * y      nbr_y     in p
+     * aux    nbr_aux   in p
+     * psi    nbr_psi   in p
+     * mfd    nbr_mfd   in SIM
+     */
+    while ( p != NULL )
+    {
+      fwrite(p->y,sizeof(double),p->nbr_y,fid);
+      fwrite(p->aux,sizeof(double),p->nbr_aux,fid);
+      fwrite(p->psi,sizeof(double),p->nbr_psi,fid);
+      fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,fid);
+      p = p->nextel;
+    }
+    fclose(fid);
+
+    return 0;
+}
 
 int fwrite_SIM(const double *restrict t, char *restrict mode)
 {

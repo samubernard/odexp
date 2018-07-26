@@ -481,6 +481,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {    
         LOGPRINT("Running first simulation");
         status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
+        status = fwrite_final_particle_state();
     }
     LOGPRINT("First simulation done.");
 
@@ -1614,6 +1615,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     srand( (unsigned long)get_int("seed") );
                 }
                 status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
+                
+                status = fwrite_final_particle_state();
+
                 if ( get_int("curves") ) /* save current.plot */ 
                 {
                     snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
@@ -1792,23 +1796,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 fprintf(GPLOTP,"unset xrange\n");
                 fprintf(GPLOTP,"unset yrange\n");
                 fprintf(GPLOTP,"unset zrange\n");
-                if (gx == 1) /* time evolution: xlabel = 'time' */
-                {
-                  fprintf(GPLOTP,"set xlabel 'time'\n");
-                }
-                else if ( (gx-2) < total_nbr_x ) /* xlabel = name of variable  */
-                {
-                  fprintf(GPLOTP,"set xlabel '%s'\n",dxv.name[gx-2]);
-                }
-                if ( (gy-2) < total_nbr_x ) /* variable */
-                {
-                  fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
-                }
-                if ( (gx <= ode_system_size + fcn.nbr_el + expr.nbr_el + 1) && 
-                   (gy <= ode_system_size + fcn.nbr_el + expr.nbr_el + 1) ) /* plot from idXX.dat */
-                {
-                  gplot_particles( );
-                }
+                gplot_particles(gx, gy, dxv );
                 break;
 
               default: 
@@ -2832,27 +2820,23 @@ int gplot_data(const size_t x, const size_t y, const char *data_fn)
     return success;
 }
 
-int gplot_particles( void )
+int gplot_particles( const int gx, const int gy, const nve var )
 {
-    par *p = SIM->pop->start;
-    FILE *fid;
-    size_t tot = SIM->nbr_y + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
-    if ( ( fid = fopen(".odexp/particle_states.dat","w") ) )
-    {
-      PRINTERR("error: could not open file 'particle_states.txt', exiting...\n");;
-    }
-    while ( p != NULL )
-    {
-      fwrite(p->y,sizeof(double),p->nbr_y,fid);
-      fwrite(p->aux,sizeof(double),p->nbr_aux,fid);
-      fwrite(p->psi,sizeof(double),p->nbr_psi,fid);
-      fwrite(p->expr,sizeof(double),p->nbr_expr,fid);
-      p = p->nextel;
-    }
-    fclose(fid);
+    size_t tot = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_mfd;
+    /* variables that can plotted
+     * type   length    where
+     * y      nbr_y     in p
+     * aux    nbr_aux   in p
+     * psi    nbr_psi   in p
+     * mfd    nbr_mfd   in SIM
+     */
+    fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "time"); 
+    fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
     fprintf(GPLOTP, "plot \".odexp/particle_states.dat\" "
-            "binary format=\"%%%zulf\" using %d:%d with pt \n",tot,1,2);
+            "binary format=\"%%%zulf\" using %d:%d with p pt \"o\" title \"particles\" \n",tot,gx-1,gy-1);
     fflush(GPLOTP);
+
+    return 0;
 }
 
 void initialize_readline()
