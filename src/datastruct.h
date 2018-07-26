@@ -1,4 +1,4 @@
-/* file dlist.h */
+/* file datastruct.h */
 
 /* includes */
 #include <stdint.h>

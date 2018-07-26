@@ -1,7 +1,7 @@
 /* methods_odexp.h */
 
 /* includes */
-#include "dlist.h"
+#include "datastruct.h"
 #include <gsl/gsl_odeiv2.h>
 
 /* extern size_t ode_system_size; */

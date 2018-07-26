@@ -1,4 +1,4 @@
-/* file dlist.c */
+/* file datastruct.c */
 
 /* includes */
 #include <stdint.h>
@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "dlist.h"
+#include "datastruct.h"
 
 /* formatting strings */
 const char *T_IND = "\033[38;5;130m";  /* index */
@@ -737,10 +737,10 @@ int list_particle(size_t with_id)
     size_t nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/tmp.txt");
+    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/id%zu.txt", with_id);
     snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '%zu \"%%5.%df\t\" \"\\n\"' .odexp/id%zu.dat >> .odexp/tmp.txt",\
-            nbr_cols, fix,  with_id);
+            "hexdump -e '%zu \"%%5.%df\t\" \"\\n\"' .odexp/id%zu.dat >> .odexp/id%zu.txt",\
+            nbr_cols, fix,  with_id, with_id);
 
     s = system(cmd_varnames); 
     s = system(cmd_data); 
