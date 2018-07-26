@@ -221,8 +221,7 @@ int odesolver( oderhs pop_ode_rhs,
     }
 
     /* Initialize SIM */
-    /* system("rm -f .odexp/id*.dat"); */ /* remove files before fopen'ing again */
-    remove_id_files();
+    remove_id_files(); /* remove files before fopen'ing again. Do not report errors, files might be absent */
     if ( ( SIM->fid = fopen(SIM->stats_buffer, "w") ) == NULL )
     {
       PRINTERR("error: could not open file '%s', exiting...\n",SIM->stats_buffer);
@@ -1641,11 +1640,11 @@ int remove_id_files()
     for (i = 0; i < SIM->max_id; i++)
     {
         snprintf(pathtofile,EXPRLENGTH-1,".odexp/id%zu.dat",i);
-        fail -= remove(pathtofile);
-    }
-    if ( fail ) 
-    {
-        DBPRINT("%d errors removing id files.", fail);
+        if ( remove(pathtofile) )
+        {
+          /* DBPRINT("error removing id file %zu.", i); */
+          fail = 1;
+        }
     }
     return fail;
 }
