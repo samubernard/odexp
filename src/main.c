@@ -72,7 +72,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"raic","raic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
     {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"},
-    {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal", "gnuplotSettings"},
+    {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal (do not change in run-time)", "gnuplotSettings"},
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
     {"pr","progress", 'i', 0.0, 2, "", "print PRogress 0 | 1 | {2}", "generalSettings"} };
@@ -223,7 +223,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       return 1;
     }
     LOGPRINT("popen gnuplot"); 
-    if ( ( GPIN = open(GFIFO, O_RDONLY | O_NONBLOCK) ) == -1 )
+    fprintf(GPLOTP,"set print \"%s\"\n", GFIFO); 
+    fputs("print \"ready\"\n", GPLOTP);
+    fflush(GPLOTP);
+    if ( ( GPIN = open(GFIFO, O_RDONLY ) ) == -1 )
     {
       PRINTERR("Could not open named pipe %s\n", GFIFO);
       close(GPIN);
@@ -516,7 +519,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* GNUPLOT SETUP */
     fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font"));
-    fprintf(GPLOTP,"set print \"%s\"\n", GFIFO); /* set gnuplot output to <SDTERR> */
+    fprintf(GPLOTP,"set print \"%s\"\n", GFIFO);
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
 
@@ -1625,7 +1628,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         fprintf(GPLOTP,"set term postscript eps color\n");
                         fprintf(GPLOTP,"set output \"%s.eps\"\n",svalue);
                         fprintf(GPLOTP,"replot\n");
-                        fprintf(GPLOTP,"set term aqua font \"Helvetica Neue Light,16\"\n");
+                        fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font") );
                         fflush(GPLOTP);
                         printf("  wrote %s.eps in current directory\n",svalue);
                     }
@@ -1638,13 +1641,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     printf("  Unknown command '%c'. Type q to quit, h for help\n", c);
             } /* end switch command */ 
 
-
-            /* read fifo */
-            read(GPIN, g_msg, EXPRLENGTH);
-            if ( strlen(g_msg) )
-            {
-                DBPRINT("%s", g_msg);
-            }
 
             if (quit)
             {
@@ -1836,6 +1832,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 fprintf(GPLOTP,"unset xrange\n");
                 fprintf(GPLOTP,"unset yrange\n");
                 fprintf(GPLOTP,"unset zrange\n");
+                fflush(GPLOTP);
                 gplot_particles(gx, gy, dxv );
                 break;
 
@@ -1877,7 +1874,18 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 extracmd = (char *)NULL; 
             }
             free(rawcmdline);
+
+
         }
+
+        /* read fifo */
+        read(GPIN, g_msg, EXPRLENGTH);
+        if ( strlen(g_msg) )
+        {
+            printf("  g_msg: %s", g_msg);
+        }
+        fputs("print \"ready\"\n", GPLOTP);
+        /* fflush(GPLOTP); */
     }
     
     printf("exiting...");
