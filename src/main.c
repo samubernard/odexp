@@ -7,6 +7,9 @@
 #include <readline/history.h>                             
 #include <string.h>
 #include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #include "main.h"
 #include "odexpConfig.h"
@@ -19,6 +22,8 @@ static char *cmdline  = (char *)NULL;
 const char *logfilename = ".odexp/model.log";
 FILE *logfr = (FILE *)NULL;
 FILE *GPLOTP = (FILE *)NULL;
+const char *GFIFO = ".odexp/gfifo";
+int GPIN;
 
 /* world */
 world *SIM = (world *)NULL;
@@ -67,6 +72,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"raic","raic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
     {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"},
+    {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal", "gnuplotSettings"},
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
     {"pr","progress", 'i', 0.0, 2, "", "print PRogress 0 | 1 | {2}", "generalSettings"} };
@@ -99,6 +105,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     char    par_details[32];
     char    list_msg[EXPRLENGTH];
     char    plot_cmd[EXPRLENGTH];
+    char    g_msg[EXPRLENGTH]; 
     char    c,
             op,
             op2;
@@ -193,13 +200,36 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     /* end variable declaration */
 
 
-    GPLOTP = popen("gnuplot -persist","w");
+
     if ( ( logfr = fopen(logfilename, "w") ) == NULL )
     {
       PRINTERR("error: could not open file '%s', exiting...\n",logfilename);;
       exit ( EXIT_FAILURE );
     }
     LOGPRINT("Log file for %s", odexp_filename); 
+    if ( mkfifo(GFIFO, 0600) ) 
+    {
+      if (errno != EEXIST) 
+      {
+	      PRINTERR("%s\n", GFIFO);
+ 	      unlink(GFIFO);
+	      return 1;
+      }
+    }
+    if ( ( GPLOTP = popen("gnuplot -persist","w") ) == NULL )
+    {
+      PRINTERR("gnuplot failed to open\n");
+      pclose(GPLOTP);
+      return 1;
+    }
+    LOGPRINT("popen gnuplot"); 
+    if ( ( GPIN = open(GFIFO, O_RDONLY | O_NONBLOCK) ) == -1 )
+    {
+      PRINTERR("Could not open named pipe %s\n", GFIFO);
+      close(GPIN);
+      return 1;
+    }
+    LOGPRINT("popen gnuplot"); 
 
     /* begin */
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
@@ -484,9 +514,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     }
     LOGPRINT("First simulation done.");
 
-    fprintf(GPLOTP,"set term aqua font \"%s,16\"\n", get_str("font"));
+    /* GNUPLOT SETUP */
+    fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font"));
+    fprintf(GPLOTP,"set print \"%s\"\n", GFIFO); /* set gnuplot output to <SDTERR> */
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
+
     sim_to_array(lastinit);
     extracmd = malloc(2*sizeof(char));
     strncpy(extracmd,"0",1); /* start by refreshing the plot with command 0: normal plot 
@@ -566,6 +599,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 case '8' : /* switch to range plot */
                     plot_mode = PM_RANGE;
                     break;
+                case 'C' :
                 case '7' :
                     plot_mode = PM_PARTICLES;
                     break;
@@ -574,7 +608,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     break;
                 case 'R' :
                     rerun = 1;
-                    plot_mode = PM_NORMAL;
+                    /* plot_mode = PM_NORMAL; */
                     break;
                 case 'h' : /* toggle hold */
                     /* TODO hold to hold the current plot 
@@ -596,7 +630,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     else
                     {
                         printf("  %shold is off%s\n",T_DET,T_NOR);
-                        plot_mode = PM_NORMAL;
+                        /* plot_mode = PM_NORMAL; */
                     }
                     break;
                 case 'u' : /* add curves on the plot */ 
@@ -613,7 +647,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         else
                         {
                             printf("  %sadd curves is off%s\n",T_DET,T_NOR);
-                            plot_mode = PM_NORMAL;
+                            /* plot_mode = PM_NORMAL; */
                         }
                     }
                     else if ( nbr_read == 1 )
@@ -623,7 +657,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             system("rm -f .odexp/curve.*");
                             nbr_hold = 0;
                             set_int("curves",0);
-                            plot_mode = PM_NORMAL;
+                            /* plot_mode = PM_NORMAL; */
                         }
                         else
                         {
@@ -699,7 +733,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         nbr_read = sscanf(cmdline+1,"%s %s %s", svalue, svalue2, svalue3);
                         if ( nbr_read >= 2 )
                         {
-                            plot_mode = PM_NORMAL;
+                            /* plot_mode = PM_NORMAL; */
                             plot3d = 0;
                             set_str("x",svalue);
                             set_str("y",svalue2);
@@ -721,7 +755,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     if ( nbr_read >= 2 )
                     {
-                        plot_mode = PM_NORMAL;
+                        /* plot_mode = PM_NORMAL; */
                         plot3d = 0;
                         if ( (ngx >= -1) && ngx < total_nbr_x)
                         {
@@ -1603,6 +1637,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 default :
                     printf("  Unknown command '%c'. Type q to quit, h for help\n", c);
             } /* end switch command */ 
+
+
+            /* read fifo */
+            read(GPIN, g_msg, EXPRLENGTH);
+            if ( strlen(g_msg) )
+            {
+                DBPRINT("%s", g_msg);
+            }
+
             if (quit)
             {
                 break;
@@ -1649,6 +1692,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             fflush(GPLOTP);
 
+            /* DBPRINT("plot_mode: %d", plot_mode); */
 
             switch(plot_mode) 
             {
@@ -1815,7 +1859,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             fpurge(stdin);
             replot = 0;
             rerun = 0;
-            plot_mode = PM_UNDEFINED;
+            /* plot_mode = PM_UNDEFINED; */
             rep_command = 1; /* reset to default = 1 */
 
             nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos);
@@ -1840,6 +1884,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     LOGPRINT("Exiting");
 
     pclose(GPLOTP);
+    close(GPIN);
+    unlink(GFIFO);
 
     free_namevalexp( pex );
     free_namevalexp( mu );
@@ -2829,7 +2875,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
     fprintf(GPLOTP, "plot \".odexp/particle_states.dat\" "
-            "binary format=\"%%%zulf\" using %d:%d with p pt \"o\" title \"particles\" \n",tot,gx-1,gy-1);
+            "binary format=\"%%%zulf\" using %d:%d with p pt 7 ps 1.5 title \"particles\" \n",tot,gx-1,gy-1);
     fflush(GPLOTP);
 
     return 0;
