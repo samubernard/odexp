@@ -23,7 +23,7 @@ const char *logfilename = ".odexp/model.log";
 FILE *logfr = (FILE *)NULL;
 FILE *GPLOTP = (FILE *)NULL;
 const char *GFIFO = ".odexp/gfifo";
-int GPIN;
+int GPIN; /* file descriptor for fifo */
 
 /* world */
 world *SIM = (world *)NULL;
@@ -144,7 +144,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* modes */
     int     not_run               = 0, /* do not run initially if = 1 */
-            replot                = 0, /* gnuplot replot */
             rerun                 = 0, /* run a new ODE simulation */
             plot3d                = 0,
             data_plotted          = 0,
@@ -216,7 +215,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 	      return 1;
       }
     }
-    if ( ( GPLOTP = popen("gnuplot -persist","w") ) == NULL )
+    if ( ( GPLOTP = popen("gnuplot -persist >>.odexp/gfifo  2>&1","w") ) == NULL ) /* open gnuplot in persist mode with redirection of stderr > stdout */
     {
       PRINTERR("gnuplot failed to open\n");
       pclose(GPLOTP);
@@ -530,7 +529,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                               */
 
     LOGPRINT("Main loop");
-    while(1)
+    while(1)  /* MAIN LOOP */
     {
         if ( strncmp(get_str("loudness"),"quiet",3) == 0 ) /* run quiet mode, break out of while loop  */
         {
@@ -826,7 +825,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     else 
                     {
                         fprintf(stderr,"  %sError: Variable index out of bound%s\n",T_ERR,T_NOR);
-                        replot = 0;
                         plot_mode = PM_UNDEFINED;
                     }
                     break;
@@ -858,7 +856,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     else 
                     {
                         fprintf(stderr,"  %sError: Variable index out of bound%s\n",T_ERR,T_NOR);
-                        replot = 0;
                         plot_mode = PM_UNDEFINED;
                     }
                     break;
@@ -1325,7 +1322,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                           else 
                           {
                             fprintf(stderr,"  %sError: Variable index out of bound.%s\n",T_ERR,T_NOR);
-                            replot = 0;
                             plot_mode = PM_UNDEFINED;
                           }
                         }
@@ -1355,7 +1351,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         else
                         {
                             fprintf(stderr,"  %sError: Too many arguments..%s\n",T_ERR,T_NOR);
-                            replot = 0;
                             plot_mode = PM_UNDEFINED;
                         }
                     }
@@ -1371,7 +1366,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         else 
                         {
                             fprintf(stderr,"  %sError: Variable index out of bound%s\n",T_ERR,T_NOR);
-                            replot = 0;
                             plot_mode = PM_UNDEFINED;
                         }
                     }
@@ -1392,7 +1386,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         else
                         {
                             fprintf(stderr,"  %sError: Time span index out of bound%s\n",T_ERR,T_NOR);
-                            replot = 0;
                             plot_mode = PM_UNDEFINED;
                         }
                     }
@@ -1428,7 +1421,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             else
                             {
                                 fprintf(stderr,"  %sError: Option index out of bound%s\n",T_ERR,T_NOR);
-                                replot = 0;
                                 plot_mode = PM_UNDEFINED;
                             }
                         }
@@ -1469,7 +1461,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             else
                             {    
                                 fprintf(stderr,"  %sError: Option name or number missing%s\n",T_ERR,T_NOR);
-                                replot = 0;
                                 plot_mode = PM_UNDEFINED;
                             }
                         }
@@ -1755,7 +1746,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   {
                       snprintf(plot_cmd,EXPRLENGTH,\
                         "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
-                        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"#%d\"\n",\
+                        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"$%d\"\n",\
                         get_int("particle"), nbr_cols, gx, gy,\
                         get_str("style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
                         get_int("particle"));
@@ -1788,7 +1779,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   {
                       snprintf(plot_cmd,EXPRLENGTH,\
                         "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
-                        "with %s title \"#%d\"\n",\
+                        "with %s title \"$%d\"\n",\
                         get_int("particle"), nbr_cols, gx, gy, gz,\
                         get_str("style"),\
                         get_int("particle"));
@@ -1854,7 +1845,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             update_act_par_index(&p, mu);
 
             fpurge(stdin);
-            replot = 0;
             rerun = 0;
             /* plot_mode = PM_UNDEFINED; */
             rep_command = 1; /* reset to default = 1 */
@@ -1879,12 +1869,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         }
 
         /* read fifo */
-        read(GPIN, g_msg, EXPRLENGTH);
-        if ( strlen(g_msg) )
-        {
-            printf("  g_msg: %s", g_msg);
-        }
-        fputs("print \"ready\"\n", GPLOTP);
+/*      
+ *      if ( read(GPIN, g_msg, EXPRLENGTH) > 1 )
+ *      {
+ *        printf("  %sg_msg: %s%s", T_ERR,g_msg,T_NOR);
+ *      }
+ *      memset(g_msg,0, sizeof(g_msg));
+ */     
         /* fflush(GPLOTP); */
     }
     
