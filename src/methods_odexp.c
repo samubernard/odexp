@@ -87,7 +87,7 @@ int odesolver( oderhs pop_ode_rhs,
 
     /* create a dummy step type dde that is a copy of rk2 */
     gsl_odeiv2_step_type *gsl_odeiv2_step_dde = malloc( sizeof(gsl_odeiv2_step_type) );
-    *gsl_odeiv2_step_dde = (gsl_odeiv2_step_type) { "fe", 0, 0, 
+    *gsl_odeiv2_step_dde = (gsl_odeiv2_step_type) { "dde", 0, 0, 
                             gsl_odeiv2_step_rk2->alloc,
                             gsl_odeiv2_step_rk2->apply,
                             gsl_odeiv2_step_rk2->set_driver,

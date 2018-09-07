@@ -187,7 +187,7 @@ sub print_ode_header
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
 # replace all constants (variable starting with '_') by their value
-# replace all , in P, O by \n 
+# replace all , in P, O, I by \n 
 sub cleanup_file
 {
   my @underscores;
@@ -218,7 +218,7 @@ sub cleanup_file
     {
          s/(?<!^)$underscores[$i]/$usvals[$i]/g; # replace underscores that don't start a line
     }
-    s/,/\n$fields[0] /g if /^[PO]/i;    # break lines at , and remove , if line starts with P or O
+    s/,/\n$fields[0] /g if /^[POI]/i;    # break lines at , and remove , if line starts with P or O or I
     print $fodeh "$_";
   }
   print $fodeh "# end of pop file entries ^^^^^^^^^^^^^^^^^^^^^^^^^\n\n";

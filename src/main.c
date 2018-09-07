@@ -41,7 +41,8 @@ struct gen_option GOPTS[NBROPTS] = {
     {"ys","yscale", 's', 0.0, 0, "linear", "Y-axis Scale {linear} | log", "plot"},
     {"zs","zscale", 's', 0.0, 0, "linear", "Z-axis Scale {linear} | log", "plot"},
     {"dp","data2plot", 's', 0.0, 0, "", "Data variable to Plot", "plot"},
-    {"d","data", 'i', 0.0, 0, "", "do we plot Data {0} | 1", "plot"},
+    {"d","plotdata", 'i', 0.0, 0, "", "do we plot Data {0} | 1", "plot"},
+    {"dpt","datapt", 'i', 0.0, 1, "", "data point type (integer)", "plot"},
     {"st","parstep", 'd', 1.1, 0, "", "paramater STep multiplicative increment", "par"},
     {"act","actpar", 's', 0.0, 0, "", "ACTive parameter", "par"},
     {"ly","lasty",'i', 0.0, 0, "", "take Last Y as initial condition {0} | 1", "ode"},
@@ -72,10 +73,10 @@ struct gen_option GOPTS[NBROPTS] = {
     {"raic","raic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
     {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"},
-    {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal (do not change in run-time)", "gnuplotSettings"},
+    {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal (do not change in runtime)", "gnuplotSettings"},
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
-    {"pr","progress", 'i', 0.0, 2, "", "print PRogress 0 | 1 | {2}", "generalSettings"} };
+    {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | 1 | {2}", "generalSettings"} };
 
 /* what kind of initial conditions to take */
 int *NUM_IC;
@@ -105,7 +106,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     char    par_details[32];
     char    list_msg[EXPRLENGTH];
     char    plot_cmd[EXPRLENGTH];
-    char    g_msg[EXPRLENGTH]; 
+    /* char    g_msg[EXPRLENGTH];  */
     char    c,
             op,
             op2;
@@ -146,7 +147,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     int     not_run               = 0, /* do not run initially if = 1 */
             rerun                 = 0, /* run a new ODE simulation */
             plot3d                = 0,
-            data_plotted          = 0,
             quit                  = 0;
     
     
@@ -613,9 +613,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     /* plot_mode = PM_NORMAL; */
                     break;
                 case 'h' : /* toggle hold */
-                    /* TODO hold to hold the current plot 
+                    /* hold to hold the current plot 
                      * and keep the same simulation
-                     * and add another 'curves' option
+                     * there is another 'curves' option
                      * to keep track of the last simulations
                      * with curve.0, curve.1 etc.
                      *
@@ -1564,7 +1564,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     break;
                 case '#' : /* add data from file to plot */
                     nbr_read = sscanf(cmdline+1,"%s %d %d",svalue,&colx,&coly);
-                    if ( nbr_read == 3 )
+                    if ( nbr_read > 0 )
                     {
                         i = 0;
                         while ( strcmp(svalue,dfl.name[i]) & (i<dfl.nbr_el))
@@ -1577,16 +1577,20 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             if ( sscanf(dfl.expression[i]," %*lu %*lu %s ",data_fn) )
                             {
                                 /* DBPRINT("data_fn=%s\n", data_fn); */
-                                data_plotted = 1;
                                 set_str("data2plot", dfl.name[i]);
-                                set_int("data", i);
+                                set_int("plotdata", 1);
                             }
+                        }
+                        if ( nbr_read < 3 ) /* set colx=1, coly=2 */
+                        {
+                            colx = 1;
+                            coly = 2;
                         }
                     }
                     else 
                     {
-                        printf("  plotting data off\n");
-                        data_plotted = 0;
+                        printf("  Dataset not found. plotting data off\n");
+                        set_int("plotdata", 0);
                         plot_mode = PM_REPLOT;
                     }
                     break;
@@ -1832,7 +1836,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
 
             /* plot data */
-            if ( data_plotted && plot_mode == PM_NORMAL ) 
+            if ( get_int("plotdata")  && plot_mode == PM_NORMAL ) 
             {
                 gplot_data(colx, coly, data_fn);
             }    
@@ -2855,8 +2859,8 @@ void printf_SIM( void )
 int gplot_data(const size_t x, const size_t y, const char *data_fn)
 {
     int success = fprintf(GPLOTP,\
-        "replot \"%s\" u %zu:%zu w p pt \"#\" title \"%s\"\n",\
-        data_fn,x,y,get_str("data2plot"));
+        "replot \"%s\" u %zu:%zu w p pt %d title \"%s\"\n",\
+        data_fn,x,y,get_int("datapt"), get_str("data2plot"));
     fflush(GPLOTP);
     return success;
 }

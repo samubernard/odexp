@@ -6,9 +6,9 @@ dx/dt = y
 
 i y 0.0, x 2 
 
-p mu 1e6
+p mu 1e6 # large value to have a stiff ODE
 
-O popmode single, abstol 1e-6, reltol 1e-6, minh 1e-7, meth bsimp, res 801
+O abstol 1e-6, reltol 1e-6, hmin 1e-7, meth bsimp, res 801
 
 tspan 0 6.3
 
