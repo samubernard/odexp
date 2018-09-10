@@ -1608,7 +1608,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     else
                         list_stats();
                     break;
-                case 'Q' :  /* quit with save */
+                case 'Q' :  /* quit with implicit save */
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case '*' : /* save file */
@@ -2615,7 +2615,7 @@ int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
     FILE *fr;
     char rootname[MAXROOTLENGTH];
     int  rootnamescanned = 0;
-    char tab_buffer[MAXFILENAMELENGTH];
+    /* char tab_buffer[MAXFILENAMELENGTH]; */
     char par_buffer[MAXFILENAMELENGTH];
     int len = *mu.max_name_length;
     clock_t time_stamp;
@@ -2646,12 +2646,12 @@ int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
 
     if (rootnamescanned > 0)
     {
-      snprintf(tab_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.tab",rootname,(uintmax_t)time_stamp);
+      /* snprintf(tab_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.tab",rootname,(uintmax_t)time_stamp); */
       snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.par",rootname,(uintmax_t)time_stamp);
     }  
     else
     {  
-      snprintf(tab_buffer,MAXFILENAMELENGTH,".odexp/%ju.tab",(uintmax_t)time_stamp);
+      /* snprintf(tab_buffer,MAXFILENAMELENGTH,".odexp/%ju.tab",(uintmax_t)time_stamp); */
       snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%ju.par",(uintmax_t)time_stamp);
     }
 

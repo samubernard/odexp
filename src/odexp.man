@@ -154,10 +154,7 @@ Set current parameter to \fIval\fR
 Make parameter with index \fIind\fr or name \fipar\fr the current parameter, and set its value to \fIval\fR 
 When val is missing, the parameter value is unchanged
 .TP
-.BR Q              
-Quit without snapshot 
-.TP
-.BR q " " \fR[\fImsg\fR]        
+.BR Q ", " q " " \fR[\fImsg\fR]        
 Quit and snap with optional message \fImsg\fR 
 .TP
 .BR R
