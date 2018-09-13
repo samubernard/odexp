@@ -57,6 +57,16 @@ my $re_pace = qr/^
   (|\#.*)?              # nothing or comment
 $/ix;
 
+my $re_nakedpar = qr/^
+  \s*[A-Z]\w*           # varname 
+  \s+                   # whitespaces
+  [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)? # one number
+  \s+                   # whitespace(s)
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;                   # end of line
+
 my $re_dxdt = qr/^
   \s*(D)                # first derivative
   (\w+)                 # var name
@@ -183,6 +193,7 @@ sub print_ode_header
   print $fodeh "# are replaced with their value\n\n";
 }
 
+# add P in front of each naked parameter (see $re_nakedpar)
 # strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
@@ -197,6 +208,7 @@ sub cleanup_file
   open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while ( <$fh> )    
   {
+    /$re_nakedpar/ && s/^\s*/P /;
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
     s/^[^#].*?(\\\n$|\.\.\.\s*$)//;    # join line after \ or ... if they are not only comments
     my @fields = split; 
