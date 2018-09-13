@@ -1,14 +1,12 @@
 # van der Pol
 # Benchmark for stiff ODE 
 
-dy/dt = mu*((1-x*x)*y-x)
-dx/dt = y
+dy/dt = mu*((1-x*x)*y-x) {init = 0.0;}
+dx/dt = y                {init = 2.0;}
 
-i y 0.0, x 2 
+mu 1e6
 
-p mu 1e6 # large value to have a stiff ODE
-
-O abstol 1e-6, reltol 1e-6, hmin 1e-7, meth bsimp, res 801
+O popmode single, abstol 1e-6, reltol 1e-6, hmin 1e-7, meth bsimp, res 801
 
 tspan 0 6.3
 
