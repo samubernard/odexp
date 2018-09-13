@@ -79,6 +79,18 @@ my $re_implicitIC = qr/^
   (|\#.*)?              # nothing or comment
 $/ix;                   # end of line
 
+my $re_nakedaux = qr/^
+  \s*([A-Z]\w*           # varname 
+  (?:\s*\[.*?\]+)?)      # optional brackets
+  \s*                   # whitespaces
+  =                     # equal sign
+  \s*                   # whitespace
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;                   # end of line
+
 my $re_attributeIC = qr/^
   \s*D                  # first derivative
   (\w+                  # var name
@@ -234,6 +246,10 @@ sub cleanup_file
   while ( <$fh> )    
   {
     /$re_nakedpar/ && s/^\s*/P /;     # insert P before naked parameters
+    if ( my ($varname) = ( $_ =~ /$re_nakedaux/ ) )
+      {
+        s/^\s*$varname\s*=/A $varname /;     # insert A before naked aux   
+      }
     if ( my ($varname) = ( $_ =~ /$re_implicitIC/ ) )
       {
         s/$/\nI $varname ${varname}_0/;   # insert new line with initial condition  
