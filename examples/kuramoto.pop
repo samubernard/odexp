@@ -4,7 +4,7 @@
 
 # PARAMETERS are constant for all particles
 # Coupling strength
-P K 0.1
+K 0.1
 
 # CONSTANT
 S PI 3.141592
