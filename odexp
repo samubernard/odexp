@@ -67,6 +67,30 @@ my $re_nakedpar = qr/^
   (|\#.*)?              # nothing or comment
 $/ix;                   # end of line
 
+my $re_implicitIC = qr/^
+  \s*P                  # must be a parameter
+  \s+                   # whitespaces
+  ([A-Z]\w*?)_0         # with a varname ends with _0
+  \s+                   # whitespaces
+  [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)? # one number
+  \s+                   # whitespace(s)
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;                   # end of line
+
+my $re_attributeIC = qr/^
+  \s*D                  # first derivative
+  (\w+                  # var name
+  (?:\s*\[.*?\])?)      # optional brackets
+  \/DT                  # second part of derivative
+  \s*=\s*               # equal
+  [^\{#\n]+             # rhs until bracket comment or newline 
+  \{.*?init\s*=\s*(.*?);.*?\} # attribute containing init=ic;
+  \s*                   # whitespace(s)
+  (?:|\#.*)?              # nothing or comment
+$/ix;
+
 my $re_dxdt = qr/^
   \s*(D)                # first derivative
   (\w+)                 # var name
@@ -194,6 +218,7 @@ sub print_ode_header
 }
 
 # add P in front of each naked parameter (see $re_nakedpar)
+# add I in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
 # strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
@@ -208,7 +233,16 @@ sub cleanup_file
   open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while ( <$fh> )    
   {
-    /$re_nakedpar/ && s/^\s*/P /;
+    /$re_nakedpar/ && s/^\s*/P /;     # insert P before naked parameters
+    if ( my ($varname) = ( $_ =~ /$re_implicitIC/ ) )
+      {
+        s/$/\nI $varname ${varname}_0/;   # insert new line with initial condition  
+      }
+    if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
+      {
+        s/$/\nI $varname $ic/;   # insert new line with initial condition  
+        print $varname . "|" . $ic . "\n";
+      }
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
     s/^[^#].*?(\\\n$|\.\.\.\s*$)//;    # join line after \ or ... if they are not only comments
     my @fields = split; 

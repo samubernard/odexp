@@ -93,9 +93,40 @@ my $re_nakedpar = qr/^
   (|\#.*)?              # nothing or comment
 $/ix;                   # end of line
 
+my $re_nakedic = qr/^
+  \s*([A-Z]\w*?)_0      # varname 
+  \s+                   # whitespaces
+  [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)? # one number
+  \s+                   # whitespace(s)
+  (|\{.*?\})?           # nothing or attribute
+  \s*                   # whitespace(s)
+  (|\#.*)?              # nothing or comment
+$/ix;                   # end of line
+
+my $re_attributeIC = qr/^
+  \s*D                  # first derivative
+  (\w+                  # var name
+  (?:\s*\[.*?\])?)      # optional brackets
+  \/DT                  # second part of derivative
+  \s*=\s*               # equal
+  [^\{#\n]+             # rhs until bracket comment or newline 
+  \{.*?init\s*=\s*(.*?);.*?\} # attribute containing init=ic;
+  \s*                   # whitespace(s)
+  (?:|\#.*)?              # nothing or comment
+$/ix;
+
 while ( <STDIN> )
 {
   
+  if ( my ($v, $ic) = ( $_ =~ $re_attributeIC ) )
+  {
+    print "attribute ic " . $_ . "\n";
+    print $v . "|" . $ic;
+  }
+  if ( $_ =~ $re_nakedic )
+  {
+    print "naked ic " . $_ . "\n";
+  }
   if ( $_ =~ $re_nakedpar )
   {
     print "naked parameters: " . $_ . "\n";
