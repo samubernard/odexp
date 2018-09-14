@@ -98,7 +98,7 @@ my $re_attributeIC = qr/^
   \/DT                  # second part of derivative
   \s*=\s*               # equal
   [^\{#\n]+             # rhs until bracket comment or newline 
-  \{.*?init\s*=\s*(.*?);.*?\} # attribute containing init=ic;
+  \{.*?init\s*=\s*(.*?)(?:;.*?\}|\s*\}) # attribute containing init=ic;
   \s*                   # whitespace(s)
   (?:|\#.*)?              # nothing or comment
 $/ix;
@@ -145,7 +145,7 @@ if ( $nbr_argv == 0 ) {
 }
 
 # ---------------------------------------
-# Files created in .filebasename
+# Files created in .odexp
 # model.ode  model file where all constants are replaced by their values
 # model.par contains parameter, initial condition, tspan and options
 # model.c: C file implementation 

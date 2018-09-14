@@ -733,9 +733,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     if ( nbr_read == 0 ) /* try reading two or three strings */
                     {
                         nbr_read = sscanf(cmdline+1,"%s %s %s", svalue, svalue2, svalue3);
+                        plot_mode = PM_NORMAL;
                         if ( nbr_read >= 2 )
                         {
-                            /* plot_mode = PM_NORMAL; */
                             plot3d = 0;
                             set_str("x",svalue);
                             set_str("y",svalue2);
@@ -757,7 +757,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     if ( nbr_read >= 2 )
                     {
-                        /* plot_mode = PM_NORMAL; */
+                        plot_mode = PM_NORMAL;
                         plot3d = 0;
                         if ( (ngx >= -1) && ngx < total_nbr_x)
                         {
@@ -1216,6 +1216,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         printf("  Initial population size       = %s%zu%s\n",T_VAL,(size_t)get_int("popsize"),T_NOR);
                         printf("  Final population size         = %s%zu%s\n",T_VAL,POP_SIZE,T_NOR);
                         printf("  Number of particles           = %s%zu%s\n",T_VAL,SIM->max_id,T_NOR);
+                        printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
                         printf("\n  hexdump -e '%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
                         printf("  hexdump -e '%zu \"%%5.2f \" \"\\n\"' idXX.dat\n", nbr_cols); 
                     }
