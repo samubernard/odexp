@@ -43,7 +43,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"dp","data2plot", 's', 0.0, 0, "", "Data variable to Plot", "plot"},
     {"d","plotdata", 'i', 0.0, 0, "", "do we plot Data {0} | 1", "plot"},
     {"dpt","datapt", 'i', 0.0, 1, "", "data point type (integer)", "plot"},
-    {"st","parstep", 'd', 1.1, 0, "", "paramater STep multiplicative increment", "par"},
+    {"st","parstep", 'd', 1.1, 0, "", "parameter STep multiplicative increment", "par"},
     {"act","actpar", 's', 0.0, 0, "", "ACTive parameter", "par"},
     {"ly","lasty",'i', 0.0, 0, "", "take Last Y as initial condition {0} | 1", "ode"},
     {"r","res",'i', 201.0, 201, "", "Resolution: nominal number of output time points", "ode"},
@@ -248,14 +248,21 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     success = load_double_array(parfilename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
-        PRINTERR("\n  Error: time span not found.\n"
+        PRINTERR("\n  Warning: time span not found.\n"
                 "  One line in file %s should be of the form\n"
-                "  TIMESPAN 0 100\n  Exiting...\n\n", odexp_filename);
-        LOGPRINT("Error: time span not found.");
-        exit ( EXIT_FAILURE );
+                "  TIMESPAN 0 100\n  \n"
+                "  time span will be set to default [0,1]\n", odexp_filename);
+        LOGPRINT("Warning: time span not found.");
+        tspan.array = malloc(2*sizeof(double));
+        tspan.length = 2;
+        tspan.array[0] = 0.0;
+        tspan.array[1] = 1.0;
     }
-    printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
-    LOGPRINT("Found %zu time points, of which %zu stopping points", tspan.length, tspan.length - 2);
+    else
+    {
+      printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
+      LOGPRINT("Found %zu time points, of which %zu stopping points", tspan.length, tspan.length - 2);
+    }
 
     /* get constant arrays */
     printf("\n%-25s%s\n", "constant arrays", HLINE);

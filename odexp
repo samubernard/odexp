@@ -17,6 +17,7 @@ use File::Basename qw( fileparse );
 use File::Path qw( make_path );
 use File::Spec;
 use File::Temp qw/ tempfile tempdir /;
+use Getopt::Std;
 
 # ---------------------------------------
 # regexp
@@ -135,11 +136,15 @@ my $re_scalar = qr/^
 
 # ---------------------------------------
 
+our $opt_p;
+getopts('p:');
+
 my $odefilename;
 # check the number of arguments, must be 1 or 2
 my $nbr_argv = @ARGV;
 if ( $nbr_argv == 0 ) {
-  die "Require a filename";  
+  # die "Require a filename";  
+  $odefilename = "standard input";
 } else {
   $odefilename = $ARGV[0];
 }
@@ -162,13 +167,13 @@ my $modelc = $odedir . "/model.c";
 
 open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
 print_ode_header();
-cleanup_file($odefilename); # clean up ode filename
-guess_single_popmode($odefilename);
+cleanup_file(); # clean up ode 
+guess_single_popmode($modelode);
 close $fodeh;
 
-if ( $nbr_argv > 1 )
+if ( defined $opt_p )
 {
-  copy($ARGV[1],$odedir . "/model.par") or die "Could not copy file '$ARGV[1]'. $!";
+  copy($opt_p,$odedir . "/model.par") or die "Could not copy file '$opt_p'. $!";
 }
 else
 {
@@ -224,7 +229,7 @@ close $fch;
 
 sub print_ode_header
 {
-  print $fodeh "# odexp file name: $ARGV[0]\n";
+  print $fodeh "# odexp file name: $odefilename\n";
   print $fodeh "# In this file, all constant (variable starting with _)\n";
   print $fodeh "# are replaced with their value\n\n";
 }
@@ -242,8 +247,8 @@ sub cleanup_file
   my @usvals;
   my $tmpfh = tempfile(); # make a first pass in temp file to remove linebreaks
                           # and find underscores
-  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
-  while ( <$fh> )    
+  #open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
+  while ( <> )    
   {
     /$re_nakedpar/ && s/^\s*/P /;     # insert P before naked parameters
     if ( my ($varname) = ( $_ =~ /$re_nakedaux/ ) )
@@ -257,7 +262,6 @@ sub cleanup_file
     if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
       {
         s/$/\nI $varname $ic/;   # insert new line with initial condition  
-        print $varname . "|" . $ic . "\n";
       }
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
     s/^[^#].*?(\\\n$|\.\.\.\s*$)//;    # join line after \ or ... if they are not only comments
@@ -270,7 +274,7 @@ sub cleanup_file
     chomp if /^[^#].*?,\s*$/;                 # join lines if line ends with ,
     print $tmpfh "$_" ;
   }
-  close($fh);
+  #close($fh);
   seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace underscores
   print $fodeh "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
   while ( <$tmpfh> )
