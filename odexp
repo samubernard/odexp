@@ -101,7 +101,7 @@ my $re_attributeIC = qr/^
   [^\{#\n]+             # rhs until bracket comment or newline 
   \{.*?init\s*=\s*(.*?)(?:;.*?\}|\s*\}) # attribute containing init=ic;
   \s*                   # whitespace(s)
-  (?:|\#.*)?              # nothing or comment
+  (?:|\#.*)?            # nothing or comment
 $/ix;
 
 my $re_dxdt = qr/^
@@ -136,8 +136,9 @@ my $re_scalar = qr/^
 
 # ---------------------------------------
 
+# odexp optional parameters
 our $opt_p;
-getopts('p:');
+getopts('p:'); # -p parameterfilename 
 
 my $odefilename;
 # check the number of arguments, must be 1 or 2

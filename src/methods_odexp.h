@@ -81,6 +81,9 @@ int any(int *, size_t len);
 /* stochastic differential equation solver */
 int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, double y[] );
 
+/* difference equation solver */
+int iteration_apply( gsl_odeiv2_system *sys , double *t, double y[] );
+
 /* delay differential equation solver */
 int dde_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, double y[] );
 
