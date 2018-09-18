@@ -1472,10 +1472,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                                 plot_mode = PM_UNDEFINED;
                             }
                         }
+                        plot_mode = PM_UNDEFINED;
                     }
                     break;
                 case '?' : /* help */
                     system(helpcmd);
+                    plot_mode = PM_UNDEFINED;
                     break;
                 case 'd' : /* reset parameters and initial cond to defaults */
                     for ( i=0; i<ode_system_size; i++ )
@@ -1533,6 +1535,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 case 'g' : /* issue a gnuplot command */
                     fprintf(GPLOTP,"%s\n", cmdline+1);
                     fflush(GPLOTP);
+                    plot_mode = PM_UNDEFINED;
                     break;
                 case 'm' :
                     sscanf(cmdline+1,"%c",&op);
@@ -1569,6 +1572,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     {
                         status = parameter_range(pop_ode_rhs, pop_ode_ic, NULL, ics, mu, fcn, tspan, GPLOTP);
                     }
+                    plot_mode = PM_UNDEFINED;
                     break;
                 case '#' : /* add data from file to plot */
                     nbr_read = sscanf(cmdline+1,"%s %d %d",svalue,&colx,&coly);
@@ -1608,6 +1612,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     {
                        printf_SIM();
                     }
+                    plot_mode = PM_UNDEFINED;
                     break;
                 case '$' :  /* list particle dataset */
                     nbr_read = sscanf(cmdline+1,"%zu",&i);
@@ -1615,6 +1620,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         list_particle(i);
                     else
                         list_stats();
+                    plot_mode = PM_UNDEFINED;
                     break;
                 case 'Q' :  /* quit with implicit save */
                 case 'q' :  /* quit with save */
