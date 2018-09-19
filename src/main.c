@@ -641,6 +641,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         printf("  %shold is off%s\n",T_DET,T_NOR);
                         /* plot_mode = PM_NORMAL; */
                     }
+                    plot_mode = PM_UNDEFINED;
                     break;
                 case 'u' : /* add curves on the plot */ 
                     nbr_read = sscanf(cmdline+1,"%c",&op);               
