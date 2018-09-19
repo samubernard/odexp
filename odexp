@@ -104,6 +104,19 @@ my $re_attributeIC = qr/^
   (?:|\#.*)?            # nothing or comment
 $/ix;
 
+my $re_implicitDelay = qr/^
+  \s*%DELAY             # declaration
+  \s+                   # whitespaces
+  (\w+)                 # varname
+  \s+                   # whitespaces
+  (\w+)                 # delay
+  \s+                   # whitespaces
+  ([\w\.]+)             # initial conidition
+  \s+                   # whitespaces
+  (\d+)                 # length of linear chain
+  (?:|\#.*)?            # nothing or comment
+$/ix;
+
 my $re_dxdt = qr/^
   \s*(D)                # first derivative
   (\w+)                 # var name
@@ -237,6 +250,8 @@ sub print_ode_header
 
 # add P in front of each naked parameter (see $re_nakedpar)
 # add I in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
+# parse IC in attribute (see $re_attributeIC)
+# parse implicitly defined delayed variables (see $re_implicitDelay)
 # strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
@@ -263,6 +278,11 @@ sub cleanup_file
     if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
       {
         s/$/\nI $varname $ic/;   # insert new line with initial condition  
+      }
+    if ( my ($varname, $delayname, $ic, $linchainlength) = ( $_ =~ /$re_implicitDelay/ ) )
+      {
+        s/^/# /; # comment out the line
+        s+$+\nd${varname}_[i=0:$linchainlength]/dt = linchaindelay($varname,${varname}_,i,$delayname,$linchainlength) {hidden}\nS ${varname}__end $linchainlength-1\nA delay_$varname ${varname}_[${varname}__end]\nI ${varname}_[i=0:$linchainlength] $ic {hidden}+; # insert new lines
       }
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
     s/^[^#].*?(\\\n$|\.\.\.\s*$)//;    # join line after \ or ... if they are not only comments

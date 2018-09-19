@@ -96,7 +96,7 @@ int odesolver( oderhs pop_ode_rhs,
                             gsl_odeiv2_step_rk2->order,
                             gsl_odeiv2_step_rk2->free };
 
-    /* create a dummy step type dde that is a copy of rk2 */
+    /* create a dummy step type iteration that is a copy of rk2 */
     gsl_odeiv2_step_type *gsl_odeiv2_step_iteration = malloc( sizeof(gsl_odeiv2_step_type) );
     *gsl_odeiv2_step_iteration = (gsl_odeiv2_step_type) { "iteration", 0, 0, 
                             gsl_odeiv2_step_rk2->alloc,

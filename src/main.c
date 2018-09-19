@@ -617,7 +617,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     break;
                 case 'R' :
                     rerun = 1;
-                    /* plot_mode = PM_NORMAL; */
+                    plot_mode = PM_REPLOT; 
                     break;
                 case 'h' : /* toggle hold */
                     /* hold to hold the current plot 
