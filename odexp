@@ -109,11 +109,10 @@ my $re_implicitDelay = qr/^
   \s+                   # whitespaces
   (\w+)                 # varname
   \s+                   # whitespaces
-  (\w+)                 # delay
+  (\w+)                 # root: delayed variable
   \s+                   # whitespaces
-  ([\w\.]+)             # initial conidition
+  \{(.*?)\}             # mandatory attribute
   \s+                   # whitespaces
-  (\d+)                 # length of linear chain
   (?:|\#.*)?            # nothing or comment
 $/ix;
 
@@ -182,8 +181,9 @@ my $modelc = $odedir . "/model.c";
 open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
 print_ode_header();
 cleanup_file(); # clean up ode 
-guess_single_popmode($modelode);
 close $fodeh;
+
+guess_single_popmode($modelode);
 
 if ( defined $opt_p )
 {
@@ -266,26 +266,8 @@ sub cleanup_file
   #open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while ( <> )    
   {
-    /$re_nakedpar/ && s/^\s*/P /;     # insert P before naked parameters
-    if ( my ($varname) = ( $_ =~ /$re_nakedaux/ ) )
-      {
-        s/^\s*$varname\s*=/A $varname /;     # insert A before naked aux   
-      }
-    if ( my ($varname) = ( $_ =~ /$re_implicitIC/ ) )
-      {
-        s/$/\nI $varname ${varname}_0/;   # insert new line with initial condition  
-      }
-    if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
-      {
-        s/$/\nI $varname $ic/;   # insert new line with initial condition  
-      }
-    if ( my ($varname, $delayname, $ic, $linchainlength) = ( $_ =~ /$re_implicitDelay/ ) )
-      {
-        s/^/# /; # comment out the line
-        s+$+\nd${varname}_[i=0:$linchainlength]/dt = linchaindelay($varname,${varname}_,i,$delayname,$linchainlength) {hidden}\nS ${varname}__end $linchainlength-1\nA delay_$varname ${varname}_[${varname}__end]\nI ${varname}_[i=0:$linchainlength] $ic {hidden}+; # insert new lines
-      }
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
-    s/^[^#].*?(\\\n$|\.\.\.\s*$)//;    # join line after \ or ... if they are not only comments
+    s/^([^#].*?)(\\\n$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
     my @fields = split; 
     if ( /^_/ ) {
       push @underscores, $fields[0];
@@ -300,6 +282,27 @@ sub cleanup_file
   print $fodeh "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
   while ( <$tmpfh> )
   {
+    /$re_nakedpar/ && s/^\s*/P /;     # insert P before naked parameters
+    if ( my ($varname) = ( $_ =~ /$re_nakedaux/ ) )
+      {
+        s/^\s*$varname\s*=/A $varname /;     # insert A before naked aux   
+      }
+    if ( my ($varname) = ( $_ =~ /$re_implicitIC/ ) )
+      {
+        s/$/\nI $varname ${varname}_0/;   # insert new line with initial condition  
+      }
+    if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
+      {
+        s/$/\nI $varname $ic/;   # insert new line with initial condition  
+      }
+    if ( my ($varname, $rootvar, $attr) = ( $_ =~ /$re_implicitDelay/ ) )
+      {
+        s/^/# /; # comment out the line
+        my ($ic) = ( $attr =~ /init\s*=\s*(.*?)([;\s]|$)/ );
+        my ($len) = ( $attr =~ /len\s*=\s*(.*?)([;\s]|$)/ );
+        my ($delay) = ( $attr =~ /delay\s*=\s*(.*?)([;\s]|$)/ );
+        s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$delay,$len) {hidden}\nS ${varname}_end $len-1\nA $varname ${varname}_chain[${varname}_end]\nI ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
+      }
     my @fields = split; 
     foreach my $i ( 0..$#underscores )
     {
@@ -318,20 +321,23 @@ sub guess_single_popmode
   my $popmode_option_found = 0;
   while (<$fh>) 
   {
-    if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
+    print $_;
+    if ( my ($type) = ( $_ =~ /^%(BIRTH|DEATH|PROLIF|M|C)/i ) )
     {
-      $pop_parameter_found = 1 if $type =~ /%/i;
-      if ( $type =~ /o/i and $varname =~ /(?:pm|popmode)/ )
-      {
-        $popmode_option_found = 1;
-      }
+      $pop_parameter_found = 1;
+    }
+    if ( my ($type,$varname) = ( /$re_pace/ )  )
+    {
+        $popmode_option_found = 1 if $varname =~ /(pm|popmode)/;
     }
   }
   close($fh);
 
   if ( ( $pop_parameter_found == 0 ) and ( $popmode_option_found == 0 ) )
   {
-    print $fodeh "O popmode single # single mode looks appropriate here; option added automatically\n\n";
+    open(my $fh, '>>', @_) or die "Could not open file '$modelode'. $!";
+    print $fh "O popmode single # single mode looks appropriate here; option added automatically\n\n";
+    close($fh);
   }
 }
 
