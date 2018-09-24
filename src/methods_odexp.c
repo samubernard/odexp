@@ -456,7 +456,7 @@ int odesolver( oderhs pop_ode_rhs,
               status = fe_apply(&sys,&t,tnext,&h,y);
               h = get_dou("h0"); /* reset h */
             }
-            if ( odeT == gsl_odeiv2_step_iteration )
+            else if ( odeT == gsl_odeiv2_step_iteration )
             {
               status = iteration_apply(&sys,&t,y);
             }
@@ -473,7 +473,7 @@ int odesolver( oderhs pop_ode_rhs,
               h = hmin;
               if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
               {
-                PRINTWARNING("\n%s  warning: hmin reached at t = %f. Continuing with h = %e\n",LINEUP_AND_CLEAR,t, hmin);
+                PRINTWARNING("\n%s  warning: hmin reached at t = %f (h=%f). Continuing with h = %e\n",LINEUP_AND_CLEAR,t, hmin,h);
                 hmin_alert = 1; 
               }
             }
@@ -1841,7 +1841,7 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
   f = malloc(sys->dimension * sizeof(double));
   if ( *h > (tnext - *t) )
   {
-    *h = min(*h, tnext-*t);
+    *h = tnext-(*t);
   }
   sys->function(*t, y, f, sys->params);
   for ( i=0; i<sys->dimension; ++i)

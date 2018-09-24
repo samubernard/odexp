@@ -326,7 +326,7 @@ sub guess_single_popmode
     {
       $pop_parameter_found = 1;
     }
-    if ( my ($type,$varname) = ( /$re_pace/ )  )
+    if ( my ($type,$varname) = ( $_ =~ /$re_pace/ )  )
     {
         $popmode_option_found = 1 if $varname =~ /(pm|popmode)/;
     }

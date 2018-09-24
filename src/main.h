@@ -8,6 +8,9 @@
 /* size of history buffer */
 #define SIZEHIST 100
 
+/* size of message buffer */
+#define SIZEMSG  10000
+
 enum plotmode { PM_UNDEFINED, PM_NORMAL, PM_CONTINUATION, PM_RANGE, PM_PARTICLES, PM_CURVES, PM_REPLOT };
 
 /* function declaration */
@@ -52,4 +55,6 @@ void initialize_readline(void);
 char **completion_list_completion(const char *, int, int);
 char *completion_list_generator(const char *, int);
 
+/* gnuplot fifo */
+int read_msg( void );
 

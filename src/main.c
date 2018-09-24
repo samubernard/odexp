@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 
 #include "main.h"
 #include "odexpConfig.h"
@@ -43,7 +44,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"dp","data2plot", 's', 0.0, 0, "", "Data variable to Plot", "plot"},
     {"d","plotdata", 'i', 0.0, 0, "", "do we plot Data {0} | 1", "plot"},
     {"dpt","datapt", 'i', 0.0, 1, "", "data point type (integer)", "plot"},
-    {"st","parstep", 'd', 1.1, 0, "", "parameter STep multiplicative increment", "par"},
+    {"step","parstep", 'd', 1.1, 0, "", "parameter STEP multiplicative increment", "par"},
     {"act","actpar", 's', 0.0, 0, "", "ACTive parameter", "par"},
     {"ly","lasty",'i', 0.0, 0, "", "take Last Y as initial condition {0} | 1", "ode"},
     {"r","res",'i', 201.0, 201, "", "Resolution: nominal number of output time points", "ode"},
@@ -106,7 +107,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     char    par_details[32];
     char    list_msg[EXPRLENGTH];
     char    plot_cmd[EXPRLENGTH];
-    /* char    g_msg[EXPRLENGTH];  */
     char    c,
             op,
             op2;
@@ -142,6 +142,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     int     success,
             status, 
             file_status;
+    int     wait_for_msg = 0;
 
     /* modes */
     int     not_run               = 0, /* do not run initially if = 1 */
@@ -223,9 +224,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     }
     LOGPRINT("popen gnuplot"); 
     fprintf(GPLOTP,"set print \"%s\"\n", GFIFO); 
-    fputs("print \"ready\"\n", GPLOTP);
     fflush(GPLOTP);
-    if ( ( GPIN = open(GFIFO, O_RDONLY ) ) == -1 )
+    if ( ( GPIN = open(GFIFO, O_RDONLY | O_NONBLOCK) ) == -1 )
     {
       PRINTERR("Could not open named pipe %s\n", GFIFO);
       close(GPIN);
@@ -525,7 +525,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* GNUPLOT SETUP */
     fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font"));
-    fprintf(GPLOTP,"set print \"%s\"\n", GFIFO);
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
 
@@ -645,6 +644,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     break;
                 case 'u' : /* add curves on the plot */ 
                     nbr_read = sscanf(cmdline+1,"%c",&op);               
+                    plot_mode = PM_UNDEFINED; 
                     if ( (nbr_read == EOF) | (nbr_read == 1 & op == ' ') )
                     {
                         set_int("curves",1-get_int("curves"));
@@ -657,7 +657,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         else
                         {
                             printf("  %sadd curves is off%s\n",T_DET,T_NOR);
-                            /* plot_mode = PM_NORMAL; */
                         }
                     }
                     else if ( nbr_read == 1 )
@@ -667,17 +666,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             system("rm -f .odexp/curve.*");
                             nbr_hold = 0;
                             set_int("curves",0);
-                            /* plot_mode = PM_NORMAL; */
                         }
                         else
                         {
                             fprintf(stderr,"  %sUnknown command %s\n",T_ERR,T_NOR);
-                            plot_mode = PM_UNDEFINED;
                         }
-                    }
-                    else 
-                    {
-                      plot_mode = PM_UNDEFINED;
                     }
                     break;
                 case '>' : /* increase resolution */
@@ -1536,6 +1529,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 case 'g' : /* issue a gnuplot command */
                     fprintf(GPLOTP,"%s\n", cmdline+1);
                     fflush(GPLOTP);
+                    wait_for_msg = 1;
                     plot_mode = PM_UNDEFINED;
                     break;
                 case 'm' :
@@ -1697,6 +1691,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             fflush(GPLOTP);
 
             /* DBPRINT("plot_mode: %d", plot_mode); */
+            if ( get_int("curves") ) /* PM_CURVES overrides PM_REPLOT */
+            {
+              plot_mode = PM_CURVES;
+            }
+
 
             switch(plot_mode) 
             {
@@ -1837,10 +1836,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 break;
 
               case PM_PARTICLES:
-                fprintf(GPLOTP,"unset xrange\n");
-                fprintf(GPLOTP,"unset yrange\n");
-                fprintf(GPLOTP,"unset zrange\n");
-                fflush(GPLOTP);
+                /* fprintf(GPLOTP,"unset xrange\n"); */
+                /* fprintf(GPLOTP,"unset yrange\n"); */
+                /* fprintf(GPLOTP,"unset zrange\n"); */
+                /* fflush(GPLOTP); */
                 gplot_particles(gx, gy, dxv );
                 break;
 
@@ -1886,14 +1885,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         }
 
         /* read fifo */
-/*      
- *      if ( read(GPIN, g_msg, EXPRLENGTH) > 1 )
- *      {
- *        printf("  %sg_msg: %s%s", T_ERR,g_msg,T_NOR);
- *      }
- *      memset(g_msg,0, sizeof(g_msg));
- */     
-        /* fflush(GPLOTP); */
+     
+        /* if ( wait_for_msg ) */
+        /* { */
+          read_msg();
+          /* wait_for_msg = 0; */
+        /* } */
+     
     }
     
     printf("exiting...");
@@ -2298,7 +2296,7 @@ int update_act_par_options(const int p, const nve mu)
 
 int update_gnuplot_settings( void )
 {
-    fprintf(GPLOTP,"set term aqua font \"%s,16\"\n", get_str("font"));
+    fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font"));
     fflush(GPLOTP);
 
     return 0;
@@ -2987,3 +2985,27 @@ char * completion_list_generator(const char *text, int state)
     return NULL;
 }
 
+int read_msg( void )
+{
+  fd_set fdset;
+  int rd;
+  char g_msg[1];
+  struct timeval tv;
+
+  FD_ZERO(&fdset); /* clear FD SET */
+  FD_SET(GPIN, &fdset);  /* include GPIN in FD SET */
+
+  tv.tv_sec = 0;
+  tv.tv_usec = 10000; /* microsec */
+
+  rd = select(GPIN + 1, &fdset, NULL, NULL, &tv);
+  if ( rd < 1 )
+  {
+    return rd;
+  }
+  while ( read(GPIN, g_msg, 1) > 0 )
+  {
+    printf("%s%s%s", T_DET, g_msg, T_NOR);
+  }
+  return rd;
+}
