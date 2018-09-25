@@ -162,9 +162,9 @@ if ( $nbr_argv == 0 ) {
 
 # ---------------------------------------
 # Files created in .odexp
-# model.ode  model file where all constants are replaced by their values
-# model.par contains parameter, initial condition, tspan and options
-# model.c: C file implementation 
+# equations.pop:   equation, constants, datafile ... where all constants are replaced by their values
+# parameters.pop:  contains parameter, initial condition, tspan and options
+# model.c:         C file implementation 
 # ---------------------------------------
 
 my $bname = fileparse($odefilename, qr/\.[^.]*/);
@@ -173,7 +173,7 @@ if ( !-d $odedir & !-e $odedir ) {
   make_path $odedir or die  "Could not create directory $odedir. $!";
 }
 
-my $modelode = $odedir . "/model.ode";
+my $modelode = $odedir . "/equations.pop";
 my $modelc = $odedir . "/model.c";
 
 open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
@@ -185,11 +185,11 @@ guess_single_popmode($modelode);
 
 if ( defined $opt_p )
 {
-  copy($opt_p,$odedir . "/model.par") or die "Could not copy file '$opt_p'. $!";
+  copy($opt_p,$odedir . "/parameters.pop") or die "Could not copy file '$opt_p'. $!";
 }
 else
 {
-  copy($odedir . "/model.ode", $odedir . "/model.par") or die "Could not copy file '$odedir/model.ode'. $!";
+  copy($odedir . "/equations.pop", $odedir . "/parameters.pop") or die "Could not copy file '$odedir/equations.pop'. $!";
 }
 
 

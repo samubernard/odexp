@@ -94,8 +94,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     time_t now = time(NULL);
 
     /* files */
-    const char *odefilename = ".odexp/model.ode";    /* */
-    const char *parfilename = ".odexp/model.par";    /* */
+    const char *eqfilename = ".odexp/equations.pop";    /* */
+    const char *parfilename = ".odexp/parameters.pop";    /* */
     char       par_filename[MAXFILENAMELENGTH];
     char data_fn[NAMELENGTH]; /* dataset filename */
 
@@ -240,9 +240,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* get short description */
     printf("\n%-25s%s\n", "model description", HLINE);
-    get_nbr_el(odefilename,"##",2, &dsc.nbr_el, NULL);
+    get_nbr_el(eqfilename,"##",2, &dsc.nbr_el, NULL);
     alloc_namevalexp(&dsc);
-    success = load_line(odefilename,dsc,"##",2, exit_if_nofile);
+    success = load_line(eqfilename,dsc,"##",2, exit_if_nofile);
     LOGPRINT("found %zu description",dsc.nbr_el);
 
     /* get tspan */
@@ -268,23 +268,23 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* get constant arrays */
     printf("\n%-25s%s\n", "constant arrays", HLINE);
-    get_nbr_el(odefilename,"C",1, &cst.nbr_el, NULL);
+    get_nbr_el(eqfilename,"C",1, &cst.nbr_el, NULL);
     alloc_namevalexp(&cst);
-    success = load_strings(odefilename,cst,"C",1,1,' ', exit_if_nofile);
+    success = load_strings(eqfilename,cst,"C",1,1,' ', exit_if_nofile);
     LOGPRINT("found %zu constants",cst.nbr_el);
 
     /* get data files */
     printf("\n%-25s%s\n", "data files", HLINE);
-    get_nbr_el(odefilename,"F",1, &dfl.nbr_el, NULL);
+    get_nbr_el(eqfilename,"F",1, &dfl.nbr_el, NULL);
     alloc_namevalexp(&dfl);
-    success = load_strings(odefilename,dfl,"F",1,1,' ', exit_if_nofile);
+    success = load_strings(eqfilename,dfl,"F",1,1,' ', exit_if_nofile);
     LOGPRINT("found %zu data files",dfl.nbr_el);
 
     /* get user-defined functions */
     printf("\n%-25s%s\n", "user-defined functions", HLINE);
-    get_nbr_el(odefilename,"@",1, &func.nbr_el, NULL);
+    get_nbr_el(eqfilename,"@",1, &func.nbr_el, NULL);
     alloc_namevalexp(&func);
-    success = load_strings(odefilename,func,"@",1,1,'=', exit_if_nofile);
+    success = load_strings(eqfilename,func,"@",1,1,'=', exit_if_nofile);
     LOGPRINT("found %zu user-defined function",func.nbr_el);
 
     /* get parameters */
@@ -313,9 +313,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     
     /* get parametric expressions */
     printf("\n%-25s%s\n", "parametric expressions", HLINE);
-    get_nbr_el(odefilename,"E",1, &pex.nbr_el, &pex.nbr_expr);
+    get_nbr_el(eqfilename,"E",1, &pex.nbr_el, &pex.nbr_expr);
     alloc_namevalexp(&pex);
-    success = load_strings(odefilename,pex,"E",1,1,' ', exit_if_nofile);
+    success = load_strings(eqfilename,pex,"E",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no parametric expression found\n");
@@ -342,9 +342,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* get nonlinear functions */
     printf("\n%-25s%s\n", "auxiliary variables", HLINE);
-    get_nbr_el(odefilename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
+    get_nbr_el(eqfilename,"A",1, &fcn.nbr_el, &fcn.nbr_expr);
     alloc_namevalexp(&fcn);
-    success = load_strings(odefilename,fcn,"A",1,1,' ', exit_if_nofile);
+    success = load_strings(eqfilename,fcn,"A",1,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no auxiliary function found\n");
@@ -353,9 +353,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* get equations */
     printf("\n%-25s%s\n", "equations", HLINE);
-    get_nbr_el(odefilename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
+    get_nbr_el(eqfilename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
     alloc_namevalexp(&eqn);
-    success = load_strings(odefilename,eqn,"d",1,0,'=', exit_if_nofile);   
+    success = load_strings(eqfilename,eqn,"d",1,0,'=', exit_if_nofile);   
     if (!success)
     {
         fprintf(stderr,"\n  Error: Equations not found.\n"
@@ -369,9 +369,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* define psi */
     printf("\n%-25s%s\n", "population couplings", HLINE);
-    get_nbr_el(odefilename,"%C",2, &psi.nbr_el, &psi.nbr_expr);
+    get_nbr_el(eqfilename,"%C",2, &psi.nbr_el, &psi.nbr_expr);
     alloc_namevalexp(&psi);
-    success = load_strings(odefilename,psi,"%C",2,1,' ', exit_if_nofile);
+    success = load_strings(eqfilename,psi,"%C",2,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no population couplings found\n");
@@ -380,9 +380,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* define mfd */
     printf("\n%-25s%s\n", "population mean fields", HLINE);
-    get_nbr_el(odefilename,"%M",2, &mfd.nbr_el, &mfd.nbr_expr);
+    get_nbr_el(eqfilename,"%M",2, &mfd.nbr_el, &mfd.nbr_expr);
     alloc_namevalexp(&mfd);
-    success = load_strings(odefilename,mfd,"%M",2,1,' ', exit_if_nofile);
+    success = load_strings(eqfilename,mfd,"%M",2,1,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no population mean fields found\n");
@@ -391,9 +391,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* define birth */
     printf("\n%-25s%s\n", "population birth rates", HLINE);
-    get_nbr_el(odefilename,"%BIRTH",6, &birth.nbr_el, &birth.nbr_expr);
+    get_nbr_el(eqfilename,"%BIRTH",6, &birth.nbr_el, &birth.nbr_expr);
     alloc_namevalexp(&birth);
-    success = load_strings(odefilename,birth,"%BIRTH",6,0,' ', exit_if_nofile);
+    success = load_strings(eqfilename,birth,"%BIRTH",6,0,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no population birth rates found\n");
@@ -402,9 +402,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* define repli */
     printf("\n%-25s%s\n", "population replication rates", HLINE);
-    get_nbr_el(odefilename,"%REPLI",6, &repli.nbr_el, &repli.nbr_expr);
+    get_nbr_el(eqfilename,"%REPLI",6, &repli.nbr_el, &repli.nbr_expr);
     alloc_namevalexp(&repli);
-    success = load_strings(odefilename,repli,"%REPLI",6,0,' ', exit_if_nofile);
+    success = load_strings(eqfilename,repli,"%REPLI",6,0,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no population replication rates found\n");
@@ -413,9 +413,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* define death */
     printf("\n%-25s%s\n", "population death rates", HLINE);
-    get_nbr_el(odefilename,"%death",6, &death.nbr_el, &death.nbr_expr);
+    get_nbr_el(eqfilename,"%death",6, &death.nbr_el, &death.nbr_expr);
     alloc_namevalexp(&death);
-    success = load_strings(odefilename,death,"%DEATH",6,0,' ', exit_if_nofile);
+    success = load_strings(eqfilename,death,"%DEATH",6,0,' ', exit_if_nofile);
     if (!success)
     {
         printf("  no population death rates found\n");
