@@ -17,6 +17,7 @@ extern const char *T_NOR;  /* NORMAL */
 extern const char *T_ERR;  /* ERROR (non fatal) */
 extern const char *T_BLD;  /* BOLD */
 extern const char *T_OPT;  /* OPTION */
+extern const char *T_GPL;  /* MSG GPLOT */
 extern const char *HLINE;  /* horizontal line */
 extern const char *LINEUP_AND_CLEAR; /* go up one line and clear it */
 

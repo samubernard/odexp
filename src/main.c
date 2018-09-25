@@ -91,6 +91,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 {
 
     /* variable declaration */
+    time_t now = time(NULL);
 
     /* files */
     const char *odefilename = ".odexp/model.ode";    /* */
@@ -142,7 +143,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     int     success,
             status, 
             file_status;
-    int     wait_for_msg = 0;
 
     /* modes */
     int     not_run               = 0, /* do not run initially if = 1 */
@@ -207,6 +207,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       exit ( EXIT_FAILURE );
     }
     LOGPRINT("Log file for %s", odexp_filename); 
+    LOGPRINT("%s", ctime( &now )); 
     if ( mkfifo(GFIFO, 0600) ) 
     {
       if (errno != EEXIST) 
@@ -216,14 +217,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 	      return 1;
       }
     }
-    if ( ( GPLOTP = popen("gnuplot -persist >>.odexp/gfifo  2>&1","w") ) == NULL ) /* open gnuplot in persist mode with redirection of stderr > stdout */
+    if ( ( GPLOTP = popen("gnuplot -persist >>.odexp/gfifo  2>&1","w") ) == NULL ) /* open gnuplot in 
+                                                                                      persist mode with 
+                                                                                      redirection of stderr > stdout */
     {
       PRINTERR("gnuplot failed to open\n");
       pclose(GPLOTP);
       return 1;
     }
-    LOGPRINT("popen gnuplot"); 
-    fprintf(GPLOTP,"set print \"%s\"\n", GFIFO); 
+    fprintf(GPLOTP,"set print \"%s\"\n", GFIFO); /* redirect output to GFIFO */  
     fflush(GPLOTP);
     if ( ( GPIN = open(GFIFO, O_RDONLY | O_NONBLOCK) ) == -1 )
     {
@@ -562,7 +564,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         /* printf("--cmdline = '%s'\n",cmdline); */
         if (cmdline && *cmdline) /* check if cmdline is not empty */
         {
-            /* printf("--cmdline = '%s'\n",cmdline);  */
+            LOGPRINT("> %s",cmdline);
             if ( extracmd == NULL ) 
             {
                 add_history (cmdline);
@@ -1529,7 +1531,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 case 'g' : /* issue a gnuplot command */
                     fprintf(GPLOTP,"%s\n", cmdline+1);
                     fflush(GPLOTP);
-                    wait_for_msg = 1;
                     plot_mode = PM_UNDEFINED;
                     break;
                 case 'm' :
@@ -1885,12 +1886,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         }
 
         /* read fifo */
-     
-        /* if ( wait_for_msg ) */
-        /* { */
-          read_msg();
-          /* wait_for_msg = 0; */
-        /* } */
+        read_msg();
      
     }
     
@@ -2987,25 +2983,29 @@ char * completion_list_generator(const char *text, int state)
 
 int read_msg( void )
 {
-  fd_set fdset;
+  fd_set fdset; /* file descriptor set */
   int rd;
-  char g_msg[1];
+  char gpchar;
   struct timeval tv;
 
   FD_ZERO(&fdset); /* clear FD SET */
   FD_SET(GPIN, &fdset);  /* include GPIN in FD SET */
 
   tv.tv_sec = 0;
-  tv.tv_usec = 10000; /* microsec */
+  tv.tv_usec = 20000; /* microsec  0.02 sec */
 
   rd = select(GPIN + 1, &fdset, NULL, NULL, &tv);
   if ( rd < 1 )
   {
     return rd;
   }
-  while ( read(GPIN, g_msg, 1) > 0 )
+  printf("  [gnuplot]\n%s",T_GPL);
+  while ( read(GPIN, &gpchar, 1) > 0 ) /* read return 0 on EOF and -1 (err) 
+                                        if file was marked for non-blocking I/O, 
+                                        and no data were ready to be read */
   {
-    printf("%s%s%s", T_DET, g_msg, T_NOR);
+    putchar(gpchar);
   }
+  printf("%s  [gnuplot]\n",T_NOR);
   return rd;
 }

@@ -81,8 +81,8 @@ my $re_implicitIC = qr/^
 $/ix;                   # end of line
 
 my $re_nakedaux = qr/^
-  \s*([A-Z]\w*           # varname 
-  (?:\s*\[.*?\]+)?)      # optional brackets
+  \s*([A-Z]\w*          # varname 
+  (?:\s*\[.*?\]+)?)     # optional brackets
   \s*                   # whitespaces
   =                     # equal sign
   \s*                   # whitespace
@@ -104,13 +104,11 @@ my $re_attributeIC = qr/^
   (?:|\#.*)?            # nothing or comment
 $/ix;
 
-my $re_implicitDelay = qr/^
-  \s*%DELAY             # declaration
+my $re_lag = qr/^
+  \s*L(?:AG)?           # lag keyword
   \s+                   # whitespaces
   (\w+)                 # varname
-  \s+                   # whitespaces
-  (\w+)                 # root: delayed variable
-  \s+                   # whitespaces
+  \s*                   # whitespaces
   \{(.*?)\}             # mandatory attribute
   \s+                   # whitespaces
   (?:|\#.*)?            # nothing or comment
@@ -251,7 +249,7 @@ sub print_ode_header
 # add P in front of each naked parameter (see $re_nakedpar)
 # add I in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
 # parse IC in attribute (see $re_attributeIC)
-# parse implicitly defined delayed variables (see $re_implicitDelay)
+# parse implicitly defined delayed variables (see $re_lag)
 # strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
@@ -295,13 +293,14 @@ sub cleanup_file
       {
         s/$/\nI $varname $ic/;   # insert new line with initial condition  
       }
-    if ( my ($varname, $rootvar, $attr) = ( $_ =~ /$re_implicitDelay/ ) )
+    if ( my ($varname, $attr) = ( $_ =~ /$re_lag/ ) )
       {
         s/^/# /; # comment out the line
+        my ($rootvar) = ( $attr =~ /root\s*=\s*(.*?)([;\s]|$)/ );
         my ($ic) = ( $attr =~ /init\s*=\s*(.*?)([;\s]|$)/ );
         my ($len) = ( $attr =~ /len\s*=\s*(.*?)([;\s]|$)/ );
-        my ($delay) = ( $attr =~ /delay\s*=\s*(.*?)([;\s]|$)/ );
-        s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$delay,$len) {hidden}\nS ${varname}_end $len-1\nA $varname ${varname}_chain[${varname}_end]\nI ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
+        my ($mean) = ( $attr =~ /mean\s*=\s*(.*?)([;\s]|$)/ );
+        s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$mean,$len) {hidden}\nS ${varname}_end $len-1\nA $varname ${varname}_chain[${varname}_end]\nI ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
       }
     my @fields = split; 
     foreach my $i ( 0..$#underscores )
