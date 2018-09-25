@@ -20,7 +20,7 @@ static char *rawcmdline = (char *)NULL;
 static char *cmdline  = (char *)NULL;
 
 /* log file */
-const char *logfilename = ".odexp/model.log";
+const char *logfilename = ".odexp/log.txt";
 FILE *logfr = (FILE *)NULL;
 FILE *GPLOTP = (FILE *)NULL;
 const char *GFIFO = ".odexp/gfifo";
@@ -201,12 +201,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
 
 
-    if ( ( logfr = fopen(logfilename, "w") ) == NULL )
+    if ( ( logfr = fopen(logfilename, "a") ) == NULL ) /* create a log file or append an existing log file */
     {
       PRINTERR("error: could not open file '%s', exiting...\n",logfilename);;
       exit ( EXIT_FAILURE );
     }
-    LOGPRINT("Log file for %s", odexp_filename); 
+    LOGPRINT("Log for model %s", odexp_filename); 
     LOGPRINT("%s", ctime( &now )); 
     if ( mkfifo(GFIFO, 0600) ) 
     {
