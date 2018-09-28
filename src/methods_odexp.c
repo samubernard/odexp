@@ -578,15 +578,7 @@ int odesolver( oderhs pop_ode_rhs,
     fclose(quickfile);
 
     fclose(SIM->fid);
-    pars = SIM->pop->start;
-    if ( get_int("writefiles") )
-    {
-      while ( pars != NULL )  
-      {
-          fclose(pars->fid);
-          pars = pars->nextel;
-      }
-    }
+    fclose_particle_files();
 
     gsl_odeiv2_evolve_free(e);
     gsl_odeiv2_control_free(c);

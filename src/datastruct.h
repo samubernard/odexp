@@ -98,6 +98,7 @@ par * getpar( size_t with_id );
 
 int fwrite_particle_state(const double *restrict t, par *p);
 int fwrite_final_particle_state( void ); 
+int fclose_particle_files( void )
 int fwrite_SIM(const double *restrict t, char *restrict mode);
 int list_particle( size_t with_id );
 int list_stats( void );

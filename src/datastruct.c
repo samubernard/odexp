@@ -726,6 +726,24 @@ int fwrite_final_particle_state( void )
     return 0;
 }
 
+int fclose_particle_files( void )
+{
+    par *pars = SIM->pop->start;
+    if ( get_int("writefiles") )
+    {
+      while ( pars != NULL )  
+      {
+          fclose(pars->fid);
+          pars = pars->nextel;
+      }
+    }
+    else
+    {
+      /* nothing to do, files were not opened */
+    }
+    return 0;
+}
+
 int fwrite_SIM(const double *restrict t, char *restrict mode)
 {
     par *pars = SIM->pop->start;
