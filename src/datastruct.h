@@ -22,7 +22,7 @@ extern const char *HLINE;  /* horizontal line */
 extern const char *LINEUP_AND_CLEAR; /* go up one line and clear it */
 
 /* number of global options */
-#define NBROPTS 47
+#define NBROPTS 48
 
 /* NOT USED */
 typedef struct namevalexp_group

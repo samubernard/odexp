@@ -467,7 +467,7 @@ int par_birth ( void )
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
     
-    if ( get_int("closefiles") == 0 )
+    if ( get_int("closefiles") == 0 && get_int("writefiles") )
     {
       if ( (p->fid = fopen(p->buffer,"w") ) == NULL )
       {
@@ -577,7 +577,10 @@ int delete_el( dlist *list, par *to_del)
     free(to_del->psi);
     free(to_del);
 
-    fclose(to_del->fid);
+    if ( get_int("writefiles") )
+    {
+      fclose(to_del->fid);
+    }
 
     list->size--;
 
@@ -726,10 +729,13 @@ int fwrite_final_particle_state( void )
 int fwrite_SIM(const double *restrict t, char *restrict mode)
 {
     par *pars = SIM->pop->start;
-    while ( pars != NULL )
+    if ( get_int("writefiles") )
     {
-        fwrite_particle_state(t, pars);
-        pars = pars->nextel;
+      while ( pars != NULL )
+      {
+          fwrite_particle_state(t, pars);
+          pars = pars->nextel;
+      }
     }
 
     fwrite(t,sizeof(double),1,SIM->fid);

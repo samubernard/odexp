@@ -579,10 +579,13 @@ int odesolver( oderhs pop_ode_rhs,
 
     fclose(SIM->fid);
     pars = SIM->pop->start;
-    while ( pars != NULL )  
+    if ( get_int("writefiles") )
     {
-        fclose(pars->fid);
-        pars = pars->nextel;
+      while ( pars != NULL )  
+      {
+          fclose(pars->fid);
+          pars = pars->nextel;
+      }
     }
 
     gsl_odeiv2_evolve_free(e);

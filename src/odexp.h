@@ -272,4 +272,9 @@ double linchaindelay(const double root, const double *chain, const size_t link, 
 
 #define DWDT (randN(0,1)/sqrt(*SIM->h))        
 
+
+/* print */
+#define PRINT(...) \
+    ({ printf( __VA_ARGS__); })
+
 #endif

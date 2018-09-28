@@ -22,6 +22,8 @@ static char *cmdline  = (char *)NULL;
 /* log file */
 const char *logfilename = ".odexp/log.txt";
 FILE *logfr = (FILE *)NULL;
+const char *dblogfilename = ".odexp/dblog.txt";
+FILE *dblogfr = (FILE *)NULL;
 FILE *GPLOTP = (FILE *)NULL;
 const char *GFIFO = ".odexp/gfifo";
 int GPIN; /* file descriptor for fifo */
@@ -56,6 +58,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"pm","popmode", 's', 0.0, 0, "population", "Population simulation Mode single | {population}", "population"},
     {"ps","popsize", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
     {"cf","closefiles", 'i', 0.0, 0, "", "close particle files between writes (slow when on)", "population"},
+    {"wf","writefiles", 'i', 0.0, 1, "", "write particle files", "population"},
     {"p","particle", 'i', 0.0, 0, "", "current Particle id", "population"},
     {"seed","seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
     {"rs","reseed", 'i', 0.0, 1, "", "Reset rng to Seed at each run 0 | {1}", "random"},
@@ -206,8 +209,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       PRINTERR("error: could not open file '%s', exiting...\n",logfilename);;
       exit ( EXIT_FAILURE );
     }
-    LOGPRINT("Log for model %s", odexp_filename); 
-    LOGPRINT("%s", ctime( &now )); 
+    if ( ( dblogfr = fopen(dblogfilename, "w") ) == NULL ) /* create a debug log file or append an existing log file */
+    {
+      PRINTERR("error: could not open file '%s', exiting...\n",logfilename);;
+      exit ( EXIT_FAILURE );
+    }
+    PRINTLOG("#--\nLog for model %s", odexp_filename); 
+    DBLOGPRINT("Log for model %s", odexp_filename); 
+    PRINTLOG("%s", ctime( &now )); 
     if ( mkfifo(GFIFO, 0600) ) 
     {
       if (errno != EEXIST) 
@@ -233,7 +242,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       close(GPIN);
       return 1;
     }
-    LOGPRINT("popen gnuplot"); 
+    DBLOGPRINT("popen gnuplot"); 
 
     /* begin */
     printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
@@ -243,7 +252,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     get_nbr_el(eqfilename,"##",2, &dsc.nbr_el, NULL);
     alloc_namevalexp(&dsc);
     success = load_line(eqfilename,dsc,"##",2, exit_if_nofile);
-    LOGPRINT("found %zu description",dsc.nbr_el);
+    DBLOGPRINT("found %zu description",dsc.nbr_el);
 
     /* get tspan */
     printf("\n%-25s%s\n","time span",HLINE);
@@ -254,7 +263,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 "  One line in file %s should be of the form\n"
                 "  TIMESPAN 0 100\n  \n"
                 "  time span will be set to default [0,1]\n", odexp_filename);
-        LOGPRINT("Warning: time span not found.");
+        DBLOGPRINT("Warning: time span not found.");
         tspan.array = malloc(2*sizeof(double));
         tspan.length = 2;
         tspan.array[0] = 0.0;
@@ -263,7 +272,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     else
     {
       printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
-      LOGPRINT("Found %zu time points, of which %zu stopping points", tspan.length, tspan.length - 2);
+      DBLOGPRINT("Found %zu time points, of which %zu stopping points", tspan.length, tspan.length - 2);
     }
 
     /* get constant arrays */
@@ -271,21 +280,21 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     get_nbr_el(eqfilename,"C",1, &cst.nbr_el, NULL);
     alloc_namevalexp(&cst);
     success = load_strings(eqfilename,cst,"C",1,1,' ', exit_if_nofile);
-    LOGPRINT("found %zu constants",cst.nbr_el);
+    DBLOGPRINT("found %zu constants",cst.nbr_el);
 
     /* get data files */
     printf("\n%-25s%s\n", "data files", HLINE);
     get_nbr_el(eqfilename,"F",1, &dfl.nbr_el, NULL);
     alloc_namevalexp(&dfl);
     success = load_strings(eqfilename,dfl,"F",1,1,' ', exit_if_nofile);
-    LOGPRINT("found %zu data files",dfl.nbr_el);
+    DBLOGPRINT("found %zu data files",dfl.nbr_el);
 
     /* get user-defined functions */
     printf("\n%-25s%s\n", "user-defined functions", HLINE);
     get_nbr_el(eqfilename,"@",1, &func.nbr_el, NULL);
     alloc_namevalexp(&func);
     success = load_strings(eqfilename,func,"@",1,1,'=', exit_if_nofile);
-    LOGPRINT("found %zu user-defined function",func.nbr_el);
+    DBLOGPRINT("found %zu user-defined function",func.nbr_el);
 
     /* get parameters */
     printf("\n%-25s%s\n", "parameters", HLINE);
@@ -309,7 +318,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         mu.value[0] = NAN;
         *mu.max_name_length = 15; 
     } 
-    LOGPRINT("found %zu parameters",mu.nbr_el);
+    DBLOGPRINT("found %zu parameters",mu.nbr_el);
     
     /* get parametric expressions */
     printf("\n%-25s%s\n", "parametric expressions", HLINE);
@@ -320,7 +329,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no parametric expression found\n");
     } 
-    LOGPRINT("found %zu parametric expressions",pex.nbr_el);
+    DBLOGPRINT("found %zu parametric expressions",pex.nbr_el);
 
     /* get initial conditions */
     printf("\n%-25s%s\n", "initial conditions", HLINE);
@@ -333,11 +342,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 "  File %s should contain initial condition for all dynamical variables "
                 "with lines of the form\n"
                 "  INITIAL I I0\nExiting...\n\n", odexp_filename);
-        LOGPRINT("Error: Initial conditions not found.");
+        DBLOGPRINT("Error: Initial conditions not found.");
         exit ( EXIT_FAILURE );
     } 
     /* DBPRINT("before pop_ode_ic"); */
-    LOGPRINT("found %zu variables",ics.nbr_el);
+    DBLOGPRINT("found %zu variables",ics.nbr_el);
 
 
     /* get nonlinear functions */
@@ -349,7 +358,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no auxiliary function found\n");
     } 
-    LOGPRINT("found %zu auxiliary variables",fcn.nbr_el);
+    DBLOGPRINT("found %zu auxiliary variables",fcn.nbr_el);
 
     /* get equations */
     printf("\n%-25s%s\n", "equations", HLINE);
@@ -362,10 +371,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 "  File %s should contain equations for all dynamical variables "
                 "with lines of the form\n"
                 "  dX/dt = RHS\n  Exiting...\n\n", odexp_filename);
-        LOGPRINT("Error: Equations not found.");
+        DBLOGPRINT("Error: Equations not found.");
         exit ( EXIT_FAILURE );
     } 
-    LOGPRINT("found %zu equations",eqn.nbr_el);
+    DBLOGPRINT("found %zu equations",eqn.nbr_el);
 
     /* define psi */
     printf("\n%-25s%s\n", "population couplings", HLINE);
@@ -376,7 +385,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no population couplings found\n");
     } 
-    LOGPRINT("found %zu population couplings",psi.nbr_el);
+    DBLOGPRINT("found %zu population couplings",psi.nbr_el);
 
     /* define mfd */
     printf("\n%-25s%s\n", "population mean fields", HLINE);
@@ -387,7 +396,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no population mean fields found\n");
     } 
-    LOGPRINT("found %zu population mean fields",mfd.nbr_el);
+    DBLOGPRINT("found %zu population mean fields",mfd.nbr_el);
 
     /* define birth */
     printf("\n%-25s%s\n", "population birth rates", HLINE);
@@ -398,7 +407,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no population birth rates found\n");
     } 
-    LOGPRINT("found %zu population birth rates",birth.nbr_el);
+    DBLOGPRINT("found %zu population birth rates",birth.nbr_el);
 
     /* define repli */
     printf("\n%-25s%s\n", "population replication rates", HLINE);
@@ -409,7 +418,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no population replication rates found\n");
     } 
-    LOGPRINT("found %zu population replication rates",repli.nbr_el);
+    DBLOGPRINT("found %zu population replication rates",repli.nbr_el);
 
     /* define death */
     printf("\n%-25s%s\n", "population death rates", HLINE);
@@ -420,7 +429,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         printf("  no population death rates found\n");
     } 
-    LOGPRINT("found %zu population death rates",repli.nbr_el);
+    DBLOGPRINT("found %zu population death rates",repli.nbr_el);
 
     /* define dxv */
     /* DBPRINT("define dxv"); */
@@ -466,7 +475,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     update_act_par_options(p, mu);
     /* printf_options(""); */
     printf("  options loaded (type 'lo' to see all options)\n");
-    LOGPRINT("Options loaded");
+    DBLOGPRINT("Options loaded");
 
     /* set IC to their numerical values */
     NUM_IC = malloc(ode_system_size*sizeof(int));
@@ -484,11 +493,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* seed random number generator */
     srand( (unsigned long)get_int("seed") );
-    LOGPRINT("Rand seed: %d",get_int("seed"));
+    PRINTLOG("Rand seed: %d",get_int("seed"));
     /* test rng */
     printf("\nrandom number generator %s\n", HLINE);
     printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR);
-    LOGPRINT("RAND_MAX %d",RAND_MAX);
+    PRINTLOG("RAND_MAX %d",RAND_MAX);
 
     /* readline */
     /* printf("\nreadline library version: %s\n\n", rl_library_version); */
@@ -497,12 +506,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         PRINTWARNING("warning: You are using the EditLine wrapper of the readline library.\n");    
         PRINTWARNING("         inputrc will not work and you will not be able to use the keyboard shortcuts\n\n");
-        LOGPRINT("warning: You are using the EditLine wrapper of the readline library.");    
+        DBLOGPRINT("warning: You are using the EditLine wrapper of the readline library.");    
     }
     else if ( rl_read_init_file (".odexp/.inputrc") ) /* readline init file */
     {
       PRINTWARNING("\n  warning: inputrc file for readline not found\n");
-      LOGPRINT("warning: inputrc file for readline not found");
+      DBLOGPRINT("warning: inputrc file for readline not found");
     }
     initialize_readline();
     rl_attempted_completion_function = completion_list_completion;
@@ -511,19 +520,20 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     using_history();
     if ( read_history(".odexp/history.txt") )
     {
-      LOGPRINT("warning: history file .odexp/history.txt not found");
+      DBLOGPRINT("warning: history file .odexp/history.txt not found");
     }
     
     stifle_history( 200 );
 
     /* first run after system init */
-    LOGPRINT("System init done.");
+    PRINTLOG("System init done.");
+    DBLOGPRINT("System init done.");
     if ( not_run == 0 )
     {    
-        LOGPRINT("Running first simulation");
+        PRINTLOG("Running first simulation");
         status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
     }
-    LOGPRINT("First simulation done.");
+    PRINTLOG("First simulation done.");
 
     /* GNUPLOT SETUP */
     fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font"));
@@ -536,7 +546,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                               * this does not go into the history  
                               */
 
-    LOGPRINT("Main loop");
+    PRINTLOG("Main loop");
     while(1)  /* MAIN LOOP */
     {
         if ( strncmp(get_str("loudness"),"quiet",3) == 0 ) /* run quiet mode, break out of while loop  */
@@ -545,7 +555,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                  "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
           printf("  hexdump -e '%zu \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
           printf("  hexdump -e '%zu \"%%5.2f \" \"\\n\"' idXX.dat\n\n", nbr_cols); 
-          LOGPRINT("Quiet mode, will exit");
+          PRINTLOG("Quiet mode, will exit");
           break;
         }
         printf("%s",T_NOR);
@@ -564,7 +574,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         /* printf("--cmdline = '%s'\n",cmdline); */
         if (cmdline && *cmdline) /* check if cmdline is not empty */
         {
-            LOGPRINT("> %s",cmdline);
+            PRINTLOG("> %s",cmdline);
             if ( extracmd == NULL ) 
             {
                 add_history (cmdline);
@@ -653,8 +663,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         if ( get_int("curves") )
                         {
                             set_int("hold",0); /* unset hold */
-                            plot_mode = PM_CURVES;
                             printf("  %sadd curves is on%s\n",T_DET,T_NOR);
+                            snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
+                            system(mv_plot_cmd);
                         }
                         else
                         {
@@ -1622,7 +1633,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 case 'q' :  /* quit with save */
                     quit = 1;
                 case '*' : /* save file */
-                    file_status = save_snapshot(ics,pex,mu,fcn,eqn,cst,dfl,func,psi,tspan, odexp_filename);
+                    file_status = save_snapshot(ics,mu,tspan, odexp_filename);
                     break;
                 case '!' : /* print ! */
                     nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -1891,7 +1902,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     }
     
     printf("exiting...");
-    LOGPRINT("Exiting");
+    PRINTLOG("Exiting");
+    DBLOGPRINT("Exiting");
 
     pclose(GPLOTP);
     close(GPIN);
@@ -1915,7 +1927,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     free(lastinit);
     free_world(SIM);
 
-    LOGPRINT("Memory freed");
+    PRINTLOG("Memory freed");
+    DBLOGPRINT("Memory freed");
 
     /* write history */
     if ( write_history(".odexp/history.txt") )
@@ -1924,7 +1937,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       fprintf(stderr, "\n  Error: could not write history\n");
     }
 
-    LOGPRINT("History written");
+    PRINTLOG("History written");
+    DBLOGPRINT("History written");
 
     /* try to remove frozen curves */
     system("rm -f .odexp/curve.*");
@@ -1932,10 +1946,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     { 
       /* try to remove idXX curves */
       remove_id_files();
-      LOGPRINT("id files removed");
+      DBLOGPRINT("id files removed");
     }
-    LOGPRINT("Closing log file");
+    PRINTLOG("Closing log file\n");
+    DBLOGPRINT("Closing log file");
     fclose(logfr);
+    fclose(dblogfr);
 
     printf(" done\n");
 
@@ -2003,8 +2019,7 @@ int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
 {
 
     int     bracket1;
-    size_t  i,
-            index0,
+    size_t  index0,
             index1;
     int     nbr_index;
     /* scan for two integers, index0, index1 in [iter=i0:i1] */
@@ -2039,15 +2054,6 @@ int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
         exit ( EXIT_FAILURE );
     }
     
-    if ( *nbr_dim > 0 )
-    {
-        fprintf(logfr,"    with size ");
-        for(i=0;i<*nbr_dim;i++)
-        {
-            fprintf(logfr,"%zu ",(*size_dim)[i]);
-        }
-    }
-
     return *nbr_dim;
 
 }
@@ -2615,16 +2621,16 @@ int load_line(const char *filename, nve var, const char *sym, const size_t sym_l
     return success;
 }
 
-int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
-        nve cst, nve dfl, nve func, nve psi, double_array tspan,\
-        const char *odexp_filename)
+int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filename)
 {
     int success = 0;
     size_t i;
+    size_t linecap;
+    char *line = NULL;
     FILE *fr;
+    FILE *eqfr;
     char rootname[MAXROOTLENGTH];
     int  rootnamescanned = 0;
-    /* char tab_buffer[MAXFILENAMELENGTH]; */
     char par_buffer[MAXFILENAMELENGTH];
     int len = *mu.max_name_length;
     clock_t time_stamp;
@@ -2635,33 +2641,18 @@ int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
     {
         len = *init.max_name_length;
     }
-    if (*pex.max_name_length > len)
-    {
-        len = *pex.max_name_length;   
-    }
-    if (*fcn.max_name_length > len)
-    {
-        len = *fcn.max_name_length;
-    }
-    if (*eqn.max_name_length > len)
-    {
-        len = *eqn.max_name_length;
-    }
 
     time_stamp = clock(); /* get a time stamp */
     rootnamescanned = sscanf(cmdline,"%*[q*] %[a-zA-Z0-9_-]",rootname); /* get the first word after command s or q */
 
-    /* printf("  rootname = %s\n", rootname); */
 
     if (rootnamescanned > 0)
     {
-      /* snprintf(tab_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.tab",rootname,(uintmax_t)time_stamp); */
       snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.par",rootname,(uintmax_t)time_stamp);
     }  
     else
     {  
-      /* snprintf(tab_buffer,MAXFILENAMELENGTH,".odexp/%ju.tab",(uintmax_t)time_stamp); */
-      snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%ju.par",(uintmax_t)time_stamp);
+      snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.par", odexp_filename, (uintmax_t)time_stamp);
     }
 
     /* open buffer parameter file (par) */
@@ -2729,35 +2720,21 @@ int save_snapshot(nve init, nve pex, nve mu, nve fcn, nve eqn,\
 
         fprintf(fr,"\n# --------------------------------------------------\n");
         fprintf(fr,"# original equations, auxiliary variables and parametric expressions\n\n");
-        for(i=0;i<func.nbr_el;i++)
-        {
-            fprintf(fr,"# @ %s = %s\n",func.name[i],func.expression[i]);
-        }
-        for(i=0;i<SIM->nbr_var;i++)
-        {
-            fprintf(fr,"# d%s/dt = %s\n",init.name[i],eqn.expression[i]);
-        }
-        for(i=0;i<fcn.nbr_el;i++)
-        {
-            fprintf(fr,"# A %s = %s\n",fcn.name[i],fcn.expression[i]);
-        }
-        for(i=0;i<pex.nbr_el;i++)
-        {
-            fprintf(fr,"# E %s = %s\n",pex.name[i],pex.expression[i]);
-        }
-        for(i=0;i<cst.nbr_el;i++)
-        {
-            fprintf(fr,"# C %s = %s\n",cst.name[i],cst.expression[i]);
-        }
-        for(i=0;i<dfl.nbr_el;i++)
-        {
-            fprintf(fr,"# F %s = %s\n",dfl.name[i],dfl.expression[i]);
-        }
-        for(i=0;i<psi.nbr_el;i++)
-        {
-            fprintf(fr,"# %%C %s = %s\n",psi.name[i],psi.expression[i]);
-        }
 
+
+        eqfr = fopen(".odexp/equations.pop","r");
+        if ( eqfr == NULL )
+        {
+            fprintf(stderr,"  %sFile %s could not be opened. Not writing equations%s\n",T_ERR,par_buffer,T_NOR);
+        }
+        else
+        {
+            while( getline(&line,&linecap,eqfr) > 0)
+            {
+              fprintf(fr,"#    %s", line);
+            }
+        }
+        fclose(eqfr);
         
         /* particle alive at the end of the simulation */
         fprintf(fr,"\n# particles alive at the end of the simulation\n");
