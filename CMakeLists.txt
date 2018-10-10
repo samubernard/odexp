@@ -44,6 +44,7 @@ add_library(odexp SHARED
   src/methods_odexp.c
   src/rand_gen.c
   src/utils_odexp.c
+  src/cheby_expansion.c
 )
 target_link_libraries(odexp GSL::gsl GSL::gslcblas)
 target_link_libraries(odexp /usr/local/opt/readline/lib/libreadline.dylib)

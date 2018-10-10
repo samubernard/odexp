@@ -153,6 +153,9 @@ double identity(double x);
 double sumxy(long len, double (*f)(double), double (*g)(double, double), const double *x, const double yi); 
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len);
 
+typedef double (*coupling_function)(double, void *);
+int compute_coupling(coupling_function f, double *x, double *y, int N);
+
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
            __typeof__ (b) _b = (b); \

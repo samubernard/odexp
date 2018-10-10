@@ -320,7 +320,6 @@ sub guess_single_popmode
   my $popmode_option_found = 0;
   while (<$fh>) 
   {
-    print $_;
     if ( my ($type) = ( $_ =~ /^%(BIRTH|DEATH|PROLIF|M|C)/i ) )
     {
       $pop_parameter_found = 1;
