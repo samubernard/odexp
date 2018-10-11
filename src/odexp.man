@@ -107,6 +107,9 @@ List all auxiliary variables (can be plotted)
 .BR lc            
 List all constant arrays
 .TP
+.BR ld            
+Print file description (all lines starting with ##)  
+.TP
 .BR le            
 List all parametric expressions
 .TP 
@@ -208,16 +211,19 @@ Plot variable with index \fIind\fR or name \fIvar\fR on the y-axis
 .TP
 .BR P 
 Parameters. 
-Must be numerical (double). 
+Must be numerical (double, int or long). 
 Parameters appear in the list of parameters. 
 They can be modified from within odexp and can be ranged over. 
 Parameters are declared in name value pairs, separated with semicolumns (;), or one parameter per line.
+Type double is default. To define an int or long, use set parameter attribute type=int or type=long.
 
 .nf
-P a 0.1; b 0.2
+P a 0.1, b 0.2
 
 P a 0.1
 P b 0.1
+
+P a 1 {type=int}, b 2.3 
 .fi
 
 .TP
@@ -227,6 +233,7 @@ Expression are declared as Name Expression pairs.
 
 .nf
 E c a*a
+E rand_array[i=0:5] -1 + 2*r[i]
 .fi
 
 .TP
@@ -267,11 +274,11 @@ I x b
 
 .TP
 .BR O
-Options. Options can be preset. See below for a list of options.
+Options. Options can be preset. 
 
 .nf
-O plot_x x
-O reltol 1e-3
+O x x1         # set x-axis to plot x1
+O reltol 1e-3  # set ode solver reltol to 1e-3
 .fi
 
 .TP
@@ -281,7 +288,8 @@ Intermediate values ti are stopping time, where the system is reset to initial c
 are discontinuous, and variable need to be reset at known timepoints.
 
 .nf
-E rand_array[i=0:5] -1 + 2*r[i]
+T 0 10
+T 0 10 20 50 100
 .fi
 
 .TP
@@ -324,6 +332,19 @@ is interpreted as
 @ mean(*x) = sum(x,LENTGH_X)/LENTGH_X 
 is interpreted as
 /* double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X } */
+
+@ myatan( x, *p) = ({ \
+  double scale = *(double*)p; \
+  x *= scale; \
+  atan(x); \
+})
+is interpreted as
+double  myatan(double x, double *p)
+{
+    double scale = *(double*)p;
+    x *= scale;
+    return atan(x);
+}
 .fi
 
 The function \fIsum\fR is a helper function (see below for a list of helper functions). 
@@ -369,15 +390,16 @@ Here is an example of an odexp file
 
 .nf
 .RS
-# file lotka.odexp
-# a simple nonlinear ODE system
+## file lotka.pop
+## a simple nonlinear ODE system
+#  all lines starting with ## are printed with the command ld
 
-P a 0.2; b 0.3
+P a 0.2, b 0.3
 
 dx/dt = x*(y - a)
 dy/dt = y*(b - x)
 
-I x 0.1; y 0.2
+I x 0.1, y 0.2
 
 T 0 10
 .RE
