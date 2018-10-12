@@ -4,7 +4,7 @@
 #
 # Description:  parse/run a population dynamical system file   
 #
-# Revisions:    07/2018 - Samuel Bernard
+# Revisions:    10/2018 - Samuel Bernard
 #------------------------------------------------------------------------------
 
 use warnings;
@@ -254,7 +254,7 @@ sub print_ode_header
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
 # replace all constants (variable starting with '_') by their value
-# replace all , in P, O, I by \n 
+# replace all , in P, O by \n 
 sub cleanup_file
 {
   my @underscores;
@@ -280,18 +280,18 @@ sub cleanup_file
   print $fodeh "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
   while ( <$tmpfh> )
   {
-    /$re_nakedpar/ && s/^\s*/P /;     # insert P before naked parameters
+    /$re_nakedpar/ && s/^\s*/PAR /;     # insert PAR before naked parameters
     if ( my ($varname) = ( $_ =~ /$re_nakedaux/ ) )
       {
-        s/^\s*$varname\s*=/A $varname /;     # insert A before naked aux   
+        s/^\s*$varname\s*=/AUX $varname /;     # insert AUX before naked aux   
       }
     if ( my ($varname) = ( $_ =~ /$re_implicitIC/ ) )
       {
-        s/$/\nI $varname ${varname}_0/;   # insert new line with initial condition  
+        s/$/\nINIT $varname ${varname}_0/;   # insert new line with initial condition  
       }
     if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
       {
-        s/$/\nI $varname $ic/;   # insert new line with initial condition  
+        s/$/\nINIT $varname $ic/;   # insert new line with initial condition  
       }
     if ( my ($varname, $attr) = ( $_ =~ /$re_lag/ ) )
       {
@@ -300,14 +300,14 @@ sub cleanup_file
         my ($ic) = ( $attr =~ /init\s*=\s*(.*?)([;\s]|$)/ );
         my ($len) = ( $attr =~ /len\s*=\s*(.*?)([;\s]|$)/ );
         my ($mean) = ( $attr =~ /mean\s*=\s*(.*?)([;\s]|$)/ );
-        s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$mean,$len) {hidden}\nS ${varname}_end $len-1\nA $varname ${varname}_chain[${varname}_end]\nI ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
+        s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$mean,$len) {hidden}\nS ${varname}_end $len-1\nAUX $varname ${varname}_chain[${varname}_end]\nINIT ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
       }
     my @fields = split; 
     foreach my $i ( 0..$#underscores )
     {
          s/(?<!^)$underscores[$i]/$usvals[$i]/g; # replace underscores that don't start a line
     }
-    s/,/\n$fields[0] /g if /^[POI]/i;    # break lines at , and remove , if line starts with P or O or I
+    s/,/\n$fields[0] /g if /^[PO]/i;    # break lines at , and remove , if line starts with P or O 
     print $fodeh "$_";
   }
   print $fodeh "# end of pop file entries ^^^^^^^^^^^^^^^^^^^^^^^^^\n\n";

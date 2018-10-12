@@ -349,6 +349,91 @@ double  myatan(double x, double *p)
 
 The function \fIsum\fR is a helper function (see below for a list of helper functions). 
 
+.SH POPULATION-SPECIFIC DECLARATIONS
+
+.TP
+.BR %BIRTH 
+Particle (de novo) birth rate
+
+.nf
+%BIRTH 0.1 /* set birth rate to 0.1 per unit time */
+%BIRTH 1.0/(10 + \fIPOP_SIZE\fR) /* set birth rate to a function of the total partice number \fIPOP_SIZE\fR */
+.fi
+
+.TP
+.BR %DEATH 
+Particle death rate
+
+.nf
+%DEATH 0.01 /* constant particle death rate */
+%DEATH \fIvar_death_rate\fR /* set death rate to \fIvar_death_rate\fR */
+.fi
+
+.TP
+.BR %REPLI
+Particle replication rate
+
+.TP
+.BR %C
+Coupling term. 
+This is of the form PSI[i] = 1/POP_SIZE*sum_{j=1}^POP_SIZE \fIphi\fR(x[j],x[i]), where \fIphi\fR is a function of two variables. The declaration is
+
+.nf
+%C PSI
+phi(THEM("x"),US("x"))
+
+The coupling term PSI take a value for each particle.
+.fi
+
+.TP
+.BR %M
+Mean field. 
+This is of the form MF = 1/POP_SIZE*sum(j=1) \fIphi\fR(x[j]), where \fIphi\fR depend only on one variable.
+
+.nf
+%M MF phi(US("x"))
+
+The mean field term in an average over the population, and take a single value.
+.fi
+
+.SH POPULATION-SPECIFIC MACROS
+
+.TP
+.BR POP_SIZE
+Total number of particles. Can be used anywhere.
+
+.TP
+.BR OY("var") " " (OE,OA)
+Used in %C to iterate over all particles; var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
+
+.TP
+.BR MY("var") " " (ME,MA) 
+Used in %C and %M to denote the current particle; var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
+
+.TP
+.BR SY("var") " " (SE,SA)
+Value of the current particle's sister var. Useful to specify what happens when particle replicates. var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
+
+.TP
+.BR ATBIRTH 
+logical variable indicating if the particle is just born.
+
+.TP
+.BR ATREPLI 
+logical varaible indicating if the particle is replicating.
+
+.TP
+.BR ISDAUGHTER 
+logical variable indicating if the particle is the daughter. This is nonzero only at replication (ATREPLI = 1). The daughter particle is the newly formed particle. At replication, the daughter particle is created from the mother particle by copy. Then, the mother particle is updated and becomes the sister particle. The daughter is then updated, and can refer to the sister particle with SE and SY.
+
+.TP
+.BR ISMOTHER 
+logical variable indicating if the particle is the mother. This is nonzero only at replication (ATREPLI = 1).
+
+.TP
+.BR ID 
+is the particle ID
+
 .SH NUMERICAL AND GRAPHICAL OPTIONS
 
 See the list of options with 'lo'
