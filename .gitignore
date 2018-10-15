@@ -13,6 +13,9 @@ Session.vim
 
 .DS_Store
 
+examples/model.*
+examples/current.plot
+
 build/
 
 
