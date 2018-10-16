@@ -135,6 +135,17 @@ my $re_pop = qr/^
   (|\#.*)?              # nothing or comment
 $/ix;
 
+my $re_expan = qr/^
+  \s*%C                 # expansion keyword
+  \s+                   # whitespaces
+  (\w+)                 # varname
+  \s+                   # whitespaces
+  [^\{#\n]+             # rhs until bracket comment or newline 
+  \{(.*?)\}             # mandatory attribute
+  \s+                   # whitespaces
+  (?:|\#.*)?            # nothing or comment
+$/ix;
+
 my $re_scalar = qr/^
       (?:D|\w+\s)               # starts with D or else
       \s*                       # whitespaces
@@ -544,6 +555,11 @@ int pop_rhs(double t, const double y[], double f[], void *params)
     size_t i = 0, j;
     par *myself_ = SIM->pop->start;
     par *other_ = (par *)NULL;
+
+    /* chebychev expansion */
+    double __attribute__((unused)) *xxp_ = NULL, *yxp_ = NULL;
+    /* chebychev expansion */
+
     SIM->pop_birth_rate=0.0;
     for(j=0;j<SIM->nbr_mfd;j++)
     {
@@ -561,6 +577,9 @@ int pop_rhs(double t, const double y[], double f[], void *params)
     }
 );
 	print $fch $s;	
+
+  set_chebychev_expansion($modelode);
+
 	set_population_meanfields($modelode);
   $s = qq(    for (j=0;j<SIM->nbr_mfd;j++)
     {
@@ -571,27 +590,12 @@ int pop_rhs(double t, const double y[], double f[], void *params)
     i = 0;
     while ( myself_ != NULL )
     {
-        /* update couplings if nbr_psi > 0 */
-        if ( myself_->nbr_psi )
-        {
-            for(j=0;j<myself_->nbr_psi;j++)
-            {
-                myself_->psi[j] = 0.0;
-            }
-            other_ = SIM->pop->start;
-            while ( other_ != NULL )
-            {
 );
-	print $fch $s;	
-	set_population_coupling($modelode);
-  $s = qq(                other_ = other_->nextel;
-            }
-            for (j=0;j<myself_->nbr_psi;j++)
-            {
-                myself_->psi[j] /= POP_SIZE;
-            }
-        }
-        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);
+  print $fch $s;
+
+  set_population_coupling($modelode);
+
+  $s = qq(        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);
         i++;
         myself_ = myself_->nextel;
     }
@@ -646,16 +650,48 @@ sub set_population_coupling
 
   open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   my $nv=0;
-	while ( <$fh> )    
-	{
+  my $nbr_n2_coupling=0;
+  
+  while ( <$fh> )    
+  {
 		/^%C/i or next;
     my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-    my $s = strip_blanks($rhs) . ";";
-    $s .= " /* $attr */" if length $attr;
-    $s .= " /* $comment */" if length $comment;
-		print $fch "                myself_->psi[$nv] += $s\n";
-		++$nv;
-	}
+    $nbr_n2_coupling++ if $attr =! /expan/;
+  }
+  seek $fh, 0, 0; # rewind file 
+
+  if ($nbr_n2_coupling > 0)
+  {
+    my $s = qq(        /* update coupling terms psi, O(N^2) */
+        for(j=0;j<myself_->nbr_psi;j++)
+        {
+          myself_->psi[j] = 0.0;
+        }
+        other_ = SIM->pop->start;
+        while ( other_ != NULL )
+        {
+);
+    print $fch $s;	
+
+    while ( <$fh> )    
+    {
+      /^%C/i or next;
+      my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
+      my $s = strip_blanks($rhs) . ";";
+      $s .= " /* $attr */" if length $attr;
+      $s .= " /* $comment */" if length $comment;
+      print $fch "          myself_->psi[$nv] += $s\n";
+      ++$nv;
+    }
+    $s = qq(          other_ = other_->nextel;
+        }
+        for (j=0;j<myself_->nbr_psi;j++)
+        {
+          myself_->psi[j] /= POP_SIZE;
+        }
+);
+    print $fch $s;
+  }
 	close($fodeh);
 	
 }
@@ -1102,6 +1138,50 @@ sub assign_pop_rate
       print $fch "\n";
     }
   }
+  close($fh);
+}
+
+sub set_chebychev_expansion
+{
+  open(my $fh, '<', @_) or die "could not open file '@_'. $!";
+  my $nv = 0;
+  my $s = qq(    /* update coupling terms psi,  O(NP^3) */
+);
+  print $fch $s;
+  while (<$fh>) 
+  {
+    my ($varname, $attr, $comment) = ( /$re_expan/ ) or next;
+    if ( $attr =~ /expan/ )
+    {
+      my ($var) = ( $attr =~ /var\s*=\s*(.*?)([;\s]|$)/ );
+      my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([;\s]|$)/ );
+      print $fch "    xxp_ = realloc(xxp_, POP_SIZE*sizeof(double));\n";
+      print $fch "    yxp_ = realloc(yxp_, POP_SIZE*sizeof(double));\n";
+      print $fch "    myself_ = SIM->pop->start;\n";
+      print $fch "    i = 0;\n";
+      print $fch "    while ( myself_ != NULL ) /* initialize xxp_ for compute_coupling */\n";
+      print $fch "    {\n";
+      print $fch "        xxp_[i] = $var;\n"; 
+      print $fch "        myself_ = myself_->nextel;\n";
+      print $fch "        ++i;\n";
+      print $fch "    }\n";
+      print $fch "    compute_coupling($fun,xxp_,yxp_,POP_SIZE);\n";
+      print $fch "    myself_ = SIM->pop->start;\n";
+      print $fch "    i = 0;\n";
+      print $fch "    j = GET_PSI(\"$varname\");\n";
+      print $fch "    while ( myself_ != NULL ) /* set psixp */\n";
+      print $fch "    {\n";
+      print $fch "        myself_->psi[j] = yxp_[i];\n"; 
+      print $fch "        myself_ = myself_->nextel;\n";
+      print $fch "        ++i;\n";
+      print $fch "    }\n";
+      print $fch "    free(xxp_);\n";
+      print $fch "    free(yxp_);\n";
+    }
+  }
+  my $s = qq(    /* end - update coupling terms psi,  O(NP^3) */
+);
+  print $fch $s;
   close($fh);
 }
 

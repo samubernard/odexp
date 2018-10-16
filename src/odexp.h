@@ -267,6 +267,25 @@ int compute_coupling(coupling_function f, double *x, double *y, int N);
        SIM->meanfield[index];                                             \
      })                                                     
 
+#define GET_AUX(name)                                           \
+    ({ static size_t index = 0;                                 \
+      while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+      {                                                         \
+        index++; index %= SIM->nbr_aux;                         \
+      }                                                         \
+      index;                                                    \
+    })
+
+#define GET_PSI(name)                                           \
+    ({ static size_t index = 0;                                 \
+      while ( strncmp(name, SIM->psinames[index], NAMELENGTH) ) \
+      {                                                         \
+        index++; index %= SIM->nbr_psi;                         \
+      }                                                         \
+      index;                                                    \
+    })
+
+
 #define ATBIRTH (SIM->event[0] == -1)
 #define ATREPLI (SIM->event[0] >= 0 && SIM->event[1] == 1)
 #define ISDAUGHTER (myself_->sister != NULL)
