@@ -34,7 +34,10 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     struct winsize w;    
     double fcmpl = (tt-t0)/(tfinal-t0);
     int i;
-    char * arrow = "``'-.,_,.-'"; /* a wave */
+    /* char * arrow = "``'-.,_,.-'"; */ /* a wave */
+    /* int arrow_length = 11; */
+    char * arrow = " "; 
+    int arrow_length = strlen(arrow); 
     if ( get_int("progress")>0 )  /* level 1: print time elapsed and percent complete */
     {
       printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line  */
@@ -43,11 +46,13 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     }
     if ( get_int("progress")>1 ) /* level 2: print wave progress bar */
     {
-      ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-      for ( i = 0; i<(int)(fcmpl*(w.ws_col-25));++i)
+      ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); /* get terminal window size in w */
+      printf("%s",T_PR);
+      for ( i = 0; i<(int)(fcmpl*(w.ws_col-25));++i) /* w.ws_col = nbr cols in terminal window */
       {
-        putchar(arrow[i % 11]);
+        putchar(arrow[i % arrow_length]);
       }
+      printf("%s",T_NOR);
     }
 }
 
@@ -1690,6 +1695,13 @@ double SSA_timestep(double *sumr)
 {
     double dt = 0.0;
     double r  = SIM->pop_birth_rate;
+
+    if ( strncmp( get_str("popmode"), "single", 3) == 0 ) 
+    {
+      *sumr = 0;
+      return INFINITY;
+    }
+
     par *pars = SIM->pop->start;
     while ( pars != NULL )
     {

@@ -19,6 +19,7 @@ const char *T_ERR = "\033[0;31m";  /* error */
 const char *T_OPT = "\033[0;32m";  /* option */
 const char *T_GPL = "\033[0;34m";  /* option */
 const char *T_BLD = "\033[2;0m";   /* bold */
+const char *T_PR  = "\033[7m";   /* SIMULATION PROGRESS */
 const char *HLINE = "--------------------------";
 const char *LINEUP_AND_CLEAR = "\033[F\033[J";
 
