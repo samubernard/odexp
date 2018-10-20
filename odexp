@@ -1179,7 +1179,7 @@ sub set_chebychev_expansion
       print $fch "    free(yxp_);\n";
     }
   }
-  my $s = qq(    /* end - update coupling terms psi,  O(NP^3) */
+  $s = qq(    /* end - update coupling terms psi,  O(NP^3) */
 );
   print $fch $s;
   close($fh);
