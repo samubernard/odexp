@@ -554,7 +554,7 @@ int pop_rhs(double t, const double y[], double f[], void *params)
     clock_t start = clock();
     size_t i = 0, j;
     par *myself_ = SIM->pop->start;
-    par *other_ = (par *)NULL;
+    par __attribute__((unused)) *other_ = (par *)NULL;
 
     /* chebychev expansion */
     double __attribute__((unused)) *xxp_ = NULL, *yxp_ = NULL;
