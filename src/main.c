@@ -259,10 +259,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     success = load_double_array(parfilename, &tspan, ts_string, ts_len, exit_if_nofile); 
     if (!success)
     {
-        PRINTWARNING("\n  Warning: time span not found.\n"
-                "  One line in file %s should be of the form\n"
-                "  TIMESPAN 0 100\n  \n"
-                "  time span will be set to default [0,1]\n", odexp_filename);
+        PRINTWARNING("\n  Warning: time span not found. Time span will be set to default [0,1]\n"
+                "  (One line in file %s should be of the form\n"
+                "  TIMESPAN 0 100)\n", odexp_filename);
         DBLOGPRINT("Warning: time span not found.");
         tspan.array = malloc(2*sizeof(double));
         tspan.length = 2;
@@ -311,10 +310,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         mu.expression[0] = malloc(EXPRLENGTH*sizeof(char*));
         mu.attribute = realloc(mu.attribute,sizeof(char*));
         mu.attribute[0] = malloc(EXPRLENGTH*sizeof(char*));
+        mu.comment = realloc(mu.comment,sizeof(char*));
+        mu.comment[0] = malloc(EXPRLENGTH*sizeof(char*));
         mu.nbr_el = 1;
         mu.nbr_expr = 1;
         strncpy(mu.name[0],"--",NAMELENGTH-1);
-        strncpy(mu.attribute[0],"no parameter",NAMELENGTH-1);
+        strncpy(mu.attribute[0],"not a parameter",NAMELENGTH-1);
         mu.value[0] = NAN;
         *mu.max_name_length = 15; 
     } 
@@ -657,7 +658,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 case 'u' : /* add curves on the plot */ 
                     nbr_read = sscanf(cmdline+1,"%c",&op);               
                     plot_mode = PM_UNDEFINED; 
-                    if ( (nbr_read == EOF) | (nbr_read == 1 & op == ' ') )
+                    if ( (nbr_read == EOF) || (nbr_read == 1  &&  op == ' ') )
                     {
                         set_int("curves",1-get_int("curves"));
                         if ( get_int("curves") )
@@ -674,7 +675,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     else if ( nbr_read == 1 )
                     {
-                        if ( op == 'c' | op == 'r' ) /* try to clear or reset curves */
+                        if ( op == 'c' || op == 'r' ) /* try to clear or reset curves */
                         {
                             system("rm -f .odexp/curve.*");
                             nbr_hold = 0;
@@ -960,7 +961,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                                     else /* try to read a char */
                                     {
                                         sscanf(svalue,"%c",&op2);
-                                        if ( op2 == 'd' | op2 == 'I' ) /* set ic to default */
+                                        if ( op2 == 'd' || op2 == 'I' ) /* set ic to default */
                                         {
                                             NUM_IC[i] = 0;
                                         }
@@ -1586,7 +1587,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     if ( nbr_read > 0 )
                     {
                         i = 0;
-                        while ( strcmp(svalue,dfl.name[i]) & (i<dfl.nbr_el))
+                        while ( strcmp(svalue,dfl.name[i])  &&  (i<dfl.nbr_el))
                         {
                             i++;
                         }
@@ -1660,6 +1661,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             {
                 break;
             } 
+            
+            check_options();
+
             if (rerun)
             {
                 if ( get_int("reseed") )
@@ -1989,7 +1993,7 @@ int get_nbr_el(const char *filename, const char *sym,\
     while( (linelength = getline(&line,&linecap,fr)) > 0)
     {
         has_read = sscanf(line,"%s%n",key,&k);
-        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
+        if ( (strncasecmp(key,sym,sym_len) == 0)  &&  (has_read == 1) ) /* keyword was found */
         {
             if ( nbr_expr )
             {
@@ -2162,7 +2166,7 @@ int load_options(const char *filename, int exit_if_nofile)
         while( (linelength = getline(&line, &linecap, fr)) > 0)
         {
             has_read = sscanf(line,"%s%n",key,&k);
-            if ( (strncasecmp(key,"OPTIONS",1) == 0) & (has_read == 1) ) /* keyword was found */
+            if ( (strncasecmp(key,"OPTIONS",1) == 0)  &&  (has_read == 1) ) /* keyword was found */
             {
                 sscanf(line,"%*s %s",opt_name);
 
@@ -2304,6 +2308,16 @@ int update_gnuplot_settings( void )
     return 0;
 }
 
+int check_options( void )
+{
+  if ( ( strncmp( get_str("popmode"), "single", 3) == 0 )  &&  ( SIM->nbr_psi || SIM->nbr_mfd ) )
+  {
+    PRINTWARNING("  popmode is set to single, but there are coupling and mean field terms defined. " 
+        "Behavior will be undefined.\n");
+  }
+  return 0;
+}
+
 int sim_to_array( double *y )
 {
     size_t j = 0;
@@ -2358,7 +2372,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     {
 
         has_read = sscanf(line,"%s%n",key,&k);
-        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found */
+        if ( (strncasecmp(key,sym,sym_len) == 0)  &&  (has_read == 1) ) /* keyword was found */
         {
             array_ptr->length = 1;
             array_ptr->array = malloc(array_ptr->length*sizeof(double));
@@ -2453,7 +2467,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
         has_read = sscanf(line,"%s%n",key,&k);                       /* read the first word of the line */
-        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found based on the sym_len first characters */
+        if ( (strncasecmp(key,sym,sym_len) == 0)  &&  (has_read == 1) ) /* keyword was found based on the sym_len first characters */
         {
             success = 1;
             /* get the size of the expression */
@@ -2602,7 +2616,7 @@ int load_line(const char *filename, nve var, const char *sym, const size_t sym_l
     while( (linelength = getline(&line, &linecap, fr)) > 0)
     {
         has_read = sscanf(line,"%s%n",key,&k);                       /* read the first word of the line */
-        if ( (strncasecmp(key,sym,sym_len) == 0) & (has_read == 1) ) /* keyword was found based on the sym_len first characters */
+        if ( (strncasecmp(key,sym,sym_len) == 0) && (has_read == 1) ) /* keyword was found based on the sym_len first characters */
         {
             success = 1;
             sscanf(line,"%*s %[^\n]",var.comment[var_index]);
@@ -2720,7 +2734,6 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 
         fprintf(fr,"\n# --------------------------------------------------\n");
         fprintf(fr,"# original equations, auxiliary variables and parametric expressions\n\n");
-
 
         eqfr = fopen(".odexp/equations.pop","r");
         if ( eqfr == NULL )

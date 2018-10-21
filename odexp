@@ -1254,7 +1254,7 @@ TAB: complete
 set bell-style visible
 
 # if there are more than 150 possible completions for
-# a word, ask the user if he wants to see all of them
+# a word, ask the user if they want to see all of them
 set completion-query-items 150
 
 $if odexp 
