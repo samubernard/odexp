@@ -14,7 +14,7 @@ my $re_pace = qr/^
   (|\{.*?\})?           # nothing or attribute
   \s*                   # whitespace(s)
   (|\#.*)?              # nothing or comment
-$/ix;
+$/uix;
 
 # @ myfunc(*x,y,z) = rhs # comment
 # @ my_weird_func( x ) = ({ \

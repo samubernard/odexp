@@ -71,7 +71,7 @@ include(GNUInstallDirs)
 # ============================================================================
 
 IF ( NOT DEFINED MANDIR )
-  set( MANDIR ${CMAKE_INSTALL_PREFIX}/share/man/man3 )
+  set( MANDIR ${CMAKE_INSTALL_PREFIX}/share/man/man1 )
 ENDIF ( NOT DEFINED MANDIR )
 message( "** Manual files will be installed in ${MANDIR}" )
 
@@ -105,9 +105,9 @@ configure_file(src/odexp.pc.in odexp.pc @ONLY)
 # ============================================================================
 ADD_CUSTOM_TARGET( manpages ALL )
 ADD_CUSTOM_COMMAND( TARGET manpages
-  COMMAND cp ${PROJECT_SOURCE_DIR}/src/odexp.man ${CMAKE_BINARY_DIR}/odexp.3
-  OUTPUTS ${CMAKE_BINARY_DIR}/odexp.3
-  DEPENDS ${CMAKE_BINARY_DIR}/odexp.3
+  COMMAND cp ${PROJECT_SOURCE_DIR}/src/odexp.man ${CMAKE_BINARY_DIR}/odexp.1
+  OUTPUTS ${CMAKE_BINARY_DIR}/odexp.1
+  DEPENDS ${CMAKE_BINARY_DIR}/odexp.1
 )
 
 # ============================================================================
@@ -115,7 +115,7 @@ ADD_CUSTOM_COMMAND( TARGET manpages
 # ============================================================================
 install(FILES ${CMAKE_BINARY_DIR}/odexp.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 
-install(FILES ${CMAKE_BINARY_DIR}/odexp.3 DESTINATION ${MANDIR}) 
+install(FILES ${CMAKE_BINARY_DIR}/odexp.1 DESTINATION ${MANDIR}) 
 
 install(PROGRAMS ${CMAKE_SOURCE_DIR}/odexp DESTINATION ${BINDIR} )
 

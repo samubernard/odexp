@@ -1,13 +1,41 @@
-.TH ODEXP 3 "odexp" 
+.TH ODEXP 1 "25/10/2018" "odexp" "odexp" 
 .SH NAME
 odexp \- fast ODE solver with gnuplot graphical output
 .SH SYNOPSIS
-.B odexp 
+.B "odexp "
+[
+.B \-o
+.I parameterfile
+] [
 .I file
+]
 .SH DESCRIPTION
 .B odexp 
-command line tool for ODE simulation.
-.SH COMMANDS 
+is a command line program for numerical simulations and analysis of dynamical systems of particle populations.
+Particles are defined by a system of ordinary differential equations (ODE), stochastic differential equations (SDE),
+delay differential equations (DDE), of finite-difference equations (FDE). 
+Particles can die and replicate. 
+
+\fIodexp\fR parses and compiles the dynamical system defined in \fIfile\fR, and launches a command line tool
+to explore its dynamics. See \fIEXAMPLES\fR for examples of a dyamical system file.
+If \fIfile\fR is not given, \fIodexp\fR will take the dynamical system from the standard input.
+When option \fB\-o\fR is present, system parameters, initial conditions and options are loaded from file \fIparameterfile\fR. 
+
+\fIodexp\fR uses the \fIGNU Scientific Library\fR (GSL) for numerical integration of ODEs and DDEs and their
+linear stability analysis. 
+Solutions are plotted with \fIgnuplot\fR.
+
+.SH OPTIONS
+
+.sp 1
+.TP 0.5i
+.BR \-o
+Optional parameter file.
+
+.SH LINE COMMANDS 
+Line commands can be entered at the \fIodexp\fR prompt. Multiple commands can be separated with && (does not
+work when command expects a string argument).
+
 .TP
 .BR ?              
 Display this help
@@ -207,41 +235,84 @@ Plot variable with index \fIind\fR or name \fIvar\fR on the x-axis
 .BR y " " \fR{\fIind\fR|\fIvar\fR}
 Plot variable with index \fIind\fR or name \fIvar\fR on the y-axis
 
-.SH ODEXP DECLARATIONS
+.SH DYAMICAL SYSTEM DECLARATIONS
 .TP
-.BR P 
+.BR PAR
 Parameters. 
 Must be numerical (double, int or long). 
+Syntax:
+
+.RS
+PAR \fIname\fR \fIvalue\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+.RE
+
 Parameters appear in the list of parameters. 
 They can be modified from within odexp and can be ranged over. 
-Parameters are declared in name value pairs, separated with semicolumns (;), or one parameter per line.
-Type double is default. To define an int or long, use set parameter attribute type=int or type=long.
+\fIname\fR must be a valid C variable name. 
+\fIvalue\fR must be a constant number; by default a double, but can be 
+an integer with attribute \fItype\fR = int or  \fItype\fR = long.
+Parameters are declared in name value pairs, separated by commas  (,), or one parameter per line.
+Parameters are common to all particles.
+The prefix PAR is optional when one parameter is declare on a single line
 
+Examples
+.RS
 .nf
-P a 0.1, b 0.2
+PAR a 0.1, b 0.2
 
-P a 0.1
-P b 0.1
+a 0.1 # ok
+a 0.1, b 0.2 # not ok
 
-P a 1 {type=int}, b 2.3 
+PAR a 0.1 {unused} # attribute unused for unused parameters
+PAR b 0.2 {inexpr} # attribute inexpr for parameters only used in expression
+PAR c 0.3 {pop}    # attribute pop    for parameters only used in population-specific terms
+PAR d 0.4 {every}  # attribute every  for parameters used in expressions, population and equations
+
+PAR a 1 {type=int} # type integer. Warning this comment end at the comma: b is another parameter!, b 2.3 
 .fi
+.RE
+
+Implicit initial condition. If \fIvar\fR is a dynamical variable, the declaration 
+
+.RS
+PAR var_0 0.5 
+.RE
+
+declares the parameter \fIvar_0\fR, sets it to 0.5 and implicitly declares the initial condition INIT \fIvar\fR 
+\fIvar_0\fR.
 
 .TP
-.BR E
+.BR EXPR
 Expressions. Expressions are function of the parameters. They cannot be modified. 
-Expression are declared as Name Expression pairs.
+Syntax:
 
+.RS
+EXPR \fIname\fR \fIexpression\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+.RE
+
+Expressions are particle-dependent. They are evaluated at the birth of a particle and are constant
+for the lifetime of the particle. Use \fIATBIRTH\fR and \fIATREPLI\fR to specify particle-dependent expressions. 
+
+Examples
 .nf
 E c a*a
-E rand_array[i=0:5] -1 + 2*r[i]
+E rand_array[i=0:5] -1 + 2*rand01[i]
+E is_ancestor ATBIRTH*1 + ATREPLI*0
 .fi
 
 .TP
-.BR A 
+.BR AUX 
 Auxiliary variables. Auxiliary variables depend on parameters, expressions and dynamical variables. 
+Syntax:
+
+.RS
+AUX \fIname\fR \fIexpression\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+.RE
+
 They are declared as Name Expression pairs, and must be scalars or one-dimensional arrays.
 Auxiliary variables are useful to monitor quantities that depend on the dynamical variables. They can be 
 plotted, and their values are recorded in the output file current.tab. 
+Auxiliary functions are particle-dependent. They are evaluated at each time step.
 
 .nf
 A d sqrt(x+c)
@@ -252,18 +323,31 @@ A norm_x2 dotprod(X,X,5)
 .fi
 
 .TP
-.BR D
+.BR D/DT
 Dynamical variables. Dynamical variables are the dependent variables of the ODE system.
-Dynamical variable x is declared as dx/dt followed by = and the RHS of the equation
+Syntax:
+
+.RS
+d\fIname\fR/dt = \fIrhs\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+.RE
+
+Dynamical variable \fIname\fR is declared as d\fIname\fR/dt followed by = and the \fIrhs\fR of the equation
 
 .nf
 dx/dt = -a*x
 .fi
 
 .TP
-.BR I
+.BR INIT
 Initial conditions. 
-Initial conditions can be numerical, or can be expression that depend on parameters, expressions and auxiliary variables.
+Syntax:
+
+.RS
+INIT \fIname\fR \fIexpression\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+.RE
+
+Initial conditions can be numerical, or can be expression that depend on parameters or expressions.
+For each equation D/DT, there must be an INIT with the corresponding \fIname\fR. 
 If initial conditions are expressions, their values can be overruled or reset in odexp.
 
 .nf
@@ -273,7 +357,7 @@ I x b
 .fi
 
 .TP
-.BR O
+.BR OPT
 Options. Options can be preset. 
 
 .nf
@@ -282,7 +366,7 @@ O reltol 1e-3  # set ode solver reltol to 1e-3
 .fi
 
 .TP
-.BR T
+.BR TIMES
 Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
@@ -293,7 +377,7 @@ T 0 10 20 50 100
 .fi
 
 .TP
-.BR S
+.BR ST
 Static variable. Must be numerical. Static variables cannot be modified.
 
 .nf
@@ -301,7 +385,7 @@ S MY_PI 3.14
 .fi
 
 .TP
-.BR C
+.BR CONST
 Constant array. Must be numerical array. Constant arrays cannot be modified.
 Constant arrays can be of any dimensions. Useful for arrays of small sizes. 
 
@@ -310,15 +394,16 @@ C MY_ARRAY[2][3] { {1.1, 1.2, 1.3}, {2.1, 2.2, 2.3} }
 .fi
 
 .TP
-.BR F
-Constant array from file. The declaration has the following syntax 
+.BR FI
+Constant array from file.
+Syntax:
 
-.nf
-F MY_ARRAY NROWS NCOLS FILENAME                      
-.fi
+.RS
+INIT \fIname\fR \fInrows\fR \fIncols\fR \fIfilename\fR 
+.RE
 
-where NROWS and NCOLS are the number of rows and columns in the file FILENAME.
-FILENAME is a text file containing space delimited array of floats.
+where \fInrows\fR \fIncols\fR are the number of rows and columns in the file \fIfilename\fR.
+\fIfilename\fR is a text file containing a space delimited array of doubles.
 
 .TP
 .BR @
@@ -349,7 +434,7 @@ double  myatan(double x, double *p)
 
 The function \fIsum\fR is a helper function (see below for a list of helper functions). 
 
-.SH POPULATION-SPECIFIC DECLARATIONS
+.SH POPULATION-SPECIFIC DECLARATIONS (%)
 
 .TP
 .BR %BIRTH 
@@ -396,11 +481,23 @@ This is of the form MF = 1/POP_SIZE*sum(j=1) \fIphi\fR(x[j]), where \fIphi\fR de
 The mean field term in an average over the population, and take a single value.
 .fi
 
-.SH POPULATION-SPECIFIC MACROS
+.SH MACROS
+
+.TP
+.BR DWDT
+Gaussian, uncorrelated white noise ~ N(0,1), as the derivative of the Wiener process. 
+The stochastic differential equation 
+
+.nf
+dx/dt = -theta(x - mu)*x + sigma*DWDT
+.fi
+
+would have as a solution x(t) the Ornstein-Uhlenbeck process, centered at mu, with sigma a diffusion constant and
+theta a pull rate constant.
 
 .TP
 .BR POP_SIZE
-Total number of particles. Can be used anywhere.
+Total number of particles. 
 
 .TP
 .BR OY("var") " " (OE,OA)
@@ -420,23 +517,29 @@ logical variable indicating if the particle is just born.
 
 .TP
 .BR ATREPLI 
-logical varaible indicating if the particle is replicating.
+logical variable indicating if the particle is replicating.
 
 .TP
 .BR ISDAUGHTER 
-logical variable indicating if the particle is the daughter. This is nonzero only at replication (ATREPLI = 1). The daughter particle is the newly formed particle. At replication, the daughter particle is created from the mother particle by copy. Then, the mother particle is updated and becomes the sister particle. The daughter is then updated, and can refer to the sister particle with SE and SY.
+logical variable indicating if the particle is the daughter. 
+This is nonzero only at replication (ATREPLI = 1). 
+The daughter particle is the newly formed particle. 
+At replication, the daughter particle is created from the mother particle by copy. 
+Then, the mother particle is updated and becomes the sister particle. 
+The daughter is then updated, and can refer to the sister particle with SE and SY.
 
 .TP
 .BR ISMOTHER 
-logical variable indicating if the particle is the mother. This is nonzero only at replication (ATREPLI = 1).
+logical variable indicating if the particle is the mother. 
+This is nonzero only at replication (ATREPLI = 1).
 
 .TP
 .BR ID 
-is the particle ID
+Particle ID
 
 .SH NUMERICAL AND GRAPHICAL OPTIONS
 
-See the list of options with 'lo'
+See the list of options with 'lo'.
 
 .SH FUNCTIONS ACTING ON ARRAYS
 .TP
@@ -470,6 +573,59 @@ Sum over j of \fIf\fR(\fIg\fR(\fIx_j\fR,\fIyi\fR))
 .BR \fIdouble\fR " " linchaindelay\fR(\fIdouble " " \fIroot\fR, " " \fIdouble " " \fI*chain\fR, " " \fIsize_t " " \fIlink\fR, " " \fIdouble " " \fIdelay\fR, " " \fIsize_t " " \fIlen\fR)
 \fIlink\fR'th element of a linear chain \fIbeta\fR*(\fIchain\fR[\fIlink\fR-1]-\fIchain\fR[\fIlink\fR]), (and \fIbeta\fR*(\fIroot\fR-\fIchain\fR[\fI0\fR]))
 
+.SH TIME DELAYS
+There is a shortcut to specify a delayed variable. 
+If z is a dynamical variable, then
+
+LAG ztau1 {root = z; mean = tau; len = 1000; init = 0.2}
+
+defines the dynamical variable ztau1 as the delayed version of z with a linear chain of length 1000 and mean tau.
+All intermediate variables, including ztau1, have initial condition 0.2.
+
+.SH EVALUATING COUPLING TERMS IN O(N)
+Coupling term (%C) are evaluated by default in O(N^2) where N is the population size. 
+When the attribute \fIexpan\fR is present in a coupling declaration, an order P Chebychev expansion  
+is used to approximate the coupling function g given in the attribute \fIfun\fR over the variable given
+in attribute \fIvar\fR. 
+The Chebychev approximation is then used to compute the first P+1 coupling moments A_k
+
+.RS
+Ak = sum_{j=1}^N (xj)^k
+
+g(xj-xi) = sum_{k=0}^P A_k phi_k(xi)  
+.RE
+
+Each moment is computed in O(N). The functions phi_k are computed in O(P^2). 
+The resulting coupling terms can be computed in O(N*P^3).
+The expansion method is therefore useful when N > P^3. For practical purpose, with P ~ 10, the method
+can be faster if N > 1000. 
+The P is precalculated at each evaluation based on abstol. 
+P increases with max{|xj-xi|}, so that the method works better when the particles are concentrated. 
+
+The coupling function g must be of the form g(u, *p) = gg(s*u) where the pointer p points to the scalar value s. 
+
+Chebychev expansion is currently limited to coupling functions of the form g(xj-xi) for xi, xj scalars.
+
+Example
+
+.fn
+The following code calls the expansion method for the coupling term sin(xj-xi).
+The auxiliary term TH is introduced to force the values of theta between 0 and 2 * PI. 
+
+.RS
+%C coupling 0.0 {expan; var = MA("TH"); fun = coupling_fun_sin}
+
+AUX TH theta - ( (int) (theta/2/PI) * 2 * PI )
+
+@ coupling_fun_sin(x, *p) = ({ \\
+  double scale = *(double *)p; \\
+  x *= scale; \\
+  sin(x); \\
+  })
+.RE
+.fi
+
+
 .SH EXAMPLES
 Here is an example of an odexp file
 
@@ -479,7 +635,7 @@ Here is an example of an odexp file
 ## a simple nonlinear ODE system
 #  all lines starting with ## are printed with the command ld
 
-P a 0.2, b 0.3
+PAR a 0.2, b 0.3
 
 dx/dt = x*(y - a)
 dy/dt = y*(b - x)
