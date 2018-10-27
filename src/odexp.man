@@ -4,7 +4,7 @@ odexp \- fast ODE solver with gnuplot graphical output
 .SH SYNOPSIS
 .B "odexp "
 [
-.B \-o
+.B \-p
 .I parameterfile
 ] [
 .I file
@@ -29,7 +29,7 @@ Solutions are plotted with \fIgnuplot\fR.
 
 .sp 1
 .TP 0.5i
-.BR \-o
+.BR \-p
 Optional parameter file.
 
 .SH LINE COMMANDS 

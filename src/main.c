@@ -547,6 +547,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                               * this does not go into the history  
                               */
 
+    /* set xterm title */
+    printf("\033]0;odexp\007");
+
     PRINTLOG("Main loop");
     while(1)  /* MAIN LOOP */
     {
@@ -1956,6 +1959,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     DBLOGPRINT("Closing log file");
     fclose(logfr);
     fclose(dblogfr);
+
+    /* reset xterm title */
+    printf("\033]0;\007");
 
     printf(" done\n");
 
