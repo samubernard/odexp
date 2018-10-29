@@ -759,7 +759,7 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
     "initialization auxiliary functions");
   assign_output($modelode,
     "D", "f_", $re_dxdt,
-    "assign equations FIXME", "rhs");
+    "assign equations", "rhs");
   assign_output($modelode,
     "A", "aux_", $re_pace, 
     "assign auxiliary array pointer", "pointer");
