@@ -2890,7 +2890,8 @@ int gplot_particles( const int gx, const int gy, const nve var )
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
     fprintf(GPLOTP, "plot \".odexp/particle_states.dat\" "
-            "binary format=\"%%%zulf\" using %d:%d with p pt 7 ps 1.5 title \"particles\" \n",tot,gx-1,gy-1);
+            "binary format=\"%%%zulf\" using %d:%d with "
+            "circles fillstyle transparent solid 0.2 noborder title \"particles\" \n",tot,gx-1,gy-1);
     fflush(GPLOTP);
 
     return 0;
