@@ -40,108 +40,112 @@ work when command expects a string argument).
 
 .TP
 .B ?              
-Display this help
+Display this help.
 .TP
 .BR + ", " = ", " C^g 
-Increment current parameter by a multiplicative factor \fBparstep\fR 
+Increment current parameter by a multiplicative factor \fBparstep\fR.
 .TP 
 .BR - ", " C^h
-Decrement current parameter by a multiplicative factor \fBparstep\fR
+Decrement current parameter by a multiplicative factor \fBparstep\fR.
 .TP
 .BR ] ", " C^]    
-Plot next variable on the y-axis (cyclic)
+Plot next variable on the y-axis (cyclic).
 .TP
 .BR [ ", " C^[ 
-Plot previous variable on the y-axis (cyclic)
+Plot previous variable on the y-axis (cyclic).
 .TP
 .BR } ", " C^}
-Plot next particle on the y-axis (cyclic)
+Plot next particle on the y-axis (cyclic).
 .TP
 .BR { ", " C^{
-Plot previous particle on the y-axis (cyclic)
+Plot previous particle on the y-axis (cyclic).
 .TP
 .B >
-Double the number of time steps 
+Double the number of time steps. 
 .TP
 .B <
-Halve the number of time steps 
+Halve the number of time steps.
 .TP
 .BI "# " dataset " " colx  " " coly 
-Add to plot \fIcolx\fR and \fIcoly\fR from \fIdataset\fR
+Add to plot \fIcolx\fR and \fIcoly\fR from \fIdataset\fR.
 .TP
 .BI "! " filename   
-Save the current plot to \fIfilename\fR. EPS format
+Save the current plot to \fIfilename\fR. EPS format.
 .TP
 .BI $ id   
-Print dataset for particle \fIid\fR, or print stats dataset if \fIid\fR is missing
+Print dataset for particle \fIid\fR, or print stats dataset if \fIid\fR is missing.
 .TP
 .BI * " " [ msg ]        
-Snapshot of current simulation and parameter values with optional \fImsg\fR 
+Snapshot of current simulation and parameter values with optional \fImsg\fR.
 .TP
 .BR 0 ", " n 
-Switch to/update normal plot 
+Switch to/update normal plot. 
 .TP
 .BR 9 ", " b
-Switch to continuation plot
+Switch to continuation plot.
 .TP
 .BR 8 ", " j
-Switch to range plot
+Switch to range plot.
 .TP
 .B A 
-Reset all axes to linear scale 
+Reset all axes to linear scale.
 .TP
 .BR a\fIus\fR ", " a\fIsu\fR
-Set axis \fIu\fR={x|y} to scale \fIs\fR={l|n}, n for linear (normal) scale and l for log scale 
+Set axis \fIu\fR={x|y} to scale \fIs\fR={l|n}, n for linear (normal) scale and l for log scale.
 .TP
 .B d              
-Reload the parameter file 
+Reload the parameter file. 
 .TP
 .B E
-Decrease the time span by a factor 2
+Decrease the time span by a factor 2.
 .TP
-.B e
-Increase the time span by a factor 2
+.BI "e [" val ]
+Increase the time span by a factor 
+.I val 
+(default factor = 2). 
+.I val 
+can be less than one.
 .TP
 .B f       
-Fit data (not implemented)
+Fit data (not implemented).
 .TP
 .BI g cmd        
-Send the command \fIcmd\fR to gnuplot 
+Send the command \fIcmd\fR to gnuplot.
 .TP
 .B h              
-Toggle plot hold (on/off) 
+Toggle plot hold (on/off).
 .TP
 .B I              
-Set initial conditions to previous 
+Set initial conditions to previous.
 .TP
 .B il            
-Use the state of the system at t1 as initial conditions 
+Use the state of the system at t1 as initial conditions.
 .TP 
 .B in            
 Loop through initial conditions. 
-Set to I to revert to expression, enter to keep current initial condition
+Set to I to revert to expression, enter to keep current initial condition.
 .TP
 .B is            
 Set initial condition to steady state. 
-Steady state must have been computed with \fBms\fR
+Steady state must have been computed with \fBms\fR.
 .TP
 .B l@            
-List all user-defined functions 
+List all user-defined functions.
 .TP
 .B l%            
-List population birth, replication and death rates 
+List population birth, replication and death rates.
 .TP
 .B la            
-List all auxiliary variables (can be plotted)
+List all auxiliary variables (can be plotted).
 .TP 
 .B lc            
-List all constant arrays
+List all constant arrays.
 .TP
 .B ld            
-Print file description (all lines starting with ##)  
+Print file description (all lines starting with ##).
 .TP
 .B le            
-List all parametric expressions
+List all parametric expressions.
 .TP 
 .B lf            
 List all array files (nrows ncols filename)
@@ -182,27 +186,27 @@ integrated over tspan and the min and the max of each variable is stored in the 
 If 
 .I rric 
 is 0, the initial conditions are set to the last state of the previous integration, 
-otherwise, the initial conditions are set as usual
+otherwise, the initial conditions are set as usual.
 
 .TP
 .B ms            
-Find a steady state with starting guess given by initial conditions 
+Find a steady state with starting guess given by initial conditions.
 .TP
 .BI "o " filename  
-Load parameters values and options from file \fIfilename\fR 
+Load parameters values and options from file \fIfilename\fR.
 .TP
 .BI "P " val        
-Set current parameter to value \fIval\fR
+Set current parameter to value \fIval\fR.
 .TP
 .BI p " " { ind | par } " " [ val ]     
 Make parameter with index \fIind\fR or name \fIpar\fR the current parameter, and set its value to \fIval\fR.
-When val is missing, the parameter value is unchanged
+When val is missing, the parameter value is unchanged.
 .TP
 .BR Q ", " q " " \fR[\fImsg\fR]        
 Quit and snap with optional message \fImsg\fR 
 .TP
 .B R
-Rerun the ODE system and update plot
+Rerun the ODE system and update plot.
 .TP
 .B r
 Repeat the last gnuplot command (replot)
@@ -260,7 +264,7 @@ A dynamical system is specified in a text file with lines starting with keywords
 Parameters. Must be numerical (double, int or long). Syntax:
 
 .nf
-PAR \fIname\fR \fIvalue\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+PAR \fIname\fR \fIvalue\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
 .fi
 
 Parameters appear in the list of parameters. 
@@ -270,7 +274,7 @@ They can be modified from within odexp and can be ranged over.
 an integer with attribute \fItype\fR = int or  \fItype\fR = long.
 Parameters are declared in name value pairs, separated by commas  (,), or one parameter per line.
 Parameters are common to all particles.
-The prefix PAR is optional when one parameter is declare on a single line
+The prefix PAR is optional when one parameter is declare on a single line.
 
 Examples
 .nf
@@ -366,8 +370,8 @@ For each equation D/DT, there must be an INIT with the corresponding \fIname\fR.
 If initial conditions are expressions, their values can be overruled or reset in odexp.
 
 .nf
-I x 1.0
-I x b
+INIT x 1.0
+INIT x b
 .fi
 
 .TP
@@ -375,44 +379,44 @@ I x b
 Options. Options can be preset. 
 
 .nf
-O x x1         # set x-axis to plot x1
-O reltol 1e-3  # set ode solver reltol to 1e-3
+OPT x x1         # set x-axis to plot x1
+OPT reltol 1e-3  # set ode solver reltol to 1e-3
 .fi
 
 .TP
-.B TIME [SPAN]
+.BR TIME [SPAN]
 Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
 
 .nf
-T 0 10
-T 0 10 20 50 100
+TIME 0 10
+TIME 0 10 20 50 100
 .fi
 
 .TP
-.B ST [ATIC]
+.BR ST [ATIC]
 Static variable. Must be numerical. Static variables cannot be modified.
 
 .nf
-S MY_PI 3.14
+ST MY_PI 3.14
 .fi
 
 .TP
-.B CONST [ANT]
+.BR CONST [ANT]
 Constant array. Must be numerical array. Constant arrays cannot be modified.
 Constant arrays can be of any dimensions. Useful for arrays of small sizes. 
 
 .nf
-C MY_ARRAY[2][3] { {1.1, 1.2, 1.3}, {2.1, 2.2, 2.3} }
+CONST MY_ARRAY[2][3] { {1.1, 1.2, 1.3}, {2.1, 2.2, 2.3} }
 .fi
 
 .TP
-.B FI [LE]
+.BR FI [LE]
 Constant array from file. Syntax:
 
 .nf
-INIT \fIname\fR \fInrows\fR \fIncols\fR \fIfilename\fR 
+FI \fIname\fR \fInrows\fR \fIncols\fR \fIfilename\fR 
 .fi
 
 where \fInrows\fR \fIncols\fR are the number of rows and columns in the file \fIfilename\fR.
@@ -470,8 +474,8 @@ The function \fIsum\fR is a helper function (see below for a list of helper func
 Particle (de novo) birth rate
 
 .nf
-%BIRTH 0.1 /* set birth rate to 0.1 per unit time */
-%BIRTH 1.0/(10 + \fIPOP_SIZE\fR) /* set birth rate to a function of the total partice number \fIPOP_SIZE\fR */
+%BIRTH 0.1 # set birth rate to 0.1 per unit time 
+%BIRTH 1.0/(10 + \fIPOP_SIZE\fR) # set birth rate to a function of the total partice number \fIPOP_SIZE\fR 
 .fi
 
 .TP
@@ -479,8 +483,8 @@ Particle (de novo) birth rate
 Particle death rate
 
 .nf
-%DEATH 0.01 /* constant particle death rate */
-%DEATH \fIvar_death_rate\fR /* set death rate to \fIvar_death_rate\fR */
+%DEATH 0.01 # constant particle death rate 
+%DEATH \fIvar_death_rate\fR # set death rate to \fIvar_death_rate\fR 
 .fi
 
 .TP
@@ -581,7 +585,7 @@ See the list of options with line commdand \fBlo\fR.
 .TP
 .BR \fIdouble\fR " " sum\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR)
 Sum the elements of the array \fIarray\fR of length \fIlen\fR.
-Return the sum of the array
+Return the sum of the array.
 .TP
 .BR \fIdouble\fR " " sumstep\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR, " " \fIlong " " \fIstep\fR)
 Sum only the \fIstep\fR'th elements of the array \fIarray\fR of length \fIlen\fR.
@@ -609,16 +613,19 @@ Sum over j of \fIf\fR(\fIg\fR(\fIx_j\fR,\fIyi\fR))
 .BR \fIdouble\fR " " linchaindelay\fR(\fIdouble " " \fIroot\fR, " " \fIdouble " " \fI*chain\fR, " " \fIsize_t " " \fIlink\fR, " " \fIdouble " " \fIdelay\fR, " " \fIsize_t " " \fIlen\fR)
 \fIlink\fR'th element of a linear chain \fIbeta\fR*(\fIchain\fR[\fIlink\fR-1]-\fIchain\fR[\fIlink\fR]), (and \fIbeta\fR*(\fIroot\fR-\fIchain\fR[\fI0\fR]))
 
-.SS Time delayS
+.SS Time delays
 There is a shortcut to specify a delayed variable. 
-If z is a dynamical variable, then
+If 
+.I z 
+is a dynamical variable, then
 
 .nf
-LAG ztau1 {root = z; mean = tau; len = 1000; init = 0.2}
+LAG \fIztau1\fR {root = z; mean = tau; len = 1000; init = 0.2}
 .fi
 
-defines the dynamical variable ztau1 as the delayed version of z with a linear chain of length 1000 and mean tau.
-All intermediate variables, including ztau1, have initial condition 0.2.
+defines the dynamical variable \fIztau1\fR as the delayed version of \fIz\fR 
+with a linear chain of length 1000 and mean tau.
+All intermediate variables, including \fIztau1\fR, have initial condition 0.2.
 
 .SS Evaluating coupling terms in O(N)
 Coupling term (%C) are evaluated by default in O(N^2) where N is the population size. 

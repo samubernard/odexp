@@ -701,7 +701,16 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     plot_mode = PM_REPLOT;
                     break;
                 case 'e' : /* extend the simulation */
-                    tspan.array[tspan.length-1] += tspan.array[tspan.length-1]-tspan.array[0];
+                    nbr_read = sscanf(cmdline+1,"%lf",&nvalue);
+                    if ( nbr_read > 0 )
+                    {
+                      tspan.array[tspan.length-1] = tspan.array[0] + \
+                                                    nvalue*(tspan.array[tspan.length-1]-tspan.array[0]);
+                    }
+                    else
+                    {
+                      tspan.array[tspan.length-1] += tspan.array[tspan.length-1]-tspan.array[0];
+                    }
                     rerun = 1;
                     plot_mode = PM_REPLOT;
                     break;
