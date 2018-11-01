@@ -166,7 +166,7 @@ my $odefilename;
 my $nbr_argv = @ARGV;
 if ( $nbr_argv == 0 ) {
   # die "Require a filename";  
-  $odefilename = "standard input";
+  $odefilename = "stdinput";
 } else {
   $odefilename = $ARGV[0];
 }
