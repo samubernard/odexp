@@ -716,6 +716,7 @@ int fwrite_final_particle_state( void )
      */
     while ( p != NULL )
     {
+      fwrite(&(p->id),sizeof(unsigned int),1,fid);
       fwrite(p->y,sizeof(double),p->nbr_y,fid);
       fwrite(p->aux,sizeof(double),p->nbr_aux,fid);
       fwrite(p->psi,sizeof(double),p->nbr_psi,fid);

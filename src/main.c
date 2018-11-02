@@ -76,7 +76,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"rmic","rmic", 'd', 1.0, 0, "", "initial condition multiplicative factor for range", "parameterRange"},
     {"raic","raic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
-    {"fo","font", 's', 0.0, 0, "Helvetica Neue Light", "gnuplot FOnt", "gnuplotSettings"},
+    {"fo","font", 's', 0.0, 0, "Helvetica", "gnuplot FOnt", "gnuplotSettings"},
     {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal (do not change in runtime)", "gnuplotSettings"},
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
@@ -538,6 +538,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     /* GNUPLOT SETUP */
     fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font"));
+    fprintf(GPLOTP,"set border lw 0.5 lc rgb \"black\"\n");
+    fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
+    fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
+    fprintf(GPLOTP,"set xlabel font \"%s Oblique\"\n", get_str("font"));
+    fprintf(GPLOTP,"set ylabel font \"%s Oblique\"\n", get_str("font"));
+    fprintf(GPLOTP,"set grid\n");
+    fprintf(GPLOTP,"set key box lw 0.5 noopaque\n");
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
 
@@ -782,7 +789,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                         update_plot_options(ngx,ngy,ngz,dxv);
                     }
-                    if ( nbr_read >= 2 )
+                    else if ( nbr_read >= 2 )
                     {
                         plot_mode = PM_NORMAL;
                         plot3d = 0;
@@ -2889,9 +2896,15 @@ int gplot_particles( const int gx, const int gy, const nve var )
      */
     fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "time"); 
     fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
+    /* Plot each particle as a transparent circle 
+     * with the ID number inside it 
+     * No customization possible at the moment */
     fprintf(GPLOTP, "plot \".odexp/particle_states.dat\" "
-            "binary format=\"%%%zulf\" using %d:%d with "
-            "circles fillstyle transparent solid 0.2 noborder title \"particles\" \n",tot,gx-1,gy-1);
+            "binary format=\"%%u%%%zulf\" using %d:%d with "
+            "circles fillstyle transparent solid 0.2 noborder title \"particles\", "
+            "\".odexp/particle_states.dat\" "
+            "binary format=\"%%u%%%zulf\" using %d:%d:(sprintf(\"%%u\",$1)) with "
+            "labels font \"Helvetica,7\" textcolor rgb \"grey20\" notitle\n",tot,gx,gy,tot,gx,gy);
     fflush(GPLOTP);
 
     return 0;
