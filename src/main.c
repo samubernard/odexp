@@ -80,7 +80,9 @@ struct gen_option GOPTS[NBROPTS] = {
     {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal (do not change in runtime)", "gnuplotSettings"},
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
-    {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2", "generalSettings"} };
+    {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2", "generalSettings"},
+    {"ros","runonstartup", 'i', 0.0, 1, "", "Run On startup"} };
+
 
 /* what kind of initial conditions to take */
 int *NUM_IC;
@@ -529,7 +531,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     /* first run after system init */
     PRINTLOG("System init done.");
     DBLOGPRINT("System init done.");
-    if ( not_run == 0 )
+    if ( get_int("runonstartup") == 1 )
     {    
         PRINTLOG("Running first simulation");
         status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
