@@ -1672,7 +1672,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     break;
                 default :
-                    printf("  Unknown command '%c'. Type q to quit, h for help\n", c);
+                    printf("  Unknown command '%c'. Type q to quit, ? for help\n", c);
             } /* end switch command */ 
 
 
