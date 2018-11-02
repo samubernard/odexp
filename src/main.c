@@ -2901,7 +2901,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
      * No customization possible at the moment */
     fprintf(GPLOTP, "plot \".odexp/particle_states.dat\" "
             "binary format=\"%%u%%%zulf\" using %d:%d with "
-            "circles fillstyle transparent solid 0.2 noborder title \"particles\", "
+            "circles fillstyle transparent solid 0.1 noborder title \"particles\", "
             "\".odexp/particle_states.dat\" "
             "binary format=\"%%u%%%zulf\" using %d:%d:(sprintf(\"%%u\",$1)) with "
             "labels font \"Helvetica,7\" textcolor rgb \"grey20\" notitle\n",tot,gx,gy,tot,gx,gy);
