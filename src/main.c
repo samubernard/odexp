@@ -80,8 +80,8 @@ struct gen_option GOPTS[NBROPTS] = {
     {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal (do not change in runtime)", "gnuplotSettings"},
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
-    {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2", "generalSettings"},
-    {"ros","runonstartup", 'i', 0.0, 1, "", "Run On startup"} };
+    {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},
+    {"ros","runonstartup", 'i', 0.0, 1, "", "Run On startup", "generalSettings"} };
 
 
 /* what kind of initial conditions to take */
@@ -150,8 +150,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             file_status;
 
     /* modes */
-    int     not_run               = 0, /* do not run initially if = 1 */
-            rerun                 = 0, /* run a new ODE simulation */
+    int     rerun                 = 0, /* run a new ODE simulation */
             plot3d                = 0,
             quit                  = 0;
     
@@ -535,26 +534,22 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {    
         PRINTLOG("Running first simulation");
         status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
+        PRINTLOG("First simulation done.");
     }
-    PRINTLOG("First simulation done.");
 
     /* GNUPLOT SETUP */
-    fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font"));
-    fprintf(GPLOTP,"set border lw 0.5 lc rgb \"black\"\n");
-    fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
-    fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
-    fprintf(GPLOTP,"set xlabel font \"%s Oblique\"\n", get_str("font"));
-    fprintf(GPLOTP,"set ylabel font \"%s Oblique\"\n", get_str("font"));
-    fprintf(GPLOTP,"set grid\n");
-    fprintf(GPLOTP,"set key box lw 0.5 noopaque\n");
-    fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
-    fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
+    gnuplot_config(gx, gy, dxv, odexp_filename);
+    /* END GNUPLOT SETUP */ 
 
     sim_to_array(lastinit);
-    extracmd = malloc(2*sizeof(char));
-    strncpy(extracmd,"0",1); /* start by refreshing the plot with command 0: normal plot 
+
+    if ( get_int("runonstartup") == 1 )
+    {
+      extracmd = malloc(2*sizeof(char));
+      strncpy(extracmd,"0",1); /* start by refreshing the plot with command 0: normal plot 
                               * this does not go into the history  
                               */
+    }
 
     /* set xterm title */
     printf("\033]0;odexp\007");
@@ -1661,10 +1656,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     nbr_read = sscanf(cmdline+1,"%s", svalue);
                     if ( nbr_read == 1 ) /* try saving plot with name given in svalue */
                     {
+                        fprintf(GPLOTP,"set term push\n");
                         fprintf(GPLOTP,"set term postscript eps color\n");
                         fprintf(GPLOTP,"set output \"%s.eps\"\n",svalue);
                         fprintf(GPLOTP,"replot\n");
-                        fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font") );
+                        fprintf(GPLOTP,"set term pop\n");
                         fflush(GPLOTP);
                         printf("  wrote %s.eps in current directory\n",svalue);
                     }
@@ -1788,9 +1784,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 }
                 else if ( get_int("hold") )  /* hold is on - unset axis labels */
                 {
-                    fprintf(GPLOTP,"unset xlabel\n");
-                    fprintf(GPLOTP,"unset ylabel\n");
-                    fprintf(GPLOTP,"unset zlabel\n");
+                    fprintf(GPLOTP,"set xlabel \"\"\n");
+                    fprintf(GPLOTP,"set ylabel \"\"\n");
+                    fprintf(GPLOTP,"set zlabel \"\"\n");
                 }
                 if ( plot3d == 0 )
                 {
@@ -3030,3 +3026,60 @@ int read_msg( void )
   printf("%s  [gnuplot]\n",T_NOR);
   return rd;
 }
+
+int gnuplot_config(const int gx, const int gy, nve dxv, const char *odefilename)
+{
+  /* color definitions */
+  fprintf(GPLOTP,"set linetype 1  lc rgb '#003323' \n"); /* black */
+  fprintf(GPLOTP,"set linetype 2  lc rgb '#0000cc' \n"); /* blue */
+  fprintf(GPLOTP,"set linetype 4  lc rgb '#cc0000' \n"); /* red */
+  fprintf(GPLOTP,"set linetype 3  lc rgb '#00cc00' \n"); /* green */
+  fprintf(GPLOTP,"set linetype 5  lc rgb '#cccc00' \n"); /* yellow */
+  fprintf(GPLOTP,"set linetype 6  lc rgb '#00cccc' \n"); /* turquoise */ 
+  fprintf(GPLOTP,"set linetype 7  lc rgb '#cc00cc' \n"); /* violet */
+  fprintf(GPLOTP,"set linetype 8  lc rgb '#cccccc' \n"); /* grey */
+
+#if 0
+  fprintf(GPLOTP,"set linetype 1  lc rgb '#143d9d' lw 2\n"); /* blue  */
+  fprintf(GPLOTP,"set linetype 2  lc rgb '#dc143c' lw 2\n"); /* orange */
+  fprintf(GPLOTP,"set linetype 3  lc rgb '#0c987d' lw 2\n"); /* green */
+  fprintf(GPLOTP,"set linetype 4  lc rgb '#ffd700' lw 2\n"); /* yellow */
+  fprintf(GPLOTP,"set linetype 5  lc rgb '#6eafc6' lw 2\n"); /* light blue */
+  fprintf(GPLOTP,"set linetype 6  lc rgb '#e34262' lw 2\n"); /* apple red  */ 
+  fprintf(GPLOTP,"set linetype 3  lc rgb '#14de14' lw 2\n"); /* apple green */
+  fprintf(GPLOTP,"set linetype 8  lc rgb '#fff5c0' lw 2\n"); /* apple yellow */
+#endif
+/*  
+ * fprintf(GPLOTP,"set linetype 1  lc rgb '#0025ad' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 2  lc rgb '#0042ad' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 3  lc rgb '#0060ad' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 4  lc rgb '#007cad' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 5  lc rgb '#0099ad' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 6  lc rgb '#00ada4' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 7  lc rgb '#00ad88' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 8  lc rgb '#00ad6b' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 9  lc rgb '#00ad4e' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 10 lc rgb '#00ad31' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 11 lc rgb '#00ad14' lw 2\n");
+ * fprintf(GPLOTP,"set linetype 12 lc rgb '#09ad00' lw 2\n");
+ */
+
+  fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s,13\"\n", get_str("terminal"), odefilename, get_str("font"));
+  fprintf(GPLOTP,"set border 1+2+16 lw 0.5 lc rgb \"black\"\n");
+  fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
+  fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
+  fprintf(GPLOTP,"set ztics textcolor rgb \"grey20\"\n");
+  fprintf(GPLOTP,"set tics nomirror out scale 0.75 font \"%s Oblique\"\n", get_str("font"));
+#if 0
+  fprintf(GPLOTP,"set xlabel font \"%s Oblique\"\n", get_str("font"));
+  fprintf(GPLOTP,"set ylabel font \"%s Oblique\"\n", get_str("font"));
+  fprintf(GPLOTP,"set zlabel font \"%s Oblique\"\n", get_str("font"));
+#endif
+  fprintf(GPLOTP,"set grid\n");
+  fprintf(GPLOTP,"set key nobox noopaque\n");
+  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
+  fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
+
+  return 0;
+}
+

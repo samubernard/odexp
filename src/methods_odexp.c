@@ -31,20 +31,27 @@ static void set_abort_odesolver_flag( int sig )
 /* print progress */
 static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start )
 {
-    struct winsize w;    
+    struct winsize w; /* get terminal window size */
     double fcmpl = (tt-t0)/(tfinal-t0);
     int i;
     /* char * arrow = "``'-.,_,.-'"; */ /* a wave */
-    /* int arrow_length = 11; */
-    char * arrow = " "; 
+    char * arrow = " "; /* this is the string for the progress bar */
     int arrow_length = strlen(arrow); 
-    if ( get_int("progress")>0 )  /* level 1: print time elapsed and percent complete */
+    if ( get_int("progress") )  /* level > 0: clear two lines */
     {
       printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line  */
+      if ( get_int("progress") > 2 ) /* level 3: clear two more lines */
+      {
+        printf("%s",LINEUP_AND_CLEAR);  /* clear the line above */
+        printf("%s",LINEUP_AND_CLEAR);  /* clear the line above */
+      }
+    }
+    if ( get_int("progress") > 0 )  /* level 1: print time elapsed and percent complete */
+    {
       printf("  %s%6.1f sec%s,", T_VAL,(clock()-start)*1.0 / CLOCKS_PER_SEC, T_NOR);
       printf("  %s%6.2f%%%s  ",T_VAL,100*fcmpl,T_NOR);
     }
-    if ( get_int("progress")>1 ) /* level 2: print wave progress bar */
+    if ( get_int("progress") > 1 ) /* level 2: print wave progress bar */
     {
       ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); /* get terminal window size in w */
       printf("%s",T_PR);
@@ -53,6 +60,12 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
         putchar(arrow[i % arrow_length]);
       }
       printf("%s",T_NOR);
+    }
+    if ( get_int("progress") > 2 ) /* level 3: print numerical integration information */
+    {
+      printf("\n  %stime     h0       h       %s\n",T_HEAD,T_NOR);
+      printf("  %s%5.2e%s %s%5.2e%s %s%5.2e%s\n\033[F", \
+          T_VAL, tt, T_NOR, T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR); 
     }
 }
 
@@ -401,6 +414,10 @@ int odesolver( oderhs pop_ode_rhs,
     else 
     {
         printf("from default initial conditions...\n");
+    }
+    if ( get_int("progress") > 2 ) /* level 3: two newlines  */
+    {
+      printf("\n\n");
     }
     fflush(stdout);
 
