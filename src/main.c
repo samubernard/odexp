@@ -81,6 +81,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
     {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},
+    {"wti","wintitle", 's', 0.0, 0, "", "Window TItle", "generalSettings"},
     {"ros","runonstartup", 'i', 0.0, 1, "", "Run On startup", "generalSettings"} };
 
 
@@ -475,6 +476,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
     update_act_par_index(&p, mu);
     update_act_par_options(p, mu);
+    /* set wintitle to odefilename if not set */
+    if ( strlen(get_str("wintitle")) == 0 )
+    {
+      set_str("wintitle",odexp_filename);
+    }
     /* printf_options(""); */
     printf("  options loaded (type 'lo' to see all options)\n");
     DBLOGPRINT("Options loaded");
@@ -538,7 +544,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     }
 
     /* GNUPLOT SETUP */
-    gnuplot_config(gx, gy, dxv, odexp_filename);
+    gnuplot_config(gx, gy, dxv);
     /* END GNUPLOT SETUP */ 
 
     sim_to_array(lastinit);
@@ -2322,7 +2328,7 @@ int update_act_par_options(const int p, const nve mu)
 
 int update_gnuplot_settings( void )
 {
-    fprintf(GPLOTP,"set term %s font \"%s\" title \"odexp - \"\n", get_str("terminal"), get_str("font"));
+    fprintf(GPLOTP,"set term %s font \"%s\" title \"odexp - %s\"\n", get_str("terminal"), get_str("font"), get_str("wintitle"));
     fflush(GPLOTP);
 
     return 0;
@@ -3027,7 +3033,7 @@ int read_msg( void )
   return rd;
 }
 
-int gnuplot_config(const int gx, const int gy, nve dxv, const char *odefilename)
+int gnuplot_config(const int gx, const int gy, nve dxv)
 {
   /* color definitions */
   fprintf(GPLOTP,"set linetype 1  lc rgb '#003323' \n"); /* black */
@@ -3064,7 +3070,7 @@ int gnuplot_config(const int gx, const int gy, nve dxv, const char *odefilename)
  * fprintf(GPLOTP,"set linetype 12 lc rgb '#09ad00' lw 2\n");
  */
 
-  fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s\"\n", get_str("terminal"), odefilename, get_str("font"));
+  fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s\"\n", get_str("terminal"), get_str("wintitle"),get_str("font"));
   fprintf(GPLOTP,"set border 1+2+16 lw 0.5 lc rgb \"black\"\n");
   fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");

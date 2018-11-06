@@ -58,4 +58,4 @@ char *completion_list_generator(const char *, int);
 /* gnuplot fifo */
 int read_msg( void );
 
-int gnuplot_config( const int gx, const int gy, nve dxv, const char *odefilename );
+int gnuplot_config( const int gx, const int gy, nve dxv);
