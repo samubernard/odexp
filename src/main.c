@@ -3050,20 +3050,6 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   fprintf(GPLOTP,"set linetype 3  lc rgb '#14de14' lw 2\n"); /* apple green */
   fprintf(GPLOTP,"set linetype 8  lc rgb '#fff5c0' lw 2\n"); /* apple yellow */
 #endif
-/*  
- * fprintf(GPLOTP,"set linetype 1  lc rgb '#0025ad' lw 2\n");
- * fprintf(GPLOTP,"set linetype 2  lc rgb '#0042ad' lw 2\n");
- * fprintf(GPLOTP,"set linetype 3  lc rgb '#0060ad' lw 2\n");
- * fprintf(GPLOTP,"set linetype 4  lc rgb '#007cad' lw 2\n");
- * fprintf(GPLOTP,"set linetype 5  lc rgb '#0099ad' lw 2\n");
- * fprintf(GPLOTP,"set linetype 6  lc rgb '#00ada4' lw 2\n");
- * fprintf(GPLOTP,"set linetype 7  lc rgb '#00ad88' lw 2\n");
- * fprintf(GPLOTP,"set linetype 8  lc rgb '#00ad6b' lw 2\n");
- * fprintf(GPLOTP,"set linetype 9  lc rgb '#00ad4e' lw 2\n");
- * fprintf(GPLOTP,"set linetype 10 lc rgb '#00ad31' lw 2\n");
- * fprintf(GPLOTP,"set linetype 11 lc rgb '#00ad14' lw 2\n");
- * fprintf(GPLOTP,"set linetype 12 lc rgb '#09ad00' lw 2\n");
- */
 
   fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s,%d\"\n", \
       get_str("terminal"), get_str("wintitle"), get_str("font"), get_int("fontsize"));
@@ -3071,7 +3057,8 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ztics textcolor rgb \"grey20\"\n");
-  fprintf(GPLOTP,"set tics nomirror out scale font \"%s Oblique\"\n", get_str("font"));
+  fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
+      get_str("font"), get_int("fontsize"));
   fprintf(GPLOTP,"set mxtics\n");
   fprintf(GPLOTP,"set mytics\n");
   fprintf(GPLOTP,"set mztics\n");
