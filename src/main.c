@@ -2217,7 +2217,7 @@ int load_options(const char *filename, int exit_if_nofile)
                             sscanf(line,"%*s %*s %lf",&GOPTS[idx_opt].numval);
                             break;
                         case 's':
-                            sscanf(line,"%*s %*s %s",GOPTS[idx_opt].strval);
+                            sscanf(line,"%*s %*s %[^#]",GOPTS[idx_opt].strval);
                             break;
                     }
                   success = 1;
