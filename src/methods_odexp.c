@@ -63,9 +63,9 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     }
     if ( get_int("progress") > 2 ) /* level 3: print numerical integration information */
     {
-      printf("\n  %stime     h0       h       %s\n",T_HEAD,T_NOR);
-      printf("  %s%5.2e%s %s%5.2e%s %s%5.2e%s\n\033[F", \
-          T_VAL, tt, T_NOR, T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR); 
+      printf("\n  %ssolver  time     h0       h       %s\n",T_HEAD,T_NOR);
+      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s\n\033[F", \
+          T_DET, get_str("solver"), T_NOR, T_VAL, tt, T_NOR, T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR); 
     }
 }
 
@@ -209,10 +209,11 @@ int odesolver( oderhs pop_ode_rhs,
     }
     else
     {
-        fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
-                T_ERR,get_str("solver"),T_NOR);
-        fprintf(stderr,"         %swill use 'rk4' as a default step method%s\n",T_ERR,T_NOR);
+        PRINTERR("  Error: %s is not a known step method\n"
+                 "         will use 'rk4' as a default step method\n",\
+                get_str("solver"));
         odeT = gsl_odeiv2_step_rk4;
+        set_str("solver","rk4");
     }
 
     /* tspan */
@@ -690,10 +691,11 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     }
     else
     {
-        fprintf(stderr,"  %serror: %s is not a known step method%s\n",\
-                T_ERR,get_str("solver"),T_NOR);
-        fprintf(stderr,"         %swill use 'rk4' as a default step method%s\n",T_ERR,T_NOR);
+        PRINTERR("  Error: %s is not a known step method\n"
+                 "         will use 'rk4' as a default step method\n",\
+                get_str("solver"));
         odeT = gsl_odeiv2_step_rk4;
+        set_str("solver","rk4");
     }
 
     s = gsl_odeiv2_step_alloc(odeT,SIM->nbr_var);
@@ -726,7 +728,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     /* open output file */
     if ( ( file = fopen(current_data_buffer,"w") ) == NULL )
     {
-        fprintf(stderr,"  %serror: could not open file %s%s\n", T_ERR,current_data_buffer,T_NOR);
+        PRINTERR("  Error: could not open file %s\n", current_data_buffer);
         exit ( EXIT_FAILURE );
     }
 
@@ -1903,6 +1905,6 @@ int dde_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doub
   (void)tnext;
   (void)h;
   (void)y;
-  fprintf(stderr,"  %serror: dde solver not implemented%s\n",T_ERR,T_NOR);
+  PRINTERR("  Error: dde solver not implemented\n");
   return GSL_FAILURE;
 }

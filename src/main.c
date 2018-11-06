@@ -3072,12 +3072,13 @@ int gnuplot_config(const int gx, const int gy, nve dxv, const char *odefilename)
   fprintf(GPLOTP,"set tics nomirror out scale 0.75 font \"%s Oblique\"\n", get_str("font"));
   fprintf(GPLOTP,"set mxtics\n");
   fprintf(GPLOTP,"set mytics\n");
+  fprintf(GPLOTP,"set mztics\n");
 #if 0
   fprintf(GPLOTP,"set xlabel font \"%s Oblique\"\n", get_str("font"));
   fprintf(GPLOTP,"set ylabel font \"%s Oblique\"\n", get_str("font"));
   fprintf(GPLOTP,"set zlabel font \"%s Oblique\"\n", get_str("font"));
 #endif
-  fprintf(GPLOTP,"set grid\n");
+  fprintf(GPLOTP,"set grid xtics ytics ztics\n");
   fprintf(GPLOTP,"set key nobox noopaque\n");
   fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
   fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
