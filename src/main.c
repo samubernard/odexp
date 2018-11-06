@@ -3071,7 +3071,7 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ztics textcolor rgb \"grey20\"\n");
-  fprintf(GPLOTP,"set tics nomirror out scale 0.75 font \"%s Oblique\"\n", get_str("font"));
+  fprintf(GPLOTP,"set tics nomirror out scale font \"%s Oblique\"\n", get_str("font"));
   fprintf(GPLOTP,"set mxtics\n");
   fprintf(GPLOTP,"set mytics\n");
   fprintf(GPLOTP,"set mztics\n");
