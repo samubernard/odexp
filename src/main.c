@@ -2322,7 +2322,7 @@ int update_act_par_options(const int p, const nve mu)
 
 int update_gnuplot_settings( void )
 {
-    fprintf(GPLOTP,"set term %s font \"%s,16\"\n", get_str("terminal"), get_str("font"));
+    fprintf(GPLOTP,"set term %s font \"%s\"\n", get_str("terminal"), get_str("font"));
     fflush(GPLOTP);
 
     return 0;
