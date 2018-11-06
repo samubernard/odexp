@@ -2322,7 +2322,7 @@ int update_act_par_options(const int p, const nve mu)
 
 int update_gnuplot_settings( void )
 {
-    fprintf(GPLOTP,"set term %s font \"%s\"\n", get_str("terminal"), get_str("font"));
+    fprintf(GPLOTP,"set term %s font \"%s\" title \"odexp - \"\n", get_str("terminal"), get_str("font"));
     fflush(GPLOTP);
 
     return 0;
@@ -3064,7 +3064,7 @@ int gnuplot_config(const int gx, const int gy, nve dxv, const char *odefilename)
  * fprintf(GPLOTP,"set linetype 12 lc rgb '#09ad00' lw 2\n");
  */
 
-  fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s,13\"\n", get_str("terminal"), odefilename, get_str("font"));
+  fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s\"\n", get_str("terminal"), odefilename, get_str("font"));
   fprintf(GPLOTP,"set border 1+2+16 lw 0.5 lc rgb \"black\"\n");
   fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
