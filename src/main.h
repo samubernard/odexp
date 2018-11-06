@@ -24,7 +24,6 @@ int update_plot_options(int ngx, int ngy, int ngz, nve dxv);
 int update_plot_index(int *ngx, int *ngy, int *ngz, int *gx, int *gy, int *gz, nve dxv);
 int update_act_par_index(int *p, const nve mu);
 int update_act_par_options(const int p, const nve mu);
-int update_gnuplot_settings( void );
 int check_options( void );
 
 int sim_to_array( double *y );

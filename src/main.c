@@ -1,4 +1,4 @@
-/* file odexp.c */
+/* file main.c */
 
 /* includes */
 #include <gsl/gsl_multiroots.h>
@@ -77,6 +77,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"raic","raic", 'd', 0.10, 0, "", "initial condition additive factor for range", "parameterRange"},
     {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
     {"fo","font", 's', 0.0, 0, "Helvetica", "gnuplot FOnt", "gnuplotSettings"},
+    {"fs","fontsize", 'i', 0.0, 13, "", "gnuplot Font Size", "gnuplotSettings"},
     {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal (do not change in runtime)", "gnuplotSettings"},
     {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
@@ -155,15 +156,17 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             plot3d                = 0,
             quit                  = 0;
     
-    
-    enum plotmode plot_mode       = PM_UNDEFINED; /* plot mode:
-                                                   * 0: undefined
-                                                   * 1: normal update plot with new parameters/option
-                                                   * 2: continuation plot continuation branch 
-                                                   * 3: range
-                                                   * 4: particles in phase space
-                                                   * 5: replot just re-issue last plot command
-                                                   */
+    /* 
+     * plot mode:
+     * 0: PM_UNDEFINED undefined
+     * 1: PM_NORMAL normal update plot with new parameters/option
+     * 2: PM_CONTINUATION continuation plot continuation branch 
+     * 3: PM_RANGE range
+     * 4: PM_PARTICLES particles in phase space
+     * 5: PM_CURVES add curves 
+     * 6: PM_REPLOT replot just re-issue last plot command
+     */
+    enum plotmode plot_mode       = PM_UNDEFINED; 
 
     /* odes */
     double *lastinit = NULL;    /* last initial conditions */
@@ -1454,7 +1457,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                                 update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                                 update_act_par_index(&p, mu);
                                 printf_option_line(i);
-                                update_gnuplot_settings();
+                                gnuplot_config(gx, gy, dxv);
                             }
                             else
                             {
@@ -1493,7 +1496,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                                     update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                                     update_act_par_index(&p, mu);
                                     printf_option_line(i);
-                                    update_gnuplot_settings();
+                                    gnuplot_config(gx, gy, dxv);
                                 }
                             }
                             else
@@ -2326,14 +2329,6 @@ int update_act_par_options(const int p, const nve mu)
     return s;
 }
 
-int update_gnuplot_settings( void )
-{
-    fprintf(GPLOTP,"set term %s font \"%s\" title \"odexp - %s\"\n", get_str("terminal"), get_str("font"), get_str("wintitle"));
-    fflush(GPLOTP);
-
-    return 0;
-}
-
 int check_options( void )
 {
   if ( ( strncmp( get_str("popmode"), "single", 3) == 0 )  &&  ( SIM->nbr_psi || SIM->nbr_mfd ) )
@@ -2908,7 +2903,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
             "circles fillstyle transparent solid 0.1 noborder title \"particles\", "
             "\".odexp/particle_states.dat\" "
             "binary format=\"%%u%%%zulf\" using %d:%d:(sprintf(\"%%u\",$1)) with "
-            "labels font \"Helvetica,7\" textcolor rgb \"grey20\" notitle\n",tot,gx,gy,tot,gx,gy);
+            "labels font \"%s,7\" textcolor rgb \"grey20\" notitle\n",tot,gx,gy,tot,gx,gy,get_str("font"));
     fflush(GPLOTP);
 
     return 0;
@@ -3070,7 +3065,8 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
  * fprintf(GPLOTP,"set linetype 12 lc rgb '#09ad00' lw 2\n");
  */
 
-  fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s\"\n", get_str("terminal"), get_str("wintitle"),get_str("font"));
+  fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s,%d\"\n", \
+      get_str("terminal"), get_str("wintitle"), get_str("font"), get_int("fontsize"));
   fprintf(GPLOTP,"set border 1+2+16 lw 0.5 lc rgb \"black\"\n");
   fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
