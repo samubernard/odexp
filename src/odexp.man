@@ -42,6 +42,9 @@ work when command expects a string argument).
 .B ?              
 Display this help.
 .TP
+.BR C^y 
+Repeat last command.
+.TP
 .BR + ", " = ", " C^g 
 Increment current parameter by a multiplicative factor \fBparstep\fR.
 .TP 

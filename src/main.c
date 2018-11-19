@@ -1665,11 +1665,17 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     nbr_read = sscanf(cmdline+1,"%s", svalue);
                     if ( nbr_read == 1 ) /* try saving plot with name given in svalue */
                     {
-                        fprintf(GPLOTP,"set term push\n");
-                        fprintf(GPLOTP,"set term postscript eps color\n");
+                        fprintf(GPLOTP,"set term push\n"); /* save term settings */
+                        fprintf(GPLOTP,"unset term\n"); /* unset all term-specific settings */
+                        fprintf(GPLOTP,"set term postscript eps color font \"%s,%d\"\n", \
+                          get_str("font"), get_int("fontsize"));
+                        fprintf(GPLOTP,"set tics nomirror out font \"%s,%d\"\n", \
+                          get_str("font"), get_int("fontsize"));
                         fprintf(GPLOTP,"set output \"%s.eps\"\n",svalue);
                         fprintf(GPLOTP,"replot\n");
                         fprintf(GPLOTP,"set term pop\n");
+                        fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
+                          get_str("font"), get_int("fontsize"));
                         fflush(GPLOTP);
                         printf("  wrote %s.eps in current directory\n",svalue);
                     }
@@ -1677,6 +1683,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     {
                         PRINTERR("  Error: Name of file required .\n");
                     }
+                    plot_mode = PM_UNDEFINED;
                     break;
                 default :
                     printf("  Unknown command '%c'. Type q to quit, ? for help\n", c);
@@ -2217,7 +2224,8 @@ int load_options(const char *filename, int exit_if_nofile)
                             sscanf(line,"%*s %*s %lf",&GOPTS[idx_opt].numval);
                             break;
                         case 's':
-                            sscanf(line,"%*s %*s %[^#]",GOPTS[idx_opt].strval);
+                            sscanf(line,"%*s %*s %[^#\n]",GOPTS[idx_opt].strval);
+                            trim_whitespaces(GOPTS[idx_opt].strval);
                             break;
                     }
                   success = 1;
@@ -3031,7 +3039,7 @@ int read_msg( void )
 int gnuplot_config(const int gx, const int gy, nve dxv)
 {
   /* color definitions */
-  fprintf(GPLOTP,"set linetype 1  lc rgb '#003323' \n"); /* black */
+  fprintf(GPLOTP,"set linetype 1  lc rgb '#002313' \n"); /* black */
   fprintf(GPLOTP,"set linetype 2  lc rgb '#0000cc' \n"); /* blue */
   fprintf(GPLOTP,"set linetype 4  lc rgb '#cc0000' \n"); /* red */
   fprintf(GPLOTP,"set linetype 3  lc rgb '#00cc00' \n"); /* green */
@@ -3072,6 +3080,18 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
   fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
 
+  return 0;
+}
+
+
+int trim_whitespaces(char *s)
+{
+  size_t i = strlen(s) - 1;
+  while ( s[i] == ' ' )
+  {
+    s[i] = '\0';
+    --i;
+  }
   return 0;
 }
 

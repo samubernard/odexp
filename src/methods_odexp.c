@@ -63,9 +63,11 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     }
     if ( get_int("progress") > 2 ) /* level 3: print numerical integration information */
     {
-      printf("\n  %ssolver  time     h0       h       %s\n",T_HEAD,T_NOR);
-      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s\n\033[F", \
-          T_DET, get_str("solver"), T_NOR, T_VAL, tt, T_NOR, T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR); 
+      printf("\n  %ssolver  time     h0       h        pop size   est. time%s\n",T_HEAD,T_NOR);
+      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s %s%5zu%s       %s%-6.1f sec%s\n\033[F", \
+          T_DET, get_str("solver"), T_NOR, T_VAL, tt, T_NOR, \
+          T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
+          T_VAL, POP_SIZE, T_NOR, T_VAL, (double)(clock() - start) / CLOCKS_PER_SEC * (1 - fcmpl) / fcmpl, T_NOR); 
     }
 }
 

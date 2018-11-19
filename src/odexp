@@ -1274,7 +1274,7 @@ $if odexp
 # extend 
 "\C-e": "e\C-j"
 # repeat last command (\e[A history-search-backward arrow up)
-"\C-r": "\e[A\C-j"
+"\C-y": "\e[A\C-j"
 $endif
 );
 
