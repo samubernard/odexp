@@ -719,7 +719,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     }
 
     /* parameter range */
-    name2index(get_str("act_par"), mu, &p);
+    name2index(get_str("actpar"), mu, &p);
     mu.value[p] = get_dou("par0");
     ymin = malloc(SIM->nbr_var*sizeof(double));
     ymax = malloc(SIM->nbr_var*sizeof(double));
@@ -1267,7 +1267,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
 {
     /* naive steady state continuation method */
     clock_t start = clock();
-    long p = get_int("act_par"); 
+    long p = get_int("actpar"); 
     size_t i;
     long ntry = 0;
     long max_fail = get_int("maxfail");
