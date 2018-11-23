@@ -453,22 +453,26 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         strcpy(dxv.name[i],ics.name[i]);
         strcpy(dxv.expression[i],ics.expression[i]);
+        strcpy(dxv.attribute[i],ics.attribute[i]);
     }
     /* DBPRINT("dxv"); */
     for (i = ode_system_size; i < ode_system_size + fcn.nbr_el; i++)
     {
         strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
         strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
+        strcpy(dxv.attribute[i],fcn.attribute[i-ode_system_size]);
     }
     for (i = ode_system_size + fcn.nbr_el; i < ode_system_size + fcn.nbr_el + psi.nbr_el; i++)
     {
         strcpy(dxv.name[i],psi.name[i-ode_system_size-fcn.nbr_el]);
         strcpy(dxv.expression[i],psi.expression[i-ode_system_size-fcn.nbr_el]);
+        strcpy(dxv.attribute[i],psi.attribute[i-ode_system_size-fcn.nbr_el]);
     }
     for (i = ode_system_size + fcn.nbr_el + psi.nbr_el; i < dxv.nbr_el; i++)
     {
         strcpy(dxv.name[i],mfd.name[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
         strcpy(dxv.expression[i],mfd.expression[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
+        strcpy(dxv.attribute[i],mfd.attribute[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
     }
 
 
@@ -1788,7 +1792,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     if ( (gy-2) < total_nbr_x ) /* variable */
                     {
-                      fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
+                      if ( get_attribute(dxv.attribute[gy-2],"tag",svalue) )
+                      {
+                        fprintf(GPLOTP,"set ylabel '%s'\n",svalue);
+                      }
+                      else
+                      {
+                        fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
+                      }
                     }
                     if ( plot3d == 1 )
                     {
@@ -3095,3 +3106,25 @@ int trim_whitespaces(char *s)
   return 0;
 }
 
+int get_attribute(const char *s, const char *key, char *val)
+{
+  int found = 0;
+  size_t k = 0;
+  size_t slen = strlen(s);
+  size_t keylen = strlen(key);
+  while ( k < slen )
+  {
+    if(strncmp(s + k,key,keylen)==0)
+    {
+      /* key found */
+      found = 1;
+      sscanf(s + k, "%*s = %[^;}]", val);
+      break;
+    }
+    else
+    {
+      ++k;
+    }
+  }
+  return found;
+}

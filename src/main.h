@@ -60,3 +60,4 @@ int read_msg( void );
 int gnuplot_config( const int gx, const int gy, nve dxv);
 
 int trim_whitespaces(char *s);
+int get_attribute(const char *s, const char *key, char *val);
