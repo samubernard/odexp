@@ -1788,7 +1788,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     }
                     else if ( (gx-2) < total_nbr_x ) /* xlabel = name of variable  */
                     {
-                      fprintf(GPLOTP,"set xlabel '%s'\n",dxv.name[gx-2]);
+                      if ( get_attribute(dxv.attribute[gx-2],"tag",svalue) )
+                      {
+                        fprintf(GPLOTP,"set xlabel '%s'\n",svalue);
+                      }
+                      else
+                      {
+                        fprintf(GPLOTP,"set xlabel '%s'\n",dxv.name[gx-2]);
+                      }
                     }
                     if ( (gy-2) < total_nbr_x ) /* variable */
                     {
@@ -1805,7 +1812,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     {
                       if ( (gz-2) < total_nbr_x ) /* variable */
                       {
-                        fprintf(GPLOTP,"set zlabel '%s'\n",dxv.name[gz-2]);
+                        if ( get_attribute(dxv.attribute[gz-2],"tag",svalue) )
+                        {
+                          fprintf(GPLOTP,"set zlabel '%s'\n",svalue);
+                        }
+                        else
+                        {
+                          fprintf(GPLOTP,"set zlabel '%s'\n",dxv.name[gz-2]);
+                        }
                       }
                     }
                 }
