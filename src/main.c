@@ -1048,6 +1048,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     break;
                 case 'l' : /* list parameters */
                     sscanf(cmdline+1,"%c",&op);               
+                    plot_mode = PM_UNDEFINED;  
                     if (op == 'p')
                     {
                         for (i=0; i<mu.nbr_el; i++)

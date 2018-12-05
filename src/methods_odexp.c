@@ -29,7 +29,7 @@ static void set_abort_odesolver_flag( int sig )
 }
 
 /* print progress */
-static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start )
+static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start, char *msg )
 {
     struct winsize w; /* get terminal window size */
     double fcmpl = (tt-t0)/(tfinal-t0);
@@ -37,13 +37,14 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     /* char * arrow = "``'-.,_,.-'"; */ /* a wave */
     char * arrow = " "; /* this is the string for the progress bar */
     int arrow_length = strlen(arrow); 
-    if ( get_int("progress") )  /* level > 0: clear two lines */
+    printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line msg line */
+    if ( get_int("progress") )  /* level > 0: clear lines */
     {
-      printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line  */
+      printf("%s",LINEUP_AND_CLEAR);  /* clear one line  */
       if ( get_int("progress") > 2 ) /* level 3: clear two more lines */
       {
-        printf("%s",LINEUP_AND_CLEAR);  /* clear the line above */
-        printf("%s",LINEUP_AND_CLEAR);  /* clear the line above */
+        printf("%s",LINEUP_AND_CLEAR);  /* clear two more lines */
+        printf("%s",LINEUP_AND_CLEAR);  
       }
     }
     if ( get_int("progress") > 0 )  /* level 1: print time elapsed and percent complete */
@@ -69,6 +70,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
           T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
           T_VAL, POP_SIZE, T_NOR, T_VAL, (double)(clock() - start) / CLOCKS_PER_SEC * (1 - fcmpl) / fcmpl, T_NOR); 
     }
+    PRINTWARNING("\n%s", msg);
 }
 
 int odesolver( oderhs pop_ode_rhs, 
@@ -167,6 +169,9 @@ int odesolver( oderhs pop_ode_rhs,
 
     /* iterators */
     size_t i,j;
+
+    /* warning/error message */
+    char msg[EXPRLENGTH];
 
     if ( strncmp(get_str("solver"),"rk4",NAMELENGTH) == 0 )
     {
@@ -418,11 +423,13 @@ int odesolver( oderhs pop_ode_rhs,
     {
         printf("from default initial conditions...\n");
     }
+    
     if ( get_int("progress") > 2 ) /* level 3: two newlines  */
     {
       printf("\n\n");
     }
     fflush(stdout);
+    snprintf(msg,EXPRLENGTH,""); /* set message to empty string */
 
     s = gsl_odeiv2_step_alloc(odeT,sim_size);
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
@@ -498,7 +505,7 @@ int odesolver( oderhs pop_ode_rhs,
               h = hmin;
               if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
               {
-                PRINTWARNING("\n%s  warning: hmin reached at t = %f (h=%f). Continuing with h = %e\n",LINEUP_AND_CLEAR,t, hmin,h);
+                snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
                 hmin_alert = 1; 
               }
             }
@@ -583,7 +590,7 @@ int odesolver( oderhs pop_ode_rhs,
           }
         }
        
-        printf_progress(t,tspan->array[0],t1, start);
+        printf_progress(t,tspan->array[0],t1, start, msg);
 
         hmin_alert = 0;
         disc_alert = 0;
