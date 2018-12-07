@@ -38,14 +38,11 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     char * arrow = " "; /* this is the string for the progress bar */
     int arrow_length = strlen(arrow); 
     printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line msg line */
-    if ( get_int("progress") )  /* level > 0: clear lines */
+    printf("%s",LINEUP_AND_CLEAR);  /* clear one line  */
+    if ( get_int("progress") > 2 ) /* level 3: clear two more lines */
     {
-      printf("%s",LINEUP_AND_CLEAR);  /* clear one line  */
-      if ( get_int("progress") > 2 ) /* level 3: clear two more lines */
-      {
-        printf("%s",LINEUP_AND_CLEAR);  /* clear two more lines */
-        printf("%s",LINEUP_AND_CLEAR);  
-      }
+      printf("%s",LINEUP_AND_CLEAR);  /* clear two more lines */
+      printf("%s",LINEUP_AND_CLEAR);  
     }
     if ( get_int("progress") > 0 )  /* level 1: print time elapsed and percent complete */
     {
