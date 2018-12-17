@@ -453,7 +453,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
         strcpy(dxv.name[i],ics.name[i]);
         strcpy(dxv.expression[i],ics.expression[i]);
-        strcpy(dxv.attribute[i],ics.attribute[i]);
+        strcpy(dxv.attribute[i],eqn.attribute[i]);
     }
     /* DBPRINT("dxv"); */
     for (i = ode_system_size; i < ode_system_size + fcn.nbr_el; i++)
@@ -932,7 +932,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             pars = SIM->pop->end;
                         }
                         set_int("particle",pars->nextel != NULL ? pars->nextel->id : SIM->pop->start->id);
-                        plot_mode = PM_REPLOT;
+                        plot_mode = PM_NORMAL;
                         printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
                                 T_IND, get_int("particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
                     }
@@ -950,7 +950,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             pars = SIM->pop->start;
                         }
                         set_int("particle",pars->prevel != NULL ? pars->prevel->id : SIM->pop->end->id);
-                        plot_mode = PM_REPLOT;
+                        plot_mode = PM_NORMAL;
                         printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
                                 T_IND, get_int("particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
                     }
