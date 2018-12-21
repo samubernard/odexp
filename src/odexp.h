@@ -15,6 +15,8 @@
 typedef long RANDINT;
 #define POISSON_RAND_MAX RAND_MAX
 
+enum vartype {Y, A, E, M, C, P}; /* possible types of variables */
+
 typedef int (*oderhs)(double, const double *, double *, void *);
 typedef int (*odeic)(double, double *, void *);
 typedef int (*rootrhs)(const gsl_vector *, void *, gsl_vector *);
@@ -156,6 +158,9 @@ double linchaindelay(const double root, const double *chain, const size_t link, 
 typedef double (*coupling_function)(double, void *);
 int compute_coupling(coupling_function f, double *x, double *y, int N);
 
+double get_val_from_par(par *myself,int shift,char *name, enum vartype type);
+
+
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
            __typeof__ (b) _b = (b); \
@@ -258,6 +263,34 @@ int compute_coupling(coupling_function f, double *x, double *y, int N);
        myself_->sister == NULL ? 0.0 : myself_->sister->y[index];                                             \
      })                                                     
 
+
+#define KY(name,degree)                                      \
+    ({ static size_t index = 0;                               \
+       par *kpar_ = myself_;                                       \
+       int dir = (degree > 0) - (degree<0);                       \
+       int d = degree*dir;                                          \
+       if ( dir > 0 )                                               \
+       {                                                            \
+         while ( d-- )                                        \
+         {                                                         \
+             kpar_ = kpar_->nextel == NULL ? SIM->pop->start : kpar_->nextel; \
+         }                                                         \
+       }                                                          \
+       else                                                       \
+       {                                                          \
+          while ( d-- )                                      \
+          {                                                       \
+            kpar_ = kpar_->prevel == NULL ? SIM->pop->end : kpar_->prevel; \
+          }                                                       \
+       }                                                          \
+       while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_var;                    \
+       }                                                      \
+       kpar_->y[index];                                             \
+     })                                                     
+
+
 #define MF(name)                                          \
     ({ static size_t index = 0;                               \
        while ( strncmp(name, SIM->mfdnames[index], NAMELENGTH) ) \
@@ -267,7 +300,7 @@ int compute_coupling(coupling_function f, double *x, double *y, int N);
        SIM->meanfield[index];                                             \
      })                                                     
 
-#define GET_AUX(name)                                           \
+#define I_AUX(name)                                             \
     ({ static size_t index = 0;                                 \
       while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
       {                                                         \
@@ -276,7 +309,7 @@ int compute_coupling(coupling_function f, double *x, double *y, int N);
       index;                                                    \
     })
 
-#define GET_PSI(name)                                           \
+#define I_PSI(name)                                             \
     ({ static size_t index = 0;                                 \
       while ( strncmp(name, SIM->psinames[index], NAMELENGTH) ) \
       {                                                         \
