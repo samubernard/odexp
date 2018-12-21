@@ -291,6 +291,8 @@ int compute_coupling(coupling_function f, double *x, double *y, int N);
 #define ISDAUGHTER (myself_->sister != NULL)
 #define ISMOTHER   (myself_->sister == NULL)
 #define ID      (myself_->id)
+#define OID     (other_->id)
+#define MID     (myself_->id) /* added for consistency - same a ID */
 #if 0 /* in development */
 #define PREVIOUS (myself_->prevel)
 #define NEXT     (myself_->nextel)
@@ -300,6 +302,7 @@ int compute_coupling(coupling_function f, double *x, double *y, int N);
 #define NEXTCIRC     (myself_->nextel == NULL ? SIM->pop->start : myself_->nextel)
 #endif
 
+/*  White noise */ 
 #define DWDT (randN(0,1)/sqrt(*SIM->h))        
 
 

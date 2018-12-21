@@ -82,6 +82,7 @@ int odesolver( oderhs pop_ode_rhs,
     double tot_odeiv = 0.0;
     
     /* gsl_odeiv */
+    enum solver solver;
     double *y,
            *f;
     double hmin     = get_dou("hmin"),
@@ -173,31 +174,38 @@ int odesolver( oderhs pop_ode_rhs,
     if ( strncmp(get_str("solver"),"rk4",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk4;
+        solver = GSL_RK4;
     }
     else if ( strncmp(get_str("solver"),"rk2",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk2;
+        solver = GSL_RK2;
     }
     else if ( strncmp(get_str("solver"),"rkf45",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rkf45;
+        solver = GSL_RKF45;
     }
     else if ( strncmp(get_str("solver"),"rkck",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rkck;
+        solver = GSL_RKCK;
     }
     else if ( strncmp(get_str("solver"),"rk8pd",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk8pd;
+        solver = GSL_RK8PD;
     }
     else if ( strncmp(get_str("solver"),"bsimp",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_bsimp;
+        solver = GSL_BSIMP;
     }
     else if ( strncmp(get_str("solver"),"fe",NAMELENGTH) == 0 )
     {
         /* see fe_apply below */
         odeT = gsl_odeiv2_step_fe;
+        solver = H_FE;
     }
     else if ( strncmp(get_str("solver"),"iteration",NAMELENGTH) == 0 )
     {
@@ -205,11 +213,13 @@ int odesolver( oderhs pop_ode_rhs,
         odeT = gsl_odeiv2_step_iteration;
         set_dou("h0", 1.0);
         set_int("res", (int)(tspan->array[tspan->length-1] - tspan->array[0]) + 1);
+        solver = H_ITERATION;
     }
     else if ( strncmp(get_str("solver"),"dde",NAMELENGTH) == 0 )
     {
         /* see dde_apply below */
         odeT = gsl_odeiv2_step_dde;
+        solver = H_DDE;
     }
     else
     {
@@ -480,22 +490,19 @@ int odesolver( oderhs pop_ode_rhs,
         sys = (gsl_odeiv2_system) {ode_rhs, ode_jac, sim_size, SIM->pop->start};
         while ( t < tnext)
         {
-            if ( odeT == gsl_odeiv2_step_fe )
+            switch (solver)
             {
-              status = fe_apply(&sys,&t,tnext,&h,y);
-              h = get_dou("h0"); /* reset h */
-            }
-            else if ( odeT == gsl_odeiv2_step_iteration )
-            {
-              status = iteration_apply(&sys,&t,y);
-            }
-            else if ( odeT == gsl_odeiv2_step_dde )
-            {
-              status = dde_apply(&sys,&t,tnext,&h,y);
-            }
-            else
-            {
-              status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+              case H_FE:
+                status = fe_apply(&sys,&t,tnext,&h,y);
+                break;
+              case H_ITERATION: 
+                status = iteration_apply(&sys,&t,y);
+                break;
+              case H_DDE:
+                status = dde_apply(&sys,&t,tnext,&h,y);
+                break;
+              default: 
+                status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
             }
             if ( h < hmin )
             {
@@ -1881,6 +1888,8 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
     y[i] = y[i] + (*h)*f[i];
   }
   *t += *h;
+  
+  *h = get_dou("h0"); /* reset h */
 
   free(f);
   return GSL_SUCCESS;
