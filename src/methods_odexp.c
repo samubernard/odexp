@@ -97,6 +97,18 @@ int odesolver( oderhs pop_ode_rhs,
 
     /* create a dummy step type fe that is a copy of rk2 */
     /* TODO: there should be a smarter way to do that */
+    gsl_odeiv2_step_type *gsl_odeiv2_step_house = malloc( sizeof(gsl_odeiv2_step_type) );
+    *gsl_odeiv2_step_house = (gsl_odeiv2_step_type) { "house", 0, 0, 
+                            gsl_odeiv2_step_rk2->alloc,
+                            gsl_odeiv2_step_rk2->apply,
+                            gsl_odeiv2_step_rk2->set_driver,
+                            gsl_odeiv2_step_rk2->reset,
+                            gsl_odeiv2_step_rk2->order,
+                            gsl_odeiv2_step_rk2->free };
+
+#if 0
+    /* create a dummy step type fe that is a copy of rk2 */
+    /* TODO: there should be a smarter way to do that */
     gsl_odeiv2_step_type *gsl_odeiv2_step_fe = malloc( sizeof(gsl_odeiv2_step_type) );
     *gsl_odeiv2_step_fe = (gsl_odeiv2_step_type) { "fe", 0, 0, 
                             gsl_odeiv2_step_rk2->alloc,
@@ -125,6 +137,7 @@ int odesolver( oderhs pop_ode_rhs,
                             gsl_odeiv2_step_rk2->reset,
                             gsl_odeiv2_step_rk2->order,
                             gsl_odeiv2_step_rk2->free };
+#endif
 
     int status;
 
@@ -204,13 +217,15 @@ int odesolver( oderhs pop_ode_rhs,
     else if ( strncmp(get_str("solver"),"fe",NAMELENGTH) == 0 )
     {
         /* see fe_apply below */
-        odeT = gsl_odeiv2_step_fe;
+        /* odeT = gsl_odeiv2_step_fe; */
+        odeT = gsl_odeiv2_step_house; 
         solver = H_FE;
     }
     else if ( strncmp(get_str("solver"),"iteration",NAMELENGTH) == 0 )
     {
         /* see iteration_apply below */
-        odeT = gsl_odeiv2_step_iteration;
+        /* odeT = gsl_odeiv2_step_iteration; */
+        odeT = gsl_odeiv2_step_house;
         set_dou("h0", 1.0);
         set_int("res", (int)(tspan->array[tspan->length-1] - tspan->array[0]) + 1);
         solver = H_ITERATION;
@@ -218,7 +233,8 @@ int odesolver( oderhs pop_ode_rhs,
     else if ( strncmp(get_str("solver"),"dde",NAMELENGTH) == 0 )
     {
         /* see dde_apply below */
-        odeT = gsl_odeiv2_step_dde;
+        /* odeT = gsl_odeiv2_step_dde; */
+        odeT = gsl_odeiv2_step_house;
         solver = H_DDE;
     }
     else
