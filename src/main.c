@@ -54,7 +54,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"h0","h0", 'd', 1e-1, 0, "",  "initial time step h0", "ode"},
     {"abstol","abstol", 'd', 1e-6, 0, "", "ode solver ABSolute TOLerance", "ode"},
     {"reltol","reltol", 'd', 0.0, 0, "", "ode solver RELative TOLerance", "ode"},
-    {"meth","solver", 's', 0.0, 0, "rk8pd", "ode solver stepping METHod rk2 | rk4 | rkf45 | rkck | {rk8pd} | bsimp", "ode"},
+    {"meth","solver", 's', 0.0, 0, "rkck", "ode solver stepping METHod rk2 | rk4 | rkf45 | {rkck} | rk8pd | bsimp", "ode"},
     {"pm","popmode", 's', 0.0, 0, "population", "Population simulation Mode single | {population}", "population"},
     {"ps","popsize", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
     {"cf","closefiles", 'i', 0.0, 0, "", "close particle files between writes (slow when on)", "population"},
@@ -2019,7 +2019,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     /* reset xterm title */
     printf("\033]0;\007");
 
-    printf(" done\n");
+    printf(" bye\n");
 
     return status;
 

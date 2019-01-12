@@ -4,7 +4,9 @@
 #include "datastruct.h"
 #include <gsl/gsl_odeiv2.h>
 
-enum solver { GSL_RK2, GSL_RK4, GSL_RKF45, GSL_RKCK, GSL_RK8PD, GSL_RK2IMP, GSL_RK4IMP, GSL_BSIMP, RK1IMP, MSADAMS, MSBDF, H_FE, H_ITERATION, H_DDE}; 
+enum solver { GSL_RK2, GSL_RK4, GSL_RKF45, GSL_RKCK, GSL_RK8PD, 
+              GSL_RK2IMP, GSL_RK4IMP, GSL_BSIMP, GSL_RK1IMP, GSL_MSADAMS, GSL_MSBDF, 
+              H_FE, H_ITERATION, H_DDE}; 
 
 /* extern size_t ode_system_size; */
 extern int *NUM_IC;

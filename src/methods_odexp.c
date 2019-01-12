@@ -224,10 +224,10 @@ int odesolver( oderhs pop_ode_rhs,
     else
     {
         PRINTERR("  Error: %s is not a known step method\n"
-                 "         will use 'rk4' as a default step method\n",\
+                 "         will use 'rkck' as a default step method\n",\
                 get_str("solver"));
-        odeT = gsl_odeiv2_step_rk4;
-        set_str("solver","rk4");
+        odeT = gsl_odeiv2_step_rkck;
+        set_str("solver","rkck");
     }
 
     /* tspan */
@@ -514,7 +514,9 @@ int odesolver( oderhs pop_ode_rhs,
               }
             }
             if (status != GSL_SUCCESS) 
-                break; /* break out of inner loop */
+            {
+               break;
+            }   
                 
             update_SIM_from_y(y);
         }
@@ -608,7 +610,7 @@ int odesolver( oderhs pop_ode_rhs,
     }
     else
     {
-        printf("GSL Error %d occured.\n", status);
+        PRINTERR("  GSL error %d: %s\n", status, gsl_strerror (status));
     }
 
     fclose(quickfile);
@@ -850,8 +852,10 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
               }
             }
             if (status != GSL_SUCCESS)
-                break;
-                
+            {
+               PRINTERR("  error: %s\n", gsl_strerror (status));
+               break;
+            }   
         }
 
         if (disc_alert == 1)

@@ -667,9 +667,42 @@ AUX TH theta - ( (int) (theta/2/PI) * 2 * PI )
   })
 .fi
 
+.SS Stepping methods
+
+.TP
+.BR rk2 
+GSL Explicit embedded Runge-Kutta (2, 3) method 
+
+.TP
+.BR rk4 
+GSL Explicit 4th order (classical) Runge-Kutta 
+
+.TP
+.BR rkf45
+GSL Explicit embedded Runge-Kutta-Fehlberg (4, 5) method.
+
+.TP
+.BR rkck 
+GSL Explicit embedded Runge-Kutta Cash-Karp (4, 5) method. 
+
+.TP
+.BR rk8pd 
+GSL Explicit embedded Runge-Kutta Prince-Dormand (8, 9) method.
+
+.TP
+.BR bsimp 
+GSL Implicit Bulirsch-Stoer method of Bader and Deuflhard.
+
+.TP
+.BR fe 
+Explicit Forward Euler with fixed time steps. Combined the macro DWDT, this is the Euler-Maruyama scheme.
+
+.TP
+.BR iteration 
+Not an ODE stepper. The stepper assigns the RHS of the equation to the updated state variable.
 
 .SH EXAMPLES
-Here is an example of an odexp file for the Lotka-Volterra equations
+Here is an example of an odexp file for the Lotka-Volterra equations.
 
 .RS
 .nf
