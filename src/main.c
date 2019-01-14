@@ -83,7 +83,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
     {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},
     {"wti","wintitle", 's', 0.0, 0, "", "Window TItle", "generalSettings"},
-    {"ros","runonstartup", 'i', 0.0, 1, "", "Run On startup", "generalSettings"} };
+    {"ros","runonstartup", 'i', 0.0, 1, "", "Run On Startup", "generalSettings"} };
 
 
 /* what kind of initial conditions to take */
