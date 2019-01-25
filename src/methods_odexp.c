@@ -95,50 +95,6 @@ int odesolver( oderhs pop_ode_rhs,
     gsl_odeiv2_evolve * e;
     gsl_odeiv2_system sys; 
 
-    /* create a dummy step type fe that is a copy of rk2 */
-    /* TODO: there should be a smarter way to do that */
-    gsl_odeiv2_step_type *gsl_odeiv2_step_house = malloc( sizeof(gsl_odeiv2_step_type) );
-    *gsl_odeiv2_step_house = (gsl_odeiv2_step_type) { "house", 0, 0, 
-                            gsl_odeiv2_step_rk2->alloc,
-                            gsl_odeiv2_step_rk2->apply,
-                            gsl_odeiv2_step_rk2->set_driver,
-                            gsl_odeiv2_step_rk2->reset,
-                            gsl_odeiv2_step_rk2->order,
-                            gsl_odeiv2_step_rk2->free };
-
-#if 0
-    /* create a dummy step type fe that is a copy of rk2 */
-    /* TODO: there should be a smarter way to do that */
-    gsl_odeiv2_step_type *gsl_odeiv2_step_fe = malloc( sizeof(gsl_odeiv2_step_type) );
-    *gsl_odeiv2_step_fe = (gsl_odeiv2_step_type) { "fe", 0, 0, 
-                            gsl_odeiv2_step_rk2->alloc,
-                            gsl_odeiv2_step_rk2->apply,
-                            gsl_odeiv2_step_rk2->set_driver,
-                            gsl_odeiv2_step_rk2->reset,
-                            gsl_odeiv2_step_rk2->order,
-                            gsl_odeiv2_step_rk2->free };
-
-    /* create a dummy step type dde that is a copy of rk2 */
-    gsl_odeiv2_step_type *gsl_odeiv2_step_dde = malloc( sizeof(gsl_odeiv2_step_type) );
-    *gsl_odeiv2_step_dde = (gsl_odeiv2_step_type) { "dde", 0, 0, 
-                            gsl_odeiv2_step_rk2->alloc,
-                            gsl_odeiv2_step_rk2->apply,
-                            gsl_odeiv2_step_rk2->set_driver,
-                            gsl_odeiv2_step_rk2->reset,
-                            gsl_odeiv2_step_rk2->order,
-                            gsl_odeiv2_step_rk2->free };
-
-    /* create a dummy step type iteration that is a copy of rk2 */
-    gsl_odeiv2_step_type *gsl_odeiv2_step_iteration = malloc( sizeof(gsl_odeiv2_step_type) );
-    *gsl_odeiv2_step_iteration = (gsl_odeiv2_step_type) { "iteration", 0, 0, 
-                            gsl_odeiv2_step_rk2->alloc,
-                            gsl_odeiv2_step_rk2->apply,
-                            gsl_odeiv2_step_rk2->set_driver,
-                            gsl_odeiv2_step_rk2->reset,
-                            gsl_odeiv2_step_rk2->order,
-                            gsl_odeiv2_step_rk2->free };
-#endif
-
     int status;
 
     oderhs ode_rhs = NULL;
@@ -184,6 +140,7 @@ int odesolver( oderhs pop_ode_rhs,
     /* warning/error message */
     char msg[EXPRLENGTH];
 
+    odeT = gsl_odeiv2_step_rkck; /* RK-Cash-Karp as default solver */
     if ( strncmp(get_str("solver"),"rk4",NAMELENGTH) == 0 )
     {
         odeT = gsl_odeiv2_step_rk4;
@@ -217,15 +174,11 @@ int odesolver( oderhs pop_ode_rhs,
     else if ( strncmp(get_str("solver"),"fe",NAMELENGTH) == 0 )
     {
         /* see fe_apply below */
-        /* odeT = gsl_odeiv2_step_fe; */
-        odeT = gsl_odeiv2_step_house; 
         solver = H_FE;
     }
     else if ( strncmp(get_str("solver"),"iteration",NAMELENGTH) == 0 )
     {
         /* see iteration_apply below */
-        /* odeT = gsl_odeiv2_step_iteration; */
-        odeT = gsl_odeiv2_step_house;
         set_dou("h0", 1.0);
         set_int("res", (int)(tspan->array[tspan->length-1] - tspan->array[0]) + 1);
         solver = H_ITERATION;
@@ -233,8 +186,6 @@ int odesolver( oderhs pop_ode_rhs,
     else if ( strncmp(get_str("solver"),"dde",NAMELENGTH) == 0 )
     {
         /* see dde_apply below */
-        /* odeT = gsl_odeiv2_step_dde; */
-        odeT = gsl_odeiv2_step_house;
         solver = H_DDE;
     }
     else
@@ -242,7 +193,6 @@ int odesolver( oderhs pop_ode_rhs,
         PRINTERR("  Error: %s is not a known step method\n"
                  "         will use 'rkck' as a default step method\n",\
                 get_str("solver"));
-        odeT = gsl_odeiv2_step_rkck;
         set_str("solver","rkck");
     }
 
