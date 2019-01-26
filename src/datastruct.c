@@ -473,7 +473,8 @@ int par_birth ( void )
     {
       if ( (p->fid = fopen(p->buffer,"w") ) == NULL )
       {
-        PRINTERR("error: could not open file '%s', exiting...\n",p->buffer);
+        PRINTERR("error: could not open particle file '%s' while" \
+            " creating particle %zu, exiting...\n",p->buffer,p->id);
         exit ( EXIT_FAILURE );
       }
     }
@@ -524,12 +525,15 @@ int par_repli (par *mother)
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
 
-    if ( ( p->fid = fopen(p->buffer,"w") ) == NULL )
+    if ( get_int("closefiles") == 0 && get_int("writefiles") )
     {
-      PRINTERR("error: could not open file '%s', exiting...\n",p->buffer);
-      exit ( EXIT_FAILURE );
+      if ( ( p->fid = fopen(p->buffer,"w") ) == NULL )
+      {
+        PRINTERR("  error: could not open particle file '%s' while replicating" \
+                 " particle %zu, exiting...\n",p->buffer,p->id);
+        exit ( EXIT_FAILURE );
+      }
     }
-
     p->sister = mother; /* pointer to mother particle. 
                          * Warning: existence of mother not guarateed 
                          * p->sister is reset to NULL after replication
@@ -674,7 +678,7 @@ int fwrite_particle_state(const double *restrict t, par *p)
     {
       if ( (p->fid = fopen(p->buffer,"a") ) == NULL )
       {
-        PRINTERR("error: could not open file '%s', exiting...\n",p->buffer);
+        PRINTERR("error: could not open particle file '%s' for writing, exiting...\n",p->buffer);
         exit ( EXIT_FAILURE );
       }
     }
