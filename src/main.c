@@ -1846,7 +1846,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   {
                       snprintf(plot_cmd,EXPRLENGTH,\
                         "\".odexp/stats.dat\" binary format=\"%%%zulf%%%dd\" using %zu:%zu "\
-                        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(meanfield)\"\n",\
+                        "with %s title \"%s\".\" vs \".\"%s\". \" \"\n",\
                         1 + mfd.nbr_el, 4,\
                         gx > 1 ? gx - ode_system_size - fcn.nbr_el - psi.nbr_el : gx,\
                         gy > 1 ? gy - ode_system_size - fcn.nbr_el - psi.nbr_el : gy,\
@@ -1878,7 +1878,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   else
                   {
                       snprintf(plot_cmd,EXPRLENGTH,\
-                        "\".odexp/stats.dat\" binary format=\"%%%zulf%%%dd\" using %zu:%zu%zu "\
+                        "\".odexp/stats.dat\" binary format=\"%%%zulf%%%dd\" using %zu:%zu:%zu "\
                         "with %s title \"(meanfield)\"\n",\
                         1 + mfd.nbr_el, 4,\
                         gx > 1 ? gx - ode_system_size - fcn.nbr_el - psi.nbr_el : gx,\
