@@ -241,7 +241,7 @@ int odesolver( oderhs pop_ode_rhs,
     remove_id_files(); /* remove files before fopen'ing again. Do not report errors, files might be absent */
     if ( ( SIM->fid = fopen(SIM->stats_buffer, "w") ) == NULL )
     {
-      PRINTERR("error: could not open file '%s', exiting...\n",SIM->stats_buffer);
+      PRINTERR("  error: could not open file stat file %s', exiting...\n",SIM->stats_buffer);
       exit ( EXIT_FAILURE );
     }
 
@@ -287,7 +287,7 @@ int odesolver( oderhs pop_ode_rhs,
              {
               if ( ( pars->fid = fopen(pars->buffer,"w") ) == NULL ) /* fopen buffers for existing particles */
               {
-                PRINTERR("error: could not open file '%s', exiting...\n",pars->buffer);
+                PRINTERR("error: could not open particle file '%s', exiting...\n",pars->buffer);
                 exit ( EXIT_FAILURE );
               }
             }
@@ -350,7 +350,7 @@ int odesolver( oderhs pop_ode_rhs,
 
     if ( ( quickfile = fopen(quick_buffer,"w") ) == NULL )
     {
-      PRINTERR("error: could not open file '%s', exiting...\n",quick_buffer);
+      PRINTERR("  error: could not open current output file '%s', exiting...\n",quick_buffer);
       exit ( EXIT_FAILURE );
     }
     
@@ -709,7 +709,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     /* open output file */
     if ( ( file = fopen(current_data_buffer,"w") ) == NULL )
     {
-        PRINTERR("  Error: could not open file %s\n", current_data_buffer);
+        PRINTERR("  error: could not open range file %s\n", current_data_buffer);
         exit ( EXIT_FAILURE );
     }
 
@@ -1291,7 +1291,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
 
     if ( ( br_file = fopen("stst_branches.tab","a") ) == NULL )
     {
-      PRINTERR("error: could not open file '%s', exiting...\n","stst_branches.tab");
+      PRINTERR("  error: could not open branch file '%s', exiting...\n","stst_branches.tab");
       exit ( EXIT_FAILURE );
     }
     fprintf(br_file,"n\t%s",SIM->parnames[p]);
