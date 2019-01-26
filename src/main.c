@@ -588,7 +588,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         }
         else
         {
+            printf_status_bar( &tspan );
             rawcmdline = readline("odexp> ");
+            printf("%s","\033[J"); /* clear to the end of screen */
         }
         sscanf(rawcmdline," %c%n",&c,&charpos);
         cmdline = rawcmdline+charpos-1; /* eat white spaces */
@@ -3142,4 +3144,18 @@ int get_attribute(const char *s, const char *key, char *val)
     }
   }
   return found;
+}
+
+int printf_status_bar( double_array *tspan) 
+{
+  struct winsize w; /* get terminal window size */
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); /* get terminal window size in w */
+  printf("\n"); /* down one line */
+  printf("%s",T_BAR);
+  printf("par: %s=%g timespan: [%g,%g] ", get_str("actpar"), SIM->mu[get_int("actpar")], tspan->array[0], tspan->array[tspan->length-1]);
+  printf("mode: %s ", get_str("popmode"));
+  printf("solver: %s ", get_str("solver"));
+  printf("%s",T_NOR);
+  printf("%s","\033[F");  /* up one line  */
+  return 0;
 }

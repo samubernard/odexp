@@ -20,6 +20,7 @@ extern const char *T_OPT;  /* OPTION */
 extern const char *T_GPL;  /* MSG GPLOT */
 extern const char *T_PR;   /* SIMULATION PROGRESS */
 extern const char *T_HEAD; /* HEADER */
+extern const char *T_BAR;  /* STATUS BAR */
 extern const char *HLINE;  /* horizontal line */
 extern const char *LINEUP_AND_CLEAR; /* go up one line and clear it */
 
