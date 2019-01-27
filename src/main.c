@@ -36,6 +36,7 @@ struct gen_option GOPTS[NBROPTS] = {
     {"x","x",'s',0.0,0, "", "variable to plot on the X-axis (default T)", "plot"},
     {"y","y",'s',0.0,0, "", "variable to plot on the Y-axis (default x0)", "plot"},
     {"z","z",'s',0.0,0, "", "variable to plot on the Z-axis (default x1)", "plot"},
+    {"ind","indvar",'s',0.0,0, "time", "name of the INDependent variable {time}", "plot"},
     {"ho","hold", 'i', 0.0, 0, "", "HOld (1) or replace ({0}) variable on plot", "plot"},
     {"u","curves", 'i', 0.0, 0, "", "add (1) or replace ({0}) cUrves on plot", "plot"},
     {"st","style", 's', 0.0, 0, "lines", "plot STyle {lines} | points | dots | linespoints ...", "plot"},
@@ -1787,7 +1788,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 {
                     if (gx == 1) /* time evolution: xlabel = 'time' */
                     {
-                      fprintf(GPLOTP,"set xlabel 'time'\n");
+                      fprintf(GPLOTP,"set xlabel '%s'\n", get_str("indvar"));
                     }
                     else if ( (gx-2) < total_nbr_x ) /* xlabel = name of variable  */
                     {
@@ -1839,9 +1840,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   {
                       snprintf(plot_cmd,EXPRLENGTH,\
                         "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d "\
-                        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"˚%d\"\n",\
+                        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
                         get_int("particle"), nbr_cols, gx, gy,\
-                        get_str("style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time",\
+                        get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
+                                           gx > 1 ? dxv.name[gx-2] : get_str("indvar"), \
                         get_int("particle"));
                   }
                   else
@@ -1852,7 +1854,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         1 + mfd.nbr_el, 4,\
                         gx > 1 ? gx - ode_system_size - fcn.nbr_el - psi.nbr_el : gx,\
                         gy > 1 ? gy - ode_system_size - fcn.nbr_el - psi.nbr_el : gy,\
-                        get_str("style"),  gy > 1 ? dxv.name[gy-2] : "time", gx > 1 ? dxv.name[gx-2] : "time");
+                        get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
+                                           gx > 1 ? dxv.name[gx-2] : get_str("indvar"));
 
                   }
                   if ( get_int("hold") == 0 ) /* normal plot command: 2D, hold=0, curves=0 */
@@ -1872,7 +1875,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   {
                       snprintf(plot_cmd,EXPRLENGTH,\
                         "\".odexp/id%d.dat\" binary format=\"%%%zulf\" using %d:%d:%d "\
-                        "with %s title \"˚%d\"\n",\
+                        "with %s title \"(%d)\"\n",\
                         get_int("particle"), nbr_cols, gx, gy, gz,\
                         get_str("style"),\
                         get_int("particle"));
@@ -1881,7 +1884,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   {
                       snprintf(plot_cmd,EXPRLENGTH,\
                         "\".odexp/stats.dat\" binary format=\"%%%zulf%%%dd\" using %zu:%zu:%zu "\
-                        "with %s title \"(meanfield)\"\n",\
+                        "with %s\n",\
                         1 + mfd.nbr_el, 4,\
                         gx > 1 ? gx - ode_system_size - fcn.nbr_el - psi.nbr_el : gx,\
                         gy > 1 ? gy - ode_system_size - fcn.nbr_el - psi.nbr_el : gy,\
@@ -2929,7 +2932,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
      * psi    nbr_psi   in p
      * mfd    nbr_mfd   in SIM
      */
-    fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "time"); 
+    fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : get_str("indvar")); 
     fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
     /* Plot each particle as a transparent circle 
      * with the ID number inside it 
@@ -3105,7 +3108,7 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
 #endif
   fprintf(GPLOTP,"set grid xtics ytics ztics\n");
   fprintf(GPLOTP,"set key nobox noopaque\n");
-  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : "time"); 
+  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : get_str("indvar")); 
   fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
 
   return 0;
@@ -3151,29 +3154,33 @@ int printf_status_bar( double_array *tspan)
   struct winsize w; /* get terminal window size */
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); /* get terminal window size in w */
   printf("\n"); /* down one line */
-  printf("%s",T_BAR);
-  if ( get_int("hold") )
+  if ( w.ws_col > 79 )  
   {
-    printf("H ");
+    printf("%s",T_BAR);
+    if ( get_int("hold") )
+    {
+      printf("H ");
+    }
+    else if ( get_int("curves") )
+    {
+      printf("U ");
+    }
+    else
+    {
+      printf("  ");
+    }
+    printf("%s=%g  t=%g…%g ", get_str("actpar"), SIM->mu[get_int("actpar")], tspan->array[0], tspan->array[tspan->length-1]);
+    printf("%s ", get_str("popmode"));
+    printf("∫%s ", get_str("solver"));
+    printf("•%d ", get_int("res"));
+    printf("(%s,", get_str("x"));
+    printf("%s,", get_str("y"));
+    printf("%s) ", get_str("z"));
+    printf("|%g| ", get_dou("abstol"));
+    printf("%%%g ", get_dou("reltol"));
+    printf("(%d)",  get_int("particle"));
+    printf("%s",T_NOR);
+    printf("%s","\033[F");  /* up one line  */
   }
-  else if ( get_int("curves") )
-  {
-    printf("U ");
-  }
-  else
-  {
-    printf("  ");
-  }
-  printf("%s=%g  t=%g…%g ", get_str("actpar"), SIM->mu[get_int("actpar")], tspan->array[0], tspan->array[tspan->length-1]);
-  printf("%s ", get_str("popmode"));
-  printf("∫%s ", get_str("solver"));
-  printf("•%d ", get_int("res"));
-  printf("(%s,", get_str("x"));
-  printf("%s,", get_str("y"));
-  printf("%s) ", get_str("z"));
-  printf("a=%g ", get_dou("abstol"));
-  printf("r=%g ", get_dou("reltol"));
-  printf("%s",T_NOR);
-  printf("%s","\033[F");  /* up one line  */
   return 0;
 }

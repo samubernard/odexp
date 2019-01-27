@@ -35,7 +35,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     double fcmpl = (tt-t0)/(tfinal-t0);
     int i;
     /* char * arrow = "``'-.,_,.-'"; */ /* a wave */
-    char * arrow = " "; /* this is the string for the progress bar */
+    char * arrow = "~"; /* this is the string for the progress bar */
     int arrow_length = strlen(arrow); 
     printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line msg line */
     printf("%s",LINEUP_AND_CLEAR);  /* clear one line  */
@@ -61,7 +61,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     }
     if ( get_int("progress") > 2 ) /* level 3: print numerical integration information */
     {
-      printf("\n  %ssolver  time     h0       h        pop size   est. time%s\n",T_HEAD,T_NOR);
+      printf("\n  %ssolver  %-8s h0       h        pop size   est. time%s\n",T_HEAD, get_str("indvar"),T_NOR);
       printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s %s%5zu%s       %s%-6.1f sec%s\n\033[F", \
           T_DET, get_str("solver"), T_NOR, T_VAL, tt, T_NOR, \
           T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
@@ -364,7 +364,7 @@ int odesolver( oderhs pop_ode_rhs,
     /* DBPRINT("  quick file"); */
     if ( get_int("particle") >= SIM->max_id )
     {
-        PRINTWARNING("  warning, particle id is too large\n");
+        PRINTWARNING("  warning, particle id is out of range\n");
     }
     fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
     /* DBPRINT("  after quick file"); */
@@ -397,6 +397,8 @@ int odesolver( oderhs pop_ode_rhs,
         printf("from default initial conditions...\n");
     }
     
+
+    printf("\n"); /* progress: newline */
     if ( get_int("progress") > 2 ) /* level 3: two newlines  */
     {
       printf("\n\n");
