@@ -212,12 +212,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     if ( ( logfr = fopen(logfilename, "a") ) == NULL ) /* create a log file or append an existing log file */
     {
-      PRINTERR("  Error: could not open file '%s', exiting...\n",logfilename);
+      PRINTERR("  Error: could not open log file '%s', exiting...\n",logfilename);
       exit ( EXIT_FAILURE );
     }
     if ( ( dblogfr = fopen(dblogfilename, "w") ) == NULL ) /* create a debug log file or append an existing log file */
     {
-      PRINTERR("error: could not open file '%s', exiting...\n",logfilename);
+      PRINTERR("error: could not open log file '%s', exiting...\n",logfilename);
       exit ( EXIT_FAILURE );
     }
     PRINTLOG("#--\nLog for model %s", odexp_filename); 
@@ -346,9 +346,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     if (!success)
     {
         PRINTERR("\n  Error: Initial conditions not found.\n"
-                "  File %s should contain initial condition for all dynamical variables "
+                "  File %s should contain initial condition for each dynamical variables "
                 "with lines of the form\n"
-                "  INITIAL I I0\nExiting...\n\n", odexp_filename);
+                "  INITIAL VAR VALUE\nExiting...\n\n", odexp_filename);
         DBLOGPRINT("Error: Initial conditions not found.");
         exit ( EXIT_FAILURE );
     } 
@@ -375,7 +375,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     if (!success)
     {
         PRINTERR("\n  Error: Equations not found.\n"
-                "  File %s should contain equations for all dynamical variables "
+                "  File %s should contain equations for each dynamical variables "
                 "with lines of the form\n"
                 "  dX/dt = RHS\n  Exiting...\n\n", odexp_filename);
         DBLOGPRINT("Error: Equations not found.");
@@ -1933,7 +1933,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 gplot_data(colx, coly, data_fn);
             }    
 
-            /* update option pl:x, pl:y, pl:z */
+            /* update option x, y, z */
             update_plot_options(ngx,ngy,ngz,dxv);
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
             /* system(postprocess); */
