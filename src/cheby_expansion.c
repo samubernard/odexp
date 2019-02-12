@@ -78,6 +78,7 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
   long **a = (long **)malloc( (p+1) * sizeof(long*)); /* Chebychev polynomial coefficients */
   double *phi=(double *)malloc( (p+1) * sizeof(double));
   double *moments= (double *)malloc( (p+1) * sizeof(double));
+  double *B= (double *)malloc( (p+1) * sizeof(double));
   gsl_cheb_series *cs = gsl_cheb_alloc (p);
 
   gsl_function F;
@@ -120,20 +121,27 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
 			moments[m] += gsl_pow_int( (x[j] - meanx)/range, m);
 		}
 	}
+
+  /* compute the weight c_k a_k,l */
+  for (l = 0; l <= p; ++l)
+  {
+    B[l] = 0;
+    for (k = l; k <= p; ++k)
+    {
+      B[l] += cc[k]*a[k][l];
+    }
+  }
  
-  for (i = 0; i < N; ++i) /* compute the coupling term: O(N*P^3)  */
+  for (i = 0; i < N; ++i) /* compute the coupling term: O(N*P^2)  */
 	{
 		y[i] = 0.0;
 		for (m = 0; m <= p; ++m)
 		{
 			phi[m] = 0.0;
-			for (k = m; k <= p; ++k)
-			{
-				for (l = m; l <= k; ++l)
-				{
-					phi[m] += cc[k] * a[k][l] * gsl_sf_choose ( l, m) * gsl_pow_int( -(x[i] - meanx)/range, l-m );
-				}
-			}
+      for (l = m; l <= p; ++l)
+      {
+        phi[m] += B[l] * gsl_sf_choose ( l, m) * gsl_pow_int( -(x[i] - meanx)/range, l-m );
+      }
 			y[i] += moments[m]*phi[m];
 		}
     y[i] /= (double)N;
@@ -146,6 +154,7 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
 	free(a);
   free(phi);
   free(moments);
+  free(B);
 	
   return 0;
 }
