@@ -379,7 +379,7 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     {
        fprintf(s->fstats_varnames,"\t%s",s->mfdnames[i]);
     }
-    fprintf(s->fstats_varnames,"\tPARENT_ID\tEVENT\tCHILD_ID\n");
+    fprintf(s->fstats_varnames,"\tN\tPARENT_ID\tEVENT\tCHILD_ID\n");
     fclose(s->fstats_varnames); 
 
     /* write names of variables in separate file
@@ -820,7 +820,7 @@ int list_stats( void )
     char cmd_data[EXPRLENGTH];
     snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/stats_varnames.txt > .odexp/tmp.txt");
     snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '%zu \"%%5.2f\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/tmp.txt",\
+            "hexdump -e '%zu \"%%5.2f\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/tmp.txt",\
             nbr_cols);
 
     s = system(cmd_varnames); 

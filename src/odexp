@@ -69,7 +69,7 @@ my $re_nakedpar = qr/^
 $/ix;                   # end of line
 
 my $re_implicitIC = qr/^
-  \s*P                  # must be a parameter
+  \s*P\w+               # must be a parameter
   \s+                   # whitespaces
   ([A-Z]\w*?)_0         # with a varname ends with _0
   \s+                   # whitespaces
