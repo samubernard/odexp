@@ -142,6 +142,19 @@ double sumxy(long len, double (*f)(double), double (*g)(double, double), const d
     return s;
 }
 
+double kern(long len, double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p)
+{
+    double s = 0.0;
+    long j;
+    
+    for (j=0;j<len;j++)
+    {
+        s += Wi[j]*f(xi,x[j],p);
+    }
+    
+    return s;
+}
+
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len)
 {
     double beta = (double)len/delay;
