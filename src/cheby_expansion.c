@@ -162,7 +162,7 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
 /* compute_coupling
  * computes the coupling term 
  *
- *   y_i = sum_{j=1:N} f(x_j - x_i)
+ *   y_i = sum_{j=1:N} w_ij * f(x_j - x_i)
  *
  * in the most efficient way
  */
