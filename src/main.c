@@ -703,6 +703,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                             system("rm -f .odexp/curve.*");
                             nbr_hold = 0;
                             set_int("curves",0);
+                            printf("  %sadd curves is off%s\n",T_DET,T_NOR);
+                            plot_mode = PM_NORMAL;
                         }
                         else
                         {
@@ -741,6 +743,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     break;
                 case 'a' : /* set axis scale  */
                     sscanf(cmdline+1,"%c%c",&op,&op2);
+                    if ( (op  == 'a' && op2 == 'l') || (op2  == 'a' && op == 'l') )
+                    {
+                        set_str("xscale","log");
+                        set_str("yscale","log");
+                        set_str("zscale","log");
+                    }
                     if ( (op  == 'z' && op2 == 'l') || (op2  == 'z' && op == 'l') )
                     {
                         set_str("zscale","log");
@@ -981,7 +989,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                         {
                             for ( i=0; i<ode_system_size; i++ )
                             {
-                                printf("  %s [I|new val|%s%0.2f%s: enter]: ",ics.name[i],T_VAL,ics.value[i],T_NOR);
+                                printf("  %s [I|new val|default: %s%0.2f%s]: ",ics.name[i],T_VAL,ics.value[i],T_NOR);
                                 if ( fgets(svalue, 32, stdin) != NULL )
                                 {
                                     nbr_read = sscanf(svalue,"%lf",&nvalue);
@@ -1660,7 +1668,16 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     if ( nbr_read == 1 )
                         list_particle(i);
                     else
+                    {
+                      if ( strncmp(get_str("popmode"), "single", 3) ) /* list particle 0 */
+                      {
+                         list_particle(0);
+                      }
+                      else
+                      {
                         list_stats();
+                      }
+                    }
                     plot_mode = PM_UNDEFINED;
                     break;
                 case 'Q' :  /* quit with implicit save */
