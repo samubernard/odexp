@@ -2,19 +2,20 @@
 
 use warnings;
 use strict;
+use feature 'unicode_strings';
 
 # @ACEIFOPS 
 my $re_pace = qr/^
   \s*([%ACEIOPST])\w*    # type
   \s+                   # whitespaces
-  (\w+)                 # varname 
+  (\p{Alnum}+)                 # varname
   (?:\s*\[.*?\])*       # any number of brackets do not capture
   \s+                   # whitespace(s)
   ([^\{#\n]+)           # rhs until bracket comment or newline 
   (|\{.*?\})?           # nothing or attribute
   \s*                   # whitespace(s)
   (|\#.*)?              # nothing or comment
-$/uix;
+$/ix;
 
 # @ myfunc(*x,y,z) = rhs # comment
 # @ my_weird_func( x ) = ({ \

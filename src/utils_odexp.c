@@ -142,6 +142,10 @@ double sumxy(long len, double (*f)(double), double (*g)(double, double), const d
     return s;
 }
 
+/*
+ *  KERN
+ *  return sum_{j=0}^{len-1} Wi[j]*f(xi,x[j],p)
+ */
 double kern(long len, double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p)
 {
     double s = 0.0;
