@@ -51,9 +51,9 @@ my $re_iter = qr/
 /x;
 
 my $re_pace = qr/^
-  \s*([%ACEIOPST])\w*   # type
+  \s*(%|AUX|CONST|EXPR|INIT|OPT|PAR|DEF|TIMES|)\w*   # type
   \s+                   # whitespaces
-  ($re_identifier)            # varname 
+  ($re_identifier)      # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
   \s+                   # whitespaces
   ([^\{#\n]+)           # rhs until bracket comment or newline 
@@ -63,7 +63,7 @@ my $re_pace = qr/^
 $/ix;
 
 my $re_nakedpar = qr/^
-  \s*$re_identifier           # varname 
+  \s*$re_identifier     # varname 
   \s+                   # whitespaces
   [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)? # one number
   \s+                   # whitespace(s)
@@ -73,7 +73,7 @@ my $re_nakedpar = qr/^
 $/ix;                   # end of line
 
 my $re_implicitIC = qr/^
-  \s*P\w+               # must be a parameter
+  \s*PAR\w*             # must be a parameter
   \s+                   # whitespaces
   ($re_identifier)_0         # with a varname ends with _0
   \s+                   # whitespaces
@@ -85,7 +85,7 @@ my $re_implicitIC = qr/^
 $/ix;                   # end of line
 
 my $re_nakedaux = qr/^
-  \s*($re_identifier     # varname 
+  \s*($re_identifier    # varname 
   (?:\s*\[.*?\]+)?)     # optional brackets
   \s*                   # whitespaces
   =                     # equal sign
@@ -257,41 +257,41 @@ close $fch;
 sub print_ode_header
 {
   print $fodeh "# odexp file name: $odefilename\n";
-  print $fodeh "# In this file, all constant (variable starting with _)\n";
+  print $fodeh "# In this file, allpredefined constants (with keyword LET)\n";
   print $fodeh "# are replaced with their value\n\n";
 }
 
-# add P in front of each naked parameter (see $re_nakedpar)
-# add I in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
-# parse IC in attribute (see $re_attributeIC)
-# parse implicitly defined delayed variables (see $re_lag)
 # strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
-# replace all constants (variable starting with '_') by their value
+# replace all LET constants by their value
+# add PAR in front of each naked parameter (see $re_nakedpar)
+# add INIT in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
+# parse IC in attribute (see $re_attributeIC)
+# parse implicitly defined delayed variables (see $re_lag)
 # replace all , in P, O by \n 
 sub cleanup_file
 {
-  my @underscores;
-  my @usvals;
+  my @lets;
+  my @letvals;
   my $tmpfh = tempfile(); # make a first pass in temp file to remove linebreaks
-                          # and find underscores
+                          # and find lets
   #open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while ( <> )    
   {
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
     s/^([^#].*?)(\\\n$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
     my @fields = split; 
-    if ( /^_/ ) {
-      push @underscores, $fields[0];
-      push @usvals, join(' ',@fields[1..$#fields]);
-      $usvals[$#usvals] =~ s/\s*?#.*?$//;
+    if ( /^LET/i ) {
+      push @lets, $fields[1];
+      push @letvals, join(' ',@fields[2..$#fields]);
+      $letvals[$#letvals] =~ s/\s*?#.*?$//;
     }
     chomp if /^[^#].*?,\s*$/;                 # join lines if line ends with ,
     print $tmpfh "$_" ;
   }
   #close($fh);
-  seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace underscores
+  seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace lets
   print $fodeh "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
   while ( <$tmpfh> )
   {
@@ -318,11 +318,12 @@ sub cleanup_file
         s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$mean,$len) {hidden}\nS ${varname}_end $len-1\nAUX $varname ${varname}_chain[${varname}_end]\nINIT ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
       }
     my @fields = split; 
-    foreach my $i ( 0..$#underscores )
+    foreach my $i ( 0..$#lets )
     {
-         s/(?<!^)$underscores[$i]/$usvals[$i]/g; # replace underscores that don't start a line
+      # s/(?<!^)$lets[$i]/$letvals[$i]/g; # replace lets that don't start a line
+        s/\b$lets[$i]\b/$letvals[$i]/g unless /^LET/i; # replace lets that don't start a line
     }
-    s/,/\n$fields[0] /g if /^[PO]/i;    # break lines at , and remove , if line starts with P or O 
+    s/,/\n$fields[0] /g if /^(PAR|OPT)/i;    # break lines at , and remove , if line starts with P or O 
     print $fodeh "$_";
   }
   print $fodeh "# end of pop file entries ^^^^^^^^^^^^^^^^^^^^^^^^^\n\n";
@@ -391,8 +392,8 @@ sub set_defines
   {
     if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
-      $type =~ /s/i or next; 
-      $comment =~ s/#\s*//;
+      $type =~ /^DEF/i or next; 
+      $comment =~ s/#\s*//; # strip comment
       print $fch "#define " . $varname . " " . $rhs;       
       print $fch " /* " . $comment . " */" if length $comment; 
       print $fch "\n";
@@ -408,7 +409,7 @@ sub declare_array_from_file
   open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while (<$fh>) 
   {
-    if ( /^[fF]/ )  
+    if ( /^FI/i )  
     {
       my @fields = split; 
       if ( 0+@fields < 5 ) { die "missing something at line: $_" };
@@ -445,7 +446,7 @@ sub declare_constant_array
   print $fch "/* Declaration and definition of constant arrays */\n\n";
   while (<$fh>) 
   {
-    if ( /^[cC]/ )  
+    if ( /^CONST/i )  
     {
       my @fields = split; 
       my $var = $fields[1];
@@ -762,10 +763,10 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
     "A", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
     "initialization auxiliary functions");
   assign_output($modelode,
-    "D", "f_", $re_dxdt,
+    "D\.*/DT", "f_", $re_dxdt,
     "assign equations", "rhs");
   assign_output($modelode,
-    "A", "aux_", $re_pace, 
+    "AUX", "aux_", $re_pace, 
     "assign auxiliary array pointer", "pointer");
   assign_pop_rate($modelode,
     "%DEATH", "myself_->death_rate",

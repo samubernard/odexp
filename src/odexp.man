@@ -76,7 +76,8 @@ Add to plot \fIcolx\fR and \fIcoly\fR from \fIdataset\fR.
 Save the current plot to \fIfilename\fR. EPS format.
 .TP
 .BI $ id   
-Print dataset for particle \fIid\fR, or print stats dataset if \fIid\fR is missing.
+Print dataset for particle \fIid\fR. If \fIid\fR is missing, print stats dataset 
+in population mode or particle in single mode.
 .TP
 .BI * " " [ msg ]        
 Snapshot of current simulation and parameter values with optional \fImsg\fR.
@@ -94,7 +95,7 @@ Switch to range plot.
 Reset all axes to linear scale.
 .TP
 .BR a\fIus\fR ", " a\fIsu\fR
-Set axis \fIu\fR={x|y} to scale \fIs\fR={l|n}, n for linear (normal) scale and l for log scale.
+Set axis \fIu\fR={x|y|a} to scale \fIs\fR={l|n}, n for linear (normal) scale and l for log scale, \fIa\fR for all axes.
 .TP
 .B d              
 Reload the parameter file. 
@@ -119,7 +120,7 @@ Send the command \fIcmd\fR to gnuplot.
 Toggle plot hold (on/off).
 .TP
 .B I              
-Set initial conditions to previous.
+Set initial conditions to default.
 .TP
 .B il            
 Use the state of the system at t1 as initial conditions.
@@ -163,25 +164,25 @@ List file name and various information
 List options that match \fIoptiontype\fR, or all options if \fIoptiontype\fR is missing
 .TP
 .B lp            
-List all parameters 
+List all parameters. 
 .TP
 .B ls            
-List steady states
+List steady states.
 .TP 
 .B lx            
-List all equations and auxiliary variables 
+List all equations and auxiliary variables.
 .TP
 .B mm            
-Try to find all steady states 
+Try to find all steady states.
 .TP
 .B mr 
-Range over parameters. The active parameter takes values between 
+Range over parameters. The active parameter takes values between.
 .I par0 
 and 
 .I par1 
 with multiplicative step 
 .I rmstep 
-and additive stepsr
+and additive stepsr 
 .IR astep . 
 For each value, the system is
 integrated over tspan and the min and the max of each variable is stored in the file 
@@ -190,7 +191,6 @@ If
 .I rric 
 is 0, the initial conditions are set to the last state of the previous integration, 
 otherwise, the initial conditions are set as usual.
-
 .TP
 .B ms            
 Find a steady state with starting guess given by initial conditions.
@@ -242,7 +242,7 @@ Final time \fIt1\fR must be larger than \fIt0\fR.
 Toggle add curves to plot (on/off) 
 .TP
 .B ur              
-Removes all added curves and set curves off.
+Remove all curves and set curves off.
 .TP
 .BR v ", " 2 ", " 3 " " \fR{\fIi\fR|\fIx\fR} " " \fR{\fIj\fR|\fIy\fR} " " \fR[{\fIk\fR|\fIz\fR}]      
 Set 2D/3D view, x-axis to index \fIi\fR (variable \fIx\fR), y-axis to \fIj\fR (variable \fIy\fR), 
@@ -279,7 +279,7 @@ Parameters are declared in name value pairs, separated by commas  (,), or one pa
 Parameters are common to all particles.
 The prefix PAR is optional when one parameter is declare on a single line.
 
-Examples
+Examples 
 .nf
 PAR a 0.1, b 0.2
 
@@ -315,7 +315,7 @@ EXPR \fIname\fR \fIexpression\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ]
 Expressions are particle-dependent. They are evaluated at the birth of a particle and are constant
 for the lifetime of the particle. Use \fIATBIRTH\fR and \fIATREPLI\fR to specify particle-dependent expressions. 
 
-Examples
+Examples 
 
 .nf
 E c a*a
@@ -374,7 +374,7 @@ If initial conditions are expressions, their values can be overruled or reset in
 
 .nf
 INIT x 1.0
-INIT x b
+INIT x b 
 .fi
 
 .TP
@@ -387,7 +387,7 @@ OPT reltol 1e-3  # set ode solver reltol to 1e-3
 .fi
 
 .TP
-.BR TIME [SPAN]
+.BR TIMES [PAN]
 Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
@@ -398,11 +398,11 @@ TIME 0 10 20 50 100
 .fi
 
 .TP
-.BR ST [ATIC]
-Static variable. Must be numerical. Static variables cannot be modified.
+.BR DEF [INE]
+Define variable. Static variables cannot be modified.
 
 .nf
-ST MY_PI 3.14
+DEF MY_PI 3.14
 .fi
 
 .TP
@@ -433,7 +433,7 @@ User-defined function.
 @ my_fun_name (x, y, z) = x*x+y+z 
 .fi
 
-is interpreted as
+is interpreted as 
 
 .nf
 double my_fun_name(double x,double y, double z) = { return x*x+y+z; } 
@@ -443,7 +443,7 @@ double my_fun_name(double x,double y, double z) = { return x*x+y+z; }
 @ mean(*x) = sum(x,LENTGH_X)/LENTGH_X 
 .fi
 
-is interpreted as
+is interpreted as 
 
 .nf
 double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X }
@@ -457,7 +457,7 @@ double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X }
 })
 .fi
 
-is interpreted as
+is interpreted as 
 
 .nf
 double  myatan(double x, double *p)
@@ -483,7 +483,7 @@ Particle (de novo) birth rate
 
 .TP
 .B %DEATH 
-Particle death rate
+Particle death rate 
 
 .nf
 %DEATH 0.01 # constant particle death rate 
@@ -492,7 +492,7 @@ Particle death rate
 
 .TP
 .B %REPLI
-Particle replication rate
+Particle replication rate 
 
 .TP
 .B %C
