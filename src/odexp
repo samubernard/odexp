@@ -463,9 +463,11 @@ sub define_functions
   print $fch "/* Declaration and definition user-defined functions */\n\n";
   while (<$fh>) 
   {
-    /^@/ or next;  
-    my @fields = split /=/; 
-    my @fs = split /[(,)@]/, shift(@fields);
+    /^(@|FUN)/i or next;  
+    my @fields = split;
+    shift(@fields);
+    my @fields = split /=/, join(' ', @fields); 
+    my @fs = split /[(,)]/i, shift(@fields);
     @fs = grep /\S/, @fs; # remove empty elements
     print $fch "double " . shift(@fs) . "(";
     while( @fs )

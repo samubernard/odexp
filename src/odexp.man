@@ -434,11 +434,11 @@ where \fInrows\fR \fIncols\fR are the number of rows and columns in the file \fI
 \fIfilename\fR is a text file containing a space delimited array of doubles.
 
 .TP
-.B @
+.B FUN
 User-defined function.
 
 .nf
-@ my_fun_name (x, y, z) = x*x+y+z 
+FUN my_fun_name (x, y, z) = x*x+y+z 
 .fi
 
 is interpreted as 
@@ -448,7 +448,7 @@ double my_fun_name(double x,double y, double z) = { return x*x+y+z; }
 .fi
 
 .nf
-@ mean(*x) = sum(x,LENTGH_X)/LENTGH_X 
+FUN mean(*x) = sum(x,LENTGH_X)/LENTGH_X 
 .fi
 
 is interpreted as 
@@ -458,7 +458,7 @@ double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X }
 .fi
 
 .nf
-@ myatan( x, *p) = ({ \
+FUN myatan( x, *p) = ({ \
   double scale = *(double*)p; \
   x *= scale; \
   atan(x); \

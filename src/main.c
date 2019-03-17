@@ -296,9 +296,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   /* get user-defined functions */
   printf("\n%-25s%s\n", "user-defined functions", HLINE);
-  get_nbr_el(eqfilename,"@",1, &func.nbr_el, NULL);
+  get_nbr_el(eqfilename,"FUN",3, &func.nbr_el, NULL);
   alloc_namevalexp(&func);
-  success = load_strings(eqfilename,func,"@",1,1,'=', exit_if_nofile);
+  success = load_strings(eqfilename,func,"FUN",3,1,'=', exit_if_nofile);
   DBLOGPRINT("found %zu user-defined function",func.nbr_el);
 
   /* get parameters */
