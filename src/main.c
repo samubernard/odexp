@@ -1201,7 +1201,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             for (i=0; i<func.nbr_el; i++)
             {
               padding = (int)log10(func.nbr_el+0.5)-(int)log10(i+0.5);
-              printf_list_str('@',i,i,padding,&func);
+              printf_list_str('F',i,i,padding,&func);
             }
           }
           else if (op == '%') /* list birth/repli/death rates */ 

@@ -269,7 +269,7 @@ sub print_ode_header
 # add INIT in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
 # parse IC in attribute (see $re_attributeIC)
 # parse implicitly defined delayed variables (see $re_lag)
-# replace all , in P, O by \n 
+# replace all , in PAR, OPT by \n 
 sub cleanup_file
 {
   my @lets;
@@ -466,7 +466,7 @@ sub define_functions
     /^(@|FUN)/i or next;  
     my @fields = split;
     shift(@fields);
-    my @fields = split /=/, join(' ', @fields); 
+    @fields = split /=/, join(' ', @fields); 
     my @fs = split /[(,)]/i, shift(@fields);
     @fs = grep /\S/, @fs; # remove empty elements
     print $fch "double " . shift(@fs) . "(";
