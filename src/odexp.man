@@ -398,11 +398,19 @@ TIME 0 10 20 50 100
 .fi
 
 .TP
-.BR DEF [INE]
-Define variable. Static variables cannot be modified.
+.BR MAC [RO]
+Define macro. Macro cannot be modified.
 
 .nf
-DEF MY_PI 3.14
+MACRO MY_PI 3.14
+.fi
+
+.TP
+.BR SET
+Set predefined constant. Useful to define system size.
+
+.nf
+SET N 100
 .fi
 
 .TP

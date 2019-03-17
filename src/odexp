@@ -51,7 +51,7 @@ my $re_iter = qr/
 /x;
 
 my $re_pace = qr/^
-  \s*(%|AUX|CONST|EXPR|INIT|OPT|PAR|DEF|TIMES|)\w*   # type
+  \s*(%|AUX|CONST|EXPR|INIT|OPT|PAR|MAC|TIMES|)\w*   # type
   \s+                   # whitespaces
   ($re_identifier)      # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
@@ -257,14 +257,14 @@ close $fch;
 sub print_ode_header
 {
   print $fodeh "# odexp file name: $odefilename\n";
-  print $fodeh "# In this file, allpredefined constants (with keyword LET)\n";
+  print $fodeh "# In this file, allpredefined constants (with keyword SET)\n";
   print $fodeh "# are replaced with their value\n\n";
 }
 
 # strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
-# replace all LET constants by their value
+# replace all SET constants by their value
 # add PAR in front of each naked parameter (see $re_nakedpar)
 # add INIT in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
 # parse IC in attribute (see $re_attributeIC)
@@ -282,7 +282,7 @@ sub cleanup_file
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
     s/^([^#].*?)(\\\n$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
     my @fields = split; 
-    if ( /^LET/i ) {
+    if ( /^SET/i ) {
       push @lets, $fields[1];
       push @letvals, join(' ',@fields[2..$#fields]);
       $letvals[$#letvals] =~ s/\s*?#.*?$//;
@@ -321,7 +321,7 @@ sub cleanup_file
     foreach my $i ( 0..$#lets )
     {
       # s/(?<!^)$lets[$i]/$letvals[$i]/g; # replace lets that don't start a line
-        s/\b$lets[$i]\b/$letvals[$i]/g unless /^LET/i; # replace lets that don't start a line
+        s/\b$lets[$i]\b/$letvals[$i]/g unless /^SET/i; # replace lets that don't start a line
     }
     s/,/\n$fields[0] /g if /^(PAR|OPT)/i;    # break lines at , and remove , if line starts with P or O 
     print $fodeh "$_";
@@ -392,7 +392,7 @@ sub set_defines
   {
     if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
-      $type =~ /^DEF/i or next; 
+      $type =~ /^MAC/i or next; 
       $comment =~ s/#\s*//; # strip comment
       print $fch "#define " . $varname . " " . $rhs;       
       print $fch " /* " . $comment . " */" if length $comment; 
@@ -742,12 +742,12 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
   print $fch $s;	
 	declare_iterators($modelode);
   declare_define_parameters($modelode,"ode");  
-  declare_scalar_or_array($modelode,"E","parametric expressions");
+  declare_scalar_or_array($modelode,"EXPR","parametric expressions");
   declare_scalar_or_array($modelode,"%C","couplings");
   declare_scalar_or_array($modelode,"%M","mean fields");
-  declare_scalar_or_array($modelode,"A","auxiliary functions");
-  declare_scalar_or_array($modelode,"I","dynamical variables");
-  define_array_from_input($modelode, "expr_", "E",
+  declare_scalar_or_array($modelode,"AUX","auxiliary functions");
+  declare_scalar_or_array($modelode,"INIT","dynamical variables");
+  define_array_from_input($modelode, "expr_", "EXPR",
     qr/\w+\s+(\w+)/, 
     "initialization parametric expressions");
   define_array_from_input($modelode, "y_", "I",
@@ -760,7 +760,7 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
     qr/\w+\s+(\w+)/,
     "initialization meanfields");
   define_array_functions($modelode,
-    "A", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "AUX", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
     "initialization auxiliary functions");
   assign_output($modelode,
     "D\.*/DT", "f_", $re_dxdt,
@@ -791,13 +791,13 @@ sub print_ode_init_cond
   declare_define_parameters($modelode,"ic");  
   declare_scalar_or_array($modelode,"E","parametric expressions");
   define_array_functions($modelode,
-    "E", qr/^[eE]\w*\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
+    "EXPR", qr/^EXPR\w*\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/i,
     "initialization parametric expressions");
   assign_output($modelode,
-    "E", "expr_", $re_pace,
+    "EXPR", "expr_", $re_pace,
     "assign parametric expression pointer", "rhs");
   assign_output($modelode,
-    "I", "y_", $re_pace,
+    "INIT", "y_", $re_pace,
     "assign initial conditions", "rhs");
   print $fch "\n    return GSL_SUCCESS;\n}\n\n";
 }
@@ -816,7 +816,7 @@ sub declare_iterators
 	while ( <$fh> )    
 	{
 		!/^#/  or next; # ignore lines starting with '#'
-		!/^C/i or next; # ignore lines starting with 'C'
+		!/^CONST/i or next; # ignore lines starting with 'C'
     if ( my @new_iter = (/\[\s*(\w+)\s*=\s*\d+\s*:\s*\d+\s*\]+/g)  )
     {
       push @iterators, @new_iter; # store iterator name
@@ -842,7 +842,7 @@ sub declare_iterators
 
 # declare_define_parameters
 # take a line of the form 
-#   P mu VAL {attr} # comment
+#   PAR mu VAL {attr} # comment
 # and write model.c 
 #   double mu = par_[<i>]; /* attr */ /* comment */
 sub declare_define_parameters
@@ -853,7 +853,7 @@ sub declare_define_parameters
   my $i = 0;
 	while ( <$fh> )    
 	{
-  	/^P/i or next;
+  	/^PAR/i or next;
     if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
       my ( $ctype ) = ( $attr =~ m/\btype\b:(int|long|double)/ );
@@ -898,7 +898,7 @@ sub declare_define_parameters
 
 # TODO: handle definition of array in multiple declarations 
 # declare_scalar_or_array
-# takes a line E array[i=0:10][j=0:15]
+# takes a line EXPR array[i=0:10][j=0:15]
 # and declare
 #   double array[10][15];
 sub declare_scalar_or_array

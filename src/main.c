@@ -284,14 +284,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   printf("\n%-25s%s\n", "constant arrays", HLINE);
   get_nbr_el(eqfilename,"CONST",5, &cst.nbr_el, NULL);
   alloc_namevalexp(&cst);
-  success = load_strings(eqfilename,cst,"C",1,1,' ', exit_if_nofile);
+  success = load_strings(eqfilename,cst,"CONST",5,1,' ', exit_if_nofile);
   DBLOGPRINT("found %zu constants",cst.nbr_el);
 
   /* get data files */
   printf("\n%-25s%s\n", "data files", HLINE);
   get_nbr_el(eqfilename,"FI",2, &dfl.nbr_el, NULL);
   alloc_namevalexp(&dfl);
-  success = load_strings(eqfilename,dfl,"F",1,1,' ', exit_if_nofile);
+  success = load_strings(eqfilename,dfl,"FI",2,1,' ', exit_if_nofile);
   DBLOGPRINT("found %zu data files",dfl.nbr_el);
 
   /* get user-defined functions */
@@ -305,7 +305,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   printf("\n%-25s%s\n", "parameters", HLINE);
   get_nbr_el(parfilename,"PAR",3, &mu.nbr_el, &mu.nbr_expr);
   alloc_namevalexp(&mu);
-  success = load_nameval(parfilename,mu,"P",1,exit_if_nofile);
+  success = load_nameval(parfilename,mu,"PAR",3,exit_if_nofile);
   if (!success) /* then create a not_a_parameter parameter */
   {
     printf("  no parameter found\n");
@@ -329,9 +329,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   /* get parametric expressions */
   printf("\n%-25s%s\n", "parametric expressions", HLINE);
-  get_nbr_el(eqfilename,"EXPR",3, &pex.nbr_el, &pex.nbr_expr);
+  get_nbr_el(eqfilename,"EXPR",4, &pex.nbr_el, &pex.nbr_expr);
   alloc_namevalexp(&pex);
-  success = load_strings(eqfilename,pex,"E",1,1,' ', exit_if_nofile);
+  success = load_strings(eqfilename,pex,"EXPR",4,1,' ', exit_if_nofile);
   if (!success)
   {
     printf("  no parametric expression found\n");
@@ -342,7 +342,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   printf("\n%-25s%s\n", "initial conditions", HLINE);
   get_nbr_el(parfilename,"INIT",4, &ics.nbr_el, &ics.nbr_expr);
   alloc_namevalexp(&ics);
-  success = load_strings(parfilename,ics,"I",1,1,' ', exit_if_nofile);
+  success = load_strings(parfilename,ics,"INIT",4,1,' ', exit_if_nofile);
   if (!success)
   {
     PRINTERR("\n  Error: Initial conditions not found.\n"
@@ -360,7 +360,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   printf("\n%-25s%s\n", "auxiliary variables", HLINE);
   get_nbr_el(eqfilename,"AUX",3, &fcn.nbr_el, &fcn.nbr_expr);
   alloc_namevalexp(&fcn);
-  success = load_strings(eqfilename,fcn,"A",1,1,' ', exit_if_nofile);
+  success = load_strings(eqfilename,fcn,"AUX",3,1,' ', exit_if_nofile);
   if (!success)
   {
     printf("  no auxiliary function found\n");
