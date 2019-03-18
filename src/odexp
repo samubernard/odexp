@@ -1006,37 +1006,43 @@ sub define_array_functions
     $rhs2print = strip_blanks($rhs) . ";";
     $rhs2print .= " /* $attr */" if length $attr;
     $rhs2print .= " /* $comment */" if length $comment;
-    if ( my @it = ($_ =~ m/$re_iter/g) )
+    if ( $attr =~ /\bvect\b/ ) # don't loop, just evaluate the rhs
     {
-      my $offset = qq();
-      my $j = 0;
-      while ( $j < (0+@it) )
-      {
-        my ($i, $a, $b) = @it[$j..$j+2];
-        $j += 3;
-        $offset = $offset . qq(    ); 
-        print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
-        print $fch $offset . "{\n";
-      }
-      print $fch $offset . "    $name";
-      $j = 0;
-      while ( $j < (0+@it) )
-      {
-        my ($i, $a, $b) = @it[$j..$j+2];
-        $j += 3;
-        print $fch "[$i]";
-      }
-      print $fch " = " . $rhs2print . "\n";
-      $j = 0;
-      while ( $j < 0+@it )
-      {
-        print $fch $offset . "}\n";
-        $offset = substr $offset, 0, -4;
-        $j += 3;
-      }
+      print $fch "    $rhs2print\n";    
     } else
     {
-      print $fch "    $name = $rhs2print\n";
+      if ( my @it = ($_ =~ m/$re_iter/g) )
+      {
+        my $offset = qq();
+        my $j = 0;
+        while ( $j < (0+@it) )
+        {
+          my ($i, $a, $b) = @it[$j..$j+2];
+          $j += 3;
+          $offset = $offset . qq(    ); 
+          print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
+          print $fch $offset . "{\n";
+        }
+        print $fch $offset . "    $name";
+        $j = 0;
+        while ( $j < (0+@it) )
+        {
+          my ($i, $a, $b) = @it[$j..$j+2];
+          $j += 3;
+          print $fch "[$i]";
+        }
+        print $fch " = " . $rhs2print . "\n";
+        $j = 0;
+        while ( $j < 0+@it )
+        {
+          print $fch $offset . "}\n";
+          $offset = substr $offset, 0, -4;
+          $j += 3;
+        }
+      } else
+      {
+        print $fch "    $name = $rhs2print\n";
+      }
     }
   }
   print $fch "\n";
