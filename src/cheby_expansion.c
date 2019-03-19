@@ -1,3 +1,10 @@
+/* cheby_expansion.c
+ * computes the coupling term 
+ *
+ *   y_i = sum_{j=1:N} w_ij * f(x_j - x_i)
+ *
+ * in the most efficient way
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,14 +166,14 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
   return 0;
 }
 
-/* compute_coupling
+/* kernlr
  * computes the coupling term 
  *
  *   y_i = sum_{j=1:N} w_ij * f(x_j - x_i)
  *
  * in the most efficient way
  */
-int compute_coupling(coupling_function f, double *x, double *y, int N)
+int kernlr(coupling_function f, double *x, double *y, int N)
 {
   int         i;
   int         p = 3;                                            /* default initial Chebychev order */

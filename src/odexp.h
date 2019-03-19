@@ -157,7 +157,7 @@ double kern(long len, double *Wi, double (*f)(double, double, double *), double 
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len);
 
 typedef double (*coupling_function)(double, void *);
-int compute_coupling(coupling_function f, double *x, double *y, int N);
+int kernlr(coupling_function f, double *x, double *y, int N);
 
 double get_val_from_par(par *myself,int shift,char *name, enum vartype type);
 
