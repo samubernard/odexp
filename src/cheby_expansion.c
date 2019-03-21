@@ -176,7 +176,8 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
 int kernlr(coupling_function f, double *x, double *y, int N)
 {
   int         i;
-  int         p = 3;                                            /* default initial Chebychev order */
+  int         p = 3;              /* default initial Chebychev order */
+  int         pmax = 30;
   double     *ylo  = (double *)malloc( N * sizeof(double));
   double      evencoeffs = 0.0, 
               oddcoeffs = 0.0;
@@ -188,7 +189,8 @@ int kernlr(coupling_function f, double *x, double *y, int N)
               chebeval;
 	double      range,
               meanx;
-  double      ytol = get_dou("abstol"); 
+  double      abstol = get_dou("abstol");
+  size_t      errn = max(N/10,10);
   /* double      yerr; */
 
   gsl_function     F;
@@ -232,18 +234,18 @@ int kernlr(coupling_function f, double *x, double *y, int N)
     pstep = 3;
   }
 
+  cs = gsl_cheb_alloc (pmax);
+  gsl_cheb_init (cs, &F, -1.0, 1.0);
   do {
     sumabserr = 0.0;
-    for (i = 0; i < N; ++i)
+    for (i = 0; i < errn; ++i)
     {
-      cs = gsl_cheb_alloc (p);
-      gsl_cheb_init (cs, &F, -1.0, 1.0);
-      gsl_cheb_eval_err (cs, -range+(double)i/(N-1)*2.0*range, &chebeval, &abserr);
+      gsl_cheb_eval_n_err (cs, p, -range+(double)i/(errn-1)*2.0*range, &chebeval, &abserr);
       sumabserr += abserr;
     }
     p += pstep;
-  } while ( ( sumabserr > ytol ) & ( p < 30 ) );
-  /* DBPRINT("p = %d, sumabserr = %g\n", p, sumabserr); */
+    /* DBPRINT("p = %d, meanabserr = %g, tol = %g", p, sumabserr/N, abstol);  */
+  } while ( ( sumabserr/N > abstol ) & ( p < pmax ) );
 
   /* DBPRINT("p = %d, range = %g", p, range); */
   compute_cheby_expansion(f,x,y,N,p,meanx,range); /* compute high accuracy */

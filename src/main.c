@@ -2767,7 +2767,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
     {
-      fprintf(fr,"P%zu %-*s %g {%s} # %s\n",\
+      fprintf(fr,"PAR%zu %-*s %g {%s} # %s\n",\
           i,len,mu.name[i],mu.value[i],mu.attribute[i],mu.comment[i]);
     }
 
@@ -2776,17 +2776,17 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     {
       if ( NUM_IC[i] == 1 ) 
       {
-        fprintf(fr,"I%zu %-*s %g {%s} # initial expression: %s; initial comment: %s\n",\
+        fprintf(fr,"INIT%zu %-*s %g {%s} # initial expression: %s; initial comment: %s\n",\
             i,len,init.name[i],init.value[i],init.attribute[i],init.expression[i],init.comment[i]);
       }
       else
       {
-        fprintf(fr,"I%zu %-*s %s {%s} # initial comment: %s\n",\
+        fprintf(fr,"INIT%zu %-*s %s {%s} # initial comment: %s\n",\
             i,len,init.name[i],init.expression[i],init.attribute[i],init.comment[i]);
       }
     }    
 
-    fprintf(fr,"\n# time span\nT ");
+    fprintf(fr,"\n# time span\nTIMESPAN ");
     for(i=0;i<tspan.length;i++)
     {
       fprintf(fr,"%g ",tspan.array[i]);
@@ -2799,13 +2799,13 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
       switch (GOPTS[i].valtype)
       {
         case 'd' :
-          fprintf(fr,"O%zu %-*s %g\n",i,len,GOPTS[i].name,GOPTS[i].numval);
+          fprintf(fr,"OPT%zu %-*s %g\n",i,len,GOPTS[i].name,GOPTS[i].numval);
           break;
         case 'i' :
-          fprintf(fr,"O%zu %-*s %d\n",i,len,GOPTS[i].name,GOPTS[i].intval);
+          fprintf(fr,"OPT%zu %-*s %d\n",i,len,GOPTS[i].name,GOPTS[i].intval);
           break;
         case 's' :
-          fprintf(fr,"O%zu %-*s %s\n",i,len,GOPTS[i].name,GOPTS[i].strval);
+          fprintf(fr,"OPT%zu %-*s %s\n",i,len,GOPTS[i].name,GOPTS[i].strval);
       }
     }
 
