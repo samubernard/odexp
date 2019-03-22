@@ -2761,7 +2761,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     fprintf(fr,"\n# To load the parameter file from odexp, use the following command:\n");
     fprintf(fr,"# odexp> o %s\n", par_buffer);
     fprintf(fr,"\n# To run %s using parameters in %s,\n# use the following command from the prompt:\n",odexp_filename,par_buffer);
-    fprintf(fr,"# prompt$ odexp %s %s\n",odexp_filename,par_buffer);
+    fprintf(fr,"# prompt$ odexp -p %s %s\n",par_buffer,odexp_filename);
     fprintf(fr,"# --------------------------------------------------\n");
 
     fprintf(fr,"\n# parameters/values\n");
