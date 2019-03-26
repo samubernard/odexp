@@ -79,7 +79,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"rric","rric", 'i', 0.0, 0, "", "reset initial conditions at each iteration for range", "parameterRange"},
   {"fo","font", 's', 0.0, 0, "Helvetica", "gnuplot FOnt", "gnuplotSettings"},
   {"fs","fontsize", 'i', 0.0, 13, "", "gnuplot Font Size", "gnuplotSettings"},
-  {"term","terminal", 's', 0.0, 0, "aqua", "gnuplot TERMinal", "gnuplotSettings"},
+  {"term","terminal", 's', 0.0, 0, "qt noraise", "gnuplot TERMinal", "gnuplotSettings"},
   {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
   {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
   {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},
@@ -2949,7 +2949,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
    * psi    nbr_psi   in p
    * mfd    nbr_mfd   in SIM
    */
-  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : get_str("indvar")); 
+  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "ID"); 
   fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
   /* Plot each particle as a transparent circle 
    * with the ID number inside it 
