@@ -80,6 +80,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"fo","font", 's', 0.0, 0, "Helvetica", "gnuplot FOnt", "gnuplotSettings"},
   {"fs","fontsize", 'i', 0.0, 13, "", "gnuplot Font Size", "gnuplotSettings"},
   {"term","terminal", 's', 0.0, 0, "qt noraise", "gnuplot TERMinal", "gnuplotSettings"},
+  {"pal","palette", 's', 0.0, 0, "acid", "color palette {acid} | other", "gnuplotSettings"},
   {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
   {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
   {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},
@@ -2949,7 +2950,9 @@ int gplot_particles( const int gx, const int gy, const nve var )
    * psi    nbr_psi   in p
    * mfd    nbr_mfd   in SIM
    */
-  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "ID"); 
+  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "ID"); /* if x-axis is the independent variable,
+                                                                       * make it ID number instead--the ind var
+                                                                       * cannot be plotted */
   fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
   /* Plot each particle as a transparent circle 
    * with the ID number inside it 
@@ -3087,25 +3090,28 @@ int read_msg( void )
 int gnuplot_config(const int gx, const int gy, nve dxv)
 {
   /* color definitions */
-  fprintf(GPLOTP,"set linetype 1  lc rgb '#002313' \n"); /* black */
-  fprintf(GPLOTP,"set linetype 2  lc rgb '#0000cc' \n"); /* blue */
-  fprintf(GPLOTP,"set linetype 4  lc rgb '#cc0000' \n"); /* red */
-  fprintf(GPLOTP,"set linetype 3  lc rgb '#00cc00' \n"); /* green */
-  fprintf(GPLOTP,"set linetype 5  lc rgb '#cccc00' \n"); /* yellow */
-  fprintf(GPLOTP,"set linetype 6  lc rgb '#00cccc' \n"); /* turquoise */ 
-  fprintf(GPLOTP,"set linetype 7  lc rgb '#cc00cc' \n"); /* violet */
-  fprintf(GPLOTP,"set linetype 8  lc rgb '#cccccc' \n"); /* grey */
-
-#if 0
-  fprintf(GPLOTP,"set linetype 1  lc rgb '#143d9d' lw 2\n"); /* blue  */
-  fprintf(GPLOTP,"set linetype 2  lc rgb '#dc143c' lw 2\n"); /* orange */
-  fprintf(GPLOTP,"set linetype 3  lc rgb '#0c987d' lw 2\n"); /* green */
-  fprintf(GPLOTP,"set linetype 4  lc rgb '#ffd700' lw 2\n"); /* yellow */
-  fprintf(GPLOTP,"set linetype 5  lc rgb '#6eafc6' lw 2\n"); /* light blue */
-  fprintf(GPLOTP,"set linetype 6  lc rgb '#e34262' lw 2\n"); /* apple red  */ 
-  fprintf(GPLOTP,"set linetype 3  lc rgb '#14de14' lw 2\n"); /* apple green */
-  fprintf(GPLOTP,"set linetype 8  lc rgb '#fff5c0' lw 2\n"); /* apple yellow */
-#endif
+  if ( strncmp("acid",get_str("palette"),3) == 0 )
+  {
+    fprintf(GPLOTP,"set linetype 1  lc rgb '#002313' \n"); /* black */
+    fprintf(GPLOTP,"set linetype 2  lc rgb '#0000cc' \n"); /* blue */
+    fprintf(GPLOTP,"set linetype 4  lc rgb '#cc0000' \n"); /* red */
+    fprintf(GPLOTP,"set linetype 3  lc rgb '#00cc00' \n"); /* green */
+    fprintf(GPLOTP,"set linetype 5  lc rgb '#cccc00' \n"); /* yellow */
+    fprintf(GPLOTP,"set linetype 6  lc rgb '#00cccc' \n"); /* turquoise */ 
+    fprintf(GPLOTP,"set linetype 7  lc rgb '#cc00cc' \n"); /* violet */
+    fprintf(GPLOTP,"set linetype 8  lc rgb '#cccccc' \n"); /* grey */
+  }
+  else
+  {
+    fprintf(GPLOTP,"set linetype 1  lc rgb '#143d9d' \n"); /* blue  */
+    fprintf(GPLOTP,"set linetype 2  lc rgb '#dc143c' \n"); /* orange */
+    fprintf(GPLOTP,"set linetype 3  lc rgb '#0c987d' \n"); /* green */
+    fprintf(GPLOTP,"set linetype 4  lc rgb '#ffd700' \n"); /* yellow */
+    fprintf(GPLOTP,"set linetype 5  lc rgb '#6eafc6' \n"); /* light blue */
+    fprintf(GPLOTP,"set linetype 6  lc rgb '#e34262' \n"); /* apple red  */ 
+    fprintf(GPLOTP,"set linetype 3  lc rgb '#14de14' \n"); /* apple green */
+    fprintf(GPLOTP,"set linetype 8  lc rgb '#fff5c0' \n"); /* apple yellow */
+  }
 
   fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s,%d\"\n", \
       get_str("terminal"), get_str("wintitle"), get_str("font"), get_int("fontsize"));
