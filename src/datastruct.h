@@ -24,8 +24,10 @@ extern const char *T_BAR;  /* STATUS BAR */
 extern const char *HLINE;  /* horizontal line */
 extern const char *LINEUP_AND_CLEAR; /* go up one line and clear it */
 
-/* number of global options */
-#define NBROPTS 53
+/* color palettes */
+extern const char PALETTE_ACID[8][7];
+extern const char PALETTE_QUAL[9][7];
+extern const char PALETTE_APPLE[8][7];
 
 /* NOT USED */
 typedef struct namevalexp_group
@@ -56,6 +58,9 @@ typedef struct gen_option
     char    optiontype[NAMELENGTH];
 } gopt;
 
+/* number of global options */
+#define NBROPTS 53
+/* declare global options */
 extern struct gen_option GOPTS[NBROPTS];
 
 int set_dou(const char *name, const double val); 

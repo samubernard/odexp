@@ -31,7 +31,6 @@ int GPIN; /* file descriptor for fifo */
 /* world */
 world *SIM = (world *)NULL;
 
-
 /* what kind of initial conditions to take */
 int *NUM_IC;
 
@@ -3033,28 +3032,28 @@ int read_msg( void )
 
 int gnuplot_config(const int gx, const int gy, nve dxv)
 {
-  /* color definitions */
+  size_t i;
+  /* color palette */
   if ( strncmp("acid",get_str("palette"),3) == 0 )
   {
-    fprintf(GPLOTP,"set linetype 1  lc rgb '#002313' \n"); /* black */
-    fprintf(GPLOTP,"set linetype 2  lc rgb '#0000cc' \n"); /* blue */
-    fprintf(GPLOTP,"set linetype 4  lc rgb '#cc0000' \n"); /* red */
-    fprintf(GPLOTP,"set linetype 3  lc rgb '#00cc00' \n"); /* green */
-    fprintf(GPLOTP,"set linetype 5  lc rgb '#cccc00' \n"); /* yellow */
-    fprintf(GPLOTP,"set linetype 6  lc rgb '#00cccc' \n"); /* turquoise */ 
-    fprintf(GPLOTP,"set linetype 7  lc rgb '#cc00cc' \n"); /* violet */
-    fprintf(GPLOTP,"set linetype 8  lc rgb '#cccccc' \n"); /* grey */
+    for (i = 0; i < 8; i++)
+    {
+      fprintf(GPLOTP,"set linetype %zu  lc rgb '%s' \n", i+1, PALETTE_ACID[i]); 
+    }
   }
-  else
+  else if ( strncmp("qual",get_str("palette"),4) == 0 )
   {
-    fprintf(GPLOTP,"set linetype 1  lc rgb '#143d9d' \n"); /* blue  */
-    fprintf(GPLOTP,"set linetype 2  lc rgb '#dc143c' \n"); /* orange */
-    fprintf(GPLOTP,"set linetype 3  lc rgb '#0c987d' \n"); /* green */
-    fprintf(GPLOTP,"set linetype 4  lc rgb '#ffd700' \n"); /* yellow */
-    fprintf(GPLOTP,"set linetype 5  lc rgb '#6eafc6' \n"); /* light blue */
-    fprintf(GPLOTP,"set linetype 6  lc rgb '#e34262' \n"); /* apple red  */ 
-    fprintf(GPLOTP,"set linetype 3  lc rgb '#14de14' \n"); /* apple green */
-    fprintf(GPLOTP,"set linetype 8  lc rgb '#fff5c0' \n"); /* apple yellow */
+    for (i = 0; i < 8; i++)
+    {
+      fprintf(GPLOTP,"set linetype %zu  lc rgb '%s' \n", i+1, PALETTE_QUAL[i]); 
+    }
+  }
+  else /* default: APPLE */
+  {
+    for (i = 0; i < 8; i++)
+    {
+      fprintf(GPLOTP,"set linetype %zu  lc rgb '%s' \n", i+1, PALETTE_APPLE[i]); 
+    }
   }
 
   fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s,%d\"\n", \
