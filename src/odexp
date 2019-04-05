@@ -276,6 +276,7 @@ sub cleanup_file
   my @letvals;
   my $tmpfh = tempfile(); # make a first pass in temp file to remove linebreaks
                           # and find lets
+  my $funcdelimiter = 0;
   #open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while ( <> )    
   {
@@ -288,7 +289,19 @@ sub cleanup_file
       $letvals[$#letvals] =~ s/\s*?#.*?$//;
     }
     chomp if /^[^#].*?,\s*$/;                 # join lines if line ends with ,
-    print $tmpfh "$_" ;
+    if ( /^@|^FUN/i && /\=/)  # this is a one liner function
+    {
+      s/\=/= return/;
+    }
+    if ( /^@|^FUN/i && /\)\s*$/ )
+    {
+      $funcdelimiter = 1;
+      s/\s*$/ = \n/;
+    }
+    $funcdelimiter = 0 if /^END/i;
+    chomp if $funcdelimiter;                  # join lines within function 
+    s/^END//i;                                 # remove the END
+    print $tmpfh "$_";
   }
   #close($fh);
   seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace lets
@@ -464,28 +477,36 @@ sub define_functions
   while (<$fh>) 
   {
     /^(@|FUN)/i or next;  
-    my @fields = split;
-    shift(@fields);
-    @fields = split /=/, join(' ', @fields); 
-    my @fs = split /[(,)]/i, shift(@fields);
-    @fs = grep /\S/, @fs; # remove empty elements
-    print $fch "double " . shift(@fs) . "(";
+    my @fields = split;                         # split line by whitespace
+    shift(@fields);                             # remove keyword @/fun
+    @fields = split /=/, join(' ', @fields);    # resplit line by =
+    my @fs = split /[(,)]/i, shift(@fields);    # split lhs 
+    @fs = grep /\S/, @fs;                       # remove empty elements
+    print $fch "double " . shift(@fs) . "(";    # print func name and (
     while( @fs )
     {
-      my $s = shift(@fs); # get next argument 
-      $s =~ s/^\s*|\s*$//g; # trim whitespaces
-      print $fch "double " . $s; 
-      print $fch ", " if @fs;  # , only if not last argument
+      my $s = shift(@fs);                       # get next argument 
+      $s =~ s/^\s*|\s*$//g;                     # trim whitespaces
+      if ( $s =~ /void|int|long|char|float/ )
+      {
+        print $fch $s;                          # print argument as is
+      }
+      else
+      {
+        print $fch "double " . $s;              # argument is double by default  
+      }
+      print $fch ", " if @fs;                   # , only if not last argument
     }
     print $fch ")\n{\n";
-    my @rhs = split /;|\(\{|\}\)/ , join('=', @fields);
+    my @rhs = split /;/ , join('=', @fields);   # put '=' back and split by ';' 
     @rhs = grep /\S/, @rhs; # remove empty elements
-    while ( @rhs )
+    while ( @rhs )                              # print all statements with ';'
     {
       my $s = shift(@rhs); 
       $s =~ s/^\s*|\s*$//g; # trim
-      print $fch "    " . $s . ";\n" if @rhs; 
-      print $fch "    return " . $s . ";\n" if not @rhs; 
+      # print $fch "    " . $s . ";\n" if @rhs; 
+      # print $fch "    return " . $s . ";\n" if not @rhs; 
+      print $fch "    " . $s . ";\n"; 
     }
     print $fch "}\n\n";
   }

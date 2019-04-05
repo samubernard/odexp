@@ -296,7 +296,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     DBLOGPRINT("Error: Initial conditions not found.");
     exit ( EXIT_FAILURE );
   } 
-  /* DBPRINT("before pop_ode_ic"); */
   DBLOGPRINT("found %zu variables",ics.nbr_el);
 
 
@@ -383,24 +382,19 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   DBLOGPRINT("found %zu population death rates",repli.nbr_el);
 
   /* define dxv */
-  /* DBPRINT("define dxv"); */
   ode_system_size = ics.nbr_el;
   total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; /* nbr of plottable elements */
   nbr_cols = 1 + ode_system_size + fcn.nbr_el + psi.nbr_el + pex.nbr_el;
-  /* DBPRINT("ode_system_size = %zu, total_nbr_x = %zu", ode_system_size, total_nbr_x); */
   dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr + mfd.nbr_expr;
   dxv.nbr_el = total_nbr_x;
-  /* DBPRINT("alloc dxv"); */
   alloc_namevalexp(&dxv);
   *dxv.max_name_length = max(*mfd.max_name_length,max(*psi.max_name_length, max(*ics.max_name_length, *fcn.max_name_length)));
-  /* DBPRINT("assign dxv"); */
   for (i = 0; i < ode_system_size; i++)
   {
     strcpy(dxv.name[i],ics.name[i]);
     strcpy(dxv.expression[i],ics.expression[i]);
     strcpy(dxv.attribute[i],eqn.attribute[i]);
   }
-  /* DBPRINT("dxv"); */
   for (i = ode_system_size; i < ode_system_size + fcn.nbr_el; i++)
   {
     strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
@@ -446,9 +440,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   */
   }
 
-  /* DBPRINT("init world SIM"); */
+  /* initialize world SIM       */
   SIM = malloc(sizeof(world));
-  /* DBPRINT("sizeof(world) = %zu", sizeof(world)); */
   init_world( SIM, &pex, &func, &mu, &ics, &fcn, &eqn, &psi, &mfd, &dxv, &cst, &dfl, pop_ode_rhs);
 
   /* seed random number generator */
@@ -460,8 +453,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   PRINTLOG("RAND_MAX %d",RAND_MAX);
 
   /* readline */
-  /* printf("\nreadline library version: %s\n\n", rl_library_version); */
-
   if (strcmp("EditLine wrapper",rl_library_version) == 0)
   {
     PRINTWARNING("warning: You are using the EditLine wrapper of the readline library.\n");    
@@ -539,7 +530,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     }
     sscanf(rawcmdline," %c%n",&c,&charpos);
     cmdline = rawcmdline+charpos-1; /* eat white spaces */
-    /* printf("--cmdline = '%s'\n",cmdline); */
     if (cmdline && *cmdline) /* check if cmdline is not empty */
     {
       PRINTLOG("> %s",cmdline);
@@ -1180,7 +1170,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               for (i=0; i<ode_system_size; i++)
               {
                 padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                /* printf_list_val('S',i,padding,*ics.max_name_length,ics.name[i],stst[j].s[i],"*"); */
                 printf("  S[%s%zu%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
                     T_IND,i,T_NOR, padding, "",*ics.max_name_length,ics.name[i],\
                     T_VAL,stst[j].s[i],T_NOR,T_DET,"*",T_NOR);
@@ -1708,7 +1697,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       }
       fflush(GPLOTP);
 
-      /* DBPRINT("plot_mode: %d", plot_mode); */
       if ( get_int("curves") ) /* PM_CURVES overrides PM_REPLOT */
       {
         plot_mode = PM_CURVES;
@@ -1877,10 +1865,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
 
         case PM_PARTICLES:
-          /* fprintf(GPLOTP,"unset xrange\n"); */
-          /* fprintf(GPLOTP,"unset yrange\n"); */
-          /* fprintf(GPLOTP,"unset zrange\n"); */
-          /* fflush(GPLOTP); */
           gplot_particles(gx, gy, dxv );
           break;
 
@@ -1907,14 +1891,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       rep_command = 1; /* reset to default = 1 */
 
       nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos);
-      /* printf("--extracmd nbr_read=%d, extracmd=%d, cmdline+extracmd='%s'\n",nbr_read,extracmdpos,cmdline+extracmdpos);  */
       free(extracmd);
       if ( (nbr_read == 1) && strncmp(svalue,"&&",2) == 0 )
       {
-        /* printf("--strlen(cmdline+extracmdpos)=%lu\n",strlen(cmdline+extracmdpos));  */
         extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
         strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
-        /* printf("--extracmd = '%s'\n", extracmd); */
       }
       else
       {
@@ -2027,15 +2008,12 @@ int get_nbr_el(const char *filename, const char *sym,\
       {
         (*nbr_expr)++;
       }
-      /* printf("--%s",line);  */
       get_multiindex(line, &nbr_dim, &size_dim);
-      /* printf("--nbr_dim %zu\n",nbr_dim); */
       for(i=0;i<nbr_dim;i++)
       {
         multi_dim *= size_dim[i];
       }
       *nbr_el += multi_dim;
-      /* printf("--nbr_el %d\n",*nbr_el); */
 
     }
     k = 0; /* reset k */
@@ -2557,17 +2535,11 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
         if (nbr_read_1 == 1 || nbr_read_2 > 0)
         {
           index_factor *= (index1-index0);
-          /* printf("--index0: %zu\n", index0); */
-          /* printf("--index1: %zu\n", index1);  */
-          /* printf("--index_factor: %zu\n", index_factor);  */
-          /* printf("--expr_size: %zu\n", expr_size);  */
           for(j=0;j<expr_size;j++)
           {
-            /* printf("--[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
             snprintf(new_index,NAMELENGTH,"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 );
             strcat(var.name[var_index+j],new_index);
             strcat(var.name[var_index+j],extensionvarname);
-            /* printf("-- %s\n",var.name[var_index+j]); */
           }
         }
         namelen0 += namelen1;
@@ -2774,7 +2746,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     fprintf(fr,"\n# particles alive at the end of the simulation\n");
     while ( pars != NULL )
     {
-      fprintf(fr,"# id[%zu] %s\n",pars->id,pars->buffer); 
+      fprintf(fr,"# %zu %s\n",pars->id,pars->buffer); 
       pars = pars->nextel;
     }
 
