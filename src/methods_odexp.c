@@ -1072,9 +1072,7 @@ int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *sts
     s = gsl_multiroot_fsolver_alloc(T,n);
     gsl_multiroot_fsolver_set (s, &f, x);
 
-    printf("  Finding a steady state... ");
-
-    printf("    initial guess:\n");
+    printf("  Finding a steady state with initial guess:\n");
     for ( i=0; i<n; i++)
     {
         printf("      %f\n", guess[i]); 
@@ -1088,7 +1086,7 @@ int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *sts
         if (status)
             break;
 
-        status = gsl_multiroot_test_residual(s->f, 1e-7);
+        status = gsl_multiroot_test_delta(s->dx, s->x, get_dou("nlabstol"), get_dou("nlreltol"));
     } while(status == GSL_CONTINUE && iter < 1000);
 
     printf("  status = %s\n", gsl_strerror(status));

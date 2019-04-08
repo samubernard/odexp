@@ -548,7 +548,7 @@ sub print_main
 
 sub print_multiroots
 {
-	my $s = qq(/* Wrapper function for ode_rhs. Modify at your own risks */
+	my $s = qq(/* Multiroot wrapper function for ode_rhs */
 int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f)
 {
     double *y,*ff;
