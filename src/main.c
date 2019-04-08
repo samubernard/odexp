@@ -202,7 +202,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"##",2, &dsc.nbr_el, NULL);
   alloc_namevalexp(&dsc);
   success = load_line(eqfilename,dsc,"##",2, exit_if_nofile);
-  DBLOGPRINT("found %zu description",dsc.nbr_el);
+  DBLOGPRINT("%zu description",dsc.nbr_el);
 
   /* get tspan */
   printf("\n%-25s%s\n","time span",HLINE);
@@ -220,8 +220,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   }
   else
   {
-    printf("  found %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
-    DBLOGPRINT("Found %zu time points, of which %zu stopping points", tspan.length, tspan.length - 2);
+    printf("  %zu time points, of which %zu stopping points\n", tspan.length, tspan.length - 2);
+    DBLOGPRINT("%zu time points, of which %zu stopping points", tspan.length, tspan.length - 2);
   }
 
   /* get constant arrays */
@@ -229,21 +229,21 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"CONST",5, &cst.nbr_el, NULL);
   alloc_namevalexp(&cst);
   success = load_strings(eqfilename,cst,"CONST",5,1,' ', exit_if_nofile);
-  DBLOGPRINT("found %zu constants",cst.nbr_el);
+  DBLOGPRINT("%zu constants",cst.nbr_el);
 
   /* get data files */
   printf("\n%-25s%s\n", "data files", HLINE);
   get_nbr_el(eqfilename,"FI",2, &dfl.nbr_el, NULL);
   alloc_namevalexp(&dfl);
   success = load_strings(eqfilename,dfl,"FI",2,1,' ', exit_if_nofile);
-  DBLOGPRINT("found %zu data files",dfl.nbr_el);
+  DBLOGPRINT("%zu data files",dfl.nbr_el);
 
   /* get user-defined functions */
   printf("\n%-25s%s\n", "user-defined functions", HLINE);
   get_nbr_el(eqfilename,"FUN",3, &func.nbr_el, NULL);
   alloc_namevalexp(&func);
   success = load_strings(eqfilename,func,"FUN",3,1,'=', exit_if_nofile);
-  DBLOGPRINT("found %zu user-defined function",func.nbr_el);
+  DBLOGPRINT("%zu user-defined function",func.nbr_el);
 
   /* get parameters */
   printf("\n%-25s%s\n", "parameters", HLINE);
@@ -252,7 +252,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_nameval(parfilename,mu,"PAR",3,exit_if_nofile);
   if (!success) /* then create a not_a_parameter parameter */
   {
-    printf("  no parameter found\n");
+    printf("  no parameter\n");
     mu.value = realloc(mu.value,sizeof(double));
     mu.name = realloc(mu.name,sizeof(char*));
     mu.name[0] = malloc(NAMELENGTH*sizeof(char));
@@ -269,7 +269,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     mu.value[0] = NAN;
     *mu.max_name_length = 15; 
   } 
-  DBLOGPRINT("found %zu parameters",mu.nbr_el);
+  DBLOGPRINT("%zu parameters",mu.nbr_el);
 
   /* get parametric expressions */
   printf("\n%-25s%s\n", "parametric expressions", HLINE);
@@ -278,9 +278,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_strings(eqfilename,pex,"EXPR",4,1,' ', exit_if_nofile);
   if (!success)
   {
-    printf("  no parametric expression found\n");
+    printf("  no parametric expression\n");
   } 
-  DBLOGPRINT("found %zu parametric expressions",pex.nbr_el);
+  DBLOGPRINT("%zu parametric expressions",pex.nbr_el);
 
   /* get initial conditions */
   printf("\n%-25s%s\n", "initial conditions", HLINE);
@@ -296,7 +296,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     DBLOGPRINT("Error: Initial conditions not found.");
     exit ( EXIT_FAILURE );
   } 
-  DBLOGPRINT("found %zu variables",ics.nbr_el);
+  DBLOGPRINT("%zu variables",ics.nbr_el);
 
 
   /* get nonlinear functions */
@@ -306,9 +306,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_strings(eqfilename,fcn,"AUX",3,1,' ', exit_if_nofile);
   if (!success)
   {
-    printf("  no auxiliary function found\n");
+    printf("  no auxiliary function\n");
   } 
-  DBLOGPRINT("found %zu auxiliary variables",fcn.nbr_el);
+  DBLOGPRINT("%zu auxiliary variables",fcn.nbr_el);
 
   /* get equations */
   printf("\n%-25s%s\n", "equations", HLINE);
@@ -324,7 +324,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     DBLOGPRINT("Error: Equations not found.");
     exit ( EXIT_FAILURE );
   } 
-  DBLOGPRINT("found %zu equations",eqn.nbr_el);
+  DBLOGPRINT("%zu equations",eqn.nbr_el);
 
   /* define psi */
   printf("\n%-25s%s\n", "population couplings", HLINE);
@@ -333,9 +333,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_strings(eqfilename,psi,"%C",2,1,' ', exit_if_nofile);
   if (!success)
   {
-    printf("  no population couplings found\n");
+    printf("  no population couplings\n");
   } 
-  DBLOGPRINT("found %zu population couplings",psi.nbr_el);
+  DBLOGPRINT("%zu population couplings",psi.nbr_el);
 
   /* define mfd */
   printf("\n%-25s%s\n", "population mean fields", HLINE);
@@ -344,9 +344,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_strings(eqfilename,mfd,"%M",2,1,' ', exit_if_nofile);
   if (!success)
   {
-    printf("  no population mean fields found\n");
+    printf("  no population mean fields\n");
   } 
-  DBLOGPRINT("found %zu population mean fields",mfd.nbr_el);
+  DBLOGPRINT("%zu population mean fields",mfd.nbr_el);
 
   /* define birth */
   printf("\n%-25s%s\n", "population birth rates", HLINE);
@@ -355,9 +355,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_strings(eqfilename,birth,"%BIRTH",6,0,' ', exit_if_nofile);
   if (!success)
   {
-    printf("  no population birth rates found\n");
+    printf("  no population birth rates\n");
   } 
-  DBLOGPRINT("found %zu population birth rates",birth.nbr_el);
+  DBLOGPRINT("%zu population birth rates",birth.nbr_el);
 
   /* define repli */
   printf("\n%-25s%s\n", "population replication rates", HLINE);
@@ -366,9 +366,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_strings(eqfilename,repli,"%REPLI",6,0,' ', exit_if_nofile);
   if (!success)
   {
-    printf("  no population replication rates found\n");
+    printf("  no population replication rates\n");
   } 
-  DBLOGPRINT("found %zu population replication rates",repli.nbr_el);
+  DBLOGPRINT("%zu population replication rates",repli.nbr_el);
 
   /* define death */
   printf("\n%-25s%s\n", "population death rates", HLINE);
@@ -377,9 +377,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_strings(eqfilename,death,"%DEATH",6,0,' ', exit_if_nofile);
   if (!success)
   {
-    printf("  no population death rates found\n");
+    printf("  no population death rates\n");
   } 
-  DBLOGPRINT("found %zu population death rates",repli.nbr_el);
+  DBLOGPRINT("%zu population death rates",repli.nbr_el);
 
   /* define dxv */
   ode_system_size = ics.nbr_el;
