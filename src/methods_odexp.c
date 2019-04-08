@@ -908,12 +908,13 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
 }
 
 
-int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
+int phasespaceanalysis( rootrhs root_rhs, double *guess, void *params, steady_state **stst)
 {
     int status, status_res, status_delta, newstst;
     gsl_qrng * q = gsl_qrng_alloc (gsl_qrng_sobol, SIM->nbr_var);
     double *ics_min, /* lower bounds on steady state values */
-          *ics_max; /* bounds on steady state values */
+           *ics_max, /* bounds on steady state values */
+           *x0;      /* current guess */
     size_t ntry = 0;
     size_t max_fail = get_int("maxfail"); /* max number of iteration without finding a new steady state */
     size_t nbr_stst = 0; /* number of steady state found so far */
@@ -931,7 +932,7 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
 
     size_t iter = 0;
 
-    gsl_multiroot_function f = {root_rhs, SIM->nbr_var, &mu};
+    gsl_multiroot_function f = {root_rhs, SIM->nbr_var, params};
 
     gsl_vector *x = gsl_vector_alloc(SIM->nbr_var);
 
@@ -945,29 +946,29 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
     ics_min = malloc(SIM->nbr_var*sizeof(double));
     for ( i=0; i<SIM->nbr_var; i++)
     {
-        ics_min[i] = get_dou("nlminr")*ics.value[i];
+        ics_min[i] = get_dou("nlminr")*guess[i];
     }
 
     /* ics_max */
     ics_max = malloc(SIM->nbr_var*sizeof(double));
     for ( i=0; i<SIM->nbr_var; i++)
     {
-        ics_max[i] = get_dou("nlrange")*ics.value[i];
+        ics_max[i] = get_dou("nlrange")*guess[i];
     }
 
     /* search for steady states */
+    x0 = malloc(SIM->nbr_var*sizeof(double));
     while (ntry < max_fail)
     {
-        gsl_qrng_get (q, ics.value); /* new starting guess */
-        /*printf("  Finding a steady with initial guess\n");*/
+        gsl_qrng_get (q, x0); /* new starting guess */
         for ( i=0; i<SIM->nbr_var; i++)
         {
-            ics.value[i] *= (ics_max[i] - ics_min[i]);
-            ics.value[i] += ics_min[i];
+            x0[i] *= (ics_max[i] - ics_min[i]);
+            x0[i] += ics_min[i];
         }
         for ( i=0; i<SIM->nbr_var; i++)
         {
-            gsl_vector_set(x,i,ics.value[i]);
+            gsl_vector_set(x,i,x0[i]); /* assign gsl vector */
         }
 
         gsl_multiroot_fsolver_set (s, &f, x);
@@ -981,13 +982,14 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
             if (status)
                 break;
 
-            status_res = gsl_multiroot_test_residual(s->f, 1e-7);
-            status_delta = gsl_multiroot_test_delta(s->dx, s->x, 1e-12,1e-7);
+            status_res = gsl_multiroot_test_residual(s->f, abs_tol);
+            status_delta = gsl_multiroot_test_delta(s->dx, s->x, abs_tol, rel_tol);
+
+
         } while( (status_res == GSL_CONTINUE || status_delta == GSL_CONTINUE ) && iter < max_fail );
 
-        /*printf("  Steady State\n");
-         *gsl_vector_fprintf(stdout,s->x,"    %+.5e");
-         */
+        /* DBPRINT("ntry = %zu; iter = %zu", ntry, iter); */
+
         /* compare with previous steady states */
         newstst = 1;
         for ( i=0; i<nbr_stst; i++)
@@ -1020,7 +1022,7 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
             printf("  Steady State\n");
             gsl_vector_fprintf(stdout,s->x,"    %+.5e");
             /* gsl_multiroot_fdjacobian(&f, s->x, s->f, 1e-9, J); */
-            jac(root_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,&mu);
+            jac(root_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,params);
             eig(J, (*stst)+nbr_stst-1);
         }
         else
@@ -1035,6 +1037,7 @@ int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst)
 
     free(ics_max);
     free(ics_min);
+    free(x0);
     gsl_qrng_free (q);
 
     gsl_multiroot_fsolver_free(s);
@@ -1086,7 +1089,9 @@ int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *sts
         if (status)
             break;
 
-        status = gsl_multiroot_test_delta(s->dx, s->x, get_dou("nlabstol"), get_dou("nlreltol"));
+        status = gsl_multiroot_test_delta(s->dx,
+                   s->x, get_dou("nlabstol"), get_dou("nlreltol"));
+
     } while(status == GSL_CONTINUE && iter < 1000);
 
     printf("  status = %s\n", gsl_strerror(status));
@@ -1100,16 +1105,9 @@ int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *sts
     printf("  steady state\n");
     gsl_vector_fprintf(stdout,s->x,"    %+.5e");
 
-    /*
-     * gsl_multiroot_fdjacobian(&f, s->x, s->f, jac_rel_eps, J);
-     * printf("--Jacobian matrix with gsl_multiroot_fdjacobian\n"); 
-     * gsl_matrix_fprintf(stdout,J,"%f");
-     */
-
+    /* compute the Jacobian matrix */
     jac(root_rhs,s->x,s->f,jac_rel_eps,jac_abs_eps,J,params);
-    /* printf("--Jacobian matrix with homemade numerical derivatives\n");  */
-    /* gsl_matrix_fprintf(stdout,J,"%f"); */
-
+    /* and its eigenvalues */
     eig(J, stst);
 
     gsl_multiroot_fsolver_free(s);

@@ -366,7 +366,7 @@ sub guess_single_popmode
   if ( ( $pop_parameter_found == 0 ) and ( $popmode_option_found == 0 ) )
   {
     open(my $fh, '>>', @_) or die "Could not open file '$modelode'. $!";
-    print $fh "O popmode single # single mode looks appropriate here; option added automatically\n\n";
+    print $fh "OPT popmode single # single mode looks appropriate here; option added automatically\n\n";
     close($fh);
   }
 }

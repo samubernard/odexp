@@ -46,7 +46,7 @@ int odesolver( oderhs pop_ode_rhs,
 int parameter_range( oderhs ode_rhs, odeic ode_ic,\
  double *lasty, nve init, nve mu, nve fcn, double_array tspan, FILE *gnuplot_pipe);
 
-int phasespaceanalysis( rootrhs root_rhs, nve ics, nve mu, steady_state **stst);
+int phasespaceanalysis( rootrhs root_rhs, double *guess, void *params, steady_state **stst);
 
 int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *stst);
 

@@ -1539,7 +1539,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           } 
           else if ( op == 'm')
           {
-            nbr_stst = phasespaceanalysis(root_rhs,ics,mu, &stst);
+            nbr_stst = phasespaceanalysis(root_rhs,SIM->pop->start->y,SIM->pop->start, &stst);
             for (j=0; j<nbr_stst; j++)
             {
               printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
