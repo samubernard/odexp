@@ -169,7 +169,6 @@ my $odefilename;
 # check the number of arguments, must be 1 or 2
 my $nbr_argv = @ARGV;
 if ( $nbr_argv == 0 ) {
-  # die "Require a filename";  
   $odefilename = "stdinput";
 } else {
   $odefilename = $ARGV[0];
@@ -260,7 +259,7 @@ close $fch;
 sub print_ode_header
 {
   print $fodeh "# odexp file name: $odefilename\n";
-  print $fodeh "# In this file, allpredefined constants (with keyword SET)\n";
+  print $fodeh "# In this file, predefined constants (with keyword SET)\n";
   print $fodeh "# are replaced with their value\n\n";
 }
 
