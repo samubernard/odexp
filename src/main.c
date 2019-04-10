@@ -3091,9 +3091,9 @@ int printf_status_bar( double_array *tspan)
 {
   struct winsize w; /* get terminal window size */
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); /* get terminal window size in w */
-  printf("\n"); /* down one line */
   if ( w.ws_col > 79 )  
   {
+    printf("\n"); /* down one line */
     printf("%s",T_BAR);
     if ( get_int("hold") )
     {

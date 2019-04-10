@@ -464,6 +464,11 @@ int odesolver( oderhs pop_ode_rhs,
                 status = fe_apply(&sys,&t,tnext,&h,y);
                 break;
               case H_ITERATION: 
+                /* **discrete iteration**:
+                 * the time is advanced by dt = 1, no matter what tnext is
+                 * this means that birth/death events will be resolved 
+                 * at t+1, if tnext < t+1. 
+                 */
                 status = iteration_apply(&sys,&t,y);
                 break;
               case H_DDE:

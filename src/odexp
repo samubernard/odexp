@@ -295,7 +295,7 @@ sub cleanup_file
     {
       s/\=/= return/;
     }
-    if ( /^@|^FUN/i && /\)\s*$/ )
+    if ( /^@|^FUN/i && not /\=/ )
     {
       $funcdelimiter = 1;
       s/\s*$/ = \n/;
