@@ -84,7 +84,7 @@ double prod(double *array, long len) /* product of the elements of the array */
   return p;
 }
 
-double dotprod(double *x, double *y, long len) /* scalar product of two arrays */
+double dotprod(const double *x, const double *y, long len) /* scalar product of two arrays */
 {
   double s = 0.0;
   long i;

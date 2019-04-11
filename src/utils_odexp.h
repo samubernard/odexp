@@ -19,7 +19,7 @@ double sumsub(double *array, long *ind, long len); /* sum sub-array with index i
 double sumstep(double *array, long len, long step);
 double sum3(double *array, long d1, long d2, long d3, long dim);
 double prod(double *array, long len); /* product of the elements of the array */
-double dotprod(double *x, double *y, long len); /* scalar product of two arrays */
+double dotprod(const double *x, const double *y, long len); /* scalar product of two arrays */
 double conv(double *u, double *v, long len); /* convolution product */ 
 double minus(double x, double y); /* subtraction */
 double plus(double x, double y); /* addition */

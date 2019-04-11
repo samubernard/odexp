@@ -560,6 +560,12 @@ int odesolver( oderhs pop_ode_rhs,
         }
 
         
+        printf_progress(t,tspan->array[0],t1, start, msg);
+
+        hmin_alert = 0;
+        disc_alert = 0;
+        bd_alert = 0;
+
         if (abort_odesolver_flag)
         {
           if ( abort_odesolver_alert == 0) /* print only once */
@@ -568,12 +574,6 @@ int odesolver( oderhs pop_ode_rhs,
             abort_odesolver_alert = 1;
           }
         }
-       
-        printf_progress(t,tspan->array[0],t1, start, msg);
-
-        hmin_alert = 0;
-        disc_alert = 0;
-        bd_alert = 0;
     }
     if (status == GSL_SUCCESS)
     {

@@ -162,9 +162,12 @@ my $re_scalar = qr/^
 # ---------------------------------------
 
 # odexp optional parameters
-our $opt_p;
-getopts('p:'); # -p parameterfilename 
-
+our ($opt_p, $opt_o);
+getopts('o:p:'); # -o optimization -p parameterfilename 
+if ( !defined $opt_o )
+{
+    $opt_o = 'g';
+}
 my $odefilename;
 # check the number of arguments, must be 1 or 2
 my $nbr_argv = @ARGV;
@@ -840,8 +843,8 @@ sub declare_iterators
   my @unique_iters;
 	while ( <$fh> )    
 	{
-		!/^#/  or next; # ignore lines starting with '#'
-		!/^CONST/i or next; # ignore lines starting with 'C'
+		/^#/ and next; # ignore lines starting with '#'
+		/^CONST/i and next; # ignore lines starting with 'C'
     if ( my @new_iter = (/\[\s*(\w+)\s*=\s*\d+\s*:\s*\d+\s*\]+/g)  )
     {
       push @iterators, @new_iter; # store iterator name
@@ -1181,7 +1184,7 @@ sub set_chebychev_expansion
 {
   open(my $fh, '<', @_) or die "could not open file '@_'. $!";
   my $nv = 0;
-  my $s = qq(    /* update coupling terms psi,  O(NP^3) */
+  my $s = qq(    /* update coupling terms psi,  O(NP^2) */
 );
   print $fch $s;
   while (<$fh>) 
@@ -1215,7 +1218,7 @@ sub set_chebychev_expansion
       print $fch "    free(yxp_);\n";
     }
   }
-  $s = qq(    /* end - update coupling terms psi,  O(NP^3) */
+  $s = qq(    /* end - update coupling terms psi,  O(NP^2) */
 );
   print $fch $s;
   close($fh);
@@ -1317,7 +1320,7 @@ $endif
 close($finputrc);
 
 my $LDFLAGS = "-lgsl -lodexp";
-my $CFLAGS =  "-Wall -Wno-gnu-statement-expression -pedantic -g";
+my $CFLAGS =  "-Wall -Wno-gnu-statement-expression -pedantic -$opt_o";
 system("gcc $CFLAGS $LDFLAGS $odedir/model.c -o model.out") == 0 
               or die "compiling failed: $?";
 exec ("./model.out") or print STDERR "couldn't exec model.out: $!";
