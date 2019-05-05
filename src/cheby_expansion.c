@@ -125,7 +125,8 @@ int pre_compute_cheby_expansion_parameters(double *x, int N, double *meanx, doub
   return 0;
 }
 
-/* compute Chebychev polynomial expansion of the
+/* compute_cheby_expansion 
+ * compute Chebychev polynomial expansion of the
  * coupling function y[i] = 1/N*sum_j f(x[j] - x[i])
  * The algorithm is based on Chebychev approximation of the
  * function f(u) on u in [-range, range]
@@ -136,32 +137,17 @@ int pre_compute_cheby_expansion_parameters(double *x, int N, double *meanx, doub
 int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, int p, double meanx, double range)
 {
   int i,k,m,j,l;
-  /* long **a = (long **)malloc( (p+1) * sizeof(long*)); */ /* Chebychev polynomial coefficients */
   double *phi=(double *)malloc( (p+1) * sizeof(double));
   double *moments= (double *)malloc( (p+1) * sizeof(double));
   double *B= (double *)malloc( (p+1) * sizeof(double));
   gsl_cheb_series *cs = gsl_cheb_alloc (p);
 
   gsl_function F;
-
-#if 0 /* no need to compute the coefficients, they are precomputed in TC */
-  for (k=0; k<=p; ++k)
-	{
-		a[k] = (long *)malloc( (k+1) * sizeof(long));  
-		for (i = 0; i < (k+1); ++i)
-		{
-			a[k][i] = 0;
-		}
-  }
-  compute_chebychev_coeffs(a, p);
-#endif
-
   F.function = f;
   F.params = &range;
 
-  /* approximate the function f on [-1,1] */
-  gsl_cheb_init (cs, &F, -1.0, 1.0);
-	double *cc = gsl_cheb_coeffs (cs);
+  gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
+	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
   /* The Chebychev series is computed using the convention
    *
    * f(x) = (c_0 / 2) + \sum_{n=1} c_n T_n(x)
@@ -210,13 +196,6 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
     y[i] /= (double)N;
 	}
 
-  /*
-  for (k = 0; k<p; ++k)
-	{
-		free(a[k]);
-	}
-  */
-	/* free(a); */
   free(phi);
   free(moments);
   free(B);
@@ -225,6 +204,7 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
 }
 
 /* kernlr
+ * **Main user function**
  * computes the coupling term 
  *
  *   y_i = sum_{j=1:N} w_ij * f(x_j - x_i)
@@ -303,20 +283,10 @@ int kernlr(coupling_function f, double *x, double *y, int N)
     }
     p += pstep;
     /* DBPRINT("p = %d, meanabserr = %g, tol = %g", p, sumabserr/N, abstol);  */
-  } while ( ( sumabserr/N > abstol ) & ( p < pmax ) );
+  } while ( ( sumabserr/errn > abstol ) & ( p < pmax ) );
 
   /* DBPRINT("p = %d, range = %g", p, range); */
   compute_cheby_expansion(f,x,y,N,p,meanx,range); /* compute high accuracy */
-  /* compute_cheby_expansion(f,x,ylo,N,p-pstep,meanx,range); */ /* compute lower accuracy */
-  /*
-   * yerr = 0.0;
-   * for (i = 0; i < N; ++i)
-   * {
-   *   yerr += fabs(ylo[i] - y[i]); 
-   * } 
-   * yerr /= (double)N;
-   */ 
-  /* DBPRINT("yerr = %g", yerr);  */
 
 	free(ylo);
   gsl_cheb_free (cs);
