@@ -134,7 +134,8 @@ int pre_compute_cheby_expansion_parameters(double *x, int N, double *meanx, doub
  * direct method if N > P^2. Numerical tests show P up to 
  * 30. Advantageous if N > 2000
  */
-int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, int p, double meanx, double range)
+int compute_cheby_expansion(coupling_function f, double *x, double *y, 
+    int N, int p, double meanx, double range)
 {
   int i,k,m,j,l;
   double *phi=(double *)malloc( (p+1) * sizeof(double));
@@ -203,11 +204,118 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y, int N, in
   return 0;
 }
 
+/* cmpexpw 
+ * compute a polynomial approximation of the coupling term
+ *
+ *    y[i] = 1/N*sum_j W_ij f(x[j] - x[i])
+ *
+ * for i = 1,...,N
+ *
+ * where the NxN matrix W is of low rank r and is factorized 
+ * 
+ *    W = U*V
+ *
+ *    U Nxr matrix
+ *    V rxN matrix
+ * 
+ *    W_ij = sum_m=1^r U_im V_mj
+ * 
+ * The algorithm is based on Chebychev approximation of the
+ * function f(u) on u in [-range, range]
+ * The algorithm runs in O(N*P^2), and is faster than the
+ * direct method if N > P^2. Numerical tests show P up to 
+ * 30. Advantageous if N > 2000
+ *
+ * the coupling term is return in the array y.
+ *
+ */
+int cmpexpw(coupling_function f, const double *U, const double *V, double *x, double *y, 
+    int N, int p, int r, double meanx, double range)
+{
+  int i,k,m,j,l;
+  int p1 = p+1;
+  double phi; 
+  double *A       = (double *)malloc( (p1) * r * sizeof(double)); /* p+1 x r */
+  double *B       = (double *)malloc( (p1) * sizeof(double));
+  gsl_cheb_series *cs = gsl_cheb_alloc (p);
+
+  gsl_function F;
+  F.function = f;
+  F.params = &range;
+
+  gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
+	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
+  /* The Chebychev series is computed using the convention
+   *
+   * f(x) = (c_0 / 2) + \sum_{n=1} c_n T_n(x)
+   *
+   * Since we want to sum
+   *
+   * c_0 + \sum_{n=1} c_n T_n(x)
+   *
+   * we need to set c_0 to c_0/2
+   *
+   */
+  cc[0] /= 2;
+
+  /* Moments A_km = sum_j=1^N V_mj psi_k(j)
+   * k = 0...p
+   * m = 1...r
+   */
+  for (k = 0; k < p1; ++k) 
+	{	
+    for (m = 0; m < r; ++m)
+    {
+		  *(A + p1*m + k) = 0.0;
+		  for (j = 0; j < N; ++j)  
+		  {
+			  *(A + p1*m + k) += *(V + m*N + j)*gsl_pow_int( (x[j] - meanx)/range, k);
+		  }
+    }
+	}
+
+  /* B_l = sum_k=l^p c_k TC_kl 
+   * l = 0,...,p
+   */
+  for (l = 0; l < p1; ++l)
+  {
+    B[l] = 0;
+    for (k = l; k < p1; ++k)
+    {
+      B[l] += cc[k]*TC[k][l];
+    }
+  }
+ 
+  for (i = 0; i < N; ++i) /* compute the coupling term: O(N*P^2)  */
+	{
+		y[i] = 0.0;
+		for (k = 0; k < p1; ++k)
+		{
+      phi = 0.0;
+      for (l = k; l < p1; ++l)
+      {
+        phi += B[l] * gsl_sf_choose ( l, k) * gsl_pow_int( -(x[i] - meanx)/range, l-k );
+      }
+		}
+    for (m = 0; m < r; ++m)
+    {
+      y[i] += *(U + i*r + m) * (*(A + p1*m + k));
+    }
+    y[i] *= phi;
+    y[i] /= (double)N;
+	}
+
+  free(A);
+  free(B);
+	
+  return 0;
+}
+
 /* kernlr
  * **Main user function**
  * computes the coupling term 
  *
- *   y_i = sum_{j=1:N} w_ij * f(x_j - x_i)
+ *   y_i = sum_{j=1:N} f(x_j - x_i)
  *
  * in the most efficient way
  */
@@ -294,4 +402,92 @@ int kernlr(coupling_function f, double *x, double *y, int N)
   return 0;
 }
 
+/* kernlrw
+ * **Main user function**
+ * computes the coupling term 
+ *
+ *   y_i = sum_{j=1:N} w_ij f(x_j - x_i)
+ *
+ * in the most efficient way
+ */
+int kernlrw(coupling_function f, double *x, double *y, int N, const double *U, const double *V, int r)
+{
+  int         i;
+  int         p = 3;              /* default initial Chebychev order */
+  int         pmax = 30;
+  double     *ylo  = (double *)malloc( N * sizeof(double));
+  double      evencoeffs = 0.0, 
+              oddcoeffs = 0.0;
+  int         feven = 0, 
+              fodd = 0, 
+              pstep = 4;
+  double      abserr, 
+              sumabserr = 0.0,
+              chebeval;
+	double      range,
+              meanx;
+  double      abstol = get_dou("abstol");
+  size_t      errn = max(N/10,10);
+  /* double      yerr; */
+
+  gsl_function     F;
+  gsl_cheb_series *cs = gsl_cheb_alloc (p);
+  
+  pre_compute_cheby_expansion_parameters(x, N, &meanx, &range);
+
+  F.function = f;
+  F.params = &range;
+
+  /* approximate the function f on [-1,1] */
+  gsl_cheb_init (cs, &F, -1.0, 1.0);
+
+  /* find out if f is even of odd */
+  for (i = 0; i < p+1; ++i)
+  {
+    if ( i % 2 )
+      oddcoeffs += cs->c[i];
+    else
+      evencoeffs += cs->c[i];
+  }
+  if ( evencoeffs < (double)p/2 * 1e-8 ) /* this is almost odd function */
+    fodd = 1;
+  if ( oddcoeffs  < (double)p/2 * 1e-8 ) /* this is almost even function */
+    feven = 1;
+  
+  /* adaptative error on Chebychev approximation */
+  if ( feven ) /* start and stick with even order */
+  {
+    p = 4;
+    /* fprintf(stderr,"function is even\n"); */
+  }
+  if ( fodd ) 
+  {  
+    p = 3;
+    /* fprintf(stderr,"function is odd\n"); */
+  }
+  if ( ! ( feven | fodd ) )
+  {
+    p = 3;
+    pstep = 3;
+  }
+
+  cs = gsl_cheb_alloc (pmax);
+  gsl_cheb_init (cs, &F, -1.0, 1.0);
+  do {
+    sumabserr = 0.0;
+    for (i = 0; i < errn; ++i)
+    {
+      gsl_cheb_eval_n_err (cs, p, -range+(double)i/(errn-1)*2.0*range, &chebeval, &abserr);
+      sumabserr += abserr;
+    }
+    p += pstep;
+  } while ( ( sumabserr/errn > abstol ) & ( p < pmax ) );
+
+  cmpexpw(f,U,V,x,y,N,p,r,meanx,range); /* compute high accuracy */
+
+	free(ylo);
+  gsl_cheb_free (cs);
+
+  return 0;
+}
 
