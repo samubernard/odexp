@@ -234,7 +234,7 @@ int cmpexpw(coupling_function f, const double *U, const double *V, double *x, do
 {
   int i,k,m,j,l;
   int p1 = p+1;
-  double *phi     = (double *)malloc( (p1) * sizeof(double));
+  double phi;
   double *A       = (double *)malloc( (p1) * r * sizeof(double)); /* p+1 x r */
   double *B       = (double *)malloc( (p1) * sizeof(double));
   double ua;
@@ -297,17 +297,16 @@ int cmpexpw(coupling_function f, const double *U, const double *V, double *x, do
       {
         ua += *(U + i*r + m) * (*(A + p1*m + k));
       }
-      phi[k] = 0.0;
+      phi = 0.0;
       for (l = k; l < p1; ++l)
       {
-        phi[k] += B[l] * gsl_sf_choose ( l, k) * gsl_pow_int( -(x[i] - meanx)/range, l-k );
+        phi += B[l] * gsl_sf_choose ( l, k) * gsl_pow_int( -(x[i] - meanx)/range, l-k );
       }
-      y[i] += phi[k] * ua;
+      y[i] += phi * ua;
 		}
     y[i] /= (double)N;
 	}
 
-  free(phi);
   free(A);
   free(B);
 	
