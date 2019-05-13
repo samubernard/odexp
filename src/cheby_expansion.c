@@ -234,9 +234,10 @@ int cmpexpw(coupling_function f, const double *U, const double *V, double *x, do
 {
   int i,k,m,j,l;
   int p1 = p+1;
-  double phi; 
+  double *phi     = (double *)malloc( (p1) * sizeof(double));
   double *A       = (double *)malloc( (p1) * r * sizeof(double)); /* p+1 x r */
   double *B       = (double *)malloc( (p1) * sizeof(double));
+  double ua;
   gsl_cheb_series *cs = gsl_cheb_alloc (p);
 
   gsl_function F;
@@ -291,20 +292,22 @@ int cmpexpw(coupling_function f, const double *U, const double *V, double *x, do
 		y[i] = 0.0;
 		for (k = 0; k < p1; ++k)
 		{
-      phi = 0.0;
+      ua = 0;
+      for (m = 0; m < r; ++m)
+      {
+        ua += *(U + i*r + m) * (*(A + p1*m + k));
+      }
+      phi[k] = 0.0;
       for (l = k; l < p1; ++l)
       {
-        phi += B[l] * gsl_sf_choose ( l, k) * gsl_pow_int( -(x[i] - meanx)/range, l-k );
+        phi[k] += B[l] * gsl_sf_choose ( l, k) * gsl_pow_int( -(x[i] - meanx)/range, l-k );
       }
+      y[i] += phi[k] * ua;
 		}
-    for (m = 0; m < r; ++m)
-    {
-      y[i] += *(U + i*r + m) * (*(A + p1*m + k));
-    }
-    y[i] *= phi;
     y[i] /= (double)N;
 	}
 
+  free(phi);
   free(A);
   free(B);
 	
@@ -354,9 +357,9 @@ int kernlr(coupling_function f, double *x, double *y, int N)
   for (i = 0; i < p+1; ++i)
   {
     if ( i % 2 )
-      oddcoeffs += cs->c[i];
+      oddcoeffs += fabs(cs->c[i]);
     else
-      evencoeffs += cs->c[i];
+      evencoeffs += fabs(cs->c[i]);
   }
   if ( evencoeffs < (double)p/2 * 1e-8 ) /* this is almost odd function */
     fodd = 1;
@@ -445,9 +448,9 @@ int kernlrw(coupling_function f, double *x, double *y, int N, const double *U, c
   for (i = 0; i < p+1; ++i)
   {
     if ( i % 2 )
-      oddcoeffs += cs->c[i];
+      oddcoeffs += fabs(cs->c[i]);
     else
-      evencoeffs += cs->c[i];
+      evencoeffs += fabs(cs->c[i]);
   }
   if ( evencoeffs < (double)p/2 * 1e-8 ) /* this is almost odd function */
     fodd = 1;

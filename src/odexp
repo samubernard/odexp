@@ -765,6 +765,7 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
     double * expr_ __attribute__((unused)) = myself_->expr;
     double * psi_  __attribute__((unused)) = myself_->psi;
     double * mfd_  __attribute__((unused)) = SIM->meanfield;
+    double * f2_ = f_;
 
 );
   print $fch $s;	
@@ -791,7 +792,7 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
     "AUX", qr/^[aA]\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/,
     "initialization auxiliary functions");
   assign_output($modelode,
-    "D\.*/DT", "f_", $re_dxdt,
+    "D\.*/DT", "f2_", $re_dxdt,
     "assign equations", "rhs");
   assign_output($modelode,
     "AUX", "aux_", $re_pace, 
@@ -813,6 +814,7 @@ sub print_ode_init_cond
     double * pars_ __attribute__((unused)) = SIM->mu;
     double * aux_  __attribute__((unused)) = myself_->aux;
     double * expr_ __attribute__((unused)) = myself_->expr;
+    double * y2_ = y_;
 );
   print $fch $s;
   declare_iterators($modelode);
@@ -825,7 +827,7 @@ sub print_ode_init_cond
     "EXPR", "expr_", $re_pace,
     "assign parametric expression pointer", "rhs");
   assign_output($modelode,
-    "INIT", "y_", $re_pace,
+    "INIT", "y2_", $re_pace,
     "assign initial conditions", "rhs");
   print $fch "\n    return GSL_SUCCESS;\n}\n\n";
 }
@@ -984,24 +986,25 @@ sub define_array_from_input
         $j += 3;
         print $fch "[$i]";
       }
-      print $fch " = " . $rhs. "[$ii";
-      my $starp = qq( + );
-      my $iter_increment = 1;
-      $j = 0;
-      while ( $j < 0+@it )
-      {
-        my ($i, $a, $b) = @it[$j..$j+2];
-        $j += 3;
-        print $fch "$starp$i";
-        $iter_increment *= ($b-$a);
-        $starp = qq/*(1+/;
-      }
-      print $fch qq/)/ x (@it/3-1);
-      print $fch "];"; 
+      print $fch " = " . "*(${rhs}++);"; # added
+      # print $fch " = " . $rhs. "[$ii";
+      # my $starp = qq( + );
+      # my $iter_increment = 1;
+      # $j = 0;
+      # while ( $j < 0+@it )
+      # {
+      #   my ($i, $a, $b) = @it[$j..$j+2];
+      #   $j += 3;
+      #   print $fch "$starp$i";
+      #   $iter_increment *= ($b-$a);
+      #   $starp = qq/*(1+/;
+      # }
+      # print $fch qq/)/ x (@it/3-1);
+      # print $fch "];"; 
       print $fch " /* $attr */" if length $attr;
       print $fch " /* $comment */" if length $comment;
       print $fch "\n";
-      $ii += $iter_increment;
+      # $ii += $iter_increment;
       $j = 0;
       while ( $j < 0+@it )
       {
@@ -1011,8 +1014,8 @@ sub define_array_from_input
       }
     } else
     {
-      print $fch "    $name = $rhs" . "[$ii];\n";
-      ++$ii;
+      print $fch "    $name = *(${rhs}++)" . ";\n";
+      # ++$ii;
     }
   }
   print $fch "\n";
@@ -1101,17 +1104,18 @@ sub assign_output
     }
     if ( $_ =~ m/$re_scalar/ ) # scalar variable
     {
-      print $fch "    ${lhs}[$ii] = " . $rhs2print;
+      print $fch "    *(${lhs}++) = " . $rhs2print; # added
+      # print $fch "    ${lhs}[$ii] = " . $rhs2print;
       print $fch ";" if $assign_rhs !~ /rhs/;
       print $fch "\n";
-      ++$ii if /^(?:D|\w+\s)\s*(\w+\s*(\/DT)?\s*[^\[])/i;
+      # ++$ii if /^(?:D|\w+\s)\s*(\w+\s*(\/DT)?\s*[^\[])/i;
       next;
     }
     if ( my @it = ($_ =~ m/$re_iter/g) )
     { 
       my $offset = qq();
-      my $starp = qq( + );
-      my $iter_increment = 1;
+      # my $starp = qq( + );
+      # my $iter_increment = 1;
       my $j = 0;
       while ( $j < (0+@it) )
       {
@@ -1122,19 +1126,23 @@ sub assign_output
         print $fch $offset . "for($i=$a;$i<$b;++$i)\n";
         print $fch $offset . "{\n";
       }
-      print $fch $offset . "    ${lhs}[$ii";
-      $j = 0;
-      while ( $j < 0+@it )
-      {
-        my ($i, $a, $b) = @it[$j..$j+2];
-        $j += 3;
-        print $fch "$starp$i";
-        $iter_increment *= ($b-$a);
-        $starp = qq/*(1+/;
-      }
-      print $fch qq/)/ x (@it/3-1);
-      print $fch "] = $rhs2print"; 
-      $ii += $iter_increment;
+
+      print $fch $offset .   "    *(${lhs}++) = $rhs2print"; # added
+      
+      # print $fch $offset . "    ${lhs}[$ii";
+      # $j = 0;
+      # while ( $j < 0+@it )
+      # {
+      #   my ($i, $a, $b) = @it[$j..$j+2];
+      #   $j += 3;
+      #   print $fch "$starp$i";
+      #   $iter_increment *= ($b-$a);
+      #   $starp = qq/*(1+/;
+      # }
+      # print $fch qq/)/ x (@it/3-1);
+      # print $fch "] = $rhs2print"; 
+
+      # $ii += $iter_increment;
       if ( $assign_rhs !~  /rhs/ )
       {
         $j = 0;
