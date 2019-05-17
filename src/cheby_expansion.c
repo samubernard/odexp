@@ -73,7 +73,7 @@ static const long TC[51][51] = { {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 /* takes state vector x and size N as input
  * and store meanx = mean(x) and range = range(x)
  */
-int cmpexpars(double *x, int N, double *meanx, double *range)
+int lrexpars(double *x, int N, double *meanx, double *range)
 {
   int i;
 	double minx = x[0],  maxx = x[0];
@@ -92,6 +92,78 @@ int cmpexpars(double *x, int N, double *meanx, double *range)
   return 0;
 }
 
+/* lrexporder 
+ * compute expansion order 
+ */
+int lrexporder(coupling_function f,int N, int *p, double range)
+{
+  int         i;
+  int         pmax = get_int("lrorder"); /* maximal polynomial order */ 
+  double      sc = 0.0;
+  int         oddity = 2; /* 0: even, 1: odd, 2: neither */
+  int         pstep = 4; /* step on adaptive order p */
+  double      abserr, 
+              err = 0.0,
+              pval,
+              spe = 0.0;
+  double      abstol = get_dou("lrabstol"),
+              reltol = get_dou("lrreltol");
+  size_t      errn = max(N/10,10);
+
+  gsl_function     F;
+  gsl_cheb_series *cs = gsl_cheb_alloc (pmax);
+
+  F.function = f;
+  F.params = &range;
+
+  /* approximate the function f on [-1,1] */
+  gsl_cheb_init (cs, &F, -1.0, 1.0);
+
+  /* find out if f is even of odd */
+  for (i = 0; i < pmax+1; i+=2)
+    sc += fabs(cs->c[i]);
+
+  if ( sc < (double)pmax/2 * 1e-8 ) /* this is almost odd function */
+    oddity = 1;
+
+  for (i = 1; i < pmax+1; i+=2)
+    sc += fabs(cs->c[i]);
+
+  if ( sc  < (double)pmax/2 * 1e-8 ) /* this is almost even function */
+    oddity = 0;
+  
+  /* check whether function if even or odd */ 
+  switch(oddity)
+  {
+    case 0 : /* start and stick with even order */
+      *p = 0;
+      break; /* start and stick with odd order */
+    case 1 :  
+      *p = -1;
+      break;
+    default : /* alternate even/odd orders */
+      *p = -1;
+      pstep = 3;
+  }
+
+  /* adaptative error on Chebychev approximation */
+  do {
+    err = 0.0;
+    spe = 0.0;
+    *p += pstep;
+    for (i = 0; i < errn; ++i)
+    {
+      gsl_cheb_eval_n_err (cs, *p, -1.0+(double)i/(errn-1)*2.0, &pval, &abserr);
+      err += abserr;
+      spe += fabs(pval);
+    }
+  } while ( ( err/errn > (abstol + reltol*spe) ) & ( *p < pmax ) );
+
+  gsl_cheb_free (cs);
+
+  return 0;
+}
+
 /* compute_cheby_expansion 
  * compute Chebychev polynomial expansion of the
  * coupling function y[i] = 1/N*sum_j f(x[j] - x[i])
@@ -101,7 +173,7 @@ int cmpexpars(double *x, int N, double *meanx, double *range)
  * direct method if N > P^2. Numerical tests show P up to 
  * 30. Advantageous if N > 2000
  */
-int cmpexp(coupling_function f, double *x, double *y, 
+int lrexp(coupling_function f, double *x, double *y, 
     int N, int p, double meanx, double range)
 {
   int i,k,m,j,l;
@@ -171,7 +243,7 @@ int cmpexp(coupling_function f, double *x, double *y,
   return 0;
 }
 
-/* cmpexpw 
+/* lrexpw 
  * compute a polynomial approximation of the coupling term
  *
  *    y[i] = 1/N*sum_j W_ij f(x[j] - x[i])
@@ -196,8 +268,8 @@ int cmpexp(coupling_function f, double *x, double *y,
  * the coupling term is return in the array y.
  *
  */
-int cmpexpw(coupling_function f, const double *U, const double *V, double *x, double *y, 
-    int N, int p, int r, double meanx, double range)
+int lrexpw(coupling_function f, const double *U, const double *V, int r, double *x, double *y, 
+    int N, int p, double meanx, double range)
 {
   int i,k,m,j,l;
   int p1 = p+1;
@@ -290,76 +362,13 @@ int cmpexpw(coupling_function f, const double *U, const double *V, double *x, do
  */
 int kernlr(coupling_function f, double *x, double *y, int N)
 {
-  int         i;
-  int         pmax = get_int("lrorder"); /* maximal polynomial order */
-  int         p;  
-  double      sc = 0.0;
-  int         oddity = 2, /* 0: even, 1: odd, 2: neither */
-              pstep = 4;
-  double      abserr, 
-              err = 0.0,
-              pval,
-              spe = 0.0;
+  int         p; /* maximal polynomial order */ 
 	double      range,
               meanx;
-  double      abstol = get_dou("lrabstol"),
-              reltol = get_dou("lrreltol");
-  size_t      errn = max(N/10,10);
-
-  gsl_function     F;
-  gsl_cheb_series *cs = gsl_cheb_alloc (pmax);
   
-  cmpexpars(x, N, &meanx, &range);
-
-  F.function = f;
-  F.params = &range;
-
-  /* approximate the function f on [-1,1] */
-  gsl_cheb_init (cs, &F, -1.0, 1.0);
-
-  /* find out if f is even of odd */
-  for (i = 0; i < pmax+1; i+=2)
-    sc += fabs(cs->c[i]);
-
-  if ( sc < (double)pmax/2 * 1e-8 ) /* this is almost odd function */
-    oddity = 1;
-
-  for (i = 1; i < pmax+1; i+=2)
-    sc += fabs(cs->c[i]);
-
-  if ( sc  < (double)pmax/2 * 1e-8 ) /* this is almost even function */
-    oddity = 0;
-  
-  /* check whether function if even or odd */ 
-  switch(oddity)
-  {
-    case 0 : /* start and stick with even order */
-      p = 4;
-      break; /* start and stick with odd order */
-    case 1 :  
-      p = 3;
-      break;
-    default : /* alternate even/odd orders */
-      p = 3;
-      pstep = 3;
-  }
-
-  /* adaptative error on Chebychev approximation */
-  do {
-    err = 0.0;
-    spe = 0.0;
-    for (i = 0; i < errn; ++i)
-    {
-      gsl_cheb_eval_n_err (cs, p, -1.0+(double)i/(errn-1)*2.0, &pval, &abserr);
-      err += abserr;
-      spe += fabs(pval);
-    }
-    p += pstep;
-  } while ( ( err/errn > (abstol + reltol*spe) ) & ( p < pmax ) );
-
-  cmpexp(f,x,y,N,p,meanx,range); /* compute high accuracy */
-
-  gsl_cheb_free (cs);
+  lrexpars(x, N, &meanx, &range); /* get meanx, range */
+  lrexporder(f,N,&p, range); /* get order p */
+  lrexp(f,x,y,N,p,meanx,range); /* compute high accuracy */
 
   return 0;
 }
@@ -368,82 +377,20 @@ int kernlr(coupling_function f, double *x, double *y, int N)
  * **Main user function**
  * computes the coupling term 
  *
- *   y_i = sum_{j=1:N} w_ij f(x_j - x_i)
+ *   y_i = sum_{j=1:N} W_ij f(x_j - x_i)
  *
+ * where W_ij can be factorized as U_i*V_j
  * in the most efficient way
  */
 int kernlrw(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N)
 {
-  int         i;
-  int         pmax = get_int("lrorder"); /* maximal polynomial order */
-  int         p;  
-  double      sc = 0.0;
-  int         oddity = 2, /* 0: even, 1: odd, 2: neither */
-              pstep = 4;
-  double      abserr, 
-              err = 0.0,
-              pval,
-              spe = 0.0;
+  int         p; /* maximal polynomial order */ 
 	double      range,
               meanx;
-  double      abstol = get_dou("lrabstol"),
-              reltol = get_dou("lrreltol");
-  size_t      errn = max(N/10,10);
-
-  gsl_function     F;
-  gsl_cheb_series *cs = gsl_cheb_alloc (pmax);
   
-  cmpexpars(x, N, &meanx, &range);
-
-  F.function = f;
-  F.params = &range;
-
-  /* approximate the function f on [-1,1] */
-  gsl_cheb_init (cs, &F, -1.0, 1.0);
-
-  /* find out if f is even of odd */
-  for (i = 0; i < pmax+1; i+=2)
-    sc += fabs(cs->c[i]);
-
-  if ( sc < (double)pmax/2 * 1e-8 ) /* this is almost odd function */
-    oddity = 1;
-
-  for (i = 1; i < pmax+1; i+=2)
-    sc += fabs(cs->c[i]);
-
-  if ( sc  < (double)pmax/2 * 1e-8 ) /* this is almost even function */
-    oddity = 0;
-  
-  /* check whether function if even or odd */ 
-  switch(oddity)
-  {
-    case 0 : /* start and stick with even order */
-      p = 4;
-      break; /* start and stick with odd order */
-    case 1 :  
-      p = 3;
-      break;
-    default : /* alternate even/odd orders */
-      p = 3;
-      pstep = 3;
-  }
-
-  /* adaptative error on Chebychev approximation */
-  do {
-    err = 0.0;
-    spe = 0.0;
-    for (i = 0; i < errn; ++i)
-    {
-      gsl_cheb_eval_n_err (cs, p, -1.0+(double)i/(errn-1)*2.0, &pval, &abserr);
-      err += abserr;
-      spe += fabs(pval);
-    }
-    p += pstep;
-  } while ( ( err/errn > (abstol + reltol*spe) ) & ( p < pmax ) );
-
-  cmpexpw(f,U,V,x,y,N,p,r,meanx,range); /* compute high accuracy */
-
-  gsl_cheb_free (cs);
+  lrexpars(x, N, &meanx, &range); /* get meanx, range */
+  lrexporder(f,N,&p, range); /* get order p */
+  lrexpw(f,U,V,r,x,y,N,p,meanx,range); /* compute high accuracy */
 
   return 0;
 }

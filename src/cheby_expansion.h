@@ -8,8 +8,9 @@
 
 typedef double (*coupling_function)(double, void *);
 
-int cmpexpars(double *x, int N, double *meanx, double *range);
-int cmpexp(coupling_function f, double *x, double *y, int N, int p, double meanx, double range);
-int cmpexpw(coupling_function f, const double *U, const double *V, double *x, double *y, int N, int p, int r, double meanx, double range);
+int lrexpars(double *x, int N, double *meanx, double *range);
+int lrexporder(coupling_function f,int N, int *p, double range);
+int lrexp(coupling_function f, double *x, double *y, int N, int p, double meanx, double range);
+int lrexpw(coupling_function f, const double *U, const double *V, int r, double *x, double *y, int N, int p, double meanx, double range);
 int kernlr(coupling_function f, double *x, double *y, int N);
 int kernlrw(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
