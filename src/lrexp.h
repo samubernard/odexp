@@ -1,4 +1,4 @@
-/* cheby_expansion.c
+/* lrexp.h
  * computes the coupling term 
  *
  *   y_i = sum_{j=1:N} w_ij * f(x_j - x_i)
