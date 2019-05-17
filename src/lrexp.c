@@ -12,7 +12,7 @@
 #include <gsl/gsl_chebyshev.h>
 #include <gsl/gsl_sf.h>
 
-#include "cheby_expansion.h"
+#include "lrexp.h"
 #include "datastruct.h"
 #include "macros.h"
 
