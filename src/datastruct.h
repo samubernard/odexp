@@ -59,7 +59,8 @@ typedef struct gen_option
 } gopt;
 
 /* number of global options */
-#define NBROPTS 53
+#define NBROPTS 56
+
 /* declare global options */
 extern struct gen_option GOPTS[NBROPTS];
 

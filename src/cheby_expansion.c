@@ -69,44 +69,11 @@ static const long TC[51][51] = { {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                           {-1, 0, 1250, 0, -260000, 0, 21528000, 0, -947232000, 0, 25638412800, 0, -466152960000, 0, 6034375680000, 0, -57930006528000, 0, 424820047872000, 0, -2432653747814400, 0, 11057517035520000, 0, -40383975260160000, 0, 119536566770073600, 0, -288405684905574400, 0, 568855350917201920, 0, -917508630511616000, 0, 1206989963132928000, 0, -1287455960675123200, 0, 1102487181118668800, 0, -746299014911098880, 0, 390051749953536000, 0, -151732604633088000, 0, 41341637204377600, 0, -7036874417766400, 0, 562949953421312},
                         };
 
-/* compute the coefficients of Chebychev polynomials
- * of order k = 0,...,p 
- * and store the coefficients l = 0,...,k in the array
- * a[k][l] 
- * **DEPRECATED**: See table TC
- */
-int compute_chebychev_coeffs(long **a, int p)
-{
-  /* a[k][l] = coefficient l of T_k, l = 0..k; k = 0..p */
-  /* size a [p+1][p+1] */
-	int l,k;	
-
-
-	a[0][0] = 1;
-  a[1][0] = 0;
-  a[1][1] = 1;
-  for (k = 2; k <= p; ++k)
-	{
-    a[k][0] = - a[k-2][0]; /* l = 0 */
-    l = 1;
-	  while ( l < k-1 )
-    for (l = 1; l < k-1; ++l)
-		{
-			a[k][l] = 2*a[k-1][l-1] - a[k-2][l];
-		}	
-		a[k][k-1] = 2*a[k-1][k-2]; /* l = k-1 */
-		a[k][k] = 2*a[k-1][k-1];   /* l = k */
-    /* fprintf(stderr,"a[%d][%d] = %ld\n", k,k, a[k][k]);  */
-	}	
-
-  return 0;
-
-} 
 
 /* takes state vector x and size N as input
  * and store meanx = mean(x) and range = range(x)
  */
-int pre_compute_cheby_expansion_parameters(double *x, int N, double *meanx, double *range)
+int cmpexpars(double *x, int N, double *meanx, double *range)
 {
   int i;
 	double minx = x[0],  maxx = x[0];
@@ -324,83 +291,74 @@ int cmpexpw(coupling_function f, const double *U, const double *V, double *x, do
 int kernlr(coupling_function f, double *x, double *y, int N)
 {
   int         i;
-  int         p = 3;              /* default initial Chebychev order */
-  int         pmax = 30;
-  double     *ylo  = (double *)malloc( N * sizeof(double));
-  double      evencoeffs = 0.0, 
-              oddcoeffs = 0.0;
-  int         feven = 0, 
-              fodd = 0, 
+  int         pmax = get_int("lrorder"); /* maximal polynomial order */
+  int         p;  
+  double      sc = 0.0;
+  int         oddity = 2, /* 0: even, 1: odd, 2: neither */
               pstep = 4;
   double      abserr, 
-              sumabserr = 0.0,
-              chebeval;
+              err = 0.0,
+              pval,
+              spe = 0.0;
 	double      range,
               meanx;
-  double      abstol = get_dou("abstol");
+  double      abstol = get_dou("lrabstol"),
+              reltol = get_dou("lrreltol");
   size_t      errn = max(N/10,10);
-  /* double      yerr; */
 
   gsl_function     F;
-  gsl_cheb_series *cs = gsl_cheb_alloc (p);
+  gsl_cheb_series *cs = gsl_cheb_alloc (pmax);
   
-  pre_compute_cheby_expansion_parameters(x, N, &meanx, &range);
+  cmpexpars(x, N, &meanx, &range);
 
-  F.function = f; /* this must be a function of type 
-                   *   double (*coupling_function)(double, void *) 
-                   */
+  F.function = f;
   F.params = &range;
 
   /* approximate the function f on [-1,1] */
   gsl_cheb_init (cs, &F, -1.0, 1.0);
 
   /* find out if f is even of odd */
-  for (i = 0; i < p+1; ++i)
-  {
-    if ( i % 2 )
-      oddcoeffs += fabs(cs->c[i]);
-    else
-      evencoeffs += fabs(cs->c[i]);
-  }
-  if ( evencoeffs < (double)p/2 * 1e-8 ) /* this is almost odd function */
-    fodd = 1;
-  if ( oddcoeffs  < (double)p/2 * 1e-8 ) /* this is almost even function */
-    feven = 1;
+  for (i = 0; i < pmax+1; i+=2)
+    sc += fabs(cs->c[i]);
+
+  if ( sc < (double)pmax/2 * 1e-8 ) /* this is almost odd function */
+    oddity = 1;
+
+  for (i = 1; i < pmax+1; i+=2)
+    sc += fabs(cs->c[i]);
+
+  if ( sc  < (double)pmax/2 * 1e-8 ) /* this is almost even function */
+    oddity = 0;
   
-  /* adaptative error on Chebychev approximation */
-  if ( feven ) /* start and stick with even order */
+  /* check whether function if even or odd */ 
+  switch(oddity)
   {
-    p = 4;
-    /* fprintf(stderr,"function is even\n"); */
-  }
-  if ( fodd ) 
-  {  
-    p = 3;
-    /* fprintf(stderr,"function is odd\n"); */
-  }
-  if ( ! ( feven | fodd ) )
-  {
-    p = 3;
-    pstep = 3;
+    case 0 : /* start and stick with even order */
+      p = 4;
+      break; /* start and stick with odd order */
+    case 1 :  
+      p = 3;
+      break;
+    default : /* alternate even/odd orders */
+      p = 3;
+      pstep = 3;
   }
 
-  cs = gsl_cheb_alloc (pmax);
-  gsl_cheb_init (cs, &F, -1.0, 1.0);
+  /* adaptative error on Chebychev approximation */
   do {
-    sumabserr = 0.0;
+    err = 0.0;
+    spe = 0.0;
     for (i = 0; i < errn; ++i)
     {
-      gsl_cheb_eval_n_err (cs, p, -range+(double)i/(errn-1)*2.0*range, &chebeval, &abserr);
-      sumabserr += abserr;
+      gsl_cheb_eval_n_err (cs, p, -1.0+(double)i/(errn-1)*2.0, &pval, &abserr);
+      err += abserr;
+      spe += fabs(pval);
     }
     p += pstep;
-    /* DBPRINT("p = %d, meanabserr = %g, tol = %g", p, sumabserr/N, abstol);  */
-  } while ( ( sumabserr/errn > abstol ) & ( p < pmax ) );
+  } while ( ( err/errn > (abstol + reltol*spe) ) & ( p < pmax ) );
 
-  /* DBPRINT("p = %d, range = %g", p, range); */
   cmpexp(f,x,y,N,p,meanx,range); /* compute high accuracy */
 
-	free(ylo);
   gsl_cheb_free (cs);
 
   return 0;
@@ -417,27 +375,25 @@ int kernlr(coupling_function f, double *x, double *y, int N)
 int kernlrw(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N)
 {
   int         i;
-  int         p = 3;              /* default initial Chebychev order */
-  int         pmax = 30;
-  double     *ylo  = (double *)malloc( N * sizeof(double));
-  double      evencoeffs = 0.0, 
-              oddcoeffs = 0.0;
-  int         feven = 0, 
-              fodd = 0, 
+  int         pmax = get_int("lrorder"); /* maximal polynomial order */
+  int         p;  
+  double      sc = 0.0;
+  int         oddity = 2, /* 0: even, 1: odd, 2: neither */
               pstep = 4;
   double      abserr, 
-              sumabserr = 0.0,
-              chebeval;
+              err = 0.0,
+              pval,
+              spe = 0.0;
 	double      range,
               meanx;
-  double      abstol = get_dou("abstol");
+  double      abstol = get_dou("lrabstol"),
+              reltol = get_dou("lrreltol");
   size_t      errn = max(N/10,10);
-  /* double      yerr; */
 
   gsl_function     F;
-  gsl_cheb_series *cs = gsl_cheb_alloc (p);
+  gsl_cheb_series *cs = gsl_cheb_alloc (pmax);
   
-  pre_compute_cheby_expansion_parameters(x, N, &meanx, &range);
+  cmpexpars(x, N, &meanx, &range);
 
   F.function = f;
   F.params = &range;
@@ -446,50 +402,47 @@ int kernlrw(const double *U, const double *V, int r, coupling_function f, double
   gsl_cheb_init (cs, &F, -1.0, 1.0);
 
   /* find out if f is even of odd */
-  for (i = 0; i < p+1; ++i)
-  {
-    if ( i % 2 )
-      oddcoeffs += fabs(cs->c[i]);
-    else
-      evencoeffs += fabs(cs->c[i]);
-  }
-  if ( evencoeffs < (double)p/2 * 1e-8 ) /* this is almost odd function */
-    fodd = 1;
-  if ( oddcoeffs  < (double)p/2 * 1e-8 ) /* this is almost even function */
-    feven = 1;
+  for (i = 0; i < pmax+1; i+=2)
+    sc += fabs(cs->c[i]);
+
+  if ( sc < (double)pmax/2 * 1e-8 ) /* this is almost odd function */
+    oddity = 1;
+
+  for (i = 1; i < pmax+1; i+=2)
+    sc += fabs(cs->c[i]);
+
+  if ( sc  < (double)pmax/2 * 1e-8 ) /* this is almost even function */
+    oddity = 0;
   
-  /* adaptative error on Chebychev approximation */
-  if ( feven ) /* start and stick with even order */
+  /* check whether function if even or odd */ 
+  switch(oddity)
   {
-    p = 4;
-    /* fprintf(stderr,"function is even\n"); */
-  }
-  if ( fodd ) 
-  {  
-    p = 3;
-    /* fprintf(stderr,"function is odd\n"); */
-  }
-  if ( ! ( feven | fodd ) )
-  {
-    p = 3;
-    pstep = 3;
+    case 0 : /* start and stick with even order */
+      p = 4;
+      break; /* start and stick with odd order */
+    case 1 :  
+      p = 3;
+      break;
+    default : /* alternate even/odd orders */
+      p = 3;
+      pstep = 3;
   }
 
-  cs = gsl_cheb_alloc (pmax);
-  gsl_cheb_init (cs, &F, -1.0, 1.0);
+  /* adaptative error on Chebychev approximation */
   do {
-    sumabserr = 0.0;
+    err = 0.0;
+    spe = 0.0;
     for (i = 0; i < errn; ++i)
     {
-      gsl_cheb_eval_n_err (cs, p, -range+(double)i/(errn-1)*2.0*range, &chebeval, &abserr);
-      sumabserr += abserr;
+      gsl_cheb_eval_n_err (cs, p, -1.0+(double)i/(errn-1)*2.0, &pval, &abserr);
+      err += abserr;
+      spe += fabs(pval);
     }
     p += pstep;
-  } while ( ( sumabserr/errn > abstol ) & ( p < pmax ) );
+  } while ( ( err/errn > (abstol + reltol*spe) ) & ( p < pmax ) );
 
   cmpexpw(f,U,V,x,y,N,p,r,meanx,range); /* compute high accuracy */
 
-	free(ylo);
   gsl_cheb_free (cs);
 
   return 0;
