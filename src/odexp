@@ -1206,13 +1206,13 @@ sub set_chebychev_expansion
       print $fch "    yxp_ = realloc(yxp_, POP_SIZE*sizeof(double));\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i = 0;\n";
-      print $fch "    while ( myself_ != NULL ) /* initialize xxp_ for kernlr */\n";
+      print $fch "    while ( myself_ != NULL ) /* initialize xxp_ for lrkern */\n";
       print $fch "    {\n";
       print $fch "        xxp_[i] = $var;\n"; 
       print $fch "        myself_ = myself_->nextel;\n";
       print $fch "        ++i;\n";
       print $fch "    }\n";
-      print $fch "    kernlr($fun,xxp_,yxp_,POP_SIZE);\n";
+      print $fch "    lrkern($fun,xxp_,yxp_,POP_SIZE);\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i = 0;\n";
       print $fch "    j = I_PSI(\"$varname\");\n";

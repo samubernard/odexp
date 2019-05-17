@@ -352,7 +352,7 @@ int lrexpw(coupling_function f, const double *U, const double *V, int r, double 
   return 0;
 }
 
-/* kernlr
+/* lrkern
  * **Main user function**
  * computes the coupling term 
  *
@@ -360,7 +360,7 @@ int lrexpw(coupling_function f, const double *U, const double *V, int r, double 
  *
  * in the most efficient way
  */
-int kernlr(coupling_function f, double *x, double *y, int N)
+int lrkern(coupling_function f, double *x, double *y, int N)
 {
   int         p; /* maximal polynomial order */ 
 	double      range,
@@ -373,7 +373,7 @@ int kernlr(coupling_function f, double *x, double *y, int N)
   return 0;
 }
 
-/* kernlrw
+/* lrwkern
  * **Main user function**
  * computes the coupling term 
  *
@@ -382,7 +382,7 @@ int kernlr(coupling_function f, double *x, double *y, int N)
  * where W_ij can be factorized as U_i*V_j
  * in the most efficient way
  */
-int kernlrw(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N)
+int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N)
 {
   int         p; /* maximal polynomial order */ 
 	double      range,
