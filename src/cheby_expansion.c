@@ -138,7 +138,7 @@ int cmpexp(coupling_function f, double *x, double *y,
     int N, int p, double meanx, double range)
 {
   int i,k,m,j,l;
-  double *phi=(double *)malloc( (p+1) * sizeof(double));
+  double phi;
   double *A= (double *)malloc( (p+1) * sizeof(double));
   double *B= (double *)malloc( (p+1) * sizeof(double));
   gsl_cheb_series *cs = gsl_cheb_alloc (p);
@@ -163,7 +163,8 @@ int cmpexp(coupling_function f, double *x, double *y,
   cc[0] /= 2;
 
   /* expand the Chebichev approximation  */
-  for (m = p+1; m--;)  /* pre-compute the (p+1) A: O(N*(p+1)) */ /* m goes from p to 0 */
+  for (m = p+1; m--;)  /* pre-compute the (p+1) moments A[m]: O(N*(p+1)) */ 
+                       /* m goes from p to 0 */
 	{	
 		A[m] = 0.0;
 		for (j = 0; j < N; ++j)  
@@ -187,17 +188,16 @@ int cmpexp(coupling_function f, double *x, double *y,
 		y[i] = 0.0;
 		for (m = 0; m <= p; ++m)
 		{
-			phi[m] = 0.0;
+			phi = 0.0;
       for (l = m; l <= p; ++l)
       {
-        phi[m] += B[l] * gsl_sf_choose ( l, m) * gsl_pow_int( -(x[i] - meanx)/range, l-m );
+        phi += B[l] * gsl_sf_choose ( l, m) * gsl_pow_int( -(x[i] - meanx)/range, l-m );
       }
-			y[i] += A[m]*phi[m];
+			y[i] += A[m]*phi;
 		}
     y[i] /= (double)N;
 	}
 
-  free(phi);
   free(A);
   free(B);
 	
