@@ -146,7 +146,7 @@ double sumxy(long len, double (*f)(double), double (*g)(double, double), const d
  *  KERN
  *  return sum_{j=0}^{len-1} Wi[j]*f(xi,x[j],p)
  */
-double kern(long len, double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p)
+double kern(double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p, long len)
 {
     double s = 0.0;
     long j;
@@ -156,7 +156,7 @@ double kern(long len, double *Wi, double (*f)(double, double, double *), double 
         s += Wi[j]*f(xi,x[j],p);
     }
     
-    return s;
+    return s/(double)len;
 }
 
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len)

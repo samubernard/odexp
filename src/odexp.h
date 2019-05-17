@@ -141,7 +141,7 @@ RANDINT poisson(double lambda);
 unsigned long randIntMax(RANDINT intmax); /* uniform random int between 0 and intmax-1 */
 double exprand(double r); /* exponential random number */
 
-
+/* utils */
 double sum(double *array, long len); /* sum the elements of the array */
 double sumsub(double *array, long *ind, long len); /* sum sub-array with index ind */
 double sumstep(double *array, long len, long step);
@@ -153,12 +153,13 @@ double minus(double x, double y); /* subtraction */
 double plus(double x, double y); /* addition */
 double identity(double x);
 double sumxy(long len, double (*f)(double), double (*g)(double, double), const double *x, const double yi); 
-double kern(long len, double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p);
+double kern(double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p, long len);
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len);
 
+/* low rank expansion */
 typedef double (*coupling_function)(double, void *);
 int kernlr(coupling_function f, double *x, double *y, int N);
-int kernlrw(coupling_function f, double *x, double *y, int N, const double *U, const double *V, int r);
+int kernlrw(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
 
 double get_val_from_par(par *myself,int shift,char *name, enum vartype type);
 

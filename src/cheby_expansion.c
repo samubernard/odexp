@@ -134,12 +134,12 @@ int pre_compute_cheby_expansion_parameters(double *x, int N, double *meanx, doub
  * direct method if N > P^2. Numerical tests show P up to 
  * 30. Advantageous if N > 2000
  */
-int compute_cheby_expansion(coupling_function f, double *x, double *y, 
+int cmpexp(coupling_function f, double *x, double *y, 
     int N, int p, double meanx, double range)
 {
   int i,k,m,j,l;
   double *phi=(double *)malloc( (p+1) * sizeof(double));
-  double *moments= (double *)malloc( (p+1) * sizeof(double));
+  double *A= (double *)malloc( (p+1) * sizeof(double));
   double *B= (double *)malloc( (p+1) * sizeof(double));
   gsl_cheb_series *cs = gsl_cheb_alloc (p);
 
@@ -163,12 +163,12 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y,
   cc[0] /= 2;
 
   /* expand the Chebichev approximation  */
-  for (m = p+1; m--;)  /* pre-compute the (p+1) moments: O(N*(p+1)) */ /* m goes from p to 0 */
+  for (m = p+1; m--;)  /* pre-compute the (p+1) A: O(N*(p+1)) */ /* m goes from p to 0 */
 	{	
-		moments[m] = 0.0;
+		A[m] = 0.0;
 		for (j = 0; j < N; ++j)  
 		{
-			moments[m] += gsl_pow_int( (x[j] - meanx)/range, m);
+			A[m] += gsl_pow_int( (x[j] - meanx)/range, m);
 		}
 	}
 
@@ -192,13 +192,13 @@ int compute_cheby_expansion(coupling_function f, double *x, double *y,
       {
         phi[m] += B[l] * gsl_sf_choose ( l, m) * gsl_pow_int( -(x[i] - meanx)/range, l-m );
       }
-			y[i] += moments[m]*phi[m];
+			y[i] += A[m]*phi[m];
 		}
     y[i] /= (double)N;
 	}
 
   free(phi);
-  free(moments);
+  free(A);
   free(B);
 	
   return 0;
@@ -346,7 +346,9 @@ int kernlr(coupling_function f, double *x, double *y, int N)
   
   pre_compute_cheby_expansion_parameters(x, N, &meanx, &range);
 
-  F.function = f;
+  F.function = f; /* this must be a function of type 
+                   *   double (*coupling_function)(double, void *) 
+                   */
   F.params = &range;
 
   /* approximate the function f on [-1,1] */
@@ -396,7 +398,7 @@ int kernlr(coupling_function f, double *x, double *y, int N)
   } while ( ( sumabserr/errn > abstol ) & ( p < pmax ) );
 
   /* DBPRINT("p = %d, range = %g", p, range); */
-  compute_cheby_expansion(f,x,y,N,p,meanx,range); /* compute high accuracy */
+  cmpexp(f,x,y,N,p,meanx,range); /* compute high accuracy */
 
 	free(ylo);
   gsl_cheb_free (cs);
@@ -412,7 +414,7 @@ int kernlr(coupling_function f, double *x, double *y, int N)
  *
  * in the most efficient way
  */
-int kernlrw(coupling_function f, double *x, double *y, int N, const double *U, const double *V, int r)
+int kernlrw(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N)
 {
   int         i;
   int         p = 3;              /* default initial Chebychev order */
