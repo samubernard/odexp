@@ -139,7 +139,7 @@ my $re_pop = qr/^
   (|\#.*)?              # nothing or comment
 $/ix;
 
-my $re_expan = qr/^
+my $re_lrexp = qr/^
   \s*%C                 # expansion keyword
   \s+                   # whitespaces
   ($re_identifier)      # varname
@@ -589,9 +589,9 @@ int pop_rhs(double t, const double y[], double f[], void *params)
     par *myself_ = SIM->pop->start;
     par __attribute__((unused)) *other_ = (par *)NULL;
 
-    /* chebychev expansion */
+    /* low-rank expansion */
     double __attribute__((unused)) *xxp_ = NULL, *yxp_ = NULL;
-    /* chebychev expansion */
+    /* low-rank expansion */
 
     SIM->pop_birth_rate=0.0;
     for(j=0;j<SIM->nbr_mfd;j++)
@@ -611,7 +611,7 @@ int pop_rhs(double t, const double y[], double f[], void *params)
 );
 	print $fch $s;	
 
-  set_chebychev_expansion($modelode);
+  set_low_rank_expansion($modelode);
 
 	set_population_meanfields($modelode);
   $s = qq(    for (j=0;j<SIM->nbr_mfd;j++)
@@ -689,7 +689,7 @@ sub set_population_coupling
   {
 		/^%C/i or next;
     my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-    $nbr_n2_coupling++ if $attr =! /expan/;
+    $nbr_n2_coupling++ if $attr =! /lrexp/;
   }
   seek $fh, 0, 0; # rewind file 
 
@@ -1188,7 +1188,7 @@ sub assign_pop_rate
   close($fh);
 }
 
-sub set_chebychev_expansion
+sub set_low_rank_expansion
 {
   open(my $fh, '<', @_) or die "could not open file '@_'. $!";
   my $nv = 0;
@@ -1197,7 +1197,7 @@ sub set_chebychev_expansion
   print $fch $s;
   while (<$fh>) 
   {
-    my ($varname, $attr, $comment) = ( /$re_expan/ ) or next;
+    my ($varname, $attr, $comment) = ( /$re_lrexp/ ) or next;
     if ( $attr =~ /expan/ )
     {
       my ($var) = ( $attr =~ /var\s*=\s*(.*?)([;\s]|$)/ );

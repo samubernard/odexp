@@ -92,13 +92,13 @@ int lrexpars(double *x, int N, double *meanx, double *range)
   return 0;
 }
 
-/* lrexporder 
- * compute expansion order 
+/* lrexprank 
+ * compute expansion rank 
  */
-int lrexporder(coupling_function f,int N, int *p, double range)
+int lrexprank(coupling_function f,int N, int *p, double range)
 {
   int         i;
-  int         pmax = get_int("lrorder"); /* maximal polynomial order */ 
+  int         pmax = get_int("lrmax"); /* maximal polynomial order */ 
   double      sc = 0.0;
   int         oddity = 2; /* 0: even, 1: odd, 2: neither */
   int         pstep = 4; /* step on adaptive order p */
@@ -135,13 +135,13 @@ int lrexporder(coupling_function f,int N, int *p, double range)
   /* check whether function if even or odd */ 
   switch(oddity)
   {
-    case 0 : /* start and stick with even order */
+    case 0 : /* start and stick with even rank */
       *p = 0;
-      break; /* start and stick with odd order */
+      break; /* start and stick with odd rank */
     case 1 :  
       *p = -1;
       break;
-    default : /* alternate even/odd orders */
+    default : /* alternate even/odd rank */
       *p = -1;
       pstep = 3;
   }
@@ -362,12 +362,12 @@ int lrexpw(coupling_function f, const double *U, const double *V, int r, double 
  */
 int lrkern(coupling_function f, double *x, double *y, int N)
 {
-  int         p; /* maximal polynomial order */ 
+  int         p; /* polynomial order */ 
 	double      range,
               meanx;
   
   lrexpars(x, N, &meanx, &range); /* get meanx, range */
-  lrexporder(f,N,&p, range); /* get order p */
+  lrexprank(f,N,&p, range); /* get rank p */
   lrexp(f,x,y,N,p,meanx,range); /* compute high accuracy */
 
   return 0;
@@ -384,12 +384,12 @@ int lrkern(coupling_function f, double *x, double *y, int N)
  */
 int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N)
 {
-  int         p; /* maximal polynomial order */ 
+  int         p; /* polynomial order */ 
 	double      range,
               meanx;
   
   lrexpars(x, N, &meanx, &range); /* get meanx, range */
-  lrexporder(f,N,&p, range); /* get order p */
+  lrexprank(f,N,&p, range); /* get rank p */
   lrexpw(f,U,V,r,x,y,N,p,meanx,range); /* compute high accuracy */
 
   return 0;

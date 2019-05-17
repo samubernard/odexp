@@ -158,8 +158,8 @@ double linchaindelay(const double root, const double *chain, const size_t link, 
 
 /* low rank expansion */
 typedef double (*coupling_function)(double, void *);
-int kernlr(coupling_function f, double *x, double *y, int N);
-int kernlrw(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
+int lrkern(coupling_function f, double *x, double *y, int N);
+int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
 
 double get_val_from_par(par *myself,int shift,char *name, enum vartype type);
 

@@ -458,11 +458,10 @@ double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X }
 .fi
 
 .nf
-FUN myatan( x, *p) = ({ \
-  double scale = *(double*)p; \
-  x *= scale; \
-  atan(x); \
-})
+FUN myatan( x, *p)
+  double a = *p;
+  return atan(a*x);
+end
 .fi
 
 is interpreted as 
@@ -470,9 +469,8 @@ is interpreted as
 .nf
 double  myatan(double x, double *p)
 {
-    double scale = *(double*)p;
-    x *= scale;
-    return atan(x);
+  double a = *p;
+  return atan(a*x);
 }
 .fi
 
@@ -621,10 +619,12 @@ Used with \fBsumxy\fR.
 .BR \fIdouble\fR " " sumxy\fR(\fIlong " " \fIlen, " " \fIdouble " " \fI(*f)(double)\fR, " " \fIdouble " " \fI(*g)(double,double)\fR, " " \fIconst " "  \fIdouble " " \fI*x\fR, " " \fIconst " " \fIdouble " " \fIyi\fR)
 Sum over j of \fIf\fR(\fIg\fR(\fIx_j\fR,\fIyi\fR)) 
 .TP
+.BR \fIdouble\fR " " kern\fR(\fIdouble "" \fI*Wi, " " \fIdouble " " \fI(*f)(double, double, double *)\fR, " " \fIdouble " " \fIxi, " " \fIconst " " \fIdouble " " \fI*x\fR, " " \fidouble " " \fI*p\fR, " " \fIlong " " \fIlen\fR);
+.TP
 .BR \fIdouble\fR " " linchaindelay\fR(\fIdouble " " \fIroot\fR, " " \fIdouble " " \fI*chain\fR, " " \fIsize_t " " \fIlink\fR, " " \fIdouble " " \fIdelay\fR, " " \fIsize_t " " \fIlen\fR)
 \fIlink\fR'th element of a linear chain \fIbeta\fR*(\fIchain\fR[\fIlink\fR-1]-\fIchain\fR[\fIlink\fR]), (and \fIbeta\fR*(\fIroot\fR-\fIchain\fR[\fI0\fR]))
 
-.SS Time delays
+.SS Time lags (gamma-distributed delays)
 There is a shortcut to specify a delayed variable. 
 If 
 .I z 
@@ -638,41 +638,29 @@ defines the dynamical variable \fIztau1\fR as the delayed version of \fIz\fR
 with a linear chain of length 1000 and mean tau.
 All intermediate variables, including \fIztau1\fR, have initial condition 0.2.
 
-.SS Evaluating coupling terms in O(N)
+.SS Low rank expansion of coupling terms in O(N)
 Coupling term (%C) are evaluated by default in O(N^2) where N is the population size. 
-When the attribute \fIexpan\fR is present in a coupling declaration, an order P Chebychev expansion  
+When the attribute \fIlrexp\fR is present in a coupling declaration, an rank P expansion  
 is used to approximate the coupling function g given in the attribute \fIfun\fR over the variable given
 in attribute \fIvar\fR. 
-The Chebychev approximation is then used to compute the first P+1 coupling moments A_k
-
-.nf
-Ak = sum_{j=1}^N (xj)^k
-g(xj-xi) = sum_{k=0}^P A_k phi_k(xi)  
-.fi
-
-Each moment is computed in O(N). The functions phi_k are computed in O(P^2). 
-The resulting coupling terms can be computed in O(N*P^3).
-The expansion method is therefore useful when N > P^3. For practical purpose, with P ~ 10, the method
-can be faster if N > 1000. 
-The P is precalculated at each evaluation based on abstol. 
-P increases with max{|xj-xi|}, so that the method works better when the particles are concentrated. 
 
 The coupling function g must be of the form g(u, *p) = gg(s*u) where the pointer p points to the scalar value s. 
-Chebychev expansion is currently limited to coupling functions of the form g(xj-xi) for xi, xj scalars.
+low rank expansion is currently limited to coupling functions of the form g(xj-xi) for xi, xj scalars.
 
 The following code calls the expansion method for the coupling term sin(xj-xi).
 The auxiliary term TH is introduced to force the values of theta between 0 and 2 * PI. 
 
 .fn
-%C coupling 0.0 {expan; var = MA("TH"); fun = coupling_fun_sin}
+%C coupling 0.0 {lrexp; var = MA("TH"); fun = coupling_fun_sin}
 
 AUX TH theta - ( (int) (theta/2/PI) * 2 * PI )
 
-@ coupling_fun_sin(x, *p) = ({ \\
-  double scale = *(double *)p; \\
-  x *= scale; \\
-  sin(x); \\
-  })
+fun coupling_fun_sin(x, *p) 
+  double scale = *(double *)p; 
+  x *= scale; 
+  return sin(x); 
+
+end
 .fi
 
 .SS Stepping methods

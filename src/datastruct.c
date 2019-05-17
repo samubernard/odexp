@@ -36,7 +36,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"meth","solver", 's', 0.0, 0, "rkck", "ode solver stepping METHod rk2 | rk4 | rkf45 | {rkck} | rk8pd | bsimp", "ode"},
   {"lrabstol","lrabstol", 'd', 1e-6, 0, "", "Low Rank approx ABSolute TOLerance", "lowrank"},
   {"lrreltol","lrreltol", 'd', 1e-6, 0, "", "Low Rank approx RELolute TOLerance", "lowrank"},
-  {"lrorder","lrorder", 'i', 0.0, 31, "", "Low Rank approx ORDER", "lowrank"},
+  {"lrmax","lrmax", 'i', 0.0, 31, "", "Low Rank approx MAX rank", "lowrank"},
   {"pm","popmode", 's', 0.0, 0, "population", "Population simulation Mode single | {population}", "population"},
   {"ps","popsize", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
   {"cf","closefiles", 'i', 0.0, 0, "", "close particle files between writes (slow when on)", "population"},
