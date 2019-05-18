@@ -590,7 +590,7 @@ int pop_rhs(double t, const double y[], double f[], void *params)
     par __attribute__((unused)) *other_ = (par *)NULL;
 
     /* low-rank expansion */
-    double __attribute__((unused)) *xxp_ = NULL, *yxp_ = NULL;
+    double __attribute__((unused)) *xxp_, *yxp_;
     /* low-rank expansion */
 
     SIM->pop_birth_rate=0.0;
@@ -689,7 +689,7 @@ sub set_population_coupling
   {
 		/^%C/i or next;
     my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-    $nbr_n2_coupling++ if $attr =! /lrexp/;
+    $nbr_n2_coupling++ if $attr =! /lrw?exp/;
   }
   seek $fh, 0, 0; # rewind file 
 
@@ -1198,12 +1198,12 @@ sub set_low_rank_expansion
   while (<$fh>) 
   {
     my ($varname, $attr, $comment) = ( /$re_lrexp/ ) or next;
-    if ( $attr =~ /expan/ )
+    if ( $attr =~ /lrexp/ )
     {
       my ($var) = ( $attr =~ /var\s*=\s*(.*?)([;\s]|$)/ );
       my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([;\s]|$)/ );
-      print $fch "    xxp_ = realloc(xxp_, POP_SIZE*sizeof(double));\n";
-      print $fch "    yxp_ = realloc(yxp_, POP_SIZE*sizeof(double));\n";
+      print $fch "    xxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
+      print $fch "    yxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i = 0;\n";
       print $fch "    while ( myself_ != NULL ) /* initialize xxp_ for lrkern */\n";
@@ -1212,7 +1212,7 @@ sub set_low_rank_expansion
       print $fch "        myself_ = myself_->nextel;\n";
       print $fch "        ++i;\n";
       print $fch "    }\n";
-      print $fch "    lrkern($fun,xxp_,yxp_,POP_SIZE);\n";
+      print $fch "    lrkern($fun, xxp_,yxp_, POP_SIZE);\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i = 0;\n";
       print $fch "    j = I_PSI(\"$varname\");\n";
@@ -1225,6 +1225,35 @@ sub set_low_rank_expansion
       print $fch "    free(xxp_);\n";
       print $fch "    free(yxp_);\n";
     }
+    elsif ( $attr =~ /lrwexp/ )
+    {
+      my ($var) = ( $attr =~ /var\s*=\s*(.*?)([;\s]|$)/ );
+      my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([;\s]|$)/ );
+      print $fch "    xxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
+      print $fch "    yxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
+      print $fch "    myself_ = SIM->pop->start;\n";
+      print $fch "    i = 0;\n";
+      print $fch "    while ( myself_ != NULL ) /* initialize xxp_ for lrkern */\n";
+      print $fch "    {\n";
+      print $fch "        xxp_[i] = $var;\n"; 
+      print $fch "        myself_ = myself_->nextel;\n";
+      print $fch "        ++i;\n";
+      print $fch "    }\n";
+      print $fch "    lrwpkern($fun, xxp_,yxp_, POP_SIZE);\n";
+      print $fch "    myself_ = SIM->pop->start;\n";
+      print $fch "    i = 0;\n";
+      print $fch "    j = I_PSI(\"$varname\");\n";
+      print $fch "    while ( myself_ != NULL ) /* set psixp */\n";
+      print $fch "    {\n";
+      print $fch "        myself_->psi[j] = yxp_[i];\n"; 
+      print $fch "        myself_ = myself_->nextel;\n";
+      print $fch "        ++i;\n";
+      print $fch "    }\n";
+      print $fch "    free(xxp_);\n";
+      print $fch "    free(yxp_);\n";
+    }
+
+
   }
   $s = qq(    /* end - update coupling terms psi,  O(NP^2) */
 );

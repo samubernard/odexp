@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_chebyshev.h>
 #include <gsl/gsl_sf.h>
@@ -352,6 +353,123 @@ int lrexpw(coupling_function f, const double *U, const double *V, int r, double 
   return 0;
 }
 
+/* lrexpwp
+ * low rank expansion for population-based system
+ * compute a polynomial approximation of the coupling term
+ *
+ *    y[i] = 1/N*sum_j W_ij f(x[j] - x[i])
+ *
+ * for i = 1,...,N
+ *
+ * The algorithm is based on Chebychev approximation of the
+ * function f(u) on u in [-range, range]
+ * The algorithm runs in O(N*P^2), and is faster than the
+ * direct method if N > P^2. Numerical tests show P up to 
+ * 30. Advantageous if N > 2000
+ *
+ * the coupling term is return in the array y.
+ *
+ */
+int lrexpwp(coupling_function f, double *x, double *y, 
+    int N, int p, double meanx, double range)
+{
+  int i,k,m,j,l;
+  int p1 = p+1;
+  int r = 2; 
+  double phi;
+  double *A       = (double *)malloc( (p1) * r * sizeof(double)); /* p+1 x r */
+  double *B       = (double *)malloc( (p1) * sizeof(double));
+  double *U       = (double *)malloc( r * N * sizeof(double)); 
+  double *Vs      = (double *)malloc( r * N * sizeof(double));
+  double ua;
+  par *myself_ = SIM->pop->start; 
+  gsl_cheb_series *cs = gsl_cheb_alloc (p);
+
+  /* construction of the matrices U and V */
+  i = 0;
+  while ( myself_ != NULL )
+  {
+    /* memcpy(void *restrict dst, const void *restrict src, size_t n); */
+    memcpy(U + i, myself_->expr, r * sizeof(double)); /* fill U row by row */
+    memcpy(Vs + i, myself_->expr + r, r * sizeof(double)); /* fill Vs row by row */
+    myself_ = myself_->nextel;
+    i += r;
+  }
+
+  gsl_function F;
+  F.function = f;
+  F.params = &range;
+
+  gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
+	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
+  /* The Chebychev series is computed using the convention
+   *
+   * f(x) = (c_0 / 2) + \sum_{n=1} c_n T_n(x)
+   *
+   * Since we want to sum
+   *
+   * c_0 + \sum_{n=1} c_n T_n(x)
+   *
+   * we need to set c_0 to c_0/2
+   *
+   */
+  cc[0] /= 2;
+
+  /* Moments A_km = sum_j=1^N V_mj psi_k(j)
+   * k = 0...p
+   * m = 1...r
+   */
+  for (k = 0; k < p1; ++k) 
+	{	
+    for (m = 0; m < r; ++m)
+    {
+		  *(A + p1*m + k) = 0.0;
+		  for (j = 0; j < N; ++j)  
+		  {
+			  *(A + p1*m + k) += *(Vs + m + j*r)*gsl_pow_int( (x[j] - meanx)/range, k);
+		  }
+    }
+	}
+
+  /* B_l = sum_k=l^p c_k TC_kl 
+   * l = 0,...,p
+   */
+  for (l = 0; l < p1; ++l)
+  {
+    B[l] = 0;
+    for (k = l; k < p1; ++k)
+    {
+      B[l] += cc[k]*TC[k][l];
+    }
+  }
+ 
+  for (i = 0; i < N; ++i) /* compute the coupling term: O(N*P^2)  */
+	{
+		y[i] = 0.0;
+		for (k = 0; k < p1; ++k)
+		{
+      ua = 0;
+      for (m = 0; m < r; ++m)
+      {
+        ua += *(U + i*r + m) * (*(A + p1*m + k));
+      }
+      phi = 0.0;
+      for (l = k; l < p1; ++l)
+      {
+        phi += B[l] * gsl_sf_choose ( l, k) * gsl_pow_int( -(x[i] - meanx)/range, l-k );
+      }
+      y[i] += phi * ua;
+		}
+    y[i] /= (double)N;
+	}
+
+  free(A);
+  free(B);
+  free(U);
+  free(Vs);
+	
+  return 0;
+}
 /* lrkern
  * **Main user function**
  * computes the coupling term 
@@ -391,6 +509,28 @@ int lrwkern(const double *U, const double *V, int r, coupling_function f, double
   lrexpars(x, N, &meanx, &range); /* get meanx, range */
   lrexprank(f,N,&p, range); /* get rank p */
   lrexpw(f,U,V,r,x,y,N,p,meanx,range); /* compute high accuracy */
+
+  return 0;
+}
+
+/* lrwpkern
+ * **Main user function**
+ * computes the coupling term 
+ *
+ *   y_i = sum_{j=1:N} W_ij f(x_j - x_i)
+ *
+ * where W_ij can be factorized as U_i*V_j
+ * in the most efficient way
+ */
+int lrwpkern(coupling_function f, double *x, double *y, int N)
+{
+  int         p; /* polynomial order */ 
+	double      range,
+              meanx;
+  
+  lrexpars(x, N, &meanx, &range); /* get meanx, range */
+  lrexprank(f,N,&p, range); /* get rank p */
+  lrexpwp(f,x,y,N,p,meanx,range); /* compute high accuracy */
 
   return 0;
 }
