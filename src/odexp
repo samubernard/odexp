@@ -140,7 +140,7 @@ my $re_pop = qr/^
 $/ix;
 
 my $re_lrexp = qr/^
-  \s*%C                 # expansion keyword
+\s*%C                 # expansion keyword
   \s+                   # whitespaces
   ($re_identifier)      # varname
   \s+                   # whitespaces
@@ -1208,7 +1208,7 @@ sub set_low_rank_expansion
       print $fch "    i = 0;\n";
       print $fch "    while ( myself_ != NULL ) /* initialize xxp_ for lrkern */\n";
       print $fch "    {\n";
-      print $fch "        xxp_[i] = $var;\n"; 
+      print $fch "        mvar(\"$var\", myself_, (xxp_ + i));\n";
       print $fch "        myself_ = myself_->nextel;\n";
       print $fch "        ++i;\n";
       print $fch "    }\n";
@@ -1227,6 +1227,9 @@ sub set_low_rank_expansion
     }
     elsif ( $attr =~ /lrwexp/ )
     {
+      my ($U) = ( $attr =~ /U\s*=\s*(.*?)([;\s]|$)/ );
+      my ($V) = ( $attr =~ /V\s*=\s*(.*?)([;\s]|$)/ );
+      my ($rank) = ( $attr =~ /rank\s*=\s*(.*?)([;\s]|$)/ );
       my ($var) = ( $attr =~ /var\s*=\s*(.*?)([;\s]|$)/ );
       my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([;\s]|$)/ );
       print $fch "    xxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
@@ -1235,11 +1238,11 @@ sub set_low_rank_expansion
       print $fch "    i = 0;\n";
       print $fch "    while ( myself_ != NULL ) /* initialize xxp_ for lrkern */\n";
       print $fch "    {\n";
-      print $fch "        xxp_[i] = $var;\n"; 
+      print $fch "        mvar(\"$var\", myself_, (xxp_ + i));\n";
       print $fch "        myself_ = myself_->nextel;\n";
       print $fch "        ++i;\n";
       print $fch "    }\n";
-      print $fch "    lrwpkern($fun, xxp_,yxp_, POP_SIZE);\n";
+      print $fch "    lrwpkern(I_EXPR(\"$U\"), I_EXPR(\"$V\"), $rank, $fun, xxp_,yxp_, POP_SIZE);\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i = 0;\n";
       print $fch "    j = I_PSI(\"$varname\");\n";

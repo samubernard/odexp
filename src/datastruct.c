@@ -893,3 +893,38 @@ int list_stats( void )
 
     return s;
 }
+
+/* get the value of variable s, for particle p, into ptr */ 
+int mvar(const char *name, par *m, double *ptr)                        
+{
+  size_t index = 0;                                       
+  while (  index < SIM->nbr_var )                       
+  {                                                       
+    if ( strncmp(name, SIM->varnames[index], NAMELENGTH) )
+    {
+     index++;
+    }
+    else
+    {
+      *ptr = m->y[index];
+      return 0;
+    }
+  }                                                       
+  while (  index < SIM->nbr_aux )                       
+  {                                                       
+    if ( strncmp(name, SIM->auxnames[index], NAMELENGTH) )
+    {
+     index++;
+    }
+    else
+    {
+      *ptr = m->aux[index];
+      return 0;
+    }
+  }                                                       
+  index = 0;
+  ptr = NULL;
+  return 1;
+}
+
+

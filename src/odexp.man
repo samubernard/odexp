@@ -651,7 +651,7 @@ The following code calls the expansion method for the coupling term sin(xj-xi).
 The auxiliary term TH is introduced to force the values of theta between 0 and 2 * PI. 
 
 .fn
-%C coupling 0.0 {lrexp; var = MA("TH"); fun = coupling_fun_sin}
+%C coupling 0.0 {lrexp; var = TH; fun = coupling_fun_sin}
 
 AUX TH theta - ( (int) (theta/2/PI) * 2 * PI )
 

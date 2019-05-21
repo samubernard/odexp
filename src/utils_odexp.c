@@ -235,6 +235,3 @@ double get_val_from_par(par *myself,int shift,char *name, enum vartype type)
   return val+0.0;
 }
 
-
-
-

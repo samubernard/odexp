@@ -1,0 +1,62 @@
+## Kuramoto model of coupled oscillators
+## rank 2 coupling matrix
+## low rank coupling expansion 
+
+# rank coupling matrix rank
+set R 2
+
+# number of oscillators
+set N 100
+
+# Coupling strength factor
+par K 0.1
+
+# CONSTANT
+macro PI 3.141592
+
+# EXPRESSIONS
+# set frequency to normal distribution.
+expr ω randN(2*PI/10.0,0.1) 
+
+# factorization of the coupling matrix W = U*V
+# U is NxR and V is RxN, U row are repeated and V column are repeated
+expr U[i=0:R] 1.0
+expr V[i=0:R] 0.5 
+
+# mean fields/order parameters ()
+# OMEGA: mean value of omega
+%M Ω  ME("ω") 
+%M MEANY  MA("y")
+
+# AUXILIARY VARIABLES
+aux y sin(θ)
+aux theta θ - ( (int) (θ/2/PI) * 2 * PI )
+
+# COUPLING
+%C CPL . {lrwexp; var = theta; fun = coupling_fun_sin; U = U[i=0]; V = V[i=0]; rank = R}
+
+fun coupling_fun_sin(x, void *p) 
+  double scale = *(double *)p;
+  x *= scale;
+  return sin(x) + sin(2*x);
+end
+
+# DYNAMICAL VARIABLES 
+dθ/dt = ω + K*CPL 
+
+# INITIAL CONDITIONS
+init θ 2*PI*rand01() 
+
+# TIME SPAN
+timespan 0 160  
+
+# OPTIONS
+
+# initial population size
+opt popsize 1000
+
+# plot MEANY on y-axis
+opt y MEANY  
+
+opt progress 2
+

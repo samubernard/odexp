@@ -160,10 +160,12 @@ double linchaindelay(const double root, const double *chain, const size_t link, 
 typedef double (*coupling_function)(double, void *);
 int lrkern(coupling_function f, double *x, double *y, int N);
 int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
-int lrwpkern(coupling_function f, double *x, double *y, int N);
+int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N);
 
 double get_val_from_par(par *myself,int shift,char *name, enum vartype type);
 
+/* get the value of variable s, for particle p, into ptr */ 
+int mvar(const char *s, par *p, double *ptr);
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
@@ -303,6 +305,15 @@ double get_val_from_par(par *myself,int shift,char *name, enum vartype type);
        }                                                      \
        SIM->meanfield[index];                                             \
      })                                                     
+
+#define I_EXPR(name)                                             \
+    ({ static size_t index = 0;                                 \
+      while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+      {                                                         \
+        index++; index %= SIM->nbr_expr;                         \
+      }                                                         \
+      index;                                                    \
+    })
 
 #define I_AUX(name)                                             \
     ({ static size_t index = 0;                                 \

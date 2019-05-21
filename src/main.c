@@ -2439,7 +2439,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
   char basevarname[NAMELENGTH];
   char rootvarname[NAMELENGTH];
   char extensionvarname[NAMELENGTH];
-  char attribute[NAMELENGTH];
+  char attribute[EXPRLENGTH];
   char comment[EXPRLENGTH];
   char iterator_str[NAMELENGTH];
   char index_str[NAMELENGTH];
@@ -2558,7 +2558,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
       /* copy comment into var.comment */
       for(j=0;j<expr_size;j++)
       {
-        strncpy(var.attribute[var_index+j], attribute,NAMELENGTH-1);
+        strncpy(var.attribute[var_index+j], attribute,EXPRLENGTH-1);
         strncpy(var.comment[var_index+j], comment,EXPRLENGTH-1);
       }
 

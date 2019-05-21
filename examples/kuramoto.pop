@@ -7,11 +7,11 @@
 K 0.1
 
 # CONSTANT
-S PI 3.141592
+macro PI 3.141592
 
 # EXPRESSIONS
 # set frequency to normal distribution.
-E omega randN(2*PI/10.0,0.1) 
+expr omega randN(2*PI/10.0,0.1) 
 
 # MEAN FIELD depends on current particles only (M). (O)ther particles not allowed.
 # Mean field is evaluated as 1/POP_SIZE*sim( expression )
@@ -27,29 +27,29 @@ E omega randN(2*PI/10.0,0.1)
 %M OMEGA  ME("omega") 
 
 # AUXILIARY VARIABLES
-A y sin(theta)
-A coupling ( A1*cos(theta) - A2*sin(theta) )
+aux y sin(theta)
+aux coupling ( A1*cos(theta) - A2*sin(theta) )
 
 # DYNAMICAL VARIABLES 
 dtheta/dt = omega + K*coupling
 
 # INITIAL CONDITIONS
-I theta 2*PI*rand01() 
+init theta 2*PI*rand01() 
 
 # TIME SPAN
-tspan 0 160 
+timespan 0 160 
 
 # OPTIONS
 
 # initial population size
-O population_size 1000
+opt population_size 1000
 
 # plot MFY at y-axis
-O plot_y A1  
+opt y A1  
 
 # numerical method
-O meth rk2
+opt meth rk2
 
 # output nominal number of points
-O res 101
+opt res 101
 

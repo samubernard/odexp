@@ -1,16 +1,16 @@
 # N-body system
 
-_N 3
+set N 3
 
 # Parameters
-P0 v0     1 {initial}
-P2 mass   1e+09
+par v0     1      {initial}
+par mass   1e+09  {pop}
 
-S G 6.674e-11 # Gravitational constant in m^3 kg^-1 s^-2
+macro G 6.674e-11 # Gravitational constant in m^3 kg^-1 s^-2
 
 # User-defined functions
-@ normCube(x,y,z) = pow(x*x+y*y+z*z,1.5)
-@ grav(numx,numxi,x,y,z,xi,yi,zi) = (numx == numxi) ? 0.0 : (numx-numxi)/normCube(x-xi,y-yi,z-zi)
+fun normCube(x,y,z) = pow(x*x+y*y+z*z,1.5)
+fun grav(numx,numxi,x,y,z,xi,yi,zi) = (numx == numxi) ? 0.0 : (numx-numxi)/normCube(x-xi,y-yi,z-zi)
 
 # Particle-particle interactions
 %C GRAVITY_X  -G*MU("mass")*grav(MY("x"),OY("x"),MY("x"),MY("y"),MY("z"),OY("x"),OY("y"),OY("z"))
@@ -26,39 +26,38 @@ dvy/dt = GRAVITY_Y
 dvz/dt = GRAVITY_Z
 
 # constants
-# The size of each array should be at least _N the number of particles
-C x_ic[] { 0.0, 1.0, 0.5 }
-C y_ic[] { 0.0, 0.0, 0.8660254037844386 }
-C z_ic[] { 0.0, 0.0, 0.0 }
-C vx0[] { 0.1, 0.0, -.1 }
-C vy0[] { 0.0, 0.1, 0.0 }
-C vz0[] { 0.0, 0.0, 0.0 }
+# The size of each array should be at least _N_ the number of particles
+const x_ic[] { 0.0, 1.0, 0.5 }
+const y_ic[] { 0.0, 0.0, 0.8660254037844386 }
+const z_ic[] { 0.0, 0.0, 0.0 }
+const vx0[] { 0.1, 0.0, -.1 }
+const vy0[] { 0.0, 0.1, 0.0 }
+const vz0[] { 0.0, 0.0, 0.0 }
 
 # Initial conditions
 # Initial position and velocities are set from constants arrays
 # ID is a macro for the particle id. 
 # Initial velocities are scaled by a factor v0 (which is a modifiable parameter)
-I x x_ic[ID]
-I y y_ic[ID]
-I z z_ic[ID]
-I vx v0*vx0[ID]
-I vy v0*vy0[ID]
-I vz v0*vz0[ID]
+init x x_ic[ID]
+init y y_ic[ID]
+init z z_ic[ID]
+init vx v0*vx0[ID]
+init vy v0*vy0[ID]
+init vz v0*vz0[ID]
 
 TIMESPAN 0 20 
 
-O population_size _N
-O0 plot_x x
-O1 plot_y y
-O2 plot_z z
-O10 par_step 1.1
-O13 odesolver_output_resolution 401
-O14 odesolver_min_h 0
-O15 odesolver_init_h 0.1
-O16 odesolver_eps_abs 1e-08
-O17 odesolver_eps_rel 1e-08
-O18 odesolver_step_method bsimp
-O19 population_mode population
-O20 population_size _N 
-O22 random_generator_seed 3141592
-O23 reset_random_generator_seed 1
+opt ps N
+opt x x
+opt y y
+opt z z
+opt step 1.1
+opt res 401
+opt hmin 0
+opt h0  0.1
+opt abstol 1e-08
+opt reltol 1e-08
+opt meth bsimp
+opt popmode population
+opt seed 3141592
+opt reseed 1

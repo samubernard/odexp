@@ -113,4 +113,6 @@ int list_particle( size_t with_id );
 int list_stats( void );
 
 
+/* get the value of variable s, for particle p, into ptr */ 
+int mvar(const char *s, par *p, double *ptr);
 

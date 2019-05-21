@@ -370,12 +370,11 @@ int lrexpw(coupling_function f, const double *U, const double *V, int r, double 
  * the coupling term is return in the array y.
  *
  */
-int lrexpwp(coupling_function f, double *x, double *y, 
+int lrexpwp(int iu, int iv, int r, coupling_function f, double *x, double *y, 
     int N, int p, double meanx, double range)
 {
   int i,k,m,j,l;
   int p1 = p+1;
-  int r = 2; 
   double phi;
   double *A       = (double *)malloc( (p1) * r * sizeof(double)); /* p+1 x r */
   double *B       = (double *)malloc( (p1) * sizeof(double));
@@ -390,8 +389,8 @@ int lrexpwp(coupling_function f, double *x, double *y,
   while ( myself_ != NULL )
   {
     /* memcpy(void *restrict dst, const void *restrict src, size_t n); */
-    memcpy(U + i, myself_->expr, r * sizeof(double)); /* fill U row by row */
-    memcpy(Vs + i, myself_->expr + r, r * sizeof(double)); /* fill Vs row by row */
+    memcpy(U + i, myself_->expr + iu, r * sizeof(double)); /* fill U row by row */
+    memcpy(Vs + i, myself_->expr + iv, r * sizeof(double)); /* fill Vs row by row */
     myself_ = myself_->nextel;
     i += r;
   }
@@ -522,7 +521,7 @@ int lrwkern(const double *U, const double *V, int r, coupling_function f, double
  * where W_ij can be factorized as U_i*V_j
  * in the most efficient way
  */
-int lrwpkern(coupling_function f, double *x, double *y, int N)
+int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N)
 {
   int         p; /* polynomial order */ 
 	double      range,
@@ -530,7 +529,7 @@ int lrwpkern(coupling_function f, double *x, double *y, int N)
   
   lrexpars(x, N, &meanx, &range); /* get meanx, range */
   lrexprank(f,N,&p, range); /* get rank p */
-  lrexpwp(f,x,y,N,p,meanx,range); /* compute high accuracy */
+  lrexpwp(iu,iv,r,f,x,y,N,p,meanx,range); /* compute high accuracy */
 
   return 0;
 }
