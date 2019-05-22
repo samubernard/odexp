@@ -333,7 +333,7 @@ sub cleanup_file
         my ($ic) = ( $attr =~ /init\s*=\s*(.*?)([;\s]|$)/ );
         my ($len) = ( $attr =~ /len\s*=\s*(.*?)([;\s]|$)/ );
         my ($mean) = ( $attr =~ /mean\s*=\s*(.*?)([;\s]|$)/ );
-        s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$mean,$len) {hidden}\nS ${varname}_end $len-1\nAUX $varname ${varname}_chain[${varname}_end]\nINIT ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
+        s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$mean,$len) {hidden}\nmacro ${varname}_end $len-1\nAUX $varname ${varname}_chain[${varname}_end]\nINIT ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
       }
     my @fields = split; 
     foreach my $i ( 0..$#lets )
@@ -525,9 +525,9 @@ sub declare_ode_functions
   print $fch "/* Declaration and definition of functions */\n";
 	my $s = qq(/* Functions */
 int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);
-int pop_rhs(double t, const double y[], double f[], void *params);
+int pop_rhs(double t, const double y_[], double f_[], void *params);
 int ode_rhs(double t, const double y_[], double f_[], void *params);
-int pop_init_conditions(const double t, double y[], void *params);
+int pop_init_conditions(const double t, double y_[], void *params);
 int ode_init_conditions(const double t, double y_[], void *params);
 
 );
@@ -581,8 +581,8 @@ int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f)
 
 sub print_pop_rhs
 {
-	my $s = qq(/* POP_RHS replicate ode_rhs pop_size times. y and f are array of size pop_size*ode_system_size */
-int pop_rhs(double t, const double y[], double f[], void *params)
+	my $s = qq(/* POP_RHS replicate ode_rhs pop_size times. y_ and f_ are array of size pop_size*ode_system_size */
+int pop_rhs(double t, const double y_[], double f_[], void *params)
 {
     clock_t start = clock();
     size_t i = 0, j;
@@ -600,7 +600,7 @@ int pop_rhs(double t, const double y[], double f[], void *params)
     }
     while ( myself_ != NULL )
     {
-        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate
+        ode_rhs(t, y_+i*myself_->nbr_y, f_+i*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate
                                                                       * first update myself_->repli_rate       */
 );
 	print $fch $s;
@@ -628,7 +628,7 @@ int pop_rhs(double t, const double y[], double f[], void *params)
 
   set_population_coupling($modelode);
 
-  $s = qq(        ode_rhs(t, y+i*myself_->nbr_y, f+i*myself_->nbr_y, myself_);
+  $s = qq(        ode_rhs(t, y_+i*myself_->nbr_y, f_+i*myself_->nbr_y, myself_);
         i++;
         myself_ = myself_->nextel;
     }
@@ -731,17 +731,17 @@ sub set_population_coupling
 
 sub print_pop_init_conds
 {
-	my $s = qq(/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y is an array of size pop_size*ode_system_size */
-int pop_init_conditions(const double t, double y[], void *params)
+	my $s = qq(/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y_ is an array of size pop_size*ode_system_size */
+int pop_init_conditions(const double t, double y_[], void *params)
 {
     size_t i = 0, j;
     par *myself_ = SIM->pop->start;
     while ( myself_ != NULL )
     {
-        ode_init_conditions(t, y+i*myself_->nbr_y, myself_);
+        ode_init_conditions(t, y_+i*myself_->nbr_y, myself_);
         for(j=0;j<myself_->nbr_y;j++)
         {
-            myself_->y[j] = *(y+i*myself_->nbr_y);
+            myself_->y[j] = *(y_+i*myself_->nbr_y);
         }
         i++;
         myself_ = myself_->nextel;
