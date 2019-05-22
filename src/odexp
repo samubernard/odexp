@@ -56,7 +56,7 @@ my $re_pace = qr/^
   ($re_identifier)      # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
   \s+                   # whitespaces
-  ([^\{#\n]+)           # rhs until bracket comment or newline 
+  ([^\{#\n]*)           # rhs until bracket comment or newline 
   (|\{.*?\})?           # nothing or attribute
   \s*                   # whitespaces
   (|\#.*)?              # nothing or comment
