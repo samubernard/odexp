@@ -235,7 +235,6 @@ int lrexp(coupling_function f, double *x, double *y,
       }
 			y[i] += A[m]*phi;
 		}
-    y[i] /= (double)N;
 	}
 
   free(A);
@@ -344,7 +343,6 @@ int lrexpw(coupling_function f, const double *U, const double *V, int r, double 
       }
       y[i] += phi * ua;
 		}
-    y[i] /= (double)N;
 	}
 
   free(A);
@@ -459,7 +457,6 @@ int lrexpwp(int iu, int iv, int r, coupling_function f, double *x, double *y,
       }
       y[i] += phi * ua;
 		}
-    y[i] /= (double)N;
 	}
 
   free(A);

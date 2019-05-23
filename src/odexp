@@ -56,7 +56,7 @@ my $re_pace = qr/^
   ($re_identifier)      # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
   \s+                   # whitespaces
-  ([^\{#\n]*)           # rhs until bracket comment or newline 
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
   (|\{.*?\})?           # nothing or attribute
   \s*                   # whitespaces
   (|\#.*)?              # nothing or comment
@@ -144,7 +144,7 @@ my $re_lrexp = qr/^
   \s+                   # whitespaces
   ($re_identifier)      # varname
   \s+                   # whitespaces
-  [^\{#\n]+             # rhs until bracket comment or newline 
+  ([^\{#\n]+)           # rhs until bracket comment or newline 
   \{(.*?)\}             # mandatory attribute
   \s+                   # whitespaces
   (?:|\#.*)?            # nothing or comment
@@ -1197,8 +1197,8 @@ sub set_low_rank_expansion
   print $fch $s;
   while (<$fh>) 
   {
-    my ($varname, $attr, $comment) = ( /$re_lrexp/ ) or next;
-    if ( $attr =~ /lrexp/ )
+    my ($varname, $rhs, $attr, $comment) = ( /$re_lrexp/ ) or next;
+    if ( $rhs =~ /lrexp/ )
     {
       my ($var) = ( $attr =~ /var\s*=\s*(.*?)([;\s]|$)/ );
       my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([;\s]|$)/ );
@@ -1225,7 +1225,7 @@ sub set_low_rank_expansion
       print $fch "    free(xxp_);\n";
       print $fch "    free(yxp_);\n";
     }
-    elsif ( $attr =~ /lrwexp/ )
+    elsif ( $rhs =~ /lrwexp/ )
     {
       my ($U) = ( $attr =~ /U\s*=\s*(.*?)([;\s]|$)/ );
       my ($V) = ( $attr =~ /V\s*=\s*(.*?)([;\s]|$)/ );

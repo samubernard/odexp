@@ -42,14 +42,14 @@ timespan 0 160
 # OPTIONS
 
 # initial population size
-opt population_size 1000
+opt popsize 1000
 
 # plot MFY at y-axis
 opt y A1  
 
 # numerical method
-opt meth rk2
+opt meth rkck
 
 # output nominal number of points
-opt res 101
+opt res 801
 

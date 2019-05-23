@@ -640,7 +640,7 @@ All intermediate variables, including \fIztau1\fR, have initial condition 0.2.
 
 .SS Low rank expansion of coupling terms in O(N)
 Coupling term (%C) are evaluated by default in O(N^2) where N is the population size. 
-When the attribute \fIlrexp\fR is present in a coupling declaration, an rank P expansion  
+When the rhight-hand side is equal to \fIlrexp\fR in a coupling declaration, an adaptative rank P expansion  
 is used to approximate the coupling function g given in the attribute \fIfun\fR over the variable given
 in attribute \fIvar\fR. 
 
@@ -648,14 +648,14 @@ The coupling function g must be of the form g(u, *p) = gg(s*u) where the pointer
 low rank expansion is currently limited to coupling functions of the form g(xj-xi) for xi, xj scalars.
 
 The following code calls the expansion method for the coupling term sin(xj-xi).
-The auxiliary term TH is introduced to force the values of theta between 0 and 2 * PI. 
+(The auxiliary term TH is introduced to force the values of theta between 0 and 2 * PI.)
 
 .fn
-%C coupling 0.0 {lrexp; var = TH; fun = coupling_fun_sin}
+%C coupling lrexp {var = TH; fun = cpling_fun}
 
 AUX TH theta - ( (int) (theta/2/PI) * 2 * PI )
 
-fun coupling_fun_sin(x, *p) 
+fun cpling_fun(x, *p) 
   double scale = *(double *)p; 
   x *= scale; 
   return sin(x); 

@@ -2481,7 +2481,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
       }
 
       /* find the name root and expression */
-      if ( prefix ) /* prefix is something like aux, %C, expression, ... */
+      if ( prefix ) /* prefix is something like aux, %C, expr, ... */
       {
         snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^#{\n] {%%[^}]}", sep, sep);
       }

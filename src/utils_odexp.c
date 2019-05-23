@@ -156,7 +156,7 @@ double kern(double *Wi, double (*f)(double, double, double *), double xi, const 
         s += Wi[j]*f(xi,x[j],p);
     }
     
-    return s/(double)len;
+    return s;
 }
 
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len)

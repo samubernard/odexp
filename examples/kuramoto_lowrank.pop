@@ -33,7 +33,7 @@ aux y sin(θ)
 aux theta θ - ( (int) (θ/2/PI) * 2 * PI )
 
 # COUPLING
-%C CPL . {lrwexp; var = theta; fun = coupling_fun_sin; U = U[i=0]; V = V[i=0]; rank = R}
+%C CPL lrwexp {var = theta; fun = coupling_fun_sin; U = U[i=0]; V = V[i=0]; rank = R}
 
 fun coupling_fun_sin(x, void *p) 
   double scale = *(double *)p;
