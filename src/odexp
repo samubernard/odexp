@@ -4,14 +4,12 @@
 #
 # Description:  parse/run a population dynamical system file   
 #
-# Revisions:    10/2018 - Samuel Bernard
+# Revisions:    05/2019 - Samuel Bernard
 #------------------------------------------------------------------------------
 
 use warnings;
 use strict;
 use feature 'unicode_strings';
-# use open ':encoding(UTF-8)';
-# use utf8;
 
 my $version = '1.0';
 
@@ -25,6 +23,8 @@ use Getopt::Std;
 # ---------------------------------------
 # regexp
 # ---------------------------------------
+# valid identifiers start with a letter (Latin or Greek), and followed by 'word'
+# characters: alphanumeric characters, underscore _, or Greek letters.
 my $re_identifier = qr/[\p{L}Α-Ωα-ω][\wΑ-Ωα-ω]*/;
 my $re_iter_scalar = qr/
   \s*                   # whitespaces
@@ -162,8 +162,9 @@ my $re_scalar = qr/^
 # ---------------------------------------
 
 # odexp optional parameters
-our ($opt_p, $opt_o);
-getopts('o:p:'); # -o optimization -p parameterfilename 
+our ($opt_p, $opt_o, $opt_i);
+$opt_i = 0; # default: do check for syntax error 
+getopts('o:p:i'); # -o optimization; -p parameterfilename; -i do not check for syntax errors
 if ( !defined $opt_o )
 {
     $opt_o = 'g';
@@ -284,24 +285,26 @@ sub cleanup_file
   my $funcdelimiter = 0;
   my $line_cont = 0; 
   my $in_fun = 0;
-  #open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while ( <> )    
   {
-    # check for common syntax errors 
-    /(ME|MA|MY|OE|OA|OY|MF)\(\"($re_identifier)\"\)/ and 
-        die "error: macro $1 needs no quote around the variable '$2' on line ${.}. Try $1($2).\n";
-    /^\s*(S|P|A|E|I|O)[ 0-9]/i and 
-        die "error: incomplete keyword '$1' on line ${.}.\n";
-    /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
-    /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|%M|%C|%BIRTH|%DEATH|%REPLI)/i
-      or die "error: wrong keyword on line ${.}\n" unless ($line_cont or $in_fun);
-    if ( /\.\.\.\s*$/ ) 
-      { $line_cont = 1; } 
-    else  
-      { $line_cont = 0; }
-    $in_fun = 1 if  /^\s*fun/i;
-    $in_fun = 0 if ( /^\s*end/i or /^\s*fun.*?=/i );
-    # end check common errors
+    if ( $opt_i == 0 )
+    {
+      # check for common syntax errors 
+      /(MU|ME|MA|MY|OE|OA|OY|MF)\(\"($re_identifier)\"\)/ and 
+          die "error: macro $1 needs no quote around the variable '$2' on line ${.}. Try $1($2).\n";
+      /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
+          die "error: incomplete keyword '$1' on line ${.}.\n";
+      /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
+      /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|%M|%C|%BIRTH|%DEATH|%REPLI)/i
+        or die "error: wrong keyword on line ${.}: $_" unless ($line_cont or $in_fun);
+      if ( /\.\.\.\s*$/ ) 
+        { $line_cont = 1; } 
+      else  
+        { $line_cont = 0; }
+      $in_fun = 1 if  /^\s*fun/i;
+      $in_fun = 0 if ( /^\s*end/i or /^\s*fun.*?=/i );
+      # end check common errors
+    }
 
     # reformat pop file    
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
