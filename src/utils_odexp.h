@@ -28,11 +28,6 @@ double sumxy(long len, double (*f)(double), double (*g)(double, double), const d
 double kern(double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p, long len);
 double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len);
 
-/* double dW(void); */
-/* double history(double tmtau); */
-
-
-double get_val_from_par(par *myself,int shift,char *name, enum vartype type);
 
 
 

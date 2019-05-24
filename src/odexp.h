@@ -15,8 +15,6 @@
 typedef long RANDINT;
 #define POISSON_RAND_MAX RAND_MAX
 
-enum vartype {Y, A, E, M, C, P}; /* possible types of variables */
-
 typedef int (*oderhs)(double, const double *, double *, void *);
 typedef int (*odeic)(double, double *, void *);
 typedef int (*rootrhs)(const gsl_vector *, void *, gsl_vector *);
@@ -162,8 +160,6 @@ int lrkern(coupling_function f, double *x, double *y, int N);
 int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
 int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N);
 
-double get_val_from_par(par *myself,int shift,char *name, enum vartype type);
-
 /* get the value of variable s, for particle p, into ptr */ 
 int mvar(const char *s, par *p, double *ptr);
 
@@ -188,6 +184,7 @@ int mvar(const char *s, par *p, double *ptr);
        }                                                      \
        SIM->mu[index];                                    \
      })
+
 #define OA(name)                                            \
     ({ static size_t index = 0;                               \
        while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
@@ -266,7 +263,7 @@ int mvar(const char *s, par *p, double *ptr);
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
-       myself_->sister == NULL ? 0.0 : myself_->sister->y[index];                                             \
+       myself_->sister == NULL ? 0.0 : myself_->sister->y[index]; \
      })                                                     
 
 

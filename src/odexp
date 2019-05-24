@@ -293,7 +293,7 @@ sub cleanup_file
       /(MU|ME|MA|MY|OE|OA|OY|MF)\(\"($re_identifier)\"\)/ and 
           die "error: macro $1 needs no quote around the variable '$2' on line ${.}. Try $1($2).\n";
       /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
-          die "error: incomplete keyword '$1' on line ${.}.\n";
+          die "error: incomplete keyword '$1' on line ${.}.\n" unless $in_fun;
       /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
       /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI)/i
         or die "error: wrong keyword on line ${.}: $_" unless ($line_cont or $in_fun);
@@ -905,7 +905,7 @@ sub declare_define_parameters
   	/^PAR/i or next;
     if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
-      my ( $ctype ) = ( $attr =~ m/\btype\b:(int|long|double)/ );
+      my ( $ctype ) = ( $attr =~ m/(int|long|double)/ );
       $ctype = "double" if not length $ctype;
       if ( $func =~ /ode/ )
       {
