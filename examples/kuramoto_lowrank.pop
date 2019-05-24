@@ -3,7 +3,7 @@
 ## low rank coupling expansion 
 
 # rank coupling matrix rank
-set R 2
+set R 1
 
 # number of oscillators
 set N 100
@@ -21,12 +21,12 @@ expr ω randN(2*PI/10.0,0.1)
 # factorization of the coupling matrix W = U*V
 # U is NxR and V is RxN, U row are repeated and V column are repeated
 expr U[i=0:R] 1.0
-expr V[i=0:R] 0.5 
+expr V[i=0:R] 1.0 
 
 # mean fields/order parameters ()
 # OMEGA: mean value of omega
-%M Ω  ME("ω") 
-%M MEANY  MA("y")
+%M Ω  ME(ω) 
+%M MEANY  MA(y)
 
 # AUXILIARY VARIABLES
 aux y sin(θ)
@@ -38,7 +38,7 @@ aux theta θ - ( (int) (θ/2/PI) * 2 * PI )
 fun coupling_fun_sin(x, void *p) 
   double scale = *(double *)p;
   x *= scale;
-  return sin(x) + sin(2*x);
+  return sin(x);
 end
 
 # DYNAMICAL VARIABLES 

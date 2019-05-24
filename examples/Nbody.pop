@@ -13,9 +13,9 @@ fun normCube(x,y,z) = pow(x*x+y*y+z*z,1.5)
 fun grav(numx,numxi,x,y,z,xi,yi,zi) = (numx == numxi) ? 0.0 : (numx-numxi)/normCube(x-xi,y-yi,z-zi)
 
 # Particle-particle interactions
-%C GRAVITY_X  -G*MU("mass")*grav(MY("x"),OY("x"),MY("x"),MY("y"),MY("z"),OY("x"),OY("y"),OY("z"))
-%C GRAVITY_Y  -G*MU("mass")*grav(MY("y"),OY("y"),MY("x"),MY("y"),MY("z"),OY("x"),OY("y"),OY("z"))
-%C GRAVITY_Z  -G*MU("mass")*grav(MY("z"),OY("z"),MY("x"),MY("y"),MY("z"),OY("x"),OY("y"),OY("z"))
+%C GRAVITY_X  -G*MU(mass)*grav(MY(x),OY(x),MY(x),MY(y),MY(z),OY(x),OY(y),OY(z))
+%C GRAVITY_Y  -G*MU(mass)*grav(MY(y),OY(y),MY(x),MY(y),MY(z),OY(x),OY(y),OY(z))
+%C GRAVITY_Z  -G*MU(mass)*grav(MY(z),OY(z),MY(x),MY(y),MY(z),OY(x),OY(y),OY(z))
 
 # differential equations
 dx/dt = vx 

@@ -182,7 +182,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define MU(name)                                            \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->parnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->parnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_par;                    \
        }                                                      \
@@ -190,7 +190,7 @@ int mvar(const char *s, par *p, double *ptr);
      })
 #define OA(name)                                            \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_aux;                    \
        }                                                      \
@@ -199,7 +199,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define OE(name)                                          \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_expr;                    \
        }                                                      \
@@ -208,7 +208,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define OY(name)                                          \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
@@ -217,7 +217,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define MA(name)                                            \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_aux;                    \
        }                                                      \
@@ -226,7 +226,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define ME(name)                                          \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_expr;                    \
        }                                                      \
@@ -235,7 +235,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define MY(name)                                          \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
@@ -244,7 +244,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define SA(name)                                            \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_aux;                    \
        }                                                      \
@@ -253,7 +253,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define SE(name)                                          \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_expr;                    \
        }                                                      \
@@ -262,7 +262,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define SY(name)                                          \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
@@ -289,7 +289,7 @@ int mvar(const char *s, par *p, double *ptr);
             kpar_ = kpar_->prevel == NULL ? SIM->pop->end : kpar_->prevel; \
           }                                                       \
        }                                                          \
-       while ( strncmp(name, SIM->varnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
@@ -299,7 +299,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define MF(name)                                          \
     ({ static size_t index = 0;                               \
-       while ( strncmp(name, SIM->mfdnames[index], NAMELENGTH) ) \
+       while ( strncmp(#name, SIM->mfdnames[index], NAMELENGTH) ) \
        {                                                      \
            index++; index %= SIM->nbr_mfd;                    \
        }                                                      \
@@ -308,7 +308,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define I_EXPR(name)                                             \
     ({ static size_t index = 0;                                 \
-      while ( strncmp(name, SIM->exprnames[index], NAMELENGTH) ) \
+      while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
       {                                                         \
         index++; index %= SIM->nbr_expr;                         \
       }                                                         \
@@ -317,7 +317,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define I_AUX(name)                                             \
     ({ static size_t index = 0;                                 \
-      while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) \
+      while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
       {                                                         \
         index++; index %= SIM->nbr_aux;                         \
       }                                                         \
@@ -326,7 +326,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define I_PSI(name)                                             \
     ({ static size_t index = 0;                                 \
-      while ( strncmp(name, SIM->psinames[index], NAMELENGTH) ) \
+      while ( strncmp(#name, SIM->psinames[index], NAMELENGTH) ) \
       {                                                         \
         index++; index %= SIM->nbr_psi;                         \
       }                                                         \

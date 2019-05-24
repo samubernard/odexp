@@ -282,9 +282,28 @@ sub cleanup_file
   my $tmpfh = tempfile(); # make a first pass in temp file to remove linebreaks
                           # and find lets
   my $funcdelimiter = 0;
+  my $line_cont = 0; 
+  my $in_fun = 0;
   #open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while ( <> )    
   {
+    # check for common syntax errors 
+    /(ME|MA|MY|OE|OA|OY|MF)\(\"($re_identifier)\"\)/ and 
+        die "error: macro $1 needs no quote around the variable '$2' on line ${.}. Try $1($2).\n";
+    /^\s*(S|P|A|E|I|O)[ 0-9]/i and 
+        die "error: incomplete keyword '$1' on line ${.}.\n";
+    /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
+    /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|%M|%C|%BIRTH|%DEATH|%REPLI)/i
+      or die "error: wrong keyword on line ${.}\n" unless ($line_cont or $in_fun);
+    if ( /\.\.\.\s*$/ ) 
+      { $line_cont = 1; } 
+    else  
+      { $line_cont = 0; }
+    $in_fun = 1 if  /^\s*fun/i;
+    $in_fun = 0 if ( /^\s*end/i or /^\s*fun.*?=/i );
+    # end check common errors
+
+    # reformat pop file    
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
     s/^([^#].*?)(\\\n$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
     my @fields = split; 
@@ -614,11 +633,7 @@ int pop_rhs(double t, const double y_[], double f_[], void *params)
   set_low_rank_expansion($modelode);
 
 	set_population_meanfields($modelode);
-  $s = qq(    for (j=0;j<SIM->nbr_mfd;j++)
-    {
-        SIM->meanfield[j] /= POP_SIZE;
-    }
-    SIM->pop_birth_rate /= POP_SIZE;
+  $s = qq(    SIM->pop_birth_rate /= POP_SIZE;
     myself_ = SIM->pop->start;
     i = 0;
     while ( myself_ != NULL )
@@ -670,9 +685,10 @@ sub set_population_meanfields
 		print $fch "    while ( myself_ != NULL )\n";
 		print $fch "    {\n";
 		print $fch "        SIM->meanfield[$nv] += $s\n"; 
-    ++$nv;
  		print $fch "        myself_ = myself_->nextel;\n";
  		print $fch "    }\n";
+    print $fch "    SIM->meanfield[$nv] /= POP_SIZE;\n";
+    ++$nv;
 	}
 	close($fh);
 
@@ -1215,7 +1231,7 @@ sub set_low_rank_expansion
       print $fch "    lrkern($fun, xxp_,yxp_, POP_SIZE);\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i = 0;\n";
-      print $fch "    j = I_PSI(\"$varname\");\n";
+      print $fch "    j = I_PSI($varname);\n";
       print $fch "    while ( myself_ != NULL ) /* set psixp */\n";
       print $fch "    {\n";
       print $fch "        myself_->psi[j] = yxp_[i];\n"; 
@@ -1242,10 +1258,10 @@ sub set_low_rank_expansion
       print $fch "        myself_ = myself_->nextel;\n";
       print $fch "        ++i;\n";
       print $fch "    }\n";
-      print $fch "    lrwpkern(I_EXPR(\"$U\"), I_EXPR(\"$V\"), $rank, $fun, xxp_,yxp_, POP_SIZE);\n";
+      print $fch "    lrwpkern(I_EXPR($U), I_EXPR($V), $rank, $fun, xxp_,yxp_, POP_SIZE);\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i = 0;\n";
-      print $fch "    j = I_PSI(\"$varname\");\n";
+      print $fch "    j = I_PSI($varname);\n";
       print $fch "    while ( myself_ != NULL ) /* set psixp */\n";
       print $fch "    {\n";
       print $fch "        myself_->psi[j] = yxp_[i];\n"; 

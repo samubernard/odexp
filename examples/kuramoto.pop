@@ -20,11 +20,11 @@ expr omega randN(2*PI/10.0,0.1)
 # The coupling function sin(v-u) = cos(u)sin(v) - sin(u)cos(v)
 # So sum(sin(v_j-u)) = cos(u)*sum(sin(v_j)) - sin(u)*sum(cos(v_j))
 #                    = cos(u)*A1 - sin(u)*A2
-%M A1     sin(MY("theta"))
-%M A2     cos(MY("theta"))
+%M A1     sin(MY(theta))
+%M A2     cos(MY(theta))
 
 # OMEGA: mean value of omega
-%M OMEGA  ME("omega") 
+%M OMEGA  ME(omega) 
 
 # AUXILIARY VARIABLES
 aux y sin(theta)

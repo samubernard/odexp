@@ -87,6 +87,8 @@ int lrexpars(double *x, int N, double *meanx, double *range)
   }
   *meanx /= (double)N;
   *range = (maxx - minx);
+  if (*range == 0.0)
+    *range = 1.0;
 
   /* fprintf(stderr,"meanx = %g, range = %g\n", *meanx, *range); */
 
