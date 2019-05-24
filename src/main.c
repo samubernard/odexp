@@ -499,6 +499,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                               * this does not go into the history  
                               */
   }
+  /* get first command form run1st */
+  if ( strlen(get_str("runfirst")) )
+  {
+    extracmd = realloc(extracmd,(strlen(get_str("runfirst"))+5)*sizeof(char));
+    strncpy(extracmd+1," && ",4);
+    strncpy(extracmd+5,get_str("runfirst"),strlen(get_str("runfirst")));
+  }
+
+
 
   /* set xterm title */
   printf("\033]0;odexp\007");

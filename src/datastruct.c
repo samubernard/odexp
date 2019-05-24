@@ -66,7 +66,8 @@ struct gen_option GOPTS[NBROPTS] = {
   {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
   {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},
   {"wti","wintitle", 's', 0.0, 0, "", "Window TItle", "generalSettings"},
-  {"ros","runonstartup", 'i', 0.0, 1, "", "Run On Startup", "generalSettings"} };
+  {"ros","runonstartup", 'i', 0.0, 1, "", "Run On Startup", "generalSettings"},
+  {"r1st","runfirst", 's', 0.0, 1, "", "Run 1st, command to execute after startup", "generalSettings"} };
 
 /* formatting strings */
 const char *T_IND = "\033[38;5;130m";  /* index */

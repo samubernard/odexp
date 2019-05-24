@@ -1358,6 +1358,8 @@ set completion-query-items 150
 $if odexp 
 # odexp specific 
 # increment parameter value and run
+"\C-w": "q\C-j"
+# increment parameter value and run
 "\C-g": "+\C-j"
 # decrement parameter value and run
 "\C-h": "-\C-j"

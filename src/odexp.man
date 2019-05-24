@@ -5,8 +5,11 @@ odexp \- numerical solver for population-based system with gnuplot graphical out
 .SH SYNOPSIS
 .B "odexp "
 [
+.B \-o
+.I optimization
 .B \-p
 .I parfile
+.B \-i
 ] [
 .I file
 ]
@@ -28,9 +31,17 @@ Solutions are plotted with \fIgnuplot\fR.
 
 .SH OPTIONS
 
+.TP
+.BI \-o " optimization"
+Optimization level of the compiler. Default 'g' for debugging.
+
 .TP 
 .BI \-p " parfile"
 Optional parameter file.
+
+.TP 
+.BI \-i 
+Ignore syntax errors try to parse the file anyway.
 
 .SH USAGE 
 
@@ -104,7 +115,7 @@ Reload the parameter file.
 Decrease the time span by a factor 2.
 .TP
 .BI "e [" val ]
-Increase the time span by a factor 
+Increase the time span by a factor.
 .I val 
 (default factor = 2). 
 .I val 
@@ -152,16 +163,16 @@ Print file description (all lines starting with ##).
 List all parametric expressions.
 .TP 
 .B lf            
-List all array files (nrows ncols filename)
+List all array files (nrows ncols filename).
 .TP
 .B li            
-List all variables with initial conditions 
+List all variables with initial conditions. 
 .TP
 .B ll          
-List file name and various information 
+List file name and various information.
 .TP
 .BI lo " " [ optiontype ]         
-List options that match \fIoptiontype\fR, or all options if \fIoptiontype\fR is missing
+List options that match \fIoptiontype\fR, or all options if \fIoptiontype\fR is missing.
 .TP
 .B lp            
 List all parameters. 
@@ -185,7 +196,7 @@ with multiplicative step
 and additive stepsr 
 .IR astep . 
 For each value, the system is
-integrated over tspan and the min and the max of each variable is stored in the file 
+integrated over tspan and the min and the max of each variable is stored in the file.
 .IR range.tab . 
 If 
 .I rric 
@@ -205,26 +216,26 @@ Set current parameter to value \fIval\fR.
 Make parameter with index \fIind\fR or name \fIpar\fR the current parameter, and set its value to \fIval\fR.
 When val is missing, the parameter value is unchanged.
 .TP
-.BR Q ", " q " " \fR[\fImsg\fR]        
-Quit and snap with optional message \fImsg\fR 
+.BR Q ", " q " " \fR[\fImsg\fR] "; " C^w        
+Quit and make a snapshot of the paramters. An optional message \fImsg\fR can be added to \fBQ\fR or \fBq\fR. 
 .TP
 .B R
 Rerun the ODE system and update plot.
 .TP
 .B r
-Repeat the last gnuplot command (replot)
+Repeat the last gnuplot command (replot).
 .TP
 .BI si " " { ind | var } " val"   
-Set value of initial condition of variable with index \fIi\fR or name \fIvar\fR to \fIval\fR
+Set value of initial condition of variable with index \fIi\fR or name \fIvar\fR to \fIval\fR.
 .TP
 .BI "sI " ind         
-Revert variable \fIind\fR to expression
+Revert variable \fIind\fR to expression.
 .TP
 .B sl            
 Change to last initial conditions, same as \fBil\fR but do not run simulation.
 .TP
 .BR so ", " set " " \fR{\fIind\fR|\fIvar\fR} " " \fIval\fR   
-Set value of option with index \fIind\fR or name \fIvar\fR to \fIval\fR
+Set the option with index \fIind\fR or name \fIvar\fR to value \fIval\fR.
 .TP
 .BI "st " ti " " val   
 Set value of \fIti\fR to 
