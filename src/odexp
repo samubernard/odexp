@@ -295,7 +295,7 @@ sub cleanup_file
       /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
           die "error: incomplete keyword '$1' on line ${.}.\n";
       /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
-      /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|%M|%C|%BIRTH|%DEATH|%REPLI)/i
+      /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI)/i
         or die "error: wrong keyword on line ${.}: $_" unless ($line_cont or $in_fun);
       if ( /\.\.\.\s*$/ ) 
         { $line_cont = 1; } 
