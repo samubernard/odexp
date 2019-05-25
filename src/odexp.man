@@ -275,7 +275,7 @@ A dynamical system is specified in a text file with lines starting with keywords
 
 .TP
 .BR PAR [ARAMETERS] 
-Parameters. Must be numerical (double, int or long). Syntax:
+Parameters. Must be numerical scalar (double, int or long). Syntax:
 
 .nf
 PAR \fIname\fR \fIvalue\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
@@ -285,7 +285,7 @@ Parameters appear in the list of parameters.
 They can be modified from within odexp and can be ranged over. 
 \fIname\fR must be a valid C variable name. 
 \fIvalue\fR must be a constant number; by default a double, but can be 
-an integer with attribute \fItype\fR = int or  \fItype\fR = long.
+an integer with attribute \fIint\fR or \fIlong\fR.
 Parameters are declared in name value pairs, separated by commas  (,), or one parameter per line.
 Parameters are common to all particles.
 The prefix PAR is optional when one parameter is declare on a single line.
@@ -297,10 +297,9 @@ PAR a 0.1, b 0.2
 a 0.1 # ok
 a 0.1, b 0.2 # not ok
 
-PAR a 0.1 {unused} # attribute unused for unused parameters
-PAR b 0.2 {inexpr} # attribute inexpr for parameters only used in expression
-PAR c 0.3 {pop}    # attribute pop    for parameters only used in population-specific terms
-PAR d 0.4 {every}  # attribute every  for parameters used in expressions, population and equations
+PAR b 0.2 {init}   # attribute init   for parameters only used in initial conditions or expressions
+PAR c 0.3 {impl}   # attribute impl   for parameters used implicitly, in population or elsewhere
+PAR d 0.4 {every}  # attribute every  for parameters used in expressions, initial conditions and auxiliary equations
 
 PAR a 1 {type=int} # type integer. Warning this comment end at the comma: b is another parameter!, b 2.3 
 .fi

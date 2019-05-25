@@ -290,6 +290,9 @@ sub cleanup_file
     if ( $opt_i == 0 )
     {
       # check for common syntax errors 
+      /\{.*?unused.*?\}/ and die "error: change unused for impl on line ${.}.\n";
+      /\{.*?pop.*?\}/ and die "error: change pop for impl on line ${.}.\n";
+      /\{.*?inexpr.*?\}/ and die "error: change inexpr for init on line ${.}.\n";
       /(MU|ME|MA|MY|OE|OA|OY|MF)\(\"($re_identifier)\"\)/ and 
           die "error: macro $1 needs no quote around the variable '$2' on line ${.}. Try $1($2).\n";
       /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
@@ -910,9 +913,7 @@ sub declare_define_parameters
       if ( $func =~ /ode/ )
       {
         if ($attr =~ /\bINIT/i or
-            $attr =~ /\bUNUSED/i or
-            $attr =~ /\bINEXPR/i or 
-            $attr =~ /\bPOP/i )	
+            $attr =~ /\bIMPL/i )	
         {
           ++$i;
         } else
@@ -926,7 +927,6 @@ sub declare_define_parameters
       } else
       {
         if ($attr =~ /\bINIT/i or
-            $attr =~ /\bINEXPR/i or
             $attr =~ /\bEVER/i )	
         {
           print $fch "    $ctype $varname = pars_[$i];";

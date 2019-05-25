@@ -4,18 +4,30 @@ use warnings;
 use strict;
 use feature 'unicode_strings';
 
-# @ACEIFOPS 
+my $re_identifier = qr/[\p{L}Α-Ωα-ω][\wΑ-Ωα-ω]*/;
 my $re_pace = qr/^
-  \s*([%ACEIOPST])\w*    # type
+  \s*(%|AUX|CONST|EXPR|INIT|OPT|PAR|MAC|TIMES|)\w*   # type
   \s+                   # whitespaces
-  (\p{Alnum}+)                 # varname
+  ($re_identifier)      # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
-  \s+                   # whitespace(s)
-  ([^\{#\n]+)           # rhs until bracket comment or newline 
-  (|\{.*?\})?           # nothing or attribute
-  \s*                   # whitespace(s)
-  (|\#.*)?              # nothing or comment
+  \s+                   # whitespaces
+  (.*?)(?=at|\#|\n)               # rhs until 'at'
+  (|at.*?)(?=\#|\n)               # nothing or attribute
+  (|\#.*)              # nothing or comment
 $/ix;
+
+# @ACEIFOPS 
+# my $re_pace = qr/^
+#   \s*([%ACEIOPST])\w*    # type
+#   \s+                   # whitespaces
+#   (\p{Alnum}+)                 # varname
+#   (?:\s*\[.*?\])*       # any number of brackets do not capture
+#   \s+                   # whitespace(s)
+#   ([^\{#\n]+)           # rhs until bracket comment or newline 
+#   (|\{.*?\})?           # nothing or attribute
+#   \s*                   # whitespace(s)
+#   (|\#.*)?              # nothing or comment
+# $/ix;
 
 # @ myfunc(*x,y,z) = rhs # comment
 # @ my_weird_func( x ) = ({ \
