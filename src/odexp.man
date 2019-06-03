@@ -1,5 +1,5 @@
 .\" 
-.TH ODEXP 1 "25/10/2018" "version 1.0" "Documentation" 
+.TH ODEXP 1 "25/05/2019" "version 1.0" "Documentation" 
 .SH NAME
 odexp \- numerical solver for population-based system with gnuplot graphical output
 .SH SYNOPSIS
@@ -297,11 +297,14 @@ PAR a 0.1, b 0.2
 a 0.1 # ok
 a 0.1, b 0.2 # not ok
 
-PAR b 0.2 {init}   # attribute init   for parameters only used in initial conditions or expressions
-PAR c 0.3 {impl}   # attribute impl   for parameters used implicitly, in population or elsewhere
-PAR d 0.4 {every}  # attribute every  for parameters used in expressions, initial conditions and auxiliary equations
+PAR b 0.2 {init}   # attribute init   for parameters only used 
+                   # in initial conditions or expressions
+PAR c 0.3 {impl}   # attribute impl   for parameters used implicitly, 
+                   # in population or elsewhere
+PAR d 0.4 {every}  # attribute every  for parameters used in expressions, 
+                   # initial conditions and auxiliary equations
 
-PAR a 1 {type=int} # type integer. Warning this comment end at the comma: b is another parameter!, b 2.3 
+PAR a 1 {int} # type integer. Warning this comment ends at the comma: b is another parameter!, b 2.3 
 .fi
 
 Implicit initial condition. If \fIvar\fR is a dynamical variable, the declaration 
@@ -319,7 +322,7 @@ Expressions. Expressions are function of the parameters. They cannot be modified
 Syntax:
 
 .nf
-EXPR \fIname\fR \fIexpression\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+EXPR \fIname\fR \fIexpression\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
 .fi
 
 Expressions are particle-dependent. They are evaluated at the birth of a particle and are constant
@@ -328,9 +331,9 @@ for the lifetime of the particle. Use \fIATBIRTH\fR and \fIATREPLI\fR to specify
 Examples 
 
 .nf
-E c a*a
-E rand_array[i=0:5] -1 + 2*rand01[i]
-E is_ancestor ATBIRTH*1 + ATREPLI*0
+EXPR c a*a
+EXPR rand_array[i=0:5] -1 + 2*rand01[i]
+EXPR is_ancestor ATBIRTH*1 + ATREPLI*0
 .fi
 
 .TP
@@ -339,7 +342,7 @@ Auxiliary variables. Auxiliary variables depend on parameters, expressions and d
 Syntax:
 
 .nf
-AUX \fIname\fR \fIexpression\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+AUX \fIname\fR \fIexpression\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
 .fi
 
 They are declared as Name Expression pairs, and must be scalars or one-dimensional arrays.
@@ -348,10 +351,10 @@ plotted, and their values are recorded in the output file current.tab.
 Auxiliary functions are particle-dependent. They are evaluated at each time step.
 
 .nf
-A d sqrt(x+c)
-A a[i=0:5] X[i]*X[i]
-A norm_x sqrt(sum(a,5))
-A norm_x2 dotprod(X,X,5)
+AUX d sqrt(x+c)
+AUX a[i=0:5] X[i]*X[i]
+AUX norm_x sqrt(sum(a,5))
+AUX norm_x2 dotprod(X,X,5)
 .fi
 
 .TP
@@ -360,7 +363,7 @@ Dynamical variables. Dynamical variables are the dependent variables of the ODE 
 Syntax:
 
 .nf
-d\fIname\fR/dt = \fIrhs\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+d\fIname\fR/dt = \fIrhs\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
 .fi
 
 Dynamical variable \fIname\fR is declared as d\fIname\fR/dt followed by = and the \fIrhs\fR of the equation
@@ -375,7 +378,7 @@ Initial conditions.
 Syntax:
 
 .nf
-INIT \fIname\fR \fIexpression\fR [ {\fIattributefR; ...} ] [ # \fIcomment\fR ] 
+INIT \fIname\fR \fIexpression\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
 .fi
 
 Initial conditions can be numerical, or can be expression that depend on parameters or expressions.
@@ -403,8 +406,8 @@ Intermediate values ti are stopping time, where the system is reset to initial c
 are discontinuous, and variable need to be reset at known timepoints.
 
 .nf
-TIME 0 10
-TIME 0 10 20 50 100
+TIMES 0 10
+TIMES 0 10 20 50 100
 .fi
 
 .TP
@@ -517,7 +520,7 @@ This is of the form PSI[i] = 1/POP_SIZE*sum_{j=1}^POP_SIZE \fIphi\fR(x[j],x[i]),
 
 .nf
 %C PSI
-phi(OY("x"),MY("x"))
+phi(OY(x),MY(x))
 .fi
 
 The coupling term PSI take a value for each particle.
@@ -528,7 +531,7 @@ Mean field.
 This is of the form MF = 1/POP_SIZE*sum(j=1) \fIphi\fR(x[j]), where \fIphi\fR depend only on one variable.
 
 .nf
-%M MF phi(MY("x"))
+%M MF phi(MY(x))
 .fi
 
 The mean field term in an average over the population, and take a single value.
@@ -552,15 +555,15 @@ theta a dissipation rate constant.
 Total number of particles. 
 
 .TP
-.B OY("var") " " (OE,OA)
+.B OY(var) " " (OE,OA)
 Used in %C to iterate over all particles; var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
 
 .TP
-.B MY("var") " " (ME,MA) 
+.B MY(var) " " (ME,MA) 
 Used in %C and %M to denote the current particle; var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
 
 .TP
-.B SY("var") " " (SE,SA)
+.B SY(var) " " (SE,SA)
 Value of the current particle's sister var. Useful to specify what happens when particle replicates. var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
 
 .TP
@@ -593,8 +596,8 @@ This is nonzero only at replication (
 = 1).
 
 .TP
-.B ID 
-Particle ID
+.B MID 
+Current particle ID
 
 .SS Numerical and graphical options
 

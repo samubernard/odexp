@@ -287,16 +287,15 @@ sub cleanup_file
   my $in_fun = 0;
   while ( <> )    
   {
-    if ( $opt_i == 0 )
+    if ( $opt_i == 0 ) # check for common syntax errors 
     {
-      # check for common syntax errors 
-      /\{.*?unused.*?\}/ and die "error: change unused for impl on line ${.}.\n";
-      /\{.*?pop.*?\}/ and die "error: change pop for impl on line ${.}.\n";
-      /\{.*?inexpr.*?\}/ and die "error: change inexpr for init on line ${.}.\n";
+      /\{.*?unused.*?\}/ and die "error: change unused for impl on line ${.}: $_\n";
+      /\{.*?pop.*?\}/ and die "error: change pop for impl on line ${.}: $_\n";
+      /\{.*?inexpr.*?\}/ and die "error: change inexpr for init on line ${.}: $_\n";
       /(MU|ME|MA|MY|OE|OA|OY|MF)\(\"($re_identifier)\"\)/ and 
           die "error: macro $1 needs no quote around the variable '$2' on line ${.}. Try $1($2).\n";
       /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
-          die "error: incomplete keyword '$1' on line ${.}.\n" unless $in_fun;
+          die "error: incomplete keyword '$1' on line ${.}: $_\n" unless $in_fun;
       /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
       /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI)/i
         or die "error: wrong keyword on line ${.}: $_" unless ($line_cont or $in_fun);
@@ -306,8 +305,7 @@ sub cleanup_file
         { $line_cont = 0; }
       $in_fun = 1 if  /^\s*fun/i;
       $in_fun = 0 if ( /^\s*end/i or /^\s*fun.*?=/i );
-      # end check common errors
-    }
+    } # end check common errors
 
     # reformat pop file    
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
