@@ -536,8 +536,6 @@ sub define_functions
     {
       my $s = shift(@rhs); 
       $s =~ s/^\s*|\s*$//g; # trim
-      # print $fch "    " . $s . ";\n" if @rhs; 
-      # print $fch "    return " . $s . ";\n" if not @rhs; 
       print $fch "    " . $s . ";\n"; 
     }
     print $fch "}\n\n";
