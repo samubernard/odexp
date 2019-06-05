@@ -283,12 +283,14 @@ sub cleanup_file
   my $tmpfh = tempfile(); # make a first pass in temp file to remove linebreaks
                           # and find lets
   my $funcdelimiter = 0;
-  my $line_cont = 0; 
+  my $cont_to_next = 0; 
+  my $cont_from_previous = 0; 
   my $in_fun = 0;
   while ( <> )    
   {
     if ( $opt_i == 0 ) # check for common syntax errors 
     {
+      $cont_from_previous = 1 if /^\s{4}/;   
       /\{.*?unused.*?\}/ and die "error: change unused for impl on line ${.}: $_\n";
       /\{.*?pop.*?\}/ and die "error: change pop for impl on line ${.}: $_\n";
       /\{.*?inexpr.*?\}/ and die "error: change inexpr for init on line ${.}: $_\n";
@@ -298,39 +300,49 @@ sub cleanup_file
           die "error: incomplete keyword '$1' on line ${.}: $_\n" unless $in_fun;
       /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
       /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI)/i
-        or die "error: wrong keyword on line ${.}: $_" unless ($line_cont or $in_fun);
+        or die "error: wrong keyword on line ${.}: $_" 
+        unless ($cont_from_previous or $cont_to_next or $in_fun);
       if ( /\.\.\.\s*$/ ) 
-        { $line_cont = 1; } 
+        { $cont_to_next = 1; } 
       else  
-        { $line_cont = 0; }
+        { $cont_to_next = 0; }
       $in_fun = 1 if  /^\s*fun/i;
       $in_fun = 0 if ( /^\s*end/i or /^\s*fun.*?=/i );
     } # end check common errors
 
     # reformat pop file    
+    # s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
+    # s/^([^#].*?)(\\\n$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
+    chomp; # remove the newline \n 
+    $cont_to_next = 1 if ( /\\$/ or /\.\.\.\s*$/ );
+    s/^([^#].*?)(\\$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
+    $cont_from_previous = 1 if /^\s{4}/;   
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
-    s/^([^#].*?)(\\\n$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
     my @fields = split; 
     if ( /^SET/i ) {
       push @lets, $fields[1];
       push @letvals, join(' ',@fields[2..$#fields]);
       $letvals[$#letvals] =~ s/\s*?#.*?$//;
     }
-    chomp if /^[^#].*?,\s*$/;                 # join lines if line ends with ,
+    # chomp if /^[^#].*?,\s*$/;                 # join lines if line ends with ,
     if ( /^@|^FUN/i && /\=/)  # this is a one liner function
     {
       s/\=/= return/;
     }
     if ( /^@|^FUN/i && not /\=/ )
     {
-      $funcdelimiter = 1;
+      $cont_to_next = 1;
       s/\s*$/ = \n/;
     }
-    $funcdelimiter = 0 if /^END/i;
-    chomp if $funcdelimiter;                  # join lines within function 
-    s/^END//i;                                 # remove the END
+    $cont_to_next = 0 if /^END/i;
+    s/^END//i;                            # remove the END
+    # chomp if $cont_to_next;                  # join lines within function 
+    print $tmpfh "\n" if not $cont_from_previous;         # start a new line if not continuing 
     print $tmpfh "$_";
+    $cont_from_previous = $cont_to_next;
+    $cont_to_next = 0;
   }
+  print "\n"; # add a final new line
   #close($fh);
   seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace lets
   print $fodeh "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
