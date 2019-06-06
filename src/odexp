@@ -263,14 +263,14 @@ close $fch;
 sub print_ode_header
 {
   print $fodeh "# odexp file name: $odefilename\n";
-  print $fodeh "# In this file, predefined constants (with keyword SET)\n";
+  print $fodeh "# In this file, predefined constants (with keyword LET)\n";
   print $fodeh "# are replaced with their value\n\n";
 }
 
 # strip any blank space at the beginning of a line
 # append next line to all lines terminating with \
 # append next line to all lines terminating with ... followed by any number of whitespaces
-# replace all SET constants by their value
+# replace all LET constants by their value
 # add PAR in front of each naked parameter (see $re_nakedpar)
 # add INIT in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
 # parse IC in attribute (see $re_attributeIC)
@@ -305,7 +305,7 @@ sub cleanup_file
       /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
           die "error: incomplete keyword '$1' on line ${.}: $_\n" unless $in_block;
       /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
-      /^\s*($|#|PAR|EXPR|AUX|D|INIT|SET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI|END)/i
+      /^\s*($|#|PAR|EXPR|AUX|D|INIT|LET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI|END)/i
         or die "error: wrong keyword on line ${.}: $_" 
         unless $in_block;
     } # end check common errors
@@ -315,7 +315,7 @@ sub cleanup_file
     s/^([^#].*?)(\\$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
     s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
     my @fields = split; 
-    if ( /^SET/i ) {
+    if ( /^LET/i ) {
       push @lets, $fields[1];
       push @letvals, join(' ',@fields[2..$#fields]);
       $letvals[$#letvals] =~ s/\s*?#.*?$//;
@@ -334,7 +334,7 @@ sub cleanup_file
     print $tmpfh "\n" if not $in_block;         # start a new line if not continuing 
     print $tmpfh "$_";
   }
-  print "\n"; # add a final new line
+  print $tmpfh "\n"; # add a final new line
   #close($fh);
   seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace lets
   print $fodeh "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
@@ -366,7 +366,7 @@ sub cleanup_file
     foreach my $i ( 0..$#lets )
     {
       # s/(?<!^)$lets[$i]/$letvals[$i]/g; # replace lets that don't start a line
-        s/\b$lets[$i]\b/$letvals[$i]/g unless /^SET/i; # replace lets that don't start a line
+        s/\b$lets[$i]\b/$letvals[$i]/g unless /^LET/i; # replace lets that don't start a line
     }
     s/,/\n$fields[0] /g if /^(PAR|OPT)/i;    # break lines at , and remove , if line starts with P or O 
     print $fodeh "$_";
