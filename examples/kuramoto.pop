@@ -4,7 +4,7 @@
 
 # PARAMETERS are constant for all particles
 # Coupling strength
-K 0.1
+par K 0.1
 
 # CONSTANT
 macro PI 3.141592

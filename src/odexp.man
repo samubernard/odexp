@@ -102,6 +102,9 @@ Switch to continuation plot.
 .BR 8 ", " j
 Switch to range plot.
 .TP
+.B 7 
+Switch to particle plot.
+.TP
 .B A 
 Reset all axes to linear scale.
 .TP
@@ -489,7 +492,7 @@ double  myatan(double x, double *p)
 
 The function \fIsum\fR is a helper function (see below for a list of helper functions). 
 
-.SS Population-specific declarations (%)
+.SS Population-specific keywords (%)
 
 .TP
 .B %BIRTH 
@@ -540,7 +543,7 @@ The mean field term in an average over the population, and take a single value.
 
 .TP
 .B DWDT
-Gaussian, uncorrelated white noise ~ N(0,1), as the derivative of the Wiener process. 
+Gaussian, uncorrelated white noise ~ N(0,1/h), with h the timestep, as the derivative of the Wiener process. 
 The stochastic differential equation 
 
 .nf
@@ -555,16 +558,22 @@ theta a dissipation rate constant.
 Total number of particles. 
 
 .TP
-.B OY(var) " " (OE,OA)
-Used in %C to iterate over all particles; var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
+.BI MU( par )
+Used anywhere to access the value of parameter with name \fIpar\fR.
 
 .TP
-.B MY(var) " " (ME,MA) 
-Used in %C and %M to denote the current particle; var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
+.BI OY( var ) " " (OE,OA)
+Used in %C to iterate over all particles; 
+.I var 
+is a dynamical variable (OY), expression (OE) or auxiliary variable (OA).
 
 .TP
-.B SY(var) " " (SE,SA)
-Value of the current particle's sister var. Useful to specify what happens when particle replicates. var is a dynamical variable (Y), expression (E) or auxiliary variable (A).
+.BI MY( var ) " " (ME,MA,MF)
+Used in %C and %M to denote the current particle; \fIvar\fR is a dynamical variable (MY), expression (ME), or auxiliary variable (MA) or a mean field (MF).
+
+.TP
+.BI SY( var ) " " (SE,SA)
+Value of the current particle's sister var. Useful to specify what happens when particle replicates; \fIvar\fR is a dynamical variable (SY), expression (SE) or auxiliary variable (SA).
 
 .TP
 .B ATBIRTH 
@@ -597,11 +606,11 @@ This is nonzero only at replication (
 
 .TP
 .B MID 
-Current particle ID
+Current particle ID.
 
 .SS Numerical and graphical options
 
-See the list of options with line commdand \fBlo\fR.
+See the list of options with line command \fBlo\fR.
 
 .SS Functions acting on arrays
 .TP

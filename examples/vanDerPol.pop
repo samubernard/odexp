@@ -4,7 +4,7 @@
 dy/dt = mu*((1-x*x)*y-x) {init = 0.0;}
 dx/dt = y                {init = 2.0;}
 
-mu 1e6
+par mu 1e6
 
 opt abstol 1e-6, reltol 1e-6, hmin 1e-7, meth bsimp, res 801
 
