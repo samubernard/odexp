@@ -3101,33 +3101,52 @@ int get_attribute(const char *s, const char *key, char *val)
 int printf_status_bar( double_array *tspan) 
 {
   struct winsize w; /* get terminal window size */
+  char status_str[86]; /* to hold three wide-chars */
+  size_t k = 0;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); /* get terminal window size in w */
   if ( w.ws_col > 79 )  
   {
     printf("\n"); /* down one line */
     printf("%s",T_BAR);
+    while(w.ws_col - k++)
+    {
+      putchar(' ');  /* fill status bar with background T_BAR */ 
+    }
+    printf("%s","\033[G");  /* cursor back to col 1  */
     if ( get_int("hold") )
     {
-      printf("H ");
+      snprintf(status_str,3,"H ");
     }
     else if ( get_int("curves") )
     {
-      printf("U ");
+      snprintf(status_str,3,"U ");
     }
     else
     {
-      printf("  ");
+      snprintf(status_str,3,"  ");
     }
-    printf("%s=%g  t=%g…%g ", get_str("actpar"), SIM->mu[get_int("actpar")], tspan->array[0], tspan->array[tspan->length-1]);
-    printf("%s ", get_str("popmode"));
-    printf("∫%s ", get_str("solver"));
-    printf("•%d ", get_int("res"));
-    printf("(%s,", get_str("x"));
-    printf("%s,", get_str("y"));
-    printf("%s) ", get_str("z"));
-    printf("|%g| ", get_dou("abstol"));
-    printf("%%%g ", get_dou("reltol"));
-    printf("(%d)",  get_int("particle"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"%s=%g  t=%g…%g ", get_str("actpar"), SIM->mu[get_int("actpar")], tspan->array[0], tspan->array[tspan->length-1]);
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"%.8s ", get_str("popmode"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"∫%s ", get_str("solver"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"•%d ", get_int("res"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"(%.4s,", get_str("x"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"%.4s,", get_str("y"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"%.4s) ", get_str("z"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"|%g| ", get_dou("abstol"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"%%%g ", get_dou("reltol"));
+    k = strlen(status_str);
+    snprintf(status_str+k,80-k,"(%d)",  get_int("particle"));
+    k = strlen(status_str) - 6; /* -6 to account for the three wide chars …, ∫ and • */
+    printf("%.79s",status_str);
     printf("%s",T_NOR);
     printf("%s","\033[F");  /* up one line  */
   }
