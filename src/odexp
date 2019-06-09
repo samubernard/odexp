@@ -847,7 +847,7 @@ sub print_ode_init_cond
     "initialization parametric expressions");
   assign_output($modelode,
     "EXPR", "expr_", $re_pace,
-    "assign parametric expression pointer", "rhs");
+    "assign parametric expression pointer", "pointer");
   assign_output($modelode,
     "INIT", "y2_", $re_pace,
     "assign initial conditions", "rhs");
@@ -1124,21 +1124,16 @@ sub assign_output
     if ( $_ =~ m/$re_scalar/ ) # scalar variable
     {
       print $fch "    *(${lhs}++) = " . $rhs2print; # added
-      # print $fch "    ${lhs}[$ii] = " . $rhs2print;
       print $fch ";" if $assign_rhs !~ /rhs/;
       print $fch "\n";
-      # ++$ii if /^(?:D|\w+\s)\s*(\w+\s*(\/DT)?\s*[^\[])/i;
       next;
     }
     if ( my @it = ($_ =~ m/$re_iter/g) )
     { 
       my $offset = qq();
-      # my $starp = qq( + );
-      # my $iter_increment = 1;
       my $j = 0;
       while ( $j < (0+@it) )
       {
-        # $iter =~ /\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)/;
         my ($i, $a, $b) = @it[$j..$j+2];
         $j += 3;
         $offset = $offset . qq(    ); 
@@ -1148,20 +1143,6 @@ sub assign_output
 
       print $fch $offset .   "    *(${lhs}++) = $rhs2print"; # added
       
-      # print $fch $offset . "    ${lhs}[$ii";
-      # $j = 0;
-      # while ( $j < 0+@it )
-      # {
-      #   my ($i, $a, $b) = @it[$j..$j+2];
-      #   $j += 3;
-      #   print $fch "$starp$i";
-      #   $iter_increment *= ($b-$a);
-      #   $starp = qq/*(1+/;
-      # }
-      # print $fch qq/)/ x (@it/3-1);
-      # print $fch "] = $rhs2print"; 
-
-      # $ii += $iter_increment;
       if ( $assign_rhs !~  /rhs/ )
       {
         $j = 0;
