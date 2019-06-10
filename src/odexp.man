@@ -281,7 +281,7 @@ A dynamical system is specified in a text file with lines starting with keywords
 Parameters. Must be numerical scalar (double, int or long). Syntax:
 
 .nf
-PAR \fIname\fR \fIvalue\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
+PAR \fIname\fR \fIvalue\fR [ {\fIattribute\fR, ...} ] [ # \fIcomment\fR ] 
 .fi
 
 Parameters appear in the list of parameters. 
@@ -289,7 +289,7 @@ They can be modified from within odexp and can be ranged over.
 \fIname\fR must be a valid C variable name. 
 \fIvalue\fR must be a constant number; by default a double, but can be 
 an integer with attribute \fIint\fR or \fIlong\fR.
-Parameters are declared in name value pairs, separated by commas  (,), or one parameter per line.
+Parameters are declared in name value pairs, separated by semi-colons ';', or one parameter per line.
 Parameters are common to all particles.
 The prefix PAR is optional when one parameter is declare on a single line.
 
@@ -307,7 +307,7 @@ PAR c 0.3 {impl}   # attribute impl   for parameters used implicitly,
 PAR d 0.4 {every}  # attribute every  for parameters used in expressions, 
                    # initial conditions and auxiliary equations
 
-PAR a 1 {int} # type integer. Warning this comment ends at the comma: b is another parameter!, b 2.3 
+PAR a 1 {int} # type integer. Warning this comment ends at the semi-colon: b is another parameter!; b 2.3 
 .fi
 
 Implicit initial condition. If \fIvar\fR is a dynamical variable, the declaration 

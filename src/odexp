@@ -103,7 +103,7 @@ my $re_attributeIC = qr/^
   \/DT                  # second part of derivative
   \s*=\s*               # equal
   [^\{#\n]+             # rhs until bracket comment or newline 
-  \{.*?init\s*=\s*(.*?)(?:;.*?\}|\s*\}) # attribute containing init=ic;
+  \{.*?init\s*=\s*(.*?)(?:,.*?\}|\s*\}) # attribute containing init=ic;
   \s*                   # whitespace(s)
   (?:|\#.*)?            # nothing or comment
 $/ix;
@@ -196,7 +196,7 @@ my $modelc = $odedir . "/model.c";
 
 open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
 print_ode_header();
-cleanup_file(); # clean up ode 
+prescan(); # clean up ode 
 close $fodeh;
 
 guess_single_popmode($modelode);
@@ -275,8 +275,8 @@ sub print_ode_header
 # add INIT in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
 # parse IC in attribute (see $re_attributeIC)
 # parse implicitly defined delayed variables (see $re_lag)
-# replace all , in PAR, OPT by \n 
-sub cleanup_file
+# replace all ; in PAR, OPT by \n 
+sub prescan
 {
   my @lets;
   my @letvals;
@@ -320,7 +320,6 @@ sub cleanup_file
       push @letvals, join(' ',@fields[2..$#fields]);
       $letvals[$#letvals] =~ s/\s*?#.*?$//;
     }
-    # chomp if /^[^#].*?,\s*$/;                 # join lines if line ends with ,
     if ( /^@|^FUN/i && /\=/)  # this is a one liner function
     {
       s/\=/= return/;
@@ -330,12 +329,11 @@ sub cleanup_file
       s/\s*$/ = /;
     }
     s/^END//i;                            # remove the END
-    # chomp if $cont_to_next;                  # join lines within function 
     print $tmpfh "\n" if not $in_block;         # start a new line if not continuing 
     print $tmpfh "$_";
   }
   print $tmpfh "\n"; # add a final new line
-  #close($fh);
+
   seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace lets
   print $fodeh "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
   while ( <$tmpfh> )
@@ -356,10 +354,10 @@ sub cleanup_file
     if ( my ($varname, $attr) = ( $_ =~ /$re_lag/ ) )
       {
         s/^/# /; # comment out the line
-        my ($rootvar) = ( $attr =~ /root\s*=\s*(.*?)([;\s]|$)/ );
-        my ($ic) = ( $attr =~ /init\s*=\s*(.*?)([;\s]|$)/ );
-        my ($len) = ( $attr =~ /len\s*=\s*(.*?)([;\s]|$)/ );
-        my ($mean) = ( $attr =~ /mean\s*=\s*(.*?)([;\s]|$)/ );
+        my ($rootvar) = ( $attr =~ /root\s*=\s*(.*?)([,\s]|$)/ );
+        my ($ic) = ( $attr =~ /init\s*=\s*(.*?)([,\s]|$)/ );
+        my ($len) = ( $attr =~ /len\s*=\s*(.*?)([,\s]|$)/ );
+        my ($mean) = ( $attr =~ /mean\s*=\s*(.*?)([,\s]|$)/ );
         s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$mean,$len) {hidden}\nmacro ${varname}_end $len-1\nAUX $varname ${varname}_chain[${varname}_end]\nINIT ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
       }
     my @fields = split; 
@@ -368,7 +366,8 @@ sub cleanup_file
       # s/(?<!^)$lets[$i]/$letvals[$i]/g; # replace lets that don't start a line
         s/\b$lets[$i]\b/$letvals[$i]/g unless /^LET/i; # replace lets that don't start a line
     }
-    s/,/\n$fields[0] /g if /^(PAR|OPT)/i;    # break lines at , and remove , if line starts with P or O 
+    s/;/\n$fields[0] /g if /^(PAR|OPT)/i;    # break lines at ; and remove ; if line starts with PAR or OPT 
+
     print $fodeh "$_";
   }
   print $fodeh "# end of pop file entries ^^^^^^^^^^^^^^^^^^^^^^^^^\n\n";
@@ -841,7 +840,7 @@ sub print_ode_init_cond
   print $fch $s;
   declare_iterators($modelode);
   declare_define_parameters($modelode,"ic");  
-  declare_scalar_or_array($modelode,"E","parametric expressions");
+  declare_scalar_or_array($modelode,"EXPR","parametric expressions");
   define_array_functions($modelode,
     "EXPR", qr/^EXPR\w*\s+(\w+)(\[[^\[\]]+\])*\s+(.*)$/i,
     "initialization parametric expressions");
@@ -1200,8 +1199,8 @@ sub set_low_rank_expansion
     my ($varname, $rhs, $attr, $comment) = ( /$re_lrexp/ ) or next;
     if ( $rhs =~ /lrexp/ )
     {
-      my ($var) = ( $attr =~ /var\s*=\s*(.*?)([;\s]|$)/ );
-      my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([;\s]|$)/ );
+      my ($var) = ( $attr =~ /var\s*=\s*(.*?)([,\s]|$)/ );
+      my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([,\s]|$)/ );
       print $fch "    xxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
       print $fch "    yxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
       print $fch "    myself_ = SIM->pop->start;\n";
@@ -1227,11 +1226,11 @@ sub set_low_rank_expansion
     }
     elsif ( $rhs =~ /lrwexp/ )
     {
-      my ($U) = ( $attr =~ /U\s*=\s*(.*?)([;\s]|$)/ );
-      my ($V) = ( $attr =~ /V\s*=\s*(.*?)([;\s]|$)/ );
-      my ($rank) = ( $attr =~ /rank\s*=\s*(.*?)([;\s]|$)/ );
-      my ($var) = ( $attr =~ /var\s*=\s*(.*?)([;\s]|$)/ );
-      my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([;\s]|$)/ );
+      my ($U) = ( $attr =~ /U\s*=\s*(.*?)([,\s]|$)/ );
+      my ($V) = ( $attr =~ /V\s*=\s*(.*?)([,\s]|$)/ );
+      my ($rank) = ( $attr =~ /rank\s*=\s*(.*?)([,\s]|$)/ );
+      my ($var) = ( $attr =~ /var\s*=\s*(.*?)([,\s]|$)/ );
+      my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([,\s]|$)/ );
       print $fch "    xxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
       print $fch "    yxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
       print $fch "    myself_ = SIM->pop->start;\n";
@@ -1354,7 +1353,7 @@ $if odexp
 "\M-\C-{": "{\C-j"
 # extend 
 "\C-e": "e\C-j"
-# repeat last command (\e[A history-search-backward arrow up)
+# repeat last ommand (\e[A history-search-backward arrow up)
 "\C-y": "\e[A\C-j"
 $endif
 );

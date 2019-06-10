@@ -1478,7 +1478,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             NUM_IC[i] = 0;
           }
           /* reset parameter values */
-          load_nameval(parfilename, mu, "P", 1,exit_if_nofile);
+          load_nameval(parfilename, mu, "PAR", 3,exit_if_nofile);
           rerun = 1;
           plot_mode = PM_REPLOT;
           update_act_par_options(p, mu);
@@ -1493,12 +1493,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           else /* read par_filename for parameters, initial conditions, and tspan */
           {
             /* load parameter values */
-            success = load_nameval(par_filename, mu, "P", 1,no_exit);
+            success = load_nameval(par_filename, mu, "PAR", 3,no_exit);
             if ( success == 0 )
             {
               PRINTWARNING("  warning: could not load parameters.\n");
             }
-            success = load_nameval(par_filename, ics, "I", 1,no_exit); /* load initial conditions value from file */
+            success = load_nameval(par_filename, ics, "INIT", 4,no_exit); /* load initial conditions value from file */
             if ( success == 1)
             {
               /* reset initial condtitions */
@@ -2548,7 +2548,10 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
           index_factor *= (index1-index0);
           for(j=0;j<expr_size;j++)
           {
-            snprintf(new_index,NAMELENGTH,"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 );
+            /* snprintf(new_index,NAMELENGTH,"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
+            /* do not print the iterator's names. this might lead to ambiguity when 
+             * several iterators are used, but is of no consequence outside displaying */
+            snprintf(new_index,NAMELENGTH,"[%zu]", index0 + (j/(expr_size/index_factor)) % index1 );
             strcat(var.name[var_index+j],new_index);
             strcat(var.name[var_index+j],extensionvarname);
           }
@@ -3101,7 +3104,7 @@ int get_attribute(const char *s, const char *key, char *val)
 int printf_status_bar( double_array *tspan) 
 {
   struct winsize w; /* get terminal window size */
-  char status_str[86]; /* to hold three wide-chars */
+  char status_str[86]; /* 79 chars + 6 to hold three wide-chars */
   size_t k = 0;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); /* get terminal window size in w */
   if ( w.ws_col > 79 )  
