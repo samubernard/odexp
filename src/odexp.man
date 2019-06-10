@@ -295,10 +295,12 @@ The prefix PAR is optional when one parameter is declare on a single line.
 
 Examples 
 .nf
-PAR a 0.1, b 0.2
+PAR a 0.1; b 0.2
 
 a 0.1 # ok
-a 0.1, b 0.2 # not ok
+a 0.1; b 0.2 # not ok
+
+PAR a {attribute of a} # comment on a; b {attribute of b} # comment on b
 
 PAR b 0.2 {init}   # attribute init   for parameters only used 
                    # in initial conditions or expressions
