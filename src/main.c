@@ -276,10 +276,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"EXPR",4, &pex.nbr_el, &pex.nbr_expr);
   alloc_namevalexp(&pex);
   success = load_strings(eqfilename,pex,"EXPR",4,1,' ', exit_if_nofile);
-  if (!success)
-  {
-    printf("  no parametric expression\n");
-  } 
   DBLOGPRINT("%zu parametric expressions",pex.nbr_el);
 
   /* get initial conditions */
@@ -304,10 +300,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"AUX",3, &fcn.nbr_el, &fcn.nbr_expr);
   alloc_namevalexp(&fcn);
   success = load_strings(eqfilename,fcn,"AUX",3,1,' ', exit_if_nofile);
-  if (!success)
-  {
-    printf("  no auxiliary function\n");
-  } 
   DBLOGPRINT("%zu auxiliary variables",fcn.nbr_el);
 
   /* get equations */
@@ -331,10 +323,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"%C",2, &psi.nbr_el, &psi.nbr_expr);
   alloc_namevalexp(&psi);
   success = load_strings(eqfilename,psi,"%C",2,1,' ', exit_if_nofile);
-  if (!success)
-  {
-    printf("  no population couplings\n");
-  } 
   DBLOGPRINT("%zu population couplings",psi.nbr_el);
 
   /* define mfd */
@@ -342,10 +330,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"%M",2, &mfd.nbr_el, &mfd.nbr_expr);
   alloc_namevalexp(&mfd);
   success = load_strings(eqfilename,mfd,"%M",2,1,' ', exit_if_nofile);
-  if (!success)
-  {
-    printf("  no population mean fields\n");
-  } 
   DBLOGPRINT("%zu population mean fields",mfd.nbr_el);
 
   /* define birth */
@@ -353,10 +337,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"%BIRTH",6, &birth.nbr_el, &birth.nbr_expr);
   alloc_namevalexp(&birth);
   success = load_strings(eqfilename,birth,"%BIRTH",6,0,' ', exit_if_nofile);
-  if (!success)
-  {
-    printf("  no population birth rates\n");
-  } 
   DBLOGPRINT("%zu population birth rates",birth.nbr_el);
 
   /* define repli */
@@ -364,10 +344,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"%REPLI",6, &repli.nbr_el, &repli.nbr_expr);
   alloc_namevalexp(&repli);
   success = load_strings(eqfilename,repli,"%REPLI",6,0,' ', exit_if_nofile);
-  if (!success)
-  {
-    printf("  no population replication rates\n");
-  } 
   DBLOGPRINT("%zu population replication rates",repli.nbr_el);
 
   /* define death */
@@ -375,10 +351,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"%DEATH",6, &death.nbr_el, &death.nbr_expr);
   alloc_namevalexp(&death);
   success = load_strings(eqfilename,death,"%DEATH",6,0,' ', exit_if_nofile);
-  if (!success)
-  {
-    printf("  no population death rates\n");
-  } 
   DBLOGPRINT("%zu population death rates",repli.nbr_el);
 
   /* define dxv */
