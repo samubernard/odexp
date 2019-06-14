@@ -11,10 +11,21 @@ my $re_pace = qr/^
   ($re_identifier)      # varname 
   (?:\s*\[.*?\])*       # any number of brackets do not capture
   \s+                   # whitespaces
-  (.*?)(?=at|\#|\n)               # rhs until 'at'
-  (|at.*?)(?=\#|\n)               # nothing or attribute
-  (|\#.*)              # nothing or comment
+  (.*?)(?=\#|\n)             # rhs 
+  (?:\#|\n)(.*?)(?=\#|\n)     # nothing or attribute
+  (?:\#|\n)(.*)              # nothing or comment
 $/ix;
+
+# my $re_pace = qr/^
+#   \s*(%|AUX|CONST|EXPR|INIT|OPT|PAR|MAC|TIMES|)\w*   # type
+#   \s+                   # whitespaces
+#   ($re_identifier)      # varname 
+#   (?:\s*\[.*?\])*       # any number of brackets do not capture
+#   \s+                   # whitespaces
+#   (.*?)(?=\ \.\ |\n)               # rhs until 'at'
+#   (|\ \. \..*?)(?=\ \.\ |\n)               # nothing or attribute
+#   (|\ \.\ .*)              # nothing or comment
+# $/ix;
 
 # @ACEIFOPS 
 # my $re_pace = qr/^

@@ -655,7 +655,7 @@ If
 is a dynamical variable, then
 
 .nf
-LAG \fIztau1\fR {root = z; mean = tau; len = 1000; init = 0.2}
+LAG \fIztau1\fR {root = z, mean = tau, len = 1000, init = 0.2}
 .fi
 
 defines the dynamical variable \fIztau1\fR as the delayed version of \fIz\fR 
@@ -675,7 +675,7 @@ The following code calls the expansion method for the coupling term sin(xj-xi).
 (The auxiliary term TH is introduced to force the values of theta between 0 and 2 * PI.)
 
 .fn
-%C coupling lrexp {var = TH; fun = cpling_fun}
+%C coupling lrexp {var = TH, fun = cpling_fun}
 
 AUX TH theta - ( (int) (theta/2/PI) * 2 * PI )
 

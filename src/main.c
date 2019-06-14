@@ -2481,8 +2481,8 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
         *var.max_name_length = (namelen1-namelen0);
       }
 
-      /* parse basevarname var[i=a:b] to var[i=a], ... var[i=b-1]
-       * parse basevarname var[i=a]   to var[i=a]
+      /* parse basevarname var[i=a:b] to var[a], ... var[b-1]
+       * parse basevarname var[i=a]   to var[a]
        * parse basevarname var[a]     to var[a]
        */
       sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */

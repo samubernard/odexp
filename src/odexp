@@ -196,8 +196,11 @@ my $modelc = $odedir . "/model.c";
 
 open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
 print_ode_header();
-prescan(); # clean up ode 
+prescan(); # check for common syntax errors; clean up ode 
 close $fodeh;
+
+init_check() if ( $opt_i == 0 ); # check that init cond are declared in the same order as dynamical variables
+impl_check() if ( $opt_i == 0 ); # check that init cond are declared in the same order as dynamical variables
 
 guess_single_popmode($modelode);
 
@@ -275,7 +278,7 @@ sub print_ode_header
 # add INIT in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
 # parse IC in attribute (see $re_attributeIC)
 # parse implicitly defined delayed variables (see $re_lag)
-# replace all ; in PAR, OPT by \n 
+# replace all ; in PAR, OPT by \n(PAR|OPT) 
 sub prescan
 {
   my @lets;
@@ -311,9 +314,10 @@ sub prescan
     } # end check common errors
 
     # reformat pop file    
-    chomp; # remove the newline \n 
-    s/^([^#].*?)(\\$|\.\.\.\s*$)/$1/;    # join line after \ or ... if they are not only comments
-    s/^\s+(\S)/$1/;                   # trim space and tab at beginning of line
+    # first pass
+    chomp; # remove the newline \n # it will be added at the end of blocks 
+    s/^([^#].*?)(\\$|\.\.\.\s*$)/$1/;    # remove line continuation keywords 
+    s/^\s+(\S)/$1/;                      # trim space and tab at beginning of line
     my @fields = split; 
     if ( /^LET/i ) {
       push @lets, $fields[1];
@@ -324,17 +328,18 @@ sub prescan
     {
       s/\=/= return/;
     }
-    if ( /^@|^FUN/i && not /\=/ )
+    if ( /^@|^FUN/i && not /\=/ ) # this is a multiline function
     {
       s/\s*$/ = /;
     }
-    s/^END//i;                            # remove the END
-    print $tmpfh "\n" if not $in_block;         # start a new line if not continuing 
+    s/^END//i;                            # remove the END keyword
+    print $tmpfh "\n" if not $in_block;         # start a new line if not in block 
     print $tmpfh "$_";
   }
   print $tmpfh "\n"; # add a final new line
 
-  seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ',' and replace lets
+  # second pass
+  seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ';' and replace lets
   print $fodeh "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
   while ( <$tmpfh> )
   {
@@ -363,7 +368,6 @@ sub prescan
     my @fields = split; 
     foreach my $i ( 0..$#lets )
     {
-      # s/(?<!^)$lets[$i]/$letvals[$i]/g; # replace lets that don't start a line
         s/\b$lets[$i]\b/$letvals[$i]/g unless /^LET/i; # replace lets that don't start a line
     }
     s/;/\n$fields[0] /g if /^(PAR|OPT)/i;    # break lines at ; and remove ; if line starts with PAR or OPT 
@@ -371,6 +375,70 @@ sub prescan
     print $fodeh "$_";
   }
   print $fodeh "# end of pop file entries ^^^^^^^^^^^^^^^^^^^^^^^^^\n\n";
+}
+
+sub init_check
+{
+  open(my $fodeh, '<', $modelode) or die "Could not open file '$modelode'. $!";
+  my @dynas;
+  my @inits;
+  while(<$fodeh>)
+  {
+    if ( my ($type, $var) = ( $_ =~ /$re_pace/ ) ) 
+    {
+      push @inits, $var if ( $_ =~ /^INIT/i );
+    }
+    if ( my ($type, $var) = ( $_ =~ /$re_dxdt/ ) )
+    {
+      push @dynas, $var;
+    }
+  }
+  close $fodeh;
+  # perform check
+  die "error: more dynamical variables than initial conditions \n" if ( (0+@dynas) > (0+@inits) );
+  die "error: more initial conditions than dynamical variables \n" if ( (0+@dynas) < (0+@inits) );
+  while ( @inits ) 
+  {
+    my $init = shift @inits;
+    my $dyna = shift @dynas;
+    die "error: initial conditions don't match dynamical variables: $init, $dyna \n" if ( $init ne $dyna );
+  }
+}
+
+sub impl_check
+{
+  open(my $fodeh, '<', $modelode) or die "Could not open file '$modelode'. $!";
+  my @vars;
+  my @impls;
+  my @lines;
+  while(<$fodeh>)
+  {
+    chomp;
+    if ( my ($type, $var) = ( $_ =~ /$re_pace/ ) ) 
+    {
+      push @vars, $var;
+    }
+    if ( my ($type, $impl) = ( $_ =~ /(MU|MY|ME|MA|MF|OY|OE|OA|SY|SE|SA)\(\s*(.*?)\s*\)/ ) )
+    {
+      push @impls, $impl;
+      push @lines, $_;
+    }
+  }
+  close $fodeh;
+  # perform check
+  while ( @impls ) 
+  {
+    my $found = 0;
+    my $i = 0;
+    my $impl = shift @impls;
+    my $line = shift @lines;
+    while ( ( not $found ) and ($i < (0+@vars) ) ) 
+    {
+      $found = 1 if ( $impl eq $vars[$i++] );
+    }
+    die "error: variable $impl, used implicitly on line \"$line\", was not declared\n" if not $found;
+  }
+
 }
 
 sub guess_single_popmode
