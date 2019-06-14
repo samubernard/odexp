@@ -263,6 +263,8 @@ print_ode_init_cond();
 
 close $fch;
 
+postscan(); # postprocess equation file 
+
 sub print_ode_header
 {
   print $fodeh "# odexp file name: $odefilename\n";

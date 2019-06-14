@@ -2509,7 +2509,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
         if (nbr_read_2 > 0) /* array expresssion var[i=0:5] or single expression var[i=0] */
         {
           sscanf(basevarname+namelen0, " [ %[^=]", iterator_str); /* get name of iterator */
-          strcat(iterator_str,"=");
+          /* strcat(iterator_str,"="); don't print iterator's name as in var[i=0] */
         }
         if (nbr_read_2 == 1) /* if var[i=0], do as if var[i=0:1] */
         {
