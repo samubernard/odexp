@@ -14,6 +14,7 @@
 
 #include "main.h"
 #include "odexpConfig.h"
+#include "loader.h"
 
 /* static variable for holding the command line string */
 static char *rawcmdline = (char *)NULL;
@@ -2493,6 +2494,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
       for(j=0;j<expr_size;j++)
       {
         strncpy(var.name[var_index+j],rootvarname,NAMELENGTH-1); 
+        strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH-1);
       }
       index_factor = 1;
       do
@@ -2523,20 +2525,26 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
             /* snprintf(new_index,NAMELENGTH,"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
             /* do not print the iterator's names. this might lead to ambiguity when 
              * several iterators are used, but is of no consequence outside displaying */
-            snprintf(new_index,NAMELENGTH,"[%zu]", index0 + (j/(expr_size/index_factor)) % index1 );
+            snprintf(new_index,NAMELENGTH,"%zu", index0 + (j/(expr_size/index_factor)) % index1 );
+            strcat(var.name[var_index+j],"[");
             strcat(var.name[var_index+j],new_index);
+            strcat(var.name[var_index+j],"]");
             strcat(var.name[var_index+j],extensionvarname);
+            replace_word(var.expression[var_index+j],iterator_str,new_index,EXPRLENGTH); 
           }
         }
         namelen0 += namelen1;
+
       }
       while (nbr_read_1 > 0 || nbr_read_2 > 0);
 
       /* copy expressions into var.expression */
+#if 0
       for(j=0;j<expr_size;j++)
       {
         strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH-1);
       }
+#endif
 
       /* copy attribute into var.attribute */
       /* copy comment into var.comment */
