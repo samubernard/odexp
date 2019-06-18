@@ -1,7 +1,7 @@
 /* methods_odexp.h */
 
 /* includes */
-#include "datastruct.h"
+#include "loader.h"
 #include <gsl/gsl_odeiv2.h>
 
 enum solver { GSL_RK2, GSL_RK4, GSL_RKF45, GSL_RKCK, GSL_RK8PD, 
@@ -10,31 +10,6 @@ enum solver { GSL_RK2, GSL_RK4, GSL_RKF45, GSL_RKCK, GSL_RK8PD,
 
 /* extern size_t ode_system_size; */
 extern int *NUM_IC;
-
-/* unused */
-typedef struct ode_functions {
-    oderhs  pop_ode_rhs;
-    odeic   pop_ode_ic;
-    odeic   single_ic;
-    rootrhs root_rhs;
-} ode_funs;
-
-typedef struct steady_state
-{
-    double *s;
-    double *re;
-    double *im; 
-    int index;
-    size_t size;
-    int status;
-} steady_state;
-
-typedef struct double_array
-{
-    double *array;
-    size_t length;
-} double_array;
-
 
 
 int odesolver( oderhs pop_ode_rhs, 

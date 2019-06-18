@@ -29,22 +29,6 @@ extern const char PALETTE_ACID[8][7];
 extern const char PALETTE_QUAL[9][7];
 extern const char PALETTE_APPLE[8][7];
 
-/* NOT USED */
-typedef struct namevalexp_group
-{
-    nve pex;     /* parametric expressions */
-    nve func;    /* user-defined functions */
-    nve mu;      /* parameters */
-    nve ics;     /* initial conditions */
-    nve fcn;     /* auxiliary functions */
-    nve eqn;     /* dynamical equations */
-    nve psi;     /* pop coupling terms */
-    nve mfd;     /* pop mean fields/stats */
-    nve dxv;     /* list of all Dynamical  + auXiliary Variables */
-    nve cst;     /* constant arrays */
-    nve dfl;     /* data files */
-} nveg;
-/* END NOT USED */
 
 typedef struct gen_option
 {
@@ -57,6 +41,33 @@ typedef struct gen_option
     char    descr[EXPRLENGTH];
     char    optiontype[NAMELENGTH];
 } gopt;
+
+
+typedef struct double_array
+{
+    double *array;
+    size_t length;
+} double_array;
+
+/* unused */
+typedef struct ode_functions {
+    oderhs  pop_ode_rhs;
+    odeic   pop_ode_ic;
+    odeic   single_ic;
+    rootrhs root_rhs;
+} ode_funs;
+
+typedef struct steady_state
+{
+    double *s;
+    double *re;
+    double *im; 
+    int index;
+    size_t size;
+    int status;
+} steady_state;
+
+
 
 /* number of global options */
 #define NBROPTS 57
