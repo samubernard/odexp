@@ -34,9 +34,9 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     struct winsize w; /* get terminal window size */
     double fcmpl = (tt-t0)/(tfinal-t0);
     int i;
-    /* char * arrow = "``'-.,_,.-'"; */ /* a wave */
-    char * arrow = "~"; /* this is the string for the progress bar */
-    int arrow_length = strlen(arrow); 
+    static char * tail = "***"; /* this is the string for the progress bar */
+    static char * head = "*"; /* this is the string for the progress bar */
+    int arrow_length = strlen(tail)+strlen(head); 
     printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line msg line */
     printf("%s",LINEUP_AND_CLEAR);  /* clear one line  */
     if ( get_int("progress") > 2 ) /* level 3: clear two more lines */
@@ -49,25 +49,26 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
       printf("  %s%6.1f sec%s,", T_VAL,(clock()-start)*1.0 / CLOCKS_PER_SEC, T_NOR);
       printf("  %s%6.2f%%%s  ",T_VAL,100*fcmpl,T_NOR);
     }
-    if ( get_int("progress") > 1 ) /* level 2: print wave progress bar */
+    if ( get_int("progress") > 1 ) /* level 2: print progress bar */
     {
       ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); /* get terminal window size in w */
-      printf("%s",T_PR);
-      for ( i = 0; i<(int)(fcmpl*(w.ws_col-25));++i) /* w.ws_col = nbr cols in terminal window */
+      /* printf("%s",T_PR); */
+      for ( i = 0; i<(int)(fcmpl*(w.ws_col-24-arrow_length));++i) 
+        /* w.ws_col = nbr cols in terminal window */
       {
-        putchar(arrow[i % arrow_length]);
+        putchar(' ');
       }
-      printf("%s",T_NOR);
+      printf("%s%s%s%s",T_PR,tail,T_NOR,head);
     }
     if ( get_int("progress") > 2 ) /* level 3: print numerical integration information */
     {
       printf("\n  %ssolver  %-8s h0       h        pop size   est. time%s\n",T_HEAD, get_str("indvar"),T_NOR);
-      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s %s%5zu%s       %s%-6.1f sec%s\n\033[F", \
+      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s %s%5zu%s       %s%-6.1f sec%s\n", \
           T_DET, get_str("solver"), T_NOR, T_VAL, tt, T_NOR, \
           T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
           T_VAL, POP_SIZE, T_NOR, T_VAL, (double)(clock() - start) / CLOCKS_PER_SEC * (1 - fcmpl) / fcmpl, T_NOR); 
     }
-    PRINTWARNING("\n%s", msg);
+    PRINTWARNING("%s\n\033[F", msg); 
 }
 
 int odesolver( oderhs pop_ode_rhs, 
@@ -476,6 +477,7 @@ int odesolver( oderhs pop_ode_rhs,
         switch (bd_meth)
         {
           case SSA:
+            snprintf(msg,EXPRLENGTH,""); /* set message to empty string */
             if ( dt_ssa < dt_dyn )
             {
               dt_next = dt_ssa; /* advance to time of event */
@@ -489,6 +491,7 @@ int odesolver( oderhs pop_ode_rhs,
             break;
           case TAU_LEAPING:
             bd_alert = 1;
+            snprintf(msg,EXPRLENGTH,"  tau-leaping"); 
             /* set dt_leaping so that the mean number of 
              * events is max(1,c_leaping*N) = dt_leaping * sum_rates 
              * => dt_leaping = max(1,c_leaping*N)/sum_rates

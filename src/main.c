@@ -2569,23 +2569,25 @@ int printf_status_bar( double_array *tspan)
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"%s=%g  t=%g…%g ", get_str("actpar"), SIM->mu[get_int("actpar")], tspan->array[0], tspan->array[tspan->length-1]);
     k = strlen(status_str);
-    snprintf(status_str+k,80-k,"%.8s ", get_str("popmode"));
+    snprintf(status_str+k,80-k,"%.3s ", get_str("popmode"));
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"∫%s ", get_str("solver"));
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"•%d ", get_int("res"));
     k = strlen(status_str);
+#if 0
     snprintf(status_str+k,80-k,"(%.4s,", get_str("x"));
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"%.4s,", get_str("y"));
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"%.4s) ", get_str("z"));
     k = strlen(status_str);
+#endif 
     snprintf(status_str+k,80-k,"|%g| ", get_dou("abstol"));
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"%%%g ", get_dou("reltol"));
     k = strlen(status_str);
-    snprintf(status_str+k,80-k,"(%d/%d)",  get_int("particle"),POP_SIZE);
+    snprintf(status_str+k,80-k,"(%d)/%zu/%zu",  get_int("particle"),POP_SIZE,SIM->max_id);
     k = strlen(status_str) - 6; /* -6 to account for the three wide chars …, ∫ and • */
     printf("%.79s",status_str);
     printf("%s",T_NOR);
