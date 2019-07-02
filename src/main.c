@@ -2585,7 +2585,7 @@ int printf_status_bar( double_array *tspan)
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"%%%g ", get_dou("reltol"));
     k = strlen(status_str);
-    snprintf(status_str+k,80-k,"(%d)",  get_int("particle"));
+    snprintf(status_str+k,80-k,"(%d/%d)",  get_int("particle"),POP_SIZE);
     k = strlen(status_str) - 6; /* -6 to account for the three wide chars …, ∫ and • */
     printf("%.79s",status_str);
     printf("%s",T_NOR);
