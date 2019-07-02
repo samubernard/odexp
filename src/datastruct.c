@@ -42,6 +42,8 @@ struct gen_option GOPTS[NBROPTS] = {
   {"cf","closefiles", 'i', 0.0, 0, "", "close particle files between writes (slow when on)", "population"},
   {"wf","writefiles", 'i', 0.0, 1, "", "write particle files", "population"},
   {"p","particle", 'i', 0.0, 0, "", "current Particle id", "population"},
+  {"ssahmin","ssahmin", 'd', 0.0, 0, "", "SSA/tau-leap relative step threshold", "population"},
+  {"aleap","aleap", 'd', 0.01, 0, "", "tau-leaping factor", "population"},
   {"seed","seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
   {"rs","reseed", 'i', 0.0, 1, "", "Reset rng to Seed at each run 0 | {1}", "random"},
   {"maxfail","maxfail", 'i', 10000.0, 10000, "", "max number of starting guesses for steady states", "steadyStates"},  
@@ -552,6 +554,7 @@ int par_birth ( void )
 
     insert_endoflist( SIM->pop, p );
 
+
     return 0;
 }
 
@@ -817,7 +820,18 @@ int fclose_particle_files( void )
     return 0;
 }
 
-int fwrite_SIM(const double *restrict t, char *restrict mode)
+int fwrite_SIM(const double *restrict t)
+{
+  /* update SIM file */
+  fwrite(t,sizeof(double),1,SIM->fid);
+  fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,SIM->fid);
+  fwrite(&(SIM->pop->size),sizeof(int),1,SIM->fid);
+  fwrite(SIM->event,sizeof(int),3,SIM->fid);
+
+  return 0;
+}
+
+int fwrite_all_particles(const double *restrict t)
 {
     par *pars = SIM->pop->start;
     if ( get_int("writefiles") )
@@ -828,29 +842,6 @@ int fwrite_SIM(const double *restrict t, char *restrict mode)
           pars = pars->nextel;
       }
     }
-
-    fwrite(t,sizeof(double),1,SIM->fid);
-    fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,SIM->fid);
-    fwrite(&(SIM->pop->size),sizeof(int),1,SIM->fid);
-    fwrite(SIM->event,sizeof(int),3,SIM->fid);
-    
-    if ( strncmp(mode,"w",1) == 0 ) /* write initial population */
-    {
-        par *pars = SIM->pop->start;
-        while ( pars != NULL )
-        {
-            SIM->event[0] = -1;
-            SIM->event[1] =  1;
-            SIM->event[2] = pars->id;
-            fwrite(t,sizeof(double),1,SIM->fid);
-            fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,SIM->fid);
-            fwrite(&(SIM->pop->size),sizeof(int),1,SIM->fid);
-            fwrite(SIM->event,sizeof(int),3,SIM->fid);
-            pars = pars->nextel;
-        }
-    }
-
-    memset(SIM->event, 0, sizeof(SIM->event));
     
     return 0; 
 }

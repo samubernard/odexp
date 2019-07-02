@@ -239,6 +239,15 @@ int mvar(const char *s, par *p, double *ptr);
        myself_->y[index];                                             \
      })                                                     
 
+#define MC(name)                                          \
+    ({ static size_t index = 0;                               \
+       while ( strncmp(#name, SIM->psinames[index], NAMELENGTH) ) \
+       {                                                      \
+           index++; index %= SIM->nbr_psi;                    \
+       }                                                      \
+       myself_->psi[index];                                             \
+     })                                                     
+
 #define SA(name)                                            \
     ({ static size_t index = 0;                               \
        while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \

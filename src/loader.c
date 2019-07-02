@@ -555,7 +555,6 @@ int trim_whitespaces(char *s)
 /* replace full word 'search' by 'replace' in 'strings' */
 int replace_word(char* string, const char* search, const char* replace, size_t max_len) 
 {
-  /* dest must be malloc'ed */
 	char *old_pos = string, *new_pos = NULL;
   char *end_of_str = NULL;
   int string_len = strlen(string);
@@ -630,11 +629,11 @@ int replace_word(char* string, const char* search, const char* replace, size_t m
 
 int is_full_word(const char *match, int len)
 {
-    if ( (( *(match-1) >= 'A' ) & ( *(match-1) <= 'Z' )) /* A-Z */ |
-         (( *(match-1) >= 'a' ) & ( *(match-1) <= 'z' )) /* a-z */ |
+    if ( (( *(match-1) >= 'A' ) & ( *(match-1) <= 'Z' ))  |
+         (( *(match-1) >= 'a' ) & ( *(match-1) <= 'z' ))  |
           (*(match-1) == '_'  ) |
-				 (( *(match+len) >= 'A' ) & ( *(match+len) <= 'Z' )) /* A-Z */ |
-         (( *(match+len) >= 'a' ) & ( *(match+len) <= 'z' )) /* a-z */ |
+				 (( *(match+len) >= 'A' ) & ( *(match+len) <= 'Z' ))  |
+         (( *(match+len) >= 'a' ) & ( *(match+len) <= 'z' ))  |
           ( *(match+len) == '_' ) )
     {
 			return 0;

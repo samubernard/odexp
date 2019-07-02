@@ -102,6 +102,7 @@ int odesolver( oderhs pop_ode_rhs,
     
     /* alerts and interrupt signals */
     struct sigaction abort_act;
+    enum bd_method bd_meth = SSA;
     int hmin_alert              = 0,
         bd_alert                = 0,
         disc_alert              = 0,
@@ -122,9 +123,13 @@ int odesolver( oderhs pop_ode_rhs,
             tnext,
             nextstop,
             nbr_stops,
-            bd_dt,
+            dt_ssa,
+            dt_leaping,
+            dt_dyn,
+            dt_next,
+            ssahmin = get_dou("ssahmin"),
             sum_rates,
-            bd_next,
+            expected_dt_ssa,
            *tstops = NULL;
     size_t idx_stop = 0;
 
@@ -328,7 +333,6 @@ int odesolver( oderhs pop_ode_rhs,
         ode_ic(t, y, SIM->pop->start); /* this updates SIM->pop->pars->expr and SIM->pop->pars->y */
         set_num_ic(y);                 /* set initial conditions to values given by ics if NUM_IC == 1 */
         update_SIM_from_y(y);
-        memset(SIM->event, 0, sizeof(SIM->event));
     }
 
     if ( pop_size != SIM->pop->size ) /* check that pop_size == SIM->pop->size */
@@ -344,6 +348,13 @@ int odesolver( oderhs pop_ode_rhs,
                                         * SIM->pop->death_rate 
                                         * repli_rate 
                                         */
+
+    for (i = 0; i < pop_size; i++) /* update SIM file */
+    {
+        SIM->event[2] = i;
+        fwrite_SIM(&t);
+    }
+    memset(SIM->event, 0, sizeof(SIM->event));
     
     
     /* DBPRINT("SIM set up done"); */
@@ -370,7 +381,7 @@ int odesolver( oderhs pop_ode_rhs,
     /* DBPRINT("  after quick file"); */
 
     /* printf each particle in a binary file pars->buffer */
-    fwrite_SIM(&t, "w");
+    fwrite_all_particles(&t);
 
     /* sigaction -- detect Ctrl-C during the simulation  */
     abort_odesolver_flag = 0;
@@ -414,45 +425,86 @@ int odesolver( oderhs pop_ode_rhs,
     /* ODE solver - main loop */
     while (t < t1 && !abort_odesolver_flag && POP_SIZE > 0)
     {
-        tnext = fmin(t+dt,t1);
-        if ( (t<=nextstop) && (tnext>=nextstop) )
+        dt_dyn = fmin(dt,t1-t);
+        if ( (t<=nextstop) && (dt_dyn>=(nextstop-t)) )
         {
-            tnext = nextstop;
+            dt_dyn = nextstop-t;
             disc_alert = 1;
             printf("\n  stopping time = %g (t = %g)", nextstop, t);
             fflush(stdout);
         }
         /* BIRTH and DEATH 
-         * compute the time of the next event 
-         * Time to next event ~ exponential law, without memory
+         * particles are set to advance from t -> tnext 
+         * (timestep dt=tnext-t)
          *
-         *  -|-----------|-------|------------------> t
-         *   t0        tnext    bd_next
+         * Select between SSA and TAU-LEAPING
+         *   compute the time to next event dt_ssa
+         *   if expected_dt_ssa < dt_dyn * ssahim,
+         *   the expected time to next event,
+         *   and ssahmin is the threshold for using tau-leaping)
+         *     use tau-leaping
+         *   otherwise 
+         *     use SSA
          *
-         *  If time to next birth death event is after tnext,
-         *  advance to tnext and redraw bd_next. If time to next birth
-         *  death occurs before tnext, set tnext to bd_next
+         * SSA: Stochastic Simulation Algorithm (single event)
+         *   Time to next event ~ exponential law, without memory
          *
-         *  -|------|------------|------------------> t
-         *   t0   bd_next   <-  tnext
+         *    bd_nbr_events = 2*POP_SIZE+1;  particles can die, 
+         *    divide, or a new particle can be added 
          *
+         * TAU-LEAPING: fixed-time step (multiple events)
+         *   Number of events ~ Poisson
          *
-         * bd_nbr_events = 2*POP_SIZE+1;  particles can die, divide, or a new particle can be added 
-         * bd_rate = 
+         *    bd_nbr_events = 2*POP_SIZE+1;  particles can die, 
+         *    divide, or a new particles can be added 
          *
          */
         /* DBPRINT("before SSA_timestep"); */
-        bd_dt = SSA_timestep(&sum_rates); /* compute time to next birth/death in all cases */
-        bd_next = t+bd_dt;
-        /* DBPRINT("t %f, bd_next %f, tnext %f",t,bd_next,tnext); */
-        if ( bd_next < tnext ) /* birth/death will occur */
+         
+        dt_ssa = SSA_timestep(&sum_rates); /* compute time to next birth/death in all cases */
+        expected_dt_ssa = 1.0/sum_rates;
+
+        if ( expected_dt_ssa > (dt_dyn * ssahmin) )
         {
-            tnext = bd_next; 
-            bd_alert = 1;
-            disc_alert = 0; /* switch off disc_alert */
-            /* printf("\n  birth/death at %.2e", bd_next); */
+          bd_meth = SSA; /* SSA if E(dt_ssa) is large enough */
         }
-        
+        else
+        {
+          bd_meth = TAU_LEAPING; /* TAU-LEAPING is E(dt_ssa) is smaller than dt_dyn times threshold ssahmin */
+        } 
+
+        switch (bd_meth)
+        {
+          case SSA:
+            if ( dt_ssa < dt_dyn )
+            {
+              dt_next = dt_ssa; /* advance to time of event */
+              bd_alert = 1;
+              disc_alert = 0;
+            }
+            else
+            {
+              dt_next = dt_dyn;
+            }
+            break;
+          case TAU_LEAPING:
+            bd_alert = 1;
+            /* set dt_leaping so that the mean number of 
+             * events is max(1,c_leaping*N) = dt_leaping * sum_rates 
+             * => dt_leaping = max(1,c_leaping*N)/sum_rates
+             *               = max(1,c_leaping*N)*expected_dt_ssa
+             */
+            dt_leaping = fmax(1,get_dou("aleap")*POP_SIZE)*expected_dt_ssa;            
+            /* DBPRINT("dt_leaping = %g, dt_dyn = %g, dt_ssa = %g",dt_leaping,dt_dyn,dt_ssa); */
+            dt_next = fmin(dt_leaping,dt_dyn);
+            break;
+          default: 
+            PRINTERR("  error: bd_method unknown\n");
+            exit ( EXIT_FAILURE );
+        }
+
+        tnext = t + dt_next;
+
         /* ODE solver - time step */
         clock_odeiv = clock();
         sys = (gsl_odeiv2_system) {ode_rhs, ode_jac, sim_size, SIM->pop->start};
@@ -500,7 +552,8 @@ int odesolver( oderhs pop_ode_rhs,
         tot_odeiv += (clock()-clock_odeiv)*1000.0 / CLOCKS_PER_SEC;
 
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
-        fwrite_SIM(&t, "a");
+        fwrite_SIM(&t);
+        fwrite_all_particles(&t);
 
         if ( bd_alert == 1 )
         {
@@ -510,7 +563,14 @@ int odesolver( oderhs pop_ode_rhs,
              * death, replication or birth,
              * and updates SIM->pop.
              */
-            apply_birthdeath(t, single_ic ); 
+            if ( bd_meth == SSA )
+            {
+              SSA_apply_birthdeath(t, single_ic ); 
+            }
+            else 
+            {
+              tau_leaping_apply_birthdeath(t, dt_next, single_ic ); 
+            }
             sim_size = POP_SIZE*SIM->nbr_var;
             y = realloc(y,sim_size*sizeof(double));  /* reallocate state y */
             f = realloc(f,sim_size*sizeof(double));  /* reallocate rhs   f */
@@ -534,9 +594,8 @@ int odesolver( oderhs pop_ode_rhs,
                                                 */
             fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
             /* printf each particle in a binary file pars->buffer */
-            fwrite_SIM(&t, "a");
-            /* DBPRINT("SIM->stats_buffer = %s",SIM->stats_buffer); */
-            /* DBPRINT("SIM->event %d %d %d",SIM->event[0], SIM->event[1], SIM->event[2]); */
+            fwrite_all_particles(&t);
+            memset(SIM->event, 0, sizeof(SIM->event)); /* reset events */
             gsl_odeiv2_evolve_free(e);
             gsl_odeiv2_step_free(s);
             s = gsl_odeiv2_step_alloc(odeT,sim_size);
@@ -551,7 +610,7 @@ int odesolver( oderhs pop_ode_rhs,
           ode_rhs(t, y, f, SIM->pop->start);
 
           fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
-          fwrite_SIM(&t, "a");
+          fwrite_all_particles(&t);
 
           /* calculating next stop */
           nextstop = tstops[idx_stop];
@@ -1721,7 +1780,7 @@ double SSA_timestep(double *sumr)
 }
 
 
-void apply_birthdeath(const double t, odeic single_ic )
+void SSA_apply_birthdeath(const double t, odeic single_ic )
 {
     par *pars = (par *)NULL;
     par **p;
@@ -1802,22 +1861,114 @@ void apply_birthdeath(const double t, odeic single_ic )
         }
 
     }
-	else /* birth */
-	{
-        /* DBPRINT("birth"); */
-        SIM->event[0] = -1;
-        SIM->event[1] = 1;
-        par_birth();
-        SIM->event[2] = (int)SIM->pop->end->id;
-        /* TODO: initialize pop->expr and pop->y for the new particle only */
-        single_ic(t, SIM->pop->end->y, SIM->pop->end);
-	}
+    else /* birth */
+    {
+          /* DBPRINT("birth"); */
+          par_birth();
+          SIM->event[0] = -1;
+          SIM->event[1] =  1;
+          SIM->event[2] = SIM->pop->end->id;
+          /* TODO: initialize pop->expr and pop->y for the new particle only */
+          single_ic(t, SIM->pop->end->y, SIM->pop->end);
+    }
+
+    fwrite_SIM(&t);
 
     free(r);
     free(p);
 
 }
 
+void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_ic )
+{
+    par *pars = (par *)NULL;
+    size_t i=0;
+    RANDINT nbr_new_particles=0; 
+
+	  int die = 0, repli = 0;
+
+    /* get the rates */
+    pars = SIM->pop->start;
+    while ( pars != NULL )
+    {
+        die = rand01() < (pars->death_rate * dt);
+        repli = rand01() < (pars->repli_rate * dt);
+        
+        SIM->event[0] = (int)pars->id;
+        if ( repli & die ) /* flip a coin */
+        {
+          if ( rand01() < pars->death_rate/(pars->death_rate + pars->repli_rate) ) /* death occurs first */ 
+          {
+            /* kill particle */
+            SIM->event[1] = -1;
+            SIM->event[2] = -1;
+            delete_el(SIM->pop, pars);
+            fwrite_SIM(&t);
+            /* DBPRINT("kill first"); */
+          }
+          else /* replicate first and die after */
+          {
+            /* replicate particle */
+            par_repli(pars);
+            SIM->event[1] = 1;
+            SIM->event[2] = (int)SIM->pop->end->id;
+            fwrite_SIM(&t);
+            /* first update mother particle initial conditions and expr */
+            single_ic(t, pars->y, pars);
+            /* then update new particle initial conditions and expr */
+            single_ic(t, SIM->pop->end->y, SIM->pop->end);
+            SIM->pop->end->sister = NULL;
+            /* kill particle */
+            SIM->event[1] = -1;
+            SIM->event[2] = -1;
+            delete_el(SIM->pop, pars);
+            fwrite_SIM(&t);
+            /* DBPRINT("repli and kill"); */
+          }
+        }
+        else if ( die ) 
+        {
+          /* kill particle */
+          SIM->event[1] = -1;
+          SIM->event[2] = -1;
+          delete_el(SIM->pop, pars);
+          fwrite_SIM(&t);
+          /* DBPRINT("kill"); */
+        }
+        else if ( repli )
+        {
+          /* replicate particle */
+          SIM->event[1] = 1;
+          par_repli(pars);
+          SIM->event[2] = (int)SIM->pop->end->id;
+          fwrite_SIM(&t);
+          /* first update mother particle initial conditions and expr */
+          single_ic(t, pars->y, pars);
+          /* then update new particle initial conditions and expr */
+          single_ic(t, SIM->pop->end->y, SIM->pop->end);
+          SIM->pop->end->sister = NULL;
+          /* DBPRINT("repli"); */
+        }
+
+        pars = pars->nextel;
+    }
+	
+    /* add new particles */
+    nbr_new_particles = poisson( SIM->pop_birth_rate * dt );
+    /* DBPRINT("nbr new particles: %d", (int)nbr_new_particles); */
+    for ( i=0; i<(size_t)nbr_new_particles; i++ )
+    {
+          /* DBPRINT("birth"); */
+          par_birth();
+          SIM->event[0] = -1;
+          SIM->event[1] =  1;
+          SIM->event[2] = SIM->pop->end->id;
+          fwrite_SIM(&t);
+          single_ic(t, SIM->pop->end->y, SIM->pop->end);
+          /* DBPRINT("birth"); */
+    }
+
+}
 
 int ncumsum(double *x, size_t len, double *sumx)
 {
