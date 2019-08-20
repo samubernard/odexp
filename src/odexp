@@ -586,7 +586,7 @@ sub define_functions
     {
       my $s = shift(@fs);                       # get next argument 
       $s =~ s/^\s*|\s*$//g;                     # trim whitespaces
-      if ( $s =~ /void|int|long|char|float/ )
+      if ( $s =~ /void|int|long|char|float|const/ )
       {
         print $fch $s;                          # print argument as is
       }
@@ -754,13 +754,20 @@ sub set_population_meanfields
     my $s = strip_blanks($rhs) . ";";
     $s .= " /* $attr */" if length $attr;
     $s .= " /* $comment */" if length $comment;
-		print $fch "    myself_ = SIM->pop->start;\n";
-		print $fch "    while ( myself_ != NULL )\n";
-		print $fch "    {\n";
-		print $fch "        SIM->meanfield[$nv] += $s\n"; 
- 		print $fch "        myself_ = myself_->nextel;\n";
- 		print $fch "    }\n";
-    print $fch "    SIM->meanfield[$nv] /= POP_SIZE;\n";
+    if ( $attr =~ /\bvect\b/ ) # don't loop, just evaluate the rhs
+    {
+      print $fch "    SIM->meanfield[$nv] = $s\n"; 
+    }
+    else
+    {
+      print $fch "    myself_ = SIM->pop->start;\n";
+      print $fch "    while ( myself_ != NULL )\n";
+      print $fch "    {\n";
+      print $fch "        SIM->meanfield[$nv] += $s\n"; 
+      print $fch "        myself_ = myself_->nextel;\n";
+      print $fch "    }\n";
+      print $fch "    SIM->meanfield[$nv] /= POP_SIZE;\n";
+    }
     ++$nv;
 	}
 	close($fh);
