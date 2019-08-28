@@ -3,7 +3,7 @@
 .SH NAME
 odexp \- numerical solver for population-based system with gnuplot graphical output
 .SH SYNOPSIS
-.B "odexp "
+.B "odexp"
 [
 .B \-o
 .I optimization
@@ -20,7 +20,7 @@ Particles are defined by a system of ordinary differential equations (ODE), stoc
 delay differential equations (DDE), of finite-difference equations (FDE). 
 Particles can die and replicate. 
 
-\fIodexp\fR parses and compiles the dynamical system defined in \fIfile\fR, and launches a command line tool
+\fBodexp\fR parses and compiles the dynamical system defined in \fIfile\fR, and launches a command line tool
 to explore its dynamics. See \fIEXAMPLES\fR for examples of a dyamical system file.
 If \fIfile\fR is not given, \fIodexp\fR will take the dynamical system from the standard input.
 When option \fB\-o\fR is present, system parameters, initial conditions and options are loaded from file \fIparameterfile\fR. 
