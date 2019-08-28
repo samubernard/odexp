@@ -575,7 +575,7 @@ Used in %C and %M to denote the current particle; \fIvar\fR is a dynamical varia
 
 .TP
 .BI SY( var ) " " (SE,SA)
-Value of the current particle's sister var. Useful to specify what happens when particle replicates; \fIvar\fR is a dynamical variable (SY), expression (SE) or auxiliary variable (SA).
+Value of the current particle \fIvar\fR's.sister.  Useful to specify what happens when particle replicates; \fIvar\fR is a dynamical variable (SY), expression (SE) or auxiliary variable (SA).
 
 .TP
 .B ATBIRTH 

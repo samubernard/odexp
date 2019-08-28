@@ -2528,7 +2528,7 @@ int get_attribute(const char *s, const char *key, char *val)
     {
       /* key found */
       found = 1;
-      sscanf(s + k, "%*s = %[^;}]", val);
+      sscanf(s + k, "%*s = %[^,}]", val);
       break;
     }
     else

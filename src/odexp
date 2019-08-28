@@ -576,12 +576,17 @@ sub define_functions
   while (<$fh>) 
   {
     /^(@|FUN)/i or next;  
+    my $output_type = "double";
+    if ( /return\s*\((int|long|char|float)\)/ )
+    {
+      $output_type = $1;
+    }
     my @fields = split;                         # split line by whitespace
     shift(@fields);                             # remove keyword @/fun
     @fields = split /=/, join(' ', @fields);    # resplit line by =
     my @fs = split /[(,)]/i, shift(@fields);    # split lhs 
     @fs = grep /\S/, @fs;                       # remove empty elements
-    print $fch "double " . shift(@fs) . "(";    # print func name and (
+    print $fch "$output_type " . shift(@fs) . "(";    # print func name and (
     while( @fs )
     {
       my $s = shift(@fs);                       # get next argument 
