@@ -29,12 +29,12 @@ Solutions are plotted with *gnuplot*.
 
 # OPTIONS
 
-  - **-o*** optimization*  
+  - **-o** *optimization*  
     Optimization level of the compiler. Default 'g' for debugging.
 
 <!-- end list -->
 
-  - **-p*** parfile*  
+  - **-p** *parfile*  
     Optional parameter file.
 
 <!-- end list -->
@@ -75,27 +75,27 @@ argument).
     Plot previous particle on the y-axis (cyclic).
 
   - **\>**  
-    Double the number of time steps. 
+    Double the number of time steps.
 
   - **\<**  
     Halve the number of time steps.
 
-  - **\# ***dataset*** ***colx*** ***coly*  
+  - **\#** *dataset* **** *colx* **** *coly*  
     Add to plot *colx* and *coly* from *dataset*.
 
-  - **\! ***filename*  
+  - **\!** *filename*  
     Save the current plot to *filename*. EPS format.
 
   - **$***id*  
     Print dataset for particle *id*. If *id* is missing, print stats
     dataset in population mode or particle in single mode.
 
-  - **\**** ***\[***msg***\]**  
+  - **\*** ** **\[***msg***\]**  
     Snapshot of current simulation and parameter values with optional
     *msg*.
 
   - **0**, **n**  
-    Switch to/update normal plot. 
+    Switch to/update normal plot.
 
   - **9**, **b**  
     Switch to continuation plot.
@@ -114,7 +114,7 @@ argument).
     and l for log scale, *a* for all axes.
 
   - **d**  
-    Reload the parameter file. 
+    Reload the parameter file.
 
   - **E**  
     Decrease the time span by a factor 2.
@@ -168,17 +168,17 @@ argument).
     List all array files (nrows ncols filename).
 
   - **li**  
-    List all variables with initial conditions. 
+    List all variables with initial conditions.
 
   - **ll**  
     List file name and various information.
 
-  - **lo*** ***\[***optiontype***\]**  
+  - **lo** ** **\[***optiontype***\]**  
     List options that match *optiontype*, or all options if *optiontype*
     is missing.
 
   - **lp**  
-    List all parameters. 
+    List all parameters.
 
   - **ls**  
     List steady states.
@@ -201,20 +201,20 @@ argument).
   - **ms**  
     Find a steady state with starting guess given by initial conditions.
 
-  - **o ***filename*  
+  - **o** *filename*  
     Load parameters values and options from file *filename*.
 
-  - **P ***val*  
+  - **P** *val*  
     Set current parameter to value *val*.
 
-  - **p*** ***{***ind***|***par***}*** ***\[***val***\]**  
+  - **p** ** **{***ind***|***par***}** ** **\[***val***\]**  
     Make parameter with index *ind* or name *par* the current parameter,
     and set its value to *val*. When val is missing, the parameter value
     is unchanged.
 
   - **Q**, **q** **\[*msg*\]**; **C^w**  
     Quit and make a snapshot of the paramters. An optional message *msg*
-    can be added to **Q** or **q**. 
+    can be added to **Q** or **q**.
 
   - **R**  
     Rerun the ODE system and update plot.
@@ -222,11 +222,11 @@ argument).
   - **r**  
     Repeat the last gnuplot command (replot).
 
-  - **si*** ***{***ind***|***var***}*** val*  
+  - **si** ** **{***ind***|***var***}** *val*  
     Set value of initial condition of variable with index *i* or name
     *var* to *val*.
 
-  - **sI ***ind*  
+  - **sI** *ind*  
     Revert variable *ind* to expression.
 
   - **sl**  
@@ -236,15 +236,15 @@ argument).
   - **so**, **set** **{*ind*|*var*}** ***val***  
     Set the option with index *ind* or name *var* to value *val*.
 
-  - **st ***ti*** ***val*  
-    Set value of *ti* to *val* (*ti* = 0 or 1) 
+  - **st** *ti* **** *val*  
+    Set value of *ti* to *val* (*ti* = 0 or 1)
 
-  - **t*** ***\[***t0***\]*** t1*  
+  - **t** ** **\[***t0***\]** *t1*  
     Set time span from *t0* to *t1*. By default *t0* is not changed.
     Final time *t1* must be larger than *t0*.
 
   - **u**  
-    Toggle add curves to plot (on/off) 
+    Toggle add curves to plot (on/off)
 
   - **ur**  
     Remove all curves and set curves off.
@@ -256,12 +256,12 @@ argument).
     the **3** takes the three arguments
 
   - **w**  
-    List all particle states 
+    List all particle states
 
-  - **x*** ***{***ind***|***var***}**  
+  - **x** ** **{***ind***|***var***}**  
     Plot variable with index *ind* or name *var* on the x-axis
 
-  - **y*** ***{***ind***|***var***}**  
+  - **y** ** **{***ind***|***var***}**  
     Plot variable with index *ind* or name *var* on the y-axis
 
 ## Dyamical system keywords
@@ -377,7 +377,7 @@ their values can be overruled or reset in odexp.
     INIT x b 
 
   - **OPT**\[IONS\]  
-    Options. Options can be preset. 
+    Options. Options can be preset.
 
 <!-- end list -->
 
@@ -413,7 +413,7 @@ their values can be overruled or reset in odexp.
   - **CONST**\[ANT\]  
     Constant array. Must be numerical array. Constant arrays cannot be
     modified. Constant arrays can be of any dimensions. Useful for
-    arrays of small sizes. 
+    arrays of small sizes.
 
 <!-- end list -->
 
@@ -475,7 +475,7 @@ functions).
     %BIRTH 1.0/(10 + POP_SIZE) # set birth rate to a function of the total partice number POP_SIZE 
 
   - **%DEATH**  
-    Particle death rate 
+    Particle death rate
 
 <!-- end list -->
 
@@ -483,7 +483,7 @@ functions).
     %DEATH var_death_rate # set death rate to var_death_rate 
 
   - **%REPLI**  
-    Particle replication rate 
+    Particle replication rate
 
 <!-- end list -->
 
@@ -515,7 +515,7 @@ value.
   - **DWDT**  
     Gaussian, uncorrelated white noise \~ N(0,1/h), with h the timestep,
     as the derivative of the Wiener process. The stochastic differential
-    equation 
+    equation
 
 <!-- end list -->
 
@@ -526,7 +526,7 @@ at mu, with sigma a diffusion constant and theta a dissipation rate
 constant.
 
   - **POP\_SIZE**  
-    Total number of particles. 
+    Total number of particles.
 
 <!-- end list -->
 
@@ -535,20 +535,20 @@ constant.
 
 <!-- end list -->
 
-  - **OY(***var***)*** ***(OE,OA)**  
+  - **OY(***var***)** ** **(OE,OA)**  
     Used in %C to iterate over all particles; *var* is a dynamical
     variable (OY), expression (OE) or auxiliary variable (OA).
 
 <!-- end list -->
 
-  - **MY(***var***)*** ***(ME,MA,MF)**  
+  - **MY(***var***)** ** **(ME,MA,MF)**  
     Used in %C and %M to denote the current particle; *var* is a
     dynamical variable (MY), expression (ME), or auxiliary variable (MA)
     or a mean field (MF).
 
 <!-- end list -->
 
-  - **SY(***var***)*** ***(SE,SA)**  
+  - **SY(***var***)** ** **(SE,SA)**  
     Value of the current particle *var*'s.sister. Useful to specify what
     happens when particle replicates; *var* is a dynamical variable
     (SY), expression (SE) or auxiliary variable (SA).
@@ -624,12 +624,12 @@ See the list of options with line command **lo**.
     ***(\*f)(double)*,** ***double*** ***(\*g)(double,double)*,**
     ***const*** ***double*** ***\*x*,** ***const*** ***double***
     ***yi*)**  
-    Sum over j of *f*(*g*(*x\_j*,*yi*)) 
+    Sum over j of *f*(*g*(*x\_j*,*yi*))
 
-  - ***double*** **kern(*double**\*Wi,*** ***double***
-    ***(\*f)(double,***double,**double**\*),** ***double*** ***xi,***
-    ***const*** ***double*** ***\*x*,** ***double*** ***\*p*,**
-    ***long*** ***len*);  
+  - ***double*** **kern(*double\*Wi,*** ***double***
+    ***(\*f)(double,***double,**double**\*), **** *double* **** *xi,*
+    **** *const* **** *double* **** *\*x*, **** *double* **** *\*p*,
+    **** *long* **** *len*);
 
   - ***double*** **linchaindelay(*double*** ***root*,** ***double***
     ***\*chain*,** ***size\_t*** ***link*,** ***double*** ***delay*,**
@@ -678,12 +678,12 @@ end
 ## Stepping methods
 
   - **rk2**  
-    GSL Explicit embedded Runge-Kutta (2, 3) method 
+    GSL Explicit embedded Runge-Kutta (2, 3) method
 
 <!-- end list -->
 
   - **rk4**  
-    GSL Explicit 4th order (classical) Runge-Kutta 
+    GSL Explicit 4th order (classical) Runge-Kutta
 
 <!-- end list -->
 
@@ -693,7 +693,7 @@ end
 <!-- end list -->
 
   - **rkck**  
-    GSL Explicit embedded Runge-Kutta Cash-Karp (4, 5) method. 
+    GSL Explicit embedded Runge-Kutta Cash-Karp (4, 5) method.
 
 <!-- end list -->
 
