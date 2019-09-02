@@ -1,201 +1,147 @@
 .\" 
-.TH ODEXP 1 "25/05/2019" "version 1.0" "Documentation" 
-.SH NAME
-odexp \- numerical solver for population-based system with gnuplot graphical output
-.SH SYNOPSIS
-.B "odexp"
-[
-.B \-o
-.I optimization
-.B \-p
-.I parfile
-.B \-i
-] [
-.I file
-]
-.SH DESCRIPTION
-.B odexp 
+.Dd 09 02, 2019
+.Dt ODEXP 1 
+.Os DARWIN16
+.Sh NAME
+.Nm odexp
+.Nd numerical solver for population-based system with gnuplot graphical output
+.Sh SYNOPSIS
+.Nm odexp
+.Op Fl o Ar optimization 
+.Op Fl p Ar parfile
+.Op Fl i Ar file
+.Sh DESCRIPTION
+.Nm odexp 
 is a command line program for numerical simulations and analysis of dynamical systems of particle populations.
 Particles are defined by a system of ordinary differential equations (ODE), stochastic differential equations (SDE),
 delay differential equations (DDE), of finite-difference equations (FDE). 
 Particles can die and replicate. 
-
-\fBodexp\fR parses and compiles the dynamical system defined in \fIfile\fR, and launches a command line tool
+.Pp
+.Nm odexp
+parses and compiles the dynamical system defined in 
+.Ar file
+, and launches a command line tool
 to explore its dynamics. See \fIEXAMPLES\fR for examples of a dyamical system file.
 If \fIfile\fR is not given, \fIodexp\fR will take the dynamical system from the standard input.
 When option \fB\-o\fR is present, system parameters, initial conditions and options are loaded from file \fIparameterfile\fR. 
-
+.Pp
 \fIodexp\fR uses the \fIGNU Scientific Library\fR (GSL) for numerical integration of ODEs and DDEs and their
 linear stability analysis. 
 Solutions are plotted with \fIgnuplot\fR.
-
-.SH OPTIONS
-
-.TP
-.B \-o 
-.I optimization
+.
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl o Ar optimization
 Optimization level of the compiler. Default 'g' for debugging.
-
-.TP
-.BI \-o " optimization"
-Optimization level of the compiler. Default 'g' for debugging.
-
-.TP 
-.BI \-p " parfile"
+.It Fl p Ar parfile
 Optional parameter file.
-
-.TP 
-.BI \-i 
+.It Fl i 
 Ignore syntax errors try to parse the file anyway.
-
-.SH USAGE 
-
-.SS Line commands
-Line commands can be entered at the \fIodexp\fR prompt. Multiple commands can be separated with && (does not
+.El
+.
+.Sh USAGE 
+.Ss Line commands
+Line commands can be entered at the 
+.Nm odexp
+prompt. Multiple commands can be separated with && (does not
 work when command expects a string argument).
-
-.TP
-.B ?              
+.Bl -hang -width indent
+.It Ic ?              
 Display this help.
-.TP
-.BR C^y 
+.It C^y 
 Repeat last command.
-.TP
-.BR + ", " = ", " C^g 
+.It +, =, C^g 
 Increment current parameter by a multiplicative factor \fBparstep\fR.
-.TP 
-.BR - ", " C^h
+.It -, C^h
 Decrement current parameter by a multiplicative factor \fBparstep\fR.
-.TP
-.BR ] ", " C^]    
+.It ], C^]    
 Plot next variable on the y-axis (cyclic).
-.TP
-.BR [ ", " C^[ 
+.It [, C^[ 
 Plot previous variable on the y-axis (cyclic).
-.TP
-.BR } ", " C^}
+.It }, C^}
 Plot next particle on the y-axis (cyclic).
-.TP
-.BR { ", " C^{
+.It {, C^{
 Plot previous particle on the y-axis (cyclic).
-.TP
-.B >
+.It >
 Double the number of time steps. 
-.TP
-.B <
+.It <
 Halve the number of time steps.
-.TP
-.BI "# " dataset " " colx  " " coly 
+.It # Ar dataset Ar colx Ar coly 
 Add to plot \fIcolx\fR and \fIcoly\fR from \fIdataset\fR.
-.TP
-.BI "! " filename   
+.It ! Ar filename   
 Save the current plot to \fIfilename\fR. EPS format.
-.TP
-.BI $ id   
+.It $ Ar id   
 Print dataset for particle \fIid\fR. If \fIid\fR is missing, print stats dataset 
 in population mode or particle in single mode.
-.TP
-.BI * " " [ msg ]        
+.It * Op Ar msg         
 Snapshot of current simulation and parameter values with optional \fImsg\fR.
-.TP
-.BR 0 ", " n 
+.It 0, n 
 Switch to/update normal plot. 
-.TP
-.BR 9 ", " b
+.It 9, b
 Switch to continuation plot.
-.TP
-.BR 8 ", " j
+.It 8, j
 Switch to range plot.
-.TP
-.B 7 
+.It 7 
 Switch to particle plot.
-.TP
-.B A 
+.It A 
 Reset all axes to linear scale.
-.TP
-.BR a\fIus\fR ", " a\fIsu\fR
+.It a Ar us , a Ar su
 Set axis \fIu\fR={x|y|a} to scale \fIs\fR={l|n}, n for linear (normal) scale and l for log scale, \fIa\fR for all axes.
-.TP
-.B d              
+.It d              
 Reload the parameter file. 
-.TP
-.B E
+.It E
 Decrease the time span by a factor 2.
-.TP
-.BI "e [" val ]
+.It e Op Ar val
 Increase the time span by a factor.
 .I val 
 (default factor = 2). 
 .I val 
 can be less than one.
-.TP
-.B f       
+.It f       
 Fit data (not implemented).
-.TP
-.BI g cmd        
+.It g Ar cmd        
 Send the command \fIcmd\fR to gnuplot.
-.TP
-.B h              
+.It h              
 Toggle plot hold (on/off).
-.TP
-.B I              
+.It I              
 Set initial conditions to default.
-.TP
-.B il            
+.It il            
 Use the state of the system at t1 as initial conditions.
-.TP 
-.B in            
+.It in            
 Loop through initial conditions. 
 Set to I to revert to expression, enter to keep current initial condition.
-.TP
-.B is            
 Set initial condition to steady state. 
 Steady state must have been computed with \fBms\fR.
-.TP
-.B l@            
+.It l@            
 List all user-defined functions.
-.TP
-.B l%            
+.It l%            
 List population birth, replication and death rates.
-.TP
-.B la            
+.It la            
 List all auxiliary variables (can be plotted).
-.TP 
-.B lc            
+.It lc            
 List all constant arrays.
-.TP
-.B ld            
+.It ld            
 Print file description (all lines starting with ##).
-.TP
-.B le            
+.It le            
 List all parametric expressions.
-.TP 
-.B lf            
+.It lf            
 List all array files (nrows ncols filename).
-.TP
-.B li            
+.It li            
 List all variables with initial conditions. 
-.TP
-.B ll          
+.It ll          
 List file name and various information.
-.TP
-.BI lo " " [ optiontype ]         
+.It lo Op Ar optiontype         
 List options that match \fIoptiontype\fR, or all options if \fIoptiontype\fR is missing.
-.TP
-.B lp            
+.It lp            
 List all parameters. 
-.TP
-.B ls            
+.It ls            
 List steady states.
-.TP 
-.B lx            
+.It lx            
 List all equations and auxiliary variables.
-.TP
-.B mm            
+.It mm            
 Try to find all steady states.
-.TP
-.B mr 
-Range over parameters. The active parameter takes values between.
+.It mr 
+Range over parameters. The active parameter takes values between
 .I par0 
 and 
 .I par1 
@@ -210,85 +156,64 @@ If
 .I rric 
 is 0, the initial conditions are set to the last state of the previous integration, 
 otherwise, the initial conditions are set as usual.
-.TP
-.B ms            
+.It ms            
 Find a steady state with starting guess given by initial conditions.
-.TP
-.BI "o " filename  
+.It o Ar filename  
 Load parameters values and options from file \fIfilename\fR.
-.TP
-.BI "P " val        
+.It P Ar val        
 Set current parameter to value \fIval\fR.
-.TP
-.BI p " " { ind | par } " " [ val ]     
+.It p { Ar ind | Ar par } Op Ar val      
 Make parameter with index \fIind\fR or name \fIpar\fR the current parameter, and set its value to \fIval\fR.
 When val is missing, the parameter value is unchanged.
-.TP
-.BR Q ", " q " " \fR[\fImsg\fR] "; " C^w        
+.It Q, q Op Ar msg , C^w        
 Quit and make a snapshot of the paramters. An optional message \fImsg\fR can be added to \fBQ\fR or \fBq\fR. 
-.TP
-.B R
+.It R
 Rerun the ODE system and update plot.
-.TP
-.B r
+.It r
 Repeat the last gnuplot command (replot).
-.TP
-.BI si " " { ind | var } " val"   
+.It si { Ar ind | Ar var } Ar val   
 Set value of initial condition of variable with index \fIi\fR or name \fIvar\fR to \fIval\fR.
-.TP
-.BI "sI " ind         
+.It sI Ar ind         
 Revert variable \fIind\fR to expression.
-.TP
-.B sl            
+.It sl            
 Change to last initial conditions, same as \fBil\fR but do not run simulation.
-.TP
-.BR so ", " set " " \fR{\fIind\fR|\fIvar\fR} " " \fIval\fR   
+.It so, set { Ar ind | Ar var } Ar val   
 Set the option with index \fIind\fR or name \fIvar\fR to value \fIval\fR.
-.TP
-.BI "st " ti " " val   
+.It st, ti Ar  val   
 Set value of \fIti\fR to 
 .I val 
 (\fIti\fR = 0 or 1) 
-.TP
-.BI t " " [ t0 ] " t1"
+.It t Op Ar t0 Ar t1
 Set time span from \fIt0\fR to \fIt1\fR. 
 By default 
 .I t0 
 is not changed. 
 Final time \fIt1\fR must be larger than \fIt0\fR.
-.TP
-.B u              
+.It u              
 Toggle add curves to plot (on/off) 
-.TP
-.B ur              
+.It ur              
 Remove all curves and set curves off.
-.TP
-.BR v ", " 2 ", " 3 " " \fR{\fIi\fR|\fIx\fR} " " \fR{\fIj\fR|\fIy\fR} " " \fR[{\fIk\fR|\fIz\fR}]      
+.It v, 2, 3 { Ar i | Ar x } { Ar j | Ar y } Op { Ar k | Ar z }      
 Set 2D/3D view, x-axis to index \fIi\fR (variable \fIx\fR), y-axis to \fIj\fR (variable \fIy\fR), 
 and z-axis to \fIk\fR (variable \fIz\fR). 
 Set variable to T or index -1 for time.
 \fB2\fR takes only the first two arguments, and the \fB3\fR takes the three arguments
-.TP
-.B w 
+.It w 
 List all particle states 
-.TP
-.BI x " " { ind | var }
+.It x { Ar ind | Ar var }
 Plot variable with index \fIind\fR or name \fIvar\fR on the x-axis
-.TP
-.BI y " " { ind | var }
+.It y { Ar ind | Ar var }
 Plot variable with index \fIind\fR or name \fIvar\fR on the y-axis
-
-.SS Dyamical system keywords
+.El
+.
+.Ss Dyamical system keywords
 A dynamical system is specified in a text file with lines starting with keywords for defining equations, parameters, options, etc. Keywords are case-insensitive. 
-
-.TP
-.BR PAR [ARAMETERS] 
+.Pp
+.Em PAR[ARAMETERS] 
 Parameters. Must be numerical scalar (double, int or long). Syntax:
-
-.nf
-PAR \fIname\fR \fIvalue\fR [ {\fIattribute\fR, ...} ] [ # \fIcomment\fR ] 
-.fi
-
+.
+.D1 PAR Va name Ar value Op { Ar attribute , ...} # Ar comment 
+.
 Parameters appear in the list of parameters. 
 They can be modified from within odexp and can be ranged over. 
 \fIname\fR must be a valid C variable name. 
@@ -297,389 +222,306 @@ an integer with attribute \fIint\fR or \fIlong\fR.
 Parameters are declared in name value pairs, separated by semi-colons ';', or one parameter per line.
 Parameters are common to all particles.
 The prefix PAR is optional when one parameter is declare on a single line.
-
+.Pp
 Examples 
-.nf
-PAR a 0.1; b 0.2
-
+.Bd -literal
+PAR a 0.1; Va b Ar 0.2
 a 0.1 # ok
 a 0.1; b 0.2 # not ok
-
 PAR a {attribute of a} # comment on a; b {attribute of b} # comment on b
-
 PAR b 0.2 {init}   # attribute init   for parameters only used 
-                   # in initial conditions or expressions
 PAR c 0.3 {impl}   # attribute impl   for parameters used implicitly, 
-                   # in population or elsewhere
 PAR d 0.4 {every}  # attribute every  for parameters used in expressions, 
                    # initial conditions and auxiliary equations
-
 PAR a 1 {int} # type integer. Warning this comment ends at the semi-colon: b is another parameter!; b 2.3 
-.fi
-
+.Ed
+.Pp
 Implicit initial condition. If \fIvar\fR is a dynamical variable, the declaration 
-
-.nf
-PAR var_0 0.5 
-.fi
-
+.D1 PAR var_0 0.5 
 declares the parameter \fIvar_0\fR, sets it to 0.5 and implicitly declares the initial condition INIT \fIvar\fR 
 \fIvar_0\fR.
-
-.TP
-.BR EXPR [ESSION]
+.Pp
+.Em EXPR[ESSION]
 Expressions. Expressions are function of the parameters. They cannot be modified. 
 Syntax:
-
-.nf
-EXPR \fIname\fR \fIexpression\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
-.fi
-
+.D1 EXPR Va name Ar expression Op { Ar attribute , ...}  # Ar comment 
 Expressions are particle-dependent. They are evaluated at the birth of a particle and are constant
 for the lifetime of the particle. Use \fIATBIRTH\fR and \fIATREPLI\fR to specify particle-dependent expressions. 
-
+.Pp
 Examples 
-
-.nf
+.Bd -literal
 EXPR c a*a
 EXPR rand_array[i=0:5] -1 + 2*rand01[i]
 EXPR is_ancestor ATBIRTH*1 + ATREPLI*0
-.fi
-
-.TP
-.B AUX 
+.Ed
+.Pp
+.Em AUX 
 Auxiliary variables. Auxiliary variables depend on parameters, expressions and dynamical variables. 
 Syntax:
-
-.nf
+.Bd -literal
 AUX \fIname\fR \fIexpression\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
-.fi
-
+.Ed
+.Pp
 They are declared as Name Expression pairs, and must be scalars or one-dimensional arrays.
 Auxiliary variables are useful to monitor quantities that depend on the dynamical variables. They can be 
 plotted, and their values are recorded in the output file current.tab. 
 Auxiliary functions are particle-dependent. They are evaluated at each time step.
-
-.nf
+.Bd -literal
 AUX d sqrt(x+c)
 AUX a[i=0:5] X[i]*X[i]
 AUX norm_x sqrt(sum(a,5))
 AUX norm_x2 dotprod(X,X,5)
-.fi
-
-.TP
-.B D/DT
+.Ed
+.Pp
+.Em D/DT
 Dynamical variables. Dynamical variables are the dependent variables of the ODE system.
 Syntax:
-
-.nf
+.Bd -literal
 d\fIname\fR/dt = \fIrhs\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
-.fi
-
+.Ed
 Dynamical variable \fIname\fR is declared as d\fIname\fR/dt followed by = and the \fIrhs\fR of the equation
-
-.nf
+.Bd -literal
 dx/dt = -a*x
-.fi
-
-.TP
-.BR INIT [IAL]
+.Ed
+.Pp
+.Em INIT [IAL]
 Initial conditions. 
 Syntax:
-
-.nf
+.Bd -literal
 INIT \fIname\fR \fIexpression\fR [ {\fIattribute\fR; ...} ] [ # \fIcomment\fR ] 
-.fi
-
+.Ed
 Initial conditions can be numerical, or can be expression that depend on parameters or expressions.
 For each equation D/DT, there must be an INIT with the corresponding \fIname\fR. 
 If initial conditions are expressions, their values can be overruled or reset in odexp.
-
-.nf
+.Bd -literal
 INIT x 1.0
 INIT x b 
-.fi
-
-.TP
-.BR OPT [IONS]
+.Ed
+.Pp
+.Em OPT[IONS]
 Options. Options can be preset. 
-
-.nf
+.Bd -literal
 OPT x x1         # set x-axis to plot x1
 OPT reltol 1e-3  # set ode solver reltol to 1e-3
-.fi
-
-.TP
-.BR TIMES [PAN]
+.Ed
+.Pp
+.Em TIMES[PAN]
 Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
-
-.nf
+.Bd -literal
 TIMES 0 10
 TIMES 0 10 20 50 100
-.fi
-
-.TP
-.BR MAC [RO]
+.Ed
+.Pp
+.Em MAC[RO]
 Define macro. Macro cannot be modified.
-
-.nf
+.Bd -literal
 MACRO MY_PI 3.14
-.fi
-
-.TP
-.BR SET
+.Ed
+.Pp
+.Em SET
 Set predefined constant. Useful to define system size.
-
-.nf
+.Bd -literal
 SET N 100
-.fi
-
-.TP
-.BR CONST [ANT]
+.Ed
+.Pp
+.Em CONST [ANT]
 Constant array. Must be numerical array. Constant arrays cannot be modified.
 Constant arrays can be of any dimensions. Useful for arrays of small sizes. 
-
-.nf
+.Bd -literal
 CONST MY_ARRAY[2][3] { {1.1, 1.2, 1.3}, {2.1, 2.2, 2.3} }
-.fi
-
-.TP
-.BR FI [LE]
+.Ed
+.Pp
+.Em FI[LE]
 Constant array from file. Syntax:
-
-.nf
+.Bd -literal
 FI \fIname\fR \fInrows\fR \fIncols\fR \fIfilename\fR 
-.fi
-
+.Ed
 where \fInrows\fR \fIncols\fR are the number of rows and columns in the file \fIfilename\fR.
 \fIfilename\fR is a text file containing a space delimited array of doubles.
-
-.TP
-.B FUN
+.Pp
+.Em FUN
 User-defined function.
-
-.nf
+.Bd -literal
 FUN my_fun_name (x, y, z) = x*x+y+z 
-.fi
-
+.Ed
 is interpreted as 
-
-.nf
+.Bd -literal
 double my_fun_name(double x,double y, double z) = { return x*x+y+z; } 
-.fi
-
-.nf
+.Ed
+.Bd -literal
 FUN mean(*x) = sum(x,LENTGH_X)/LENTGH_X 
-.fi
-
+.Ed
 is interpreted as 
-
-.nf
+.Bd -literal
 double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X }
-.fi
-
-.nf
+.Ed
+.Bd -literal
 FUN myatan( x, *p)
   double a = *p;
   return atan(a*x);
 end
-.fi
-
+.Ed
 is interpreted as 
-
-.nf
+.Bd -literal
 double  myatan(double x, double *p)
 {
   double a = *p;
   return atan(a*x);
 }
-.fi
-
+.Ed
 The function \fIsum\fR is a helper function (see below for a list of helper functions). 
-
 .SS Population-specific keywords (%)
-
-.TP
-.B %BIRTH 
+.Pp
+.Em %BIRTH 
 Particle (de novo) birth rate
-
-.nf
+.Bd -literal
 %BIRTH 0.1 # set birth rate to 0.1 per unit time 
 %BIRTH 1.0/(10 + \fIPOP_SIZE\fR) # set birth rate to a function of the total partice number \fIPOP_SIZE\fR 
-.fi
-
-.TP
-.B %DEATH 
+.Ed
+.Pp
+.Em %DEATH 
 Particle death rate 
-
-.nf
+.Bd -literal
 %DEATH 0.01 # constant particle death rate 
 %DEATH \fIvar_death_rate\fR # set death rate to \fIvar_death_rate\fR 
-.fi
-
-.TP
-.B %REPLI
+.Ed
+.Pp
+.Em %REPLI
 Particle replication rate 
-
-.TP
-.B %C
+.Pp
+.Em %C
 Coupling term. 
 This is of the form PSI[i] = 1/POP_SIZE*sum_{j=1}^POP_SIZE \fIphi\fR(x[j],x[i]), where \fIphi\fR is a function of two variables. The declaration is
-
-.nf
+.Bd -literal
 %C PSI
 phi(OY(x),MY(x))
-.fi
-
+.Ed
 The coupling term PSI take a value for each particle.
-
-.TP
-.B %M
+.Pp
+.Em %M
 Mean field. 
 This is of the form MF = 1/POP_SIZE*sum(j=1) \fIphi\fR(x[j]), where \fIphi\fR depend only on one variable.
-
-.nf
+.Bd -literal
 %M MF phi(MY(x))
-.fi
-
+.Ed
 The mean field term in an average over the population, and take a single value.
-
-.SS Macros
-
-.TP
-.B DWDT
+.
+.Ss Macros
+.Pp
+.Em DWDT
 Gaussian, uncorrelated white noise ~ N(0,1/h), with h the timestep, as the derivative of the Wiener process. 
 The stochastic differential equation 
-
-.nf
+.Bd -literal
 dx/dt = -theta(x - mu)*x + sigma*DWDT
-.fi
-
+.Ed
 would have as a solution x(t) the Ornstein-Uhlenbeck process, centered at mu, with sigma a diffusion constant and
 theta a dissipation rate constant.
-
-.TP
-.B POP_SIZE
+.Pp
+.Em POP_SIZE
 Total number of particles. 
-
-.TP
-.BI MU( par )
+.Pp
+.Em MU(Va par)
 Used anywhere to access the value of parameter with name \fIpar\fR.
-
-.TP
-.BI OY( var ) " " (OE,OA)
+.Pp
+.Em OY(Va var )  (Va OE, Va OA)
 Used in %C to iterate over all particles; 
 .I var 
 is a dynamical variable (OY), expression (OE) or auxiliary variable (OA).
-
-.TP
-.BI MY( var ) " " (ME,MA,MF)
+.Pp
+.Em MY( var ) (ME,MA,MF)
 Used in %C and %M to denote the current particle; \fIvar\fR is a dynamical variable (MY), expression (ME), or auxiliary variable (MA) or a mean field (MF).
-
-.TP
-.BI SY( var ) " " (SE,SA)
+.Pp
+.Em SY( var ) (SE,SA)
 Value of the current particle \fIvar\fR's.sister.  Useful to specify what happens when particle replicates; \fIvar\fR is a dynamical variable (SY), expression (SE) or auxiliary variable (SA).
-
-.TP
-.B ATBIRTH 
+.Pp
+.Em ATBIRTH 
 logical variable indicating if the particle is just born.
-
-.TP
-.B ATREPLI 
+.Pp
+.Em ATREPLI 
 logical variable indicating if the particle is replicating.
-
-.TP
-.B ISDAUGHTER 
+.Pp
+.Em ISDAUGHTER 
 logical variable indicating if the particle is the daughter. 
 This is nonzero only at replication (
-.B ATREPLI 
+ATREPLI 
 = 1). 
 The daughter particle is the newly formed particle. 
 At replication, the daughter particle is created from the mother particle by copy. 
 Then, the mother particle is updated and becomes the sister particle. 
 The daughter is then updated, and can refer to the sister particle with 
-.B SE 
+ SE 
 and 
-.BR SY .
-
-.TP
-.B ISMOTHER 
+SY.
+.Pp
+.Em ISMOTHER 
 logical variable indicating if the particle is the mother. 
 This is nonzero only at replication (
-.B ATREPLI 
+ ATREPLI 
 = 1).
-
-.TP
-.B MID 
+.Pp
+.Em MID 
 Current particle ID.
-
-.SS Numerical and graphical options
-
+.
+.Ss Numerical and graphical options
+.Pp
 See the list of options with line command \fBlo\fR.
-
-.SS Functions acting on arrays
-.TP
-.BR \fIdouble\fR " " sum\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR)
+.
+.Ss Functions acting on arrays
+.Bl -tag 
+.It Fn "sum" "double *array" "long len"
 Sum the elements of the array \fIarray\fR of length \fIlen\fR.
 Return the sum of the array.
-.TP
-.BR \fIdouble\fR " " sumstep\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR, " " \fIlong " " \fIstep\fR)
+.It Fn "sumstep" double *array" "long len" "long step"
 Sum only the \fIstep\fR'th elements of the array \fIarray\fR of length \fIlen\fR.
-.TP 
-.BR \fIdouble\fR " " prod\fR(\fIdouble " " \fI*array\fR, " " \fIlong " " \fIlen\fR) 
+.It Fn "prod" "double *array" "long len" 
 Product of the elements of the array \fIarray\fR of length \fIlen\fR.
-.TP
-.BR \fIdouble\fR " " dotprod\fR(\fIdouble " " \fI*x\fR, " " \fIdouble " " \fI*y\fR, " " \fIlong  " " \fIlen\fR)
+.It Fn "dotprod" "double *x" "double *y" "long len"
 Scalar product of two arrays \fIx\fR and \fIy\fR of lengths \fIlen\fR. Returns the scalar product.
-.TP
-.BR \fIdouble\fR " " conv\fR(\fIdouble " " \fI*u\fR, " " \fIdouble " "  \fI*v\fR, " " \fIlong " " \fIlen\fR) 
+.It Fn "conv" "double *u" "double *v" "long len"
 convolution product between arrays \fIu\fR and \fIv\fR, each of length \fIlen\fR. Returns the convolution product.
-.TP
-.BR \fIdouble\fR " " minus\fR(\fIdouble " "  \fIx\fR, " "  \fIdouble " "  \fIy\fR)
+.It Fn "minus" "double x" "double y"
 Subtraction. 
 Used with \fBsumxy\fR.
-.TP
-.BR \fIdouble\fR " " plus\fR(\fIdouble " "  \fIx\fR, " "  \fIdouble " "  \fIy\fR)
+.It Fn "plus" "double x" "double y"
 Addition.
 Used with \fBsumxy\fR.
-.TP
-.BR \fIdouble\fR " " sumxy\fR(\fIlong " " \fIlen, " " \fIdouble " " \fI(*f)(double)\fR, " " \fIdouble " " \fI(*g)(double,double)\fR, " " \fIconst " "  \fIdouble " " \fI*x\fR, " " \fIconst " " \fIdouble " " \fIyi\fR)
+.It Fn "sumxy" "long len" "double (*f)(double)" "double (*g)(double,double)" "const double *x" "const double yi"
 Sum over j of \fIf\fR(\fIg\fR(\fIx_j\fR,\fIyi\fR)) 
-.TP
-.BR \fIdouble\fR " " kern\fR(\fIdouble "" \fI*Wi, " " \fIdouble " " \fI(*f)(double, double, double *)\fR, " " \fIdouble " " \fIxi, " " \fIconst " " \fIdouble " " \fI*x\fR, " " \fidouble " " \fI*p\fR, " " \fIlong " " \fIlen\fR);
-.TP
-.BR \fIdouble\fR " " linchaindelay\fR(\fIdouble " " \fIroot\fR, " " \fIdouble " " \fI*chain\fR, " " \fIsize_t " " \fIlink\fR, " " \fIdouble " " \fIdelay\fR, " " \fIsize_t " " \fIlen\fR)
+.It Fn "kern" "double *Wi" "double (*f)(double, double, double *)" "double xi" "const double *x" "double *p" "long len"
+.It Fn "linchaindelay" "double root" "double *chain" "size_t link" "double delay" "size_t len"
 \fIlink\fR'th element of a linear chain \fIbeta\fR*(\fIchain\fR[\fIlink\fR-1]-\fIchain\fR[\fIlink\fR]), (and \fIbeta\fR*(\fIroot\fR-\fIchain\fR[\fI0\fR]))
-
-.SS Time lags (gamma-distributed delays)
+.El
+.
+.Ss Time lags (gamma-distributed delays)
+.Pp
 There is a shortcut to specify a delayed variable. 
 If 
-.I z 
+.Va z 
 is a dynamical variable, then
-
-.nf
+.
+.Bd -literal
 LAG \fIztau1\fR {root = z, mean = tau, len = 1000, init = 0.2}
-.fi
-
+.Ed
+.
 defines the dynamical variable \fIztau1\fR as the delayed version of \fIz\fR 
 with a linear chain of length 1000 and mean tau.
 All intermediate variables, including \fIztau1\fR, have initial condition 0.2.
-
-.SS Low rank expansion of coupling terms in O(N)
+.
+.Ss Low rank expansion of coupling terms in O(N)
+.Pp
 Coupling term (%C) are evaluated by default in O(N^2) where N is the population size. 
 When the rhight-hand side is equal to \fIlrexp\fR in a coupling declaration, an adaptative rank P expansion  
 is used to approximate the coupling function g given in the attribute \fIfun\fR over the variable given
 in attribute \fIvar\fR. 
-
+.Pp
 The coupling function g must be of the form g(u, *p) = gg(s*u) where the pointer p points to the scalar value s. 
 low rank expansion is currently limited to coupling functions of the form g(xj-xi) for xi, xj scalars.
-
+.Pp
 The following code calls the expansion method for the coupling term sin(xj-xi).
 (The auxiliary term TH is introduced to force the values of theta between 0 and 2 * PI.)
-
-.fn
+.Bd -literal
 %C coupling lrexp {var = TH, fun = cpling_fun}
 
 AUX TH theta - ( (int) (theta/2/PI) * 2 * PI )
@@ -690,70 +532,49 @@ fun cpling_fun(x, *p)
   return sin(x); 
 
 end
-.fi
-
-.SS Stepping methods
-
-.TP
-.BR rk2 
+.Ed
+.
+.Ss Stepping methods
+.Bl -hang -width indent
+.It rk2 
 GSL Explicit embedded Runge-Kutta (2, 3) method 
-
-.TP
-.BR rk4 
+.It rk4 
 GSL Explicit 4th order (classical) Runge-Kutta 
-
-.TP
-.BR rkf45
+.It rkf45
 GSL Explicit embedded Runge-Kutta-Fehlberg (4, 5) method.
-
-.TP
-.BR rkck 
+.It rkck 
 GSL Explicit embedded Runge-Kutta Cash-Karp (4, 5) method. 
-
-.TP
-.BR rk8pd 
+.It rk8pd 
 GSL Explicit embedded Runge-Kutta Prince-Dormand (8, 9) method.
-
-.TP
-.BR bsimp 
+.It bsimp 
 GSL Implicit Bulirsch-Stoer method of Bader and Deuflhard.
-
-.TP
-.BR fe 
+.It fe 
 Explicit Forward Euler with fixed time steps. Combined the macro DWDT, this is the Euler-Maruyama scheme.
-
-.TP
-.BR iteration 
+.It iteration 
 Not an ODE stepper. The stepper assigns the RHS of the equation to the updated state variable.
-
-.SH EXAMPLES
+.
+.Sh EXAMPLES
+.Pp
 Here is an example of an odexp file for the Lotka-Volterra equations.
-
-.RS
-.nf
+.Bd -literal
 ## file lotka.pop
 ## a simple nonlinear ODE system
 #  all lines starting with ## are printed with the command ld
-
+.
 PAR a 0.2 # parameters can changed 
 PAR b 0.3
-
+.
 dx/dt = x*(y - a) # equation on x
 dy/dt = y*(b - x) # equation on y
-
+.
 INIT x 0.1 # initial condition for x
 INIT y 0.2 # initial condition for y
-
+.
 TIMESPAN 0 10 # timespan is 0 to 10
-.fi
-.RE
-
+.Ed
 To print the file current.plot formatted, use
-
-.RS
-hexdump -e '"%f " "%f " "%f " "\\n"' current.plot
-.RE
-
-.SH BUGS
-
-
+.D1 hexdump -e '"%f " "%f " "%f " "\\n"' current.plot
+.
+.Sh BUGS
+.
+.

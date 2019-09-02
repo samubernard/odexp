@@ -416,7 +416,7 @@ int odesolver( oderhs pop_ode_rhs,
       printf("\n\n");
     }
     fflush(stdout);
-    snprintf(msg,EXPRLENGTH,""); /* set message to empty string */
+    snprintf(msg,EXPRLENGTH," "); /* set message to empty string */
 
     s = gsl_odeiv2_step_alloc(odeT,sim_size);
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
@@ -477,7 +477,7 @@ int odesolver( oderhs pop_ode_rhs,
         switch (bd_meth)
         {
           case SSA:
-            snprintf(msg,EXPRLENGTH,""); /* set message to empty string */
+            snprintf(msg,EXPRLENGTH," "); /* set message to empty string */
             if ( dt_ssa < dt_dyn )
             {
               dt_next = dt_ssa; /* advance to time of event */
