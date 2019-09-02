@@ -37,11 +37,17 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     static char * tail = "***"; /* this is the string for the progress bar */
     static char * head = "*"; /* this is the string for the progress bar */
     int arrow_length = strlen(tail)+strlen(head); 
-    printf("\n%s",LINEUP_AND_CLEAR);  /* clear the line msg line */
-    printf("%s",LINEUP_AND_CLEAR);  /* clear one line  */
-    if ( get_int("progress") > 2 ) /* level 3: clear two more lines */
+
+    if ( get_int("progress") == 0 ) /* do nothing */
     {
-      printf("%s",LINEUP_AND_CLEAR);  /* clear two more lines */
+      return;
+    }
+
+    printf("\n%s",LINEUP_AND_CLEAR);               /* clear the msg line */
+    printf("%s",LINEUP_AND_CLEAR);                 /* clear one line  */
+    if ( get_int("progress") > 2 )                 /* if level 3: clear two more lines */
+    {
+      printf("%s",LINEUP_AND_CLEAR);  
       printf("%s",LINEUP_AND_CLEAR);  
     }
     if ( get_int("progress") > 0 )  /* level 1: print time elapsed and percent complete */
@@ -63,12 +69,12 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     if ( get_int("progress") > 2 ) /* level 3: print numerical integration information */
     {
       printf("\n  %ssolver  %-8s h0       h        pop size   est. time%s\n",T_HEAD, get_str("indvar"),T_NOR);
-      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s %s%5zu%s       %s%-6.1f sec%s\n", \
+      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s %s%5zu%s       %s%-6.1f sec%s", \
           T_DET, get_str("solver"), T_NOR, T_VAL, tt, T_NOR, \
           T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
           T_VAL, POP_SIZE, T_NOR, T_VAL, (double)(clock() - start) / CLOCKS_PER_SEC * (1 - fcmpl) / fcmpl, T_NOR); 
     }
-    PRINTWARNING("%s\n\033[F", msg); 
+    PRINTWARNING("%s\n\n\033[F", msg); 
 }
 
 int odesolver( oderhs pop_ode_rhs, 
@@ -416,7 +422,7 @@ int odesolver( oderhs pop_ode_rhs,
       printf("\n\n");
     }
     fflush(stdout);
-    snprintf(msg,EXPRLENGTH," "); /* set message to empty string */
+    snprintf(msg,EXPRLENGTH,""); /* set message to empty string */
 
     s = gsl_odeiv2_step_alloc(odeT,sim_size);
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
@@ -477,7 +483,7 @@ int odesolver( oderhs pop_ode_rhs,
         switch (bd_meth)
         {
           case SSA:
-            snprintf(msg,EXPRLENGTH," "); /* set message to empty string */
+            snprintf(msg,EXPRLENGTH,""); /* set message to empty string */
             if ( dt_ssa < dt_dyn )
             {
               dt_next = dt_ssa; /* advance to time of event */
