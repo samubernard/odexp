@@ -74,7 +74,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
           T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
           T_VAL, POP_SIZE, T_NOR, T_VAL, (double)(clock() - start) / CLOCKS_PER_SEC * (1 - fcmpl) / fcmpl, T_NOR); 
     }
-    PRINTWARNING("%s\n\n\033[F", msg); 
+    PRINTWARNING("%s\n\n\033[F", msg); /* [F = one line up */
 }
 
 int odesolver( oderhs pop_ode_rhs, 
