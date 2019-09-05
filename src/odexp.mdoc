@@ -51,6 +51,35 @@ Ignore syntax errors try to parse the file anyway.
 .El
 .
 .Sh USAGE 
+.Ss File structure
+The
+.Nm 
+file defines an initial value problem (IVP): equations, initial conditions, parameter, auxiliary functions, integration interval, etc. Essential elements are at least one equation, the initial condition and the time span over which integration must take place. Other elements such as options, auxiliary functions and constants 
+can be defined as well.
+The general structure of the file is
+.Bl -bullet -compact
+.It
+Description of the dynamical system. Lines start with ##. Comments start with # and run until the end of the line.
+.It
+Model parameters. Lines start with PAR
+.It 
+Parametric expressions. Lines start with EXPR
+.It 
+Auxiliary functions (AUX)
+.It 
+Equations (D/DT)
+.It 
+Mean fields (%M)
+.It 
+Coupling terms (%C)
+.It 
+User-defined functions (FUN)
+.It 
+Timespan (TIMES)
+.It 
+Options (OPT)
+.El
+.
 .Ss Interactive commands
 Interactive commands can be entered at the 
 .Nm odexp
@@ -64,16 +93,14 @@ Repeat last command.
 .It Ic +, =, C^g 
 Increment current parameter by a multiplicative factor 
 .Ar step 
-(
-.Ar step
+.Ar ( step
 is an option, see 
 .Ic set 
 options).
 .It Ic -, C^h
 Decrement current parameter by a multiplicative factor 
 .Ar step 
-(
-.Ar step
+.Ar ( step
 is an option, see 
 .Ic set 
 options).
@@ -396,7 +423,7 @@ The prefix PAR is optional when one parameter is declare per single line.
 .Pp
 These examples are valid  
 .Bd -literal
-PAR a 0.1; Va b Ar 0.2
+PAR a 0.1; Va b 0.2
 a 0.1 # ok
 PAR a {attribute of a} # comment on a; b {attribute of b} # comment on b
 PAR b 0.2 {init}   # attribute init   for parameters only used 
@@ -459,32 +486,24 @@ AUX norm_x2 dotprod(X,X,5)
 .It Ic D/DT
 Dynamical variables. Dynamical variables are the dependent variables of the ODE system.
 Syntax:
-.Bd -literal
-d Va name /dt = Va rhs [ { Va attribute ; ...} ] [ # Va comment ] 
-.Ed
+.Pp
+.D1 Pf d Va var /dt = Ar rhs Oo { Ar attribute ; ... } Oc Op  # Ar comment 
+.Pp
 Dynamical variable 
-.Va name
+.Va var
 is declared as d
 .Va name
 /dt followed by = and the 
 .Va rhs
-of the equation
-.Bd -literal
-dx/dt = -a*x
-.Ed
-.It Ic INIT [IAL]
+of the equation. Example
+.Pp
+.D1 dx/dt = -a*x
+.It Ic INIT 
 Initial conditions. 
 Syntax:
-.Bd -literal
-INIT 
-.Va name
-.Va expression
-[ {
-.Va attribute
-; ...} ] [ # 
-.Va comment
-] 
-.Ed
+.Pp
+.D1 INIT Va var Va expression Oo { Ar attribute ; ... } Oc Op  # Ar comment 
+.Pp
 Initial conditions can be numerical, or can be expression that depend on parameters or expressions.
 For each equation D/DT, there must be an INIT with the corresponding 
 .Va name
@@ -494,13 +513,13 @@ If initial conditions are expressions, their values can be overruled or reset in
 INIT x 1.0
 INIT x b 
 .Ed
-.It Ic OPT[IONS]
+.It Ic OPT
 Options. Options can be preset. 
 .Bd -literal
 OPT x x1         # set x-axis to plot x1
 OPT reltol 1e-3  # set ode solver reltol to 1e-3
 .Ed
-.It Ic TIMES[PAN]
+.It Ic TIMES
 Timespan. Time span is an array of the form t0 ti ... t1 where t0 and t1 are the initial and final times. 
 Intermediate values ti are stopping time, where the system is reset to initial condition. This is useful when systems
 are discontinuous, and variable need to be reset at known timepoints.
@@ -508,128 +527,137 @@ are discontinuous, and variable need to be reset at known timepoints.
 TIMES 0 10
 TIMES 0 10 20 50 100
 .Ed
-.It Ic MAC[RO]
-Define macro. Macro cannot be modified.
-.Bd -literal
-MACRO MY_PI 3.14
-.Ed
 .It Ic SET
 Set predefined constant. Useful to define system size.
 .Bd -literal
 SET N 100
 .Ed
-.It Ic CONST [ANT]
+.It Ic CONST
 Constant array. Must be numerical array. Constant arrays cannot be modified.
 Constant arrays can be of any dimensions. Useful for arrays of small sizes. 
 .Bd -literal
 CONST MY_ARRAY[2][3] { {1.1, 1.2, 1.3}, {2.1, 2.2, 2.3} }
 .Ed
-.It Ic FI[LE]
+.It Ic FI
 Constant array from file. Syntax:
-.Bd -literal
-FI 
-.Va name
-.Va nrows
-.Va ncols
-.Va filename
-.Ed
+.Pp
+.D1 FI Va varname Ar nrows Ar ncols Ar filename
+.Pp
 where 
 .Va nrows
 .Va ncols
 are the number of rows and columns in the file 
 .Va filename .
 .Va filename
-is a text file containing a space delimited array of doubles.
+is a text file containing a bare space delimited array of doubles.
 .It Ic FUN
-User-defined function.
+User-defined function. Simple, one-line functions can be defined this way
 .Bd -literal
 FUN my_fun_name (x, y, z) = x*x+y+z 
 .Ed
-is interpreted as 
+.Pp
+This is interpreted in C as 
+.Pp
 .Bd -literal
 double my_fun_name(double x,double y, double z) = { return x*x+y+z; } 
 .Ed
+.Pp
+Array can be passed as pointers,
 .Bd -literal
 FUN mean(*x) = sum(x,LENTGH_X)/LENTGH_X 
 .Ed
-is interpreted as 
-.Bd -literal
-double mean(double *x) { return sum(x,LENTGH_X)/LENTGH_X }
+.Pp
+is interpreted in C as 
+.Pp
+.Bd
+.Ft double 
+.Fo mean 
+.Fa "double *x" 
+.Fc 
+{ return sum(x,LENTGH_X)/LENTGH_X; }
 .Ed
+.Pp
+More complex function can be defined on multiple lines. Definition is terminated by the keyword 'end'.
 .Bd -literal
 FUN myatan( x, *p)
   double a = *p;
   return atan(a*x);
 end
 .Ed
+.Pp
 is interpreted as 
 .Bd -literal
-double  myatan(double x, double *p)
+.Fn "double myatan" "double x" "double *p"
 {
   double a = *p;
   return atan(a*x);
 }
 .Ed
+.Pp
 The function 
-.Va sum
+.Fn sum
 is a helper function (see below for a list of helper functions). 
 .El
 .
 .SS Population-specific keywords (%)
 .Bl -ohang
 .It Ic %BIRTH 
-Particle (de novo) birth rate
+Particle (de novo) birth rate. Examples
 .Bd -literal
 %BIRTH 0.1 # set birth rate to 0.1 per unit time 
-%BIRTH 1.0/(10 + 
-.Va POP_SIZE
-) # set birth rate to a function of the total partice number 
-.Va POP_SIZE
+%BIRTH 1.0/(10 + POP_SIZE) # birth rate function on total particle number POP_SIZE
 .Ed
 .It Ic %DEATH 
-Particle death rate 
+Particle death rate. Examples
 .Bd -literal
 %DEATH 0.01 # constant particle death rate 
-%DEATH 
-.Va var_death_rate
-# set death rate to 
-.Va var_death_rate
+%DEATH death_rate # set death rate to death_rate
 .Ed
 .It Ic %REPLI
-Particle replication rate 
+Particle replication rate. 
 .It Ic %C
 Coupling term. 
-This is of the form PSI[i] = 1/POP_SIZE*sum_{j=1}^POP_SIZE 
-.Va phi
-(x[j],x[i]), where 
-.Va phi
+This is of the form 
+.Pp
+.Dl PSI[i] = 1/POP_SIZE*sum_{j=1}^POP_SIZE Fn phi "x[j]" "x[i]", 
+.Pp
+where 
+.Fn phi
 is a function of two variables. The declaration is
-.Bd -literal
-%C PSI
-phi(OY(x),MY(x))
-.Ed
-The coupling term PSI take a value for each particle.
+.Pp
+.Dl %C PSI phi (OY(x),MY(x))  
+.Pp 
+The coupling term PSI takes a value for each particle.
 .It Ic %M
 Mean field. 
-This is of the form MF = 1/POP_SIZE*sum(j=1) 
+This is of the form 
+.Pp
+.Dl MF = 1/POP_SIZE * sum_{j=1}^POP_SIZE Fn phi "x[j]", 
+.Pp
+where 
 .Va phi
-(x[j]), where 
-.Va phi
-depend only on one variable.
-.Bd -literal
-%M MF phi(MY(x))
-.Ed
-The mean field term in an average over the population, and take a single value.
-.El
+depends only on one variable. Example,
+.Pp
+.Dl %M MF phi(MY(x)) # average phi(my dynamical variable x) over all particles
+.Pp
+Since mean fields are averaged over the total particle number POP_SIZE, to get the total particle number, use
+.Pp
+.Dl %M TOTAL POP_SIZE # not numerically efficient but ok
+.Pp
+Alternatively, a mean field can be computed without looping through all particles, by using the attribute vect
+.Pp
+.Dl %M TOTAL POP_SIZE {vect} # no loop, faster
+.Pp
 .
 .Ss Macros
-.Bl -ohang
+.Bl -tag
 .It Dv DWDT
 Gaussian, uncorrelated white noise ~ N(0,1/h), with h the timestep, as the derivative of the Wiener process. 
 The stochastic differential equation 
+.Pp
 .D1 dx/dt = -theta(x - mu)*x + sigma*DWDT
-would have as a solution x(t) the Ornstein-Uhlenbeck process, centered at mu, with sigma a diffusion constant and
-theta a dissipation rate constant.
+.Pp
+would have as a solution x(t) the Ornstein-Uhlenbeck process, centered at mu, with sigma a diffusion constant and theta a dissipation rate constant.
 .It Dv POP_SIZE
 Total number of particles. 
 .It Fn MU par
@@ -645,33 +673,26 @@ Used in %C and %M to denote the current particle;
 is a dynamical variable (MY), expression (ME), or auxiliary variable (MA) or a mean field (MF).
 .It Fn SY var , Fn SE var, Fn SA var
 Value of the current particle 
-.Va var
-'s.sister.  Useful to specify what happens when particle replicates; 
+.Va var Ap
+s sister.  Useful to specify what happens when particle replicates; 
 .Va var
 is a dynamical variable (SY), expression (SE) or auxiliary variable (SA).
 .It Dv ATBIRTH 
-logical variable indicating if the particle is just born.
+logical variable indicating that the particle is just born (i.e. has no parent).
 .It Dv ATREPLI 
-logical variable indicating if the particle is replicating.
+logical variable indicating that the particle is replicating.
 .It Dv ISDAUGHTER 
 logical variable indicating if the particle is the daughter. 
-This is nonzero only at replication (
-ATREPLI 
-= 1). 
+This is nonzero only at replication (ATREPLI = 1). 
 The daughter particle is the newly formed particle. 
 At replication, the daughter particle is created from the mother particle by copy. 
 Then, the mother particle is updated and becomes the sister particle. 
-The daughter is then updated, and can refer to the sister particle with 
-SE 
-and 
-SY.
+The daughter is then updated, and can refer to the sister particle with SE and SY.
 .It Dv ISMOTHER 
 logical variable indicating if the particle is the mother. 
-This is nonzero only at replication (
-ATREPLI 
-= 1).
+This is nonzero only at replication (ATREPLI = 1).
 .It Dv MID 
-Current particle ID.
+Current particle ID. ID's are unique and indicate the order of creation of the particle. ID's are not recycled. 
 .El
 .
 .Ss Numerical and graphical options
@@ -685,8 +706,7 @@ See the list of options with line command
 Sum the elements of the array 
 .Va array
 of length 
-.Va len
-.
+.Va len .
 Return the sum of the array.
 .It Fn "sumstep" double *array" "long len" "long step"
 Sum only the 
@@ -725,37 +745,20 @@ Addition.
 Used with 
 .Ic sumxy .
 .It Fn "sumxy" "long len" "double (*f)(double)" "double (*g)(double,double)" "const double *x" "const double yi"
-Sum over j of 
-.Va f
-(
-.Va g
-(
-.Va x_j
-,
-.Va yi
-)) 
+Sum over j of f(g(x[j], yi)). 
 .It Fn "kern" "double *Wi" "double (*f)(double, double, double *)" "double xi" "const double *x" "double *p" "long len"
 .It Fn "linchaindelay" "double root" "double *chain" "size_t link" "double delay" "size_t len"
-.Va link
-'th element of a linear chain 
-.Va beta
-*(
-.Va chain
-[
-.Va link
--1]-
-.Va chain
-[
-.Va link
-]), (and 
-.Va beta
-*(
-.Va root
--
-.Va chain
-[
-.Va 0
-]))
+This returns the 
+.Va link AP
+th element of a linear chain 
+.Pp
+.Dl beta*(chain[link-1] - chain[link]),
+.Pp 
+if link > 0, and
+.Pp
+.Dl beta*(root - chain [0])
+.Pp
+if link = 0.
 .El
 .
 .Ss Time lags (gamma-distributed delays)
@@ -805,7 +808,8 @@ end
 For more complex low-rank expansion, use
 .Ic lrwkern , 
 on the right-hand side.  
-.Ic lrwexp uses a matrix W = U*V as weights in the coupling term:
+.Ic lrwexp 
+uses a matrix W = U*V as weights in the coupling term:
 .Pp
 .D1 y = sum_j W_ij g(x_j - x_i) 
 .Pp
@@ -843,25 +847,28 @@ Not an ODE stepper. The stepper assigns the RHS of the equation to the updated s
 .Sh EXAMPLES
 .Pp
 Here is an example of an odexp file for the Lotka-Volterra equations.
-.Bd -literal
+.Bd -literal 
 ## file lotka.pop
 ## a simple nonlinear ODE system
 #  all lines starting with ## are printed with the command ld
-.
-PAR a 0.2 # parameters can changed 
+ 
+PAR a 0.2
 PAR b 0.3
-.
+ 
 dx/dt = x*(y - a) # equation on x
 dy/dt = y*(b - x) # equation on y
-.
+ 
 INIT x 0.1 # initial condition for x
 INIT y 0.2 # initial condition for y
-.
+ 
 TIMESPAN 0 10 # timespan is 0 to 10
+
+# end of file
 .Ed
-.
+.Pp
 To print the file current.plot formatted, use
-.D1 hexdump -e '"%f " "%f " "%f " "\\n"' current.plot
+.Pp
+.Li hexdump -e '\(dq%f \(dq \(dq%f \(dq \(dq%f \(dq \(dq\en\(dq' current.plot
 .
 .Sh BUGS
 .
