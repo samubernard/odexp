@@ -902,6 +902,7 @@ int mvar(const char *name, par *m, double *ptr)
       return 0;
     }
   }                                                       
+  index = 0;
   while (  index < SIM->nbr_aux )                       
   {                                                       
     if ( strncmp(name, SIM->auxnames[index], NAMELENGTH) )

@@ -369,7 +369,7 @@ Differential equations for the dynamical variables. Must be an expression, and c
 Initial conditions for the dynamical variables. 
 .It CONST
 Constant arrays.
-.It SET
+.It LET
 Prescan macro. 
 .It FILE
 Array from file 
@@ -527,10 +527,10 @@ are discontinuous, and variable need to be reset at known timepoints.
 TIMES 0 10
 TIMES 0 10 20 50 100
 .Ed
-.It Ic SET
+.It Ic LET
 Set predefined constant. Useful to define system size.
 .Bd -literal
-SET N 100
+LET N 100
 .Ed
 .It Ic CONST
 Constant array. Must be numerical array. Constant arrays cannot be modified.
