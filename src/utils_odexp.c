@@ -159,7 +159,7 @@ double kern(double *Wi, double (*f)(double, double, double *), double xi, const 
     return s;
 }
 
-double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len)
+double linchaindelay(const double root, const double *chain, const int link, const double delay, const int len)
 {
     double beta = (double)len/delay;
     return beta*((link==0 ? root : chain[link-1]) - chain[link]); 

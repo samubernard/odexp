@@ -94,7 +94,7 @@ const char PALETTE_APPLE[8][7] = {"#143d9d", "#dc143c", "#0c987d", "#ffd700", "#
 
 int set_dou(const char *name, const double val) 
 {
-    size_t idx_opt = 0;
+    int idx_opt = 0;
     int success = 0;
     while ( idx_opt < NBROPTS)
     {
@@ -122,7 +122,7 @@ int set_dou(const char *name, const double val)
 
 int set_int(const char *name, const int val) 
 {
-    size_t idx_opt = 0;
+    int idx_opt = 0;
     int success = 0;
     while ( idx_opt < NBROPTS)
     {
@@ -150,7 +150,7 @@ int set_int(const char *name, const int val)
 
 int set_str(const char *name, const char * val) 
 {
-    size_t idx_opt = 0;
+    int idx_opt = 0;
     int success = 0;
     while ( idx_opt < NBROPTS)
     {
@@ -179,7 +179,7 @@ int set_str(const char *name, const char * val)
 
 double get_dou(const char *name)
 {
-    size_t idx_opt = 0;
+    int idx_opt = 0;
     while ( idx_opt < NBROPTS)
     {
         if ( strcmp(name, GOPTS[idx_opt].name) )
@@ -203,7 +203,7 @@ double get_dou(const char *name)
 
 int get_int(const char *name)
 {
-    size_t idx_opt = 0;
+    int idx_opt = 0;
     while ( idx_opt < NBROPTS)
     {
         if ( strcmp(name, GOPTS[idx_opt].name) )
@@ -228,7 +228,7 @@ int get_int(const char *name)
 
 char * get_str(const char *name)
 {
-    size_t idx_opt = 0;
+    int idx_opt = 0;
     while ( idx_opt < NBROPTS)
     {
         if ( strcmp(name, GOPTS[idx_opt].name) )
@@ -252,7 +252,7 @@ char * get_str(const char *name)
 
 int name2index( const char *name, nve var, int *n) /* get index of var.name == name */
 {
-    size_t i = 0;
+    int i = 0;
     int s = 0;
 
     if ( (strcmp(name,"T") == 0) | (strcmp(name,"t") == 0) )
@@ -295,7 +295,7 @@ int name2index( const char *name, nve var, int *n) /* get index of var.name == n
 
 int option_name2index( const char *name, int *n) /* get index of option.name == name or option.abbr == name */
 {
-    size_t i = 0;
+    int i = 0;
     int s = 0;
 
     if ( strcmp(name,"") == 0 )
@@ -333,13 +333,13 @@ int option_name2index( const char *name, int *n) /* get index of option.name == 
 
 void alloc_namevalexp( nve *var )
 {
-    size_t i;
+    int i;
     var->value = malloc(var->nbr_el*sizeof(double));
     var->name = malloc(var->nbr_el*sizeof(char*));
     var->expression = malloc(var->nbr_el*sizeof(char*));
     var->attribute = malloc(var->nbr_el*sizeof(char*));
     var->comment = malloc(var->nbr_el*sizeof(char*));
-    var->expr_index = malloc(var->nbr_el*sizeof(size_t));
+    var->expr_index = malloc(var->nbr_el*sizeof(int));
     var->max_name_length = malloc(sizeof(int));
     for (i = 0; i < var->nbr_el; i++)
     {
@@ -352,7 +352,7 @@ void alloc_namevalexp( nve *var )
 
 void free_namevalexp(nve var )
 {
-    size_t i;
+    int i;
     
     /* do not free _pointeris, they will be freed in time */
     for (i = 0; i < var.nbr_el; i++)
@@ -383,7 +383,7 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
         nve *ics, nve *fcn, nve *eqn, nve *psi, nve *mfd,\
         nve *dxv, nve *cst, nve *dfl, int (*ode_rhs)(double, const double *, double *, void *))
 {
-    size_t i;
+    int i;
 
     s->nbr_par = mu->nbr_el;
     s->nbr_var = ics->nbr_el;
@@ -507,7 +507,7 @@ int insert_endoflist( dlist *list, par *p )
 int par_birth ( void )
 {
     par *p = malloc(sizeof(par));
-    size_t i;
+    int i;
     p->nbr_expr = SIM->pex_ptr->nbr_el;
     p->nbr_aux  = SIM->fcn_ptr->nbr_el;
     p->nbr_y    = SIM->ics_ptr->nbr_el;
@@ -535,14 +535,14 @@ int par_birth ( void )
         p->psi[i]    = 0.0;
     }
 
-    snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
+    snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%d.dat",p->id);
     
     if ( get_int("closefiles") == 0 && get_int("writefiles") )
     {
       if ( (p->fid = fopen(p->buffer,"w") ) == NULL )
       {
         PRINTERR("error: could not open particle file '%s' while" \
-            " creating particle %zu, exiting...\n",p->buffer,p->id);
+            " creating particle %d, exiting...\n",p->buffer,p->id);
         exit ( EXIT_FAILURE );
       }
     }
@@ -562,7 +562,7 @@ int par_birth ( void )
 int par_repli (par *mother)
 {
     par *p = malloc(sizeof(par));
-    size_t i;
+    int i;
     p->nbr_expr = mother->nbr_expr;
     p->nbr_aux  = mother->nbr_aux;
     p->nbr_y    = mother->nbr_y;
@@ -592,14 +592,14 @@ int par_repli (par *mother)
     p->death_rate = mother->death_rate;
     p->repli_rate = mother->repli_rate;
 
-    snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%zu.dat",p->id);
+    snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%d.dat",p->id);
 
     if ( get_int("closefiles") == 0 && get_int("writefiles") )
     {
       if ( ( p->fid = fopen(p->buffer,"w") ) == NULL )
       {
         PRINTERR("  error: could not open particle file '%s' while replicating" \
-                 " particle %zu, exiting...\n",p->buffer,p->id);
+                 " particle %d, exiting...\n",p->buffer,p->id);
         exit ( EXIT_FAILURE );
       }
     }
@@ -687,9 +687,9 @@ void free_world(world *s)
 
 void printf_particle(par *p)
 {
-    size_t i;
+    int i;
     printf("------------------------------\n");
-    printf("    particle id     = %s%zu%s\n", T_VAL,p->id,T_NOR);
+    printf("    particle id     = %s%d%s\n", T_VAL,p->id,T_NOR);
     for (i=0;i<p->nbr_y;i++)
     {
         printf("  %sD%s %-15s = %s%g%s\n", T_DET,T_NOR,SIM->varnames[i], T_VAL,p->y[i],T_NOR);
@@ -714,7 +714,7 @@ void printf_particle(par *p)
 
 double getv(char *name, par *p)
 {
-    static size_t index = 0;
+    static int index = 0;
     while ( strncmp(name, SIM->auxnames[index], NAMELENGTH) ) 
     {                                                      
         index++; index %= SIM->nbr_aux;                    
@@ -722,7 +722,7 @@ double getv(char *name, par *p)
     return p->aux[index];                              
 }
 
-par * getpar( size_t with_id )
+par * getpar( int with_id )
 {
     par *pars = SIM->pop->start;
     while ( pars != NULL )
@@ -847,20 +847,20 @@ int fwrite_all_particles(const double *restrict t)
 }
 
 
-int list_particle(size_t with_id)
+int list_particle(int with_id)
 {
     int s;
     int fix = get_int("fix");
-    size_t nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+    int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
     char cmd_print[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/id%zu.txt", with_id);
+    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
     snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '%zu \"%%5.%df\t\" \"\\n\"' .odexp/id%zu.dat >> .odexp/id%zu.txt",\
+            "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
             nbr_cols, fix,  with_id, with_id);
 
-    snprintf(cmd_print,EXPRLENGTH-1,"column -t .odexp/id%zu.txt | less -S", with_id);
+    snprintf(cmd_print,EXPRLENGTH-1,"column -t .odexp/id%d.txt | less -S", with_id);
     s = system(cmd_varnames); 
     s = system(cmd_data); 
     s = system(cmd_print);
@@ -871,12 +871,12 @@ int list_particle(size_t with_id)
 int list_stats( void )
 {
     int s;
-    size_t nbr_cols = 1 + SIM->nbr_mfd; 
+    int nbr_cols = 1 + SIM->nbr_mfd; 
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
     snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/stats_varnames.txt > .odexp/tmp.txt");
     snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '%zu \"%%5.2f\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/tmp.txt",\
+            "hexdump -e '%d \"%%5.2f\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/tmp.txt",\
             nbr_cols);
 
     s = system(cmd_varnames); 
@@ -889,7 +889,7 @@ int list_stats( void )
 /* get the value of variable s, for particle p, into ptr */ 
 int mvar(const char *name, par *m, double *ptr)                        
 {
-  size_t index = 0;                                       
+  int index = 0;                                       
   while (  index < SIM->nbr_var )                       
   {                                                       
     if ( strncmp(name, SIM->varnames[index], NAMELENGTH) )

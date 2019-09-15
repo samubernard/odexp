@@ -111,7 +111,7 @@ int lrexprank(coupling_function f,int N, int *p, double range)
               spe = 0.0;
   double      abstol = get_dou("lrabstol"),
               reltol = get_dou("lrreltol");
-  size_t      errn = max(N/10,10);
+  int      errn = max(N/10,10);
 
   gsl_function     F;
   gsl_cheb_series *cs = gsl_cheb_alloc (pmax);
@@ -388,7 +388,7 @@ int lrexpwp(int iu, int iv, int r, coupling_function f, double *x, double *y,
   i = 0;
   while ( myself_ != NULL )
   {
-    /* memcpy(void *restrict dst, const void *restrict src, size_t n); */
+    /* memcpy(void *restrict dst, const void *restrict src, int n); */
     memcpy(U + i, myself_->expr + iu, r * sizeof(double)); /* fill U row by row */
     memcpy(Vs + i, myself_->expr + iv, r * sizeof(double)); /* fill Vs row by row */
     myself_ = myself_->nextel;

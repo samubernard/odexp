@@ -10,7 +10,7 @@ enum solver { GSL_RK2, GSL_RK4, GSL_RKF45, GSL_RKCK, GSL_RK8PD,
 
 enum bd_method { SSA, TAU_LEAPING };
 
-/* extern size_t ode_system_size; */
+/* extern int ode_system_size; */
 extern int *NUM_IC;
 
 
@@ -55,10 +55,10 @@ int set_num_ic( double *y );
 double SSA_timestep(double *r);
 void SSA_apply_birthdeath(const double t, odeic single_ic );
 void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_ic );
-int ncumsum(double *x, size_t len, double *sumx);
+int ncumsum(double *x, int len, double *sumx);
 
 /* various */
-int any(int *, size_t len);
+int any(int *, int len);
 
 /* stochastic differential equation solver */
 int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, double y[] );

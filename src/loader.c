@@ -8,27 +8,27 @@
 #include "loader.h"
 #include "macros.h"
 
-int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
+int get_multiindex(const char *line, int *nbr_dim, int **size_dim)
 {
 
   int     bracket1;
-  size_t  index0,
+  int  index0,
           index1;
   int     nbr_index;
   /* scan for two integers, index0, index1 in [iter=i0:i1] */
-  nbr_index = sscanf(line,"%*[^[] [ %*[^=] = %zu : %zu ]%n",&index0,&index1,&bracket1);
+  nbr_index = sscanf(line,"%*[^[] [ %*[^=] = %d : %d ]%n",&index0,&index1,&bracket1);
   *nbr_dim = 0;
   if ( nbr_index == 2 )
   {
     do 
     {
-      *size_dim = realloc(*size_dim, ((*nbr_dim)+1)*sizeof(size_t));
+      *size_dim = realloc(*size_dim, ((*nbr_dim)+1)*sizeof(int));
       (*size_dim)[*nbr_dim] = index1 - index0; 
       (*nbr_dim)++;
       line+=bracket1;
       /* scan for two integers, index0, index1 in [iter=i0:i1] */
-      nbr_index = sscanf(line," [ %*[^=] = %zu : %zu ]%n",&index0,&index1,&bracket1);
-      /* printf("--nbr_dim %zu, size_dim %zu\n",*nbr_dim,(*size_dim)[*nbr_dim-1]); */
+      nbr_index = sscanf(line," [ %*[^=] = %d : %d ]%n",&index0,&index1,&bracket1);
+      /* printf("--nbr_dim %d, size_dim %d\n",*nbr_dim,(*size_dim)[*nbr_dim-1]); */
       /* printf("--nbr_index %d\n",nbr_index); */
     } while ( nbr_index == 2 );
   }
@@ -51,7 +51,7 @@ int get_multiindex(const char *line, size_t *nbr_dim, size_t **size_dim)
 
 }
 
-int printf_option_line(size_t i)
+int printf_option_line(int i)
 {
   static int p = 16;
   int s = (int)log10(NBROPTS)+1;
@@ -61,35 +61,35 @@ int printf_option_line(size_t i)
     switch (GOPTS[i].valtype)
     {
       case 'd':
-        printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
+        printf("  O[%s%*d%s] ",T_IND,s,i,T_NOR);
         printf("%-*s",p,GOPTS[i].name);
         printf("%s%-*g ",T_VAL,p,GOPTS[i].numval);
         printf("%s%s%s\n",T_DET,GOPTS[i].descr,T_NOR);
         break;
       case 'i':
-        printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
+        printf("  O[%s%*d%s] ",T_IND,s,i,T_NOR);
         printf("%-*s",p,GOPTS[i].name);
         printf("%s%-*d ",T_VAL,p,GOPTS[i].intval);
         printf("%s%s%s\n",T_DET,GOPTS[i].descr,T_NOR);
         break;
       case 's':
-        printf("  O[%s%*zu%s] ",T_IND,s,i,T_NOR);
+        printf("  O[%s%*d%s] ",T_IND,s,i,T_NOR);
         printf("%-*s",p,GOPTS[i].name);
         printf("%s%-*s ",T_VAL,p,GOPTS[i].strval);
         printf("%s%s%s\n",T_DET,GOPTS[i].descr,T_NOR);
         break;
       default:
-        printf("  O[%-*zu] %-*s = not defined\n",s,i,p,GOPTS[i].name);
+        printf("  O[%-*d] %-*s = not defined\n",s,i,p,GOPTS[i].name);
     }
     success = 1;
   }
   return success;
 }
 
-int load_line(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
+int load_line(const char *filename, nve var, const char *sym, const int sym_len, int exit_if_nofile)
 {
-  size_t  var_index = 0,
-          linecap = 0;
+  int  var_index = 0;
+  size_t  linecap = 0;
   ssize_t linelength;
   char *line = NULL;
   char key[NAMELENGTH]; 
@@ -135,10 +135,10 @@ int load_line(const char *filename, nve var, const char *sym, const size_t sym_l
   return success;
 }
 
-int load_nameval(const char *filename, nve var, const char *sym, const size_t sym_len, int exit_if_nofile)
+int load_nameval(const char *filename, nve var, const char *sym, const int sym_len, int exit_if_nofile)
 {
-  size_t var_index = 0;
-  size_t length_name;
+  int var_index = 0;
+  int length_name;
   ssize_t linelength;
   size_t linecap = 0;
   char *line = NULL;
@@ -194,7 +194,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
           *var.max_name_length = length_name;
         }
 
-        printf("  %s[%s%zu%s] %-*s=",sym,T_IND,var_index,T_NOR,*var.max_name_length+2,var.name[var_index]);
+        printf("  %s[%s%d%s] %-*s=",sym,T_IND,var_index,T_NOR,*var.max_name_length+2,var.name[var_index]);
         printf(" %s%f   %s%s%s\n",T_VAL,var.value[var_index],T_DET,attribute,T_NOR);
         var_index++;
       }
@@ -209,7 +209,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const size_t sy
 
 int load_options(const char *filename, int exit_if_nofile)
 {
-  size_t idx_opt;
+  int idx_opt;
   ssize_t linelength;
   size_t linecap = 0;
   char *line = NULL;
@@ -283,7 +283,7 @@ int load_options(const char *filename, int exit_if_nofile)
   return success;
 }
 
-int load_double_array(const char *filename, double_array *array_ptr, const char *sym, size_t sym_len, int exit_if_nofile)
+int load_double_array(const char *filename, double_array *array_ptr, const char *sym, int sym_len, int exit_if_nofile)
 {
   /* Find the last line starting with string sym and copy doubles on 
    * that line into *array_ptr. If no line starts with sym, *array_ptr is not assigned.
@@ -297,7 +297,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
   int has_read = 0;
   double r;
   FILE *fr;
-  size_t i;
+  int i;
   int k = 0;
   int success = 0;
   fr = fopen (filename, "rt");
@@ -366,22 +366,22 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
 
 }
 
-int load_strings(const char *filename, nve var, const char *sym, const size_t sym_len, int prefix, char sep, int exit_if_nofile)
+int load_strings(const char *filename, nve var, const char *sym, const int sym_len, int prefix, char sep, int exit_if_nofile)
 {
-  size_t  var_index = 0,
+  int  var_index = 0,
           j = 0,
-          linecap = 0,
           index0,
           index1,
           index_factor = 1,
           expr_size;
   ssize_t linelength;
+  size_t  linecap = 0;
   int     namelen0,
           namelen1,
           nbr_read_1,
           nbr_read_2;
-  size_t  nbr_dim = 0;
-  size_t   *size_dim = malloc(sizeof(size_t));
+  int  nbr_dim = 0;
+  int   *size_dim = malloc(sizeof(int));
   char *line = NULL;
   char str2match[NAMELENGTH];
   char key[NAMELENGTH]; 
@@ -467,14 +467,14 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
       do
       {
         /* try to read var[0] */
-        nbr_read_1 = sscanf(basevarname+namelen0, " [ %zu ]%n", &index0, &namelen1); /* get index var[a] -> a */
+        nbr_read_1 = sscanf(basevarname+namelen0, " [ %d ]%n", &index0, &namelen1); /* get index var[a] -> a */
         if (nbr_read_1 == 1) /* single expresssion with brackets var[0] */
         {
           index1 = index0+1;
           snprintf(iterator_str,1,"");
         }
         /* try to read var[i=0:5] */
-        nbr_read_2 = sscanf(basevarname+namelen0, " [ %*[^=] =  %zu : %zu ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
+        nbr_read_2 = sscanf(basevarname+namelen0, " [ %*[^=] =  %d : %d ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */
         if (nbr_read_2 > 0) /* array expresssion var[i=0:5] or single expression var[i=0] */
         {
           sscanf(basevarname+namelen0, " [ %[^=]", iterator_str); /* get name of iterator */
@@ -489,10 +489,10 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
           index_factor *= (index1-index0);
           for(j=0;j<expr_size;j++)
           {
-            /* snprintf(new_index,NAMELENGTH,"[%s%zu]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
+            /* snprintf(new_index,NAMELENGTH,"[%s%d]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
             /* do not print the iterator's names. this might lead to ambiguity when 
              * several iterators are used, but is of no consequence outside displaying */
-            snprintf(new_index,NAMELENGTH,"%zu", index0 + (j/(expr_size/index_factor)) % index1 );
+            snprintf(new_index,NAMELENGTH,"%d", index0 + (j/(expr_size/index_factor)) % index1 );
             strcat(var.name[var_index+j],"[");
             strcat(var.name[var_index+j],new_index);
             strcat(var.name[var_index+j],"]");
@@ -524,7 +524,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
       for (j=0;j<expr_size;j++)
       {
         var.expr_index[var_index+j] = var_index;
-        printf("  %s[%s%zu%s] %-*s %c %s%s%s %s%s%s\n",\
+        printf("  %s[%s%d%s] %-*s %c %s%s%s %s%s%s\n",\
             sym,T_IND,var_index+j,T_NOR,*var.max_name_length,var.name[var_index+j],\
             sep,T_EXPR,var.expression[var_index+j],T_NOR,T_DET,var.attribute[var_index+j],T_NOR);
       }
@@ -542,7 +542,7 @@ int load_strings(const char *filename, nve var, const char *sym, const size_t sy
 
 int trim_whitespaces(char *s)
 {
-  size_t i = strlen(s) - 1;
+  int i = strlen(s) - 1;
   while ( s[i] == ' ' )
   {
     s[i] = '\0';
@@ -553,7 +553,7 @@ int trim_whitespaces(char *s)
 
 
 /* replace full word 'search' by 'replace' in 'strings' */
-int replace_word(char* string, const char* search, const char* replace, size_t max_len) 
+int replace_word(char* string, const char* search, const char* replace, int max_len) 
 {
 	char *old_pos = string, *new_pos = NULL;
   char *end_of_str = NULL;

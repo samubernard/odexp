@@ -69,7 +69,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     if ( get_int("progress") > 2 ) /* level 3: print numerical integration information */
     {
       printf("\n  %ssolver  %-8s h0       h        pop size   est. time%s\n",T_HEAD, get_str("indvar"),T_NOR);
-      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s %s%5zu%s       %s%-6.1f sec%s", \
+      printf("  %s%-7s%s %s%5.2e%s %s%5.2e%s %s%5.2e%s %s%5d%s       %s%-6.1f sec%s", \
           T_DET, get_str("solver"), T_NOR, T_VAL, tt, T_NOR, \
           T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
           T_VAL, POP_SIZE, T_NOR, T_VAL, (double)(clock() - start) / CLOCKS_PER_SEC * (1 - fcmpl) / fcmpl, T_NOR); 
@@ -138,16 +138,16 @@ int odesolver( oderhs pop_ode_rhs,
             sum_rates,
             expected_dt_ssa,
            *tstops = NULL;
-    size_t idx_stop = 0;
+    int idx_stop = 0;
 
     /* world SIM */
     par *pars, *next_pars;
-    size_t pop_size;
-    size_t sim_size;
-    size_t ode_system_size = SIM->nbr_var;
+    int pop_size;
+    int sim_size;
+    int ode_system_size = SIM->nbr_var;
 
     /* iterators */
-    size_t i,j;
+    int i,j;
 
     /* warning/error message */
     char msg[EXPRLENGTH];
@@ -217,7 +217,7 @@ int odesolver( oderhs pop_ode_rhs,
                                       */ 
 
     /* stopping time (discontinuities for example) */
-    /* printf("--tspan->length=%ld\n",tspan->length); */
+    /* printf("--tspan->length=%d\n",tspan->length); */
     if ( tspan->length > 2 )
     {
        nbr_stops = tspan->length-2;
@@ -225,7 +225,7 @@ int odesolver( oderhs pop_ode_rhs,
        for(i=0;i<nbr_stops;i++)
        {
           tstops[i] = tspan->array[i+1];
-          /* printf("--tstop[%ld]=%g\n",i,tstops[i]); */
+          /* printf("--tstop[%d]=%g\n",i,tstops[i]); */
        }
        mergesort(tstops, nbr_stops, sizeof(double),compare);
        nextstop = tstops[idx_stop];
@@ -344,7 +344,7 @@ int odesolver( oderhs pop_ode_rhs,
 
     if ( pop_size != SIM->pop->size ) /* check that pop_size == SIM->pop->size */
     {
-        DBPRINT("pop_size = %zu, SIM->pop->size = %zu - error", pop_size, SIM->pop->size);
+        DBPRINT("pop_size = %d, SIM->pop->size = %d - error", pop_size, SIM->pop->size);
     }
 
     f = malloc(sim_size*sizeof(double));
@@ -688,10 +688,10 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     int hmin_alert              = 0,
         disc_alert              = 0,
         abort_odesolver_alert   = 0;
-    long nbr_out = (long)get_int("res");
+    int nbr_out = (int)get_int("res");
     FILE *file;
     const char current_data_buffer[] = "range.tab";
-    size_t i;
+    int i;
     int    p;
     
     /* sigaction */
@@ -705,7 +705,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
             nextstop,
             nbr_stops,
            *tstops = NULL;
-    size_t idx_stop = 0;
+    int idx_stop = 0;
 
     /* gsl ode */
     const gsl_odeiv2_step_type * odeT;
@@ -988,10 +988,10 @@ int phasespaceanalysis( rootrhs root_rhs, double *guess, void *params, steady_st
     double *ics_min, /* lower bounds on steady state values */
            *ics_max, /* bounds on steady state values */
            *x0;      /* current guess */
-    size_t ntry = 0;
-    size_t max_fail = get_int("maxfail"); /* max number of iteration without finding a new steady state */
-    size_t nbr_stst = 0; /* number of steady state found so far */
-    size_t i,j;
+    int ntry = 0;
+    int max_fail = get_int("maxfail"); /* max number of iteration without finding a new steady state */
+    int nbr_stst = 0; /* number of steady state found so far */
+    int i,j;
     double rel_tol = get_dou("nlabstol"), 
            abs_tol = get_dou("nlreltol"), 
            err, 
@@ -1003,7 +1003,7 @@ int phasespaceanalysis( rootrhs root_rhs, double *guess, void *params, steady_st
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
-    size_t iter = 0;
+    int iter = 0;
 
     gsl_multiroot_function f = {root_rhs, SIM->nbr_var, params};
 
@@ -1061,7 +1061,7 @@ int phasespaceanalysis( rootrhs root_rhs, double *guess, void *params, steady_st
 
         } while( (status_res == GSL_CONTINUE || status_delta == GSL_CONTINUE ) && iter < max_fail );
 
-        /* DBPRINT("ntry = %zu; iter = %zu", ntry, iter); */
+        /* DBPRINT("ntry = %d; iter = %d", ntry, iter); */
 
         /* compare with previous steady states */
         newstst = 1;
@@ -1128,9 +1128,9 @@ int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *sts
     gsl_multiroot_fsolver *s;
 
     int status;
-    size_t i, iter = 0;
+    int i, iter = 0;
 
-    const size_t n = SIM->nbr_var;
+    const int n = SIM->nbr_var;
     gsl_multiroot_function f = {root_rhs, n, params};
 
     gsl_matrix *J = gsl_matrix_alloc(n,n);
@@ -1194,11 +1194,11 @@ int ststsolver( rootrhs root_rhs, double *guess, void *params, steady_state *sts
 int eig(gsl_matrix *J, steady_state *stst)
 {
     int status;
-    size_t i;
+    int i;
     gsl_vector_view re;
     gsl_vector_view im;
     gsl_complex ev_complex;
-    const size_t n = J->size1;
+    const int n = J->size1;
     gsl_vector_complex *eval = gsl_vector_complex_alloc(n);
     
     gsl_eigen_nonsymm_workspace *w = gsl_eigen_nonsymm_alloc(n);
@@ -1229,14 +1229,14 @@ int eig(gsl_matrix *J, steady_state *stst)
 int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double eps_abs, gsl_matrix *J, void *params)
 {
 
-    const size_t n = J->size1;
+    const int n = J->size1;
 
     gsl_vector *f1 = gsl_vector_alloc(n);
     gsl_vector *x1 = gsl_vector_alloc(n);
 
     double dx, dfdx;
 
-    size_t i,j;
+    int i,j;
 
     for(j=0;j<n;j++)
     {
@@ -1251,7 +1251,7 @@ int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double e
         {
             root_rhs(x1,params,f1); /* set f(x+dx) */
             dfdx = (gsl_vector_get(f1,i)-gsl_vector_get(f,i))/dx;
-            /* printf("--ststsolver dx=%g, dfdx=%g, [i,j]=%ld,%ld\n",dx,dfdx,i,j); */
+            /* printf("--ststsolver dx=%g, dfdx=%g, [i,j]=%d,%d\n",dx,dfdx,i,j); */
             gsl_matrix_set(J,i,j,dfdx);
             /* printf("--ststsolver %g\n",dfdx); */
         }
@@ -1267,7 +1267,7 @@ int jac(rootrhs root_rhs, gsl_vector *x, gsl_vector *f, double eps_rel, double e
 
 int ode_jac(double t, const double y[], double * dfdy, double dfdt[], void * params)
 {
-    const size_t dimension = SIM->nbr_var*POP_SIZE;
+    const int dimension = SIM->nbr_var*POP_SIZE;
 
     oderhs ode_rhs = SIM->ode_rhs; 
 
@@ -1281,7 +1281,7 @@ int ode_jac(double t, const double y[], double * dfdy, double dfdt[], void * par
     const double eps_rel = 1e-12;
     const double eps_abs = 1e-12;
 
-    size_t i,j;
+    int i,j;
 
     ode_rhs(t,y,f,params);         /* get f: dydt = f(t,y) */
 
@@ -1319,10 +1319,10 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
 {
     /* naive steady state continuation method */
     clock_t start = clock();
-    long p = get_int("actpar"); 
-    size_t i;
-    long ntry = 0;
-    long max_fail = get_int("maxfail");
+    int p = get_int("actpar"); 
+    int i;
+    int ntry = 0;
+    int max_fail = get_int("maxfail");
     int status;
     steady_state stst;
     double h = get_dou("hc0"),
@@ -1332,7 +1332,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
     double mu2, mu1, mu0;
     double b, c, s=h;
     double eig_tol = get_dou("nlabstol"); 
-    long nstst = 0;
+    int nstst = 0;
 
     int turning_point_found = 0;
     int turning_point_before = 0;
@@ -1372,7 +1372,7 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
     }
     for (i = 0; i < SIM->nbr_var; i++)
     {
-        fprintf(br_file,"\tRe_%ld\tIm_%ld\tNote",i,i);
+        fprintf(br_file,"\tRe_%d\tIm_%d\tNote",i,i);
     }
     fprintf(br_file,"\n");
 
@@ -1383,12 +1383,12 @@ int ststcont( rootrhs root_rhs, nve ics, void *params)
          * for fixed parameter values mu
          * =============================*/
         printf("  *----------------------*\n");
-        printf("  %ld: %s = %g, s=%g\n",ntry,SIM->parnames[p],SIM->mu[p],s);
+        printf("  %d: %s = %g, s=%g\n",ntry,SIM->parnames[p],SIM->mu[p],s);
         status = ststsolver(root_rhs,ics.value, params, &stst);
         if ( status == GSL_SUCCESS ) /* then move to next point */
         {
             nstst++;
-            fprintf(br_file,"%ld\t%g",nstst,SIM->mu[p]);
+            fprintf(br_file,"%d\t%g",nstst,SIM->mu[p]);
             /* print steady states */
             for (i=0; i<SIM->nbr_var; i++)
             {
@@ -1572,9 +1572,9 @@ static int compare (void const *a, void const *b)
 int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, const double t, const double *y)
 {
     int cp = get_int("particle");
-    size_t tx = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
+    int tx = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
     par *pars = (par *)NULL;
-    pars = getpar((size_t)cp);
+    pars = getpar((int)cp);
     double nan = NAN;
     if ( ngx == -1 )
     {
@@ -1658,7 +1658,7 @@ int fwrite_quick(FILE *quickfile,const int ngx,const int ngy, const int ngz, con
 void update_SIM_from_y(const double *y)
 {
     par *pars = SIM->pop->start;
-    size_t i,j = 0;
+    int i,j = 0;
     while ( pars != NULL )
     {
         for (i = 0; i < SIM->nbr_var; i++)
@@ -1672,7 +1672,7 @@ void update_SIM_from_y(const double *y)
 
 void fprintf_SIM_y(FILE *file, double t, double *y)
 {
-        size_t i,j = 0;
+        int i,j = 0;
         par *pars;
         fprintf(file,"%g ",t);
         pars = SIM->pop->start;
@@ -1730,14 +1730,14 @@ int remove_id_files()
 {
     /* try to remove idXX curves */
     int fail = 0;
-    size_t i;
+    int i;
     char pathtofile[EXPRLENGTH];
     for (i = 0; i < SIM->max_id; i++)
     {
-        snprintf(pathtofile,EXPRLENGTH-1,".odexp/id%zu.dat",i);
+        snprintf(pathtofile,EXPRLENGTH-1,".odexp/id%d.dat",i);
         if ( remove(pathtofile) )
         {
-          /* DBPRINT("error removing id file %zu.", i); */
+          /* DBPRINT("error removing id file %d.", i); */
           fail = 1;
         }
     }
@@ -1746,7 +1746,7 @@ int remove_id_files()
 
 int set_num_ic( double *y )
 {
-    size_t i, j = 0;
+    int i, j = 0;
     par *pars = SIM->pop->start;
     while(pars != NULL)
     {
@@ -1793,12 +1793,12 @@ void SSA_apply_birthdeath(const double t, odeic single_ic )
 {
     par *pars = (par *)NULL;
     par **p;
-    size_t i;
+    int i;
 
     double *r,
 			sumr = 0.0,
 			choose_event;
-    size_t  event_index = 0,
+    int  event_index = 0,
             choose_pars;
 	  int die = 0, repli = 0, birth = 0;
 
@@ -1891,7 +1891,7 @@ void SSA_apply_birthdeath(const double t, odeic single_ic )
 void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_ic )
 {
     par *pars = (par *)NULL;
-    size_t i=0;
+    int i=0;
     RANDINT nbr_new_particles=0; 
 
 	  int die = 0, repli = 0;
@@ -1965,7 +1965,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
     /* add new particles */
     nbr_new_particles = poisson( SIM->pop_birth_rate * dt );
     /* DBPRINT("nbr new particles: %d", (int)nbr_new_particles); */
-    for ( i=0; i<(size_t)nbr_new_particles; i++ )
+    for ( i=0; i<(int)nbr_new_particles; i++ )
     {
           /* DBPRINT("birth"); */
           par_birth();
@@ -1979,9 +1979,9 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
 
 }
 
-int ncumsum(double *x, size_t len, double *sumx)
+int ncumsum(double *x, int len, double *sumx)
 {
-    size_t i;
+    int i;
     for( i=1; i<len; i++)
     {
         x[i] += x[i-1];
@@ -1994,9 +1994,9 @@ int ncumsum(double *x, size_t len, double *sumx)
     return 0;
 }
 
-int any(int *y, size_t len)
+int any(int *y, int len)
 {
-    size_t i = 0;
+    int i = 0;
     while ( y[i] == 0 )
     {
         i++;
@@ -2008,7 +2008,7 @@ int any(int *y, size_t len)
 int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, double y[] )
 {
   /* this is just a Forward-Euler step */
-  size_t i;
+  int i;
   double *f;
   f = malloc(sys->dimension * sizeof(double));
   if ( *h > (tnext - *t) )
@@ -2016,7 +2016,7 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
     *h = tnext-(*t);
   }
   sys->function(*t, y, f, sys->params);
-  for ( i=0; i<sys->dimension; ++i)
+  for ( i=0; i<(int)sys->dimension; ++i)
   {
     y[i] = y[i] + (*h)*f[i];
   }
@@ -2031,11 +2031,11 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
 int iteration_apply( gsl_odeiv2_system *sys , double *t, double y[] )
 {
   /* this is just an iteration step */
-  size_t i;
+  int i;
   double *f;
   f = malloc(sys->dimension * sizeof(double));
   sys->function(*t, y, f, sys->params);
-  for ( i=0; i<sys->dimension; ++i)
+  for ( i=0; i<(int)sys->dimension; ++i)
   {
     y[i] = f[i];
   }

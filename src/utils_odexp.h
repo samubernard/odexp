@@ -26,7 +26,7 @@ double plus(double x, double y); /* addition */
 double identity(double x);
 double sumxy(long len, double (*f)(double), double (*g)(double, double), const double *x, const double yi); 
 double kern(double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p, long len);
-double linchaindelay(const double root, const double *chain, const size_t link, const double delay, const size_t len);
+double linchaindelay(const double root, const double *chain, const int link, const double delay, const int len);
 
 
 

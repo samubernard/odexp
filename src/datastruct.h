@@ -46,7 +46,7 @@ typedef struct gen_option
 typedef struct double_array
 {
     double *array;
-    size_t length;
+    int length;
 } double_array;
 
 /* unused */
@@ -63,7 +63,7 @@ typedef struct steady_state
     double *re;
     double *im; 
     int index;
-    size_t size;
+    int size;
     int status;
 } steady_state;
 
@@ -114,14 +114,14 @@ void printf_particle(par *p);
 
 double getv(char *name, par *p);
 
-par * getpar( size_t with_id );
+par * getpar( int with_id );
 
 int fwrite_particle_state(const double *restrict t, par *p);
 int fwrite_final_particle_state( void ); 
 int fclose_particle_files( void );
 int fwrite_all_particles(const double *restrict t);
 int fwrite_SIM(const double *restrict t);
-int list_particle( size_t with_id );
+int list_particle( int with_id );
 int list_stats( void );
 
 
