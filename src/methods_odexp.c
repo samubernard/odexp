@@ -44,8 +44,8 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     }
 
     printf("\n%s",LINEUP_AND_CLEAR);               /* clear the msg line */
-    printf("%s",LINEUP_AND_CLEAR);                 /* clear one line  */
-    if ( get_int("progress") > 2 )                 /* if level 3: clear two more lines */
+    printf("%s",LINEUP_AND_CLEAR);                 /* clear one line above  */
+    if ( get_int("progress") > 2 )                 /* if level 3: clear two more lines above */
     {
       printf("%s",LINEUP_AND_CLEAR);  
       printf("%s",LINEUP_AND_CLEAR);  
@@ -74,7 +74,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
           T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
           T_VAL, POP_SIZE, T_NOR, T_VAL, (double)(clock() - start) / CLOCKS_PER_SEC * (1 - fcmpl) / fcmpl, T_NOR); 
     }
-    PRINTWARNING("%s\n\n\033[F", msg); /* [F = one line up */
+    PRINTWARNING("\n%s\n\033[F", msg); /* [F = one line up */
 }
 
 int odesolver( oderhs pop_ode_rhs, 
@@ -422,7 +422,7 @@ int odesolver( oderhs pop_ode_rhs,
       printf("\n\n");
     }
     fflush(stdout);
-    snprintf(msg,EXPRLENGTH,""); /* set message to empty string */
+    msg[0] = 0; /* snprintf(msg,EXPRLENGTH,""); set message to empty string */
 
     s = gsl_odeiv2_step_alloc(odeT,sim_size);
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
@@ -483,7 +483,7 @@ int odesolver( oderhs pop_ode_rhs,
         switch (bd_meth)
         {
           case SSA:
-            snprintf(msg,EXPRLENGTH,""); /* set message to empty string */
+            msg[0] = 0; /* snprintf(msg,EXPRLENGTH,""); set message to empty string */
             if ( dt_ssa < dt_dyn )
             {
               dt_next = dt_ssa; /* advance to time of event */
