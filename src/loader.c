@@ -120,9 +120,9 @@ int load_line(const char *filename, nve var, const char *sym, const int sym_len,
     {
       success = 1;
       sscanf(line,"%*s %[^\n]",var.comment[var_index]);
-      snprintf(var.attribute[var_index],1,"");
-      snprintf(var.name[var_index],1,"");
-      snprintf(var.expression[var_index],1,"");
+      var.attribute[var_index] = 0;  /* snprintf(var.attribute[var_index],1,""); */
+      var.name[var_index] = 0;       /* snprintf(var.name[var_index],1,""); */
+      var.expression[var_index] = 0; /* snprintf(var.expression[var_index],1,""); */
       var.value[var_index] = 0.0;
 
       printf("  %s %s%s%s\n", sym,T_DET,var.comment[var_index],T_NOR);
@@ -173,8 +173,8 @@ int load_nameval(const char *filename, nve var, const char *sym, const int sym_l
       {
         success = 1;
         /* try to read SYM0:N VAR VALUE {ATTRIBUTE} */
-        snprintf(attribute,1,"");
-        snprintf(comment,1,"");
+        attribute[0] = 0; /* snprintf(attribute,1,""); */
+        comment[0] = 0;   /* snprintf(comment,1,""); */
         has_read = sscanf(line,"%*s %s %lf {%[^}]}",\
             var.name[var_index],&var.value[var_index],attribute);
         /* try to read comments */
@@ -438,8 +438,8 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
       {
         snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^#{\n] {%%[^}]}", sep); 
       }
-      snprintf(attribute,1,"");
-      snprintf(comment,1,"");
+      attribute[0] = 0; /* snprintf(attribute,1,""); */
+      comment[0] = 0;   /* snprintf(comment,1,""); */
       /* scan something like A0 VAR EXPRESSION {attr} */
       sscanf(line,str2match, &namelen0, basevarname, &namelen1, baseexpression, attribute);
       /* scan the comments */
@@ -454,9 +454,9 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
        * parse basevarname var[a]     to var[a]
        */
       sscanf(basevarname, "%[^[]%n", rootvarname, &namelen0); /* get root name var[a] -> var */
-      snprintf(extensionvarname,1,"");
+      extensionvarname[0] = 0; /* snprintf(extensionvarname,1,""); */
       sscanf(basevarname, "%*[^/]%s", extensionvarname); /* get the dt if there is one */
-      snprintf(index_str,1,""); /* reset index_str. */  
+      index_str[0] = 0; /* snprintf(index_str,1,""); reset index_str.  */
 
       for(j=0;j<expr_size;j++)
       {
@@ -471,7 +471,7 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
         if (nbr_read_1 == 1) /* single expresssion with brackets var[0] */
         {
           index1 = index0+1;
-          snprintf(iterator_str,1,"");
+          iterator_str[0] = 0; /* snprintf(iterator_str,1,""); */
         }
         /* try to read var[i=0:5] */
         nbr_read_2 = sscanf(basevarname+namelen0, " [ %*[^=] =  %d : %d ]%n", &index0, &index1, &namelen1); /* get index var[i=a:b] -> a b */

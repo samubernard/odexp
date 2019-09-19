@@ -63,7 +63,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"fo","font", 's', 0.0, 0, "Helvetica", "gnuplot FOnt", "gnuplotSettings"},
   {"fs","fontsize", 'i', 0.0, 13, "", "gnuplot Font Size", "gnuplotSettings"},
   {"term","terminal", 's', 0.0, 0, "qt noraise", "gnuplot TERMinal", "gnuplotSettings"},
-  {"pal","palette", 's', 0.0, 0, "acid", "color palette {acid} | other", "gnuplotSettings"},
+  {"pal","palette", 's', 0.0, 0, "acid", "color palette acid | qual | {apple}", "gnuplotSettings"},
   {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
   {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
   {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},

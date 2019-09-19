@@ -988,7 +988,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               }
               else
               {
-                snprintf(par_details,1,"");  
+                par_details[0] = 0; /* snprintf(par_details,1,"");   */
               }
               printf_list_val('P',i,i,padding,&mu,par_details);
             }
@@ -2262,7 +2262,7 @@ int printf_options(const char *optiontype)
 {
   int i; 
   char last_option_type[NAMELENGTH]; 
-  snprintf(last_option_type,NAMELENGTH,""); 
+  last_option_type[0] = 0; /* snprintf(last_option_type,NAMELENGTH,"");  */
   for(i=0;i<NBROPTS;i++)
   {
     if ( strcmp(GOPTS[i].optiontype,optiontype) == 0 || strlen(optiontype) == 0 )
