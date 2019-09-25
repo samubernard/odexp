@@ -622,10 +622,10 @@ sub declare_ode_functions
   print $fch "/* Declaration and definition of functions */\n";
 	my $s = qq(/* Functions */
 int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);
-int pop_rhs(double t, const double y_[], double f_[], void *params);
-int ode_rhs(double t, const double y_[], double f_[], void *params);
-int pop_init_conditions(const double t, double y_[], void *params);
-int ode_init_conditions(const double t, double y_[], void *params);
+int pop_rhs(double t, const double y_[], double f_[], void *params_);
+int ode_rhs(double t, const double y_[], double f_[], void *params_);
+int pop_init_conditions(const double t, double y_[], void *params_);
+int ode_init_conditions(const double t, double y_[], void *params_);
 
 );
 	print $fch $s;
@@ -679,10 +679,10 @@ int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f)
 sub print_pop_rhs
 {
 	my $s = qq(/* POP_RHS replicate ode_rhs pop_size times. y_ and f_ are array of size pop_size*ode_system_size */
-int pop_rhs(double t, const double y_[], double f_[], void *params)
+int pop_rhs(double t, const double y_[], double f_[], void *params_)
 {
     clock_t start = clock();
-    size_t i = 0, j;
+    size_t i_ = 0, j_;
     par *myself_ = SIM->pop->start;
     par __attribute__((unused)) *other_ = (par *)NULL;
 
@@ -691,18 +691,18 @@ int pop_rhs(double t, const double y_[], double f_[], void *params)
     /* low-rank expansion */
 
     SIM->pop_birth_rate=0.0;
-    for(j=0;j<SIM->nbr_mfd;j++)
+    for(j_=0;j_<SIM->nbr_mfd;j_++)
     {
-        SIM->meanfield[j] = 0.0;
+        SIM->meanfield[j_] = 0.0;
     }
     while ( myself_ != NULL )
     {
-        ode_rhs(t, y_+i*myself_->nbr_y, f_+i*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate
+        ode_rhs(t, y_+i_*myself_->nbr_y, f_+i_*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate
                                                                       * first update myself_->repli_rate       */
 );
 	print $fch $s;
   set_population_birth_rate($modelode);
-  $s = qq(        i++;
+  $s = qq(        i_++;
         myself_ = myself_->nextel;
     }
 );
@@ -713,7 +713,7 @@ int pop_rhs(double t, const double y_[], double f_[], void *params)
 	set_population_meanfields($modelode);
   $s = qq(    SIM->pop_birth_rate /= POP_SIZE;
     myself_ = SIM->pop->start;
-    i = 0;
+    i_ = 0;
     while ( myself_ != NULL )
     {
 );
@@ -721,8 +721,8 @@ int pop_rhs(double t, const double y_[], double f_[], void *params)
 
   set_population_coupling($modelode);
 
-  $s = qq(        ode_rhs(t, y_+i*myself_->nbr_y, f_+i*myself_->nbr_y, myself_);
-        i++;
+  $s = qq(        ode_rhs(t, y_+i_*myself_->nbr_y, f_+i_*myself_->nbr_y, myself_);
+        i_++;
         myself_ = myself_->nextel;
     }
 
@@ -797,9 +797,9 @@ sub set_population_coupling
   if ($nbr_n2_coupling > 0)
   {
     my $s = qq(        /* update coupling terms psi, O(N^2) */
-        for(j=0;j<myself_->nbr_psi;j++)
+        for(j_=0;j_<myself_->nbr_psi;j_++)
         {
-          myself_->psi[j] = 0.0;
+          myself_->psi[j_] = 0.0;
         }
         other_ = SIM->pop->start;
         while ( other_ != NULL )
@@ -819,9 +819,9 @@ sub set_population_coupling
     }
     $s = qq(          other_ = other_->nextel;
         }
-        for (j=0;j<myself_->nbr_psi;j++)
+        for (j_=0;j_<myself_->nbr_psi;j_++)
         {
-          myself_->psi[j] /= POP_SIZE;
+          myself_->psi[j_] /= POP_SIZE;
         }
 );
     print $fch $s;
@@ -833,18 +833,18 @@ sub set_population_coupling
 sub print_pop_init_conds
 {
 	my $s = qq(/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y_ is an array of size pop_size*ode_system_size */
-int pop_init_conditions(const double t, double y_[], void *params)
+int pop_init_conditions(const double t, double y_[], void *params_)
 {
-    size_t i = 0, j;
+    size_t i_ = 0, j_;
     par *myself_ = SIM->pop->start;
     while ( myself_ != NULL )
     {
-        ode_init_conditions(t, y_+i*myself_->nbr_y, myself_);
-        for(j=0;j<myself_->nbr_y;j++)
+        ode_init_conditions(t, y_+i_*myself_->nbr_y, myself_);
+        for(j_=0;j_<myself_->nbr_y;j_++)
         {
-            myself_->y[j] = *(y_+i*myself_->nbr_y);
+            myself_->y[j_] = *(y_+i_*myself_->nbr_y);
         }
-        i++;
+        i_++;
         myself_ = myself_->nextel;
     }
 
