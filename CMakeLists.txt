@@ -86,6 +86,7 @@ message( "** Executable files will be installed in ${BINDIR}" )
 # Set compilation flags (general and then build-type specific)
 # ============================================================================
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Wno-sign-compare -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wno-nullability-completeness")
 set(CMAKE_BUILD_TYPE Debug)
 
 

@@ -169,7 +169,7 @@ int lrexprank(coupling_function f,int N, int *p, double range)
 
 /* compute_cheby_expansion 
  * compute Chebychev polynomial expansion of the
- * coupling function y[i] = 1/N*sum_j f(x[j] - x[i])
+ * coupling function y[i] = sum_j f(x[j] - x[i])
  * The algorithm is based on Chebychev approximation of the
  * function f(u) on u in [-range, range]
  * The algorithm runs in O(N*P^2), and is faster than the
@@ -181,8 +181,8 @@ int lrexp(coupling_function f, double *x, double *y,
 {
   int i,k,m,j,l;
   double phi;
-  double *A= (double *)malloc( (p+1) * sizeof(double));
-  double *B= (double *)malloc( (p+1) * sizeof(double));
+  double *A   = (double *)malloc( (p+1) * sizeof(double));
+  double *B   = (double *)malloc( (p+1) * sizeof(double));
   gsl_cheb_series *cs = gsl_cheb_alloc (p);
 
   gsl_function F;
@@ -248,7 +248,7 @@ int lrexp(coupling_function f, double *x, double *y,
 /* lrexpw 
  * compute a polynomial approximation of the coupling term
  *
- *    y[i] = 1/N*sum_j W_ij f(x[j] - x[i])
+ *    y[i] = sum_j W_ij f(x[j] - x[i])
  *
  * for i = 1,...,N
  *

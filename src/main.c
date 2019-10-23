@@ -87,7 +87,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           ngz =  1,
           colx = 1,
           coly = 2;
-  int  p; /* active parameter index */
+  int  p = 0; /* active parameter index */
 
   /* iterators */
   int  i,j;
