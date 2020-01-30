@@ -90,6 +90,7 @@ const char *LINEUP_AND_CLEAR = "\033[F\033[J";
 const char PALETTE_ACID[8][7] = {"#002313", "#0000cc", "#cc0000", "#00cc00", "#cccc00", "#00cccc", "#cc00cc", "#cccccc"};
 const char PALETTE_QUAL[9][7] = {"#1E659F", "#CB0002", "#339631", "#7F358A", "#E66600", "#E6E61A", "#8D3D0E", "#DE68A6", "#808080"};
 const char PALETTE_APPLE[8][7] = {"#143d9d", "#dc143c", "#0c987d", "#ffd700", "#6eafc6", "#e34262", "#14de14", "#fff5c0"};
+const char PALETTE_MONO[1][7] = {"#143d9d"};
 
 
 int set_dou(const char *name, const double val) 
@@ -545,6 +546,11 @@ int par_birth ( void )
             " creating particle %d, exiting...\n",p->buffer,p->id);
         exit ( EXIT_FAILURE );
       }
+      p->is_file_open = 1;
+    }
+    else
+    {
+      p->is_file_open = 0;
     }
 
     p->death_rate = 0.0;
@@ -602,6 +608,11 @@ int par_repli (par *mother)
                  " particle %d, exiting...\n",p->buffer,p->id);
         exit ( EXIT_FAILURE );
       }
+      p->is_file_open = 1;
+    }
+    else
+    {
+      p->is_file_open = 0;
     }
     p->sister = mother; /* pointer to mother particle. 
                          * Warning: existence of mother not guarateed 
@@ -650,13 +661,13 @@ int delete_el( dlist *list, par *to_del)
     free(to_del->aux);
     free(to_del->y);
     free(to_del->psi);
-    free(to_del);
 
-    if ( get_int("writefiles") )
+    if ( to_del->is_file_open )
     {
       fclose(to_del->fid);
     }
 
+    free(to_del);
     list->size--;
 
     return 0;
@@ -750,6 +761,7 @@ int fwrite_particle_state(const double *restrict t, par *p)
         PRINTERR("error: could not open particle file '%s' for writing, exiting...\n",p->buffer);
         exit ( EXIT_FAILURE );
       }
+      p->is_file_open = 1;
     }
 
     if ( p->fid == NULL ) 
@@ -766,6 +778,7 @@ int fwrite_particle_state(const double *restrict t, par *p)
     if ( get_int("closefiles") )
     {
       fclose(p->fid);
+      p->is_file_open = 0;
     }
     
     return 0;
@@ -810,6 +823,7 @@ int fclose_particle_files( void )
       while ( pars != NULL )  
       {
           fclose(pars->fid);
+          pars->is_file_open = 0;
           pars = pars->nextel;
       }
     }

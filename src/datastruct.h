@@ -28,6 +28,7 @@ extern const char *LINEUP_AND_CLEAR; /* go up one line and clear it */
 extern const char PALETTE_ACID[8][7];
 extern const char PALETTE_QUAL[9][7];
 extern const char PALETTE_APPLE[8][7];
+extern const char PALETTE_MONO[1][7];
 
 
 typedef struct gen_option
