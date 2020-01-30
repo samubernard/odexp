@@ -1218,17 +1218,17 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 mu.value[p] = nvalue;
                 rerun = 1;
                 plot_mode = PM_REPLOT;
-                printf("  new active parameter %s set to %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
+                printf("  active parameter %s set to %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
               }
               else /* new active parameter without new value */
               {
-                printf("  new active parameter %s with value %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
+                printf("  active parameter %s is %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
               }
             }
             else
             {
               PRINTERR("  Error: Parameter index out of bound. Use lp to list parameters\n");
-              printf("  active parameter %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
+              printf("  (the active parameter %s = %s%lg)%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
             }
 
           }
@@ -2482,6 +2482,13 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
     for (i = 0; i < 8; i++)
     {
       fprintf(GPLOTP,"set linetype %d  lc rgb '%s' \n", i+1, PALETTE_QUAL[i]); 
+    }
+  }
+  else if ( strncmp("mono",get_str("palette"),4) == 0 )
+  {
+    for (i = 0; i < 8; i++)
+    {
+      fprintf(GPLOTP,"set linetype %d  lc rgb '%s' \n", i+1, PALETTE_MONO[0]); 
     }
   }
   else /* default: APPLE */
