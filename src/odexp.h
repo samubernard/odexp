@@ -49,6 +49,7 @@ typedef struct particle_state {
     int id;
 
     FILE *fid;
+    int is_file_open;
     char buffer[MAXFILENAMELENGTH];
 
     struct particle_state *sister;
@@ -155,7 +156,9 @@ double kern(double *Wi, double (*f)(double, double, double *), double xi, const 
 double linchaindelay(const double root, const double *chain, const int link, const double delay, const int len);
 
 /* low rank expansion */
-typedef double (*coupling_function)(double, void *);
+#ifndef _LREXP_H_
+typedef double (*coupling_function)(double, void *); 
+#endif
 int lrkern(coupling_function f, double *x, double *y, int N);
 int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
 int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N);
