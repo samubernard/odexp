@@ -256,6 +256,11 @@ int odesolver( oderhs pop_ode_rhs,
       PRINTERR("  error: could not open file stat file %s', exiting...\n",SIM->stats_buffer);
       exit ( EXIT_FAILURE );
     }
+    if ( ( SIM->ftrajectories = fopen(SIM->trajectories_buffer, "w") ) == NULL )
+    {
+      PRINTERR("  error: could not open file stat file %s', exiting...\n",SIM->trajectories_buffer);
+      exit ( EXIT_FAILURE );
+    }
 
     SIM->time_in_ode_rhs = 0.0;
     SIM->h = &h;
@@ -656,6 +661,7 @@ int odesolver( oderhs pop_ode_rhs,
 
     fclose(quickfile);
 
+    fclose(SIM->ftrajectories);
     fclose(SIM->fid);
     fclose_particle_files();
 

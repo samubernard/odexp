@@ -125,6 +125,9 @@ typedef struct system_state {
     char particle_varnames[MAXFILENAMELENGTH];
     FILE *fparticle_varnames;
 
+    char trajectories_buffer[MAXFILENAMELENGTH];
+    FILE *ftrajectories;
+
 } world;
 
 extern world  *SIM;

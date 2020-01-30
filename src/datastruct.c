@@ -40,7 +40,8 @@ struct gen_option GOPTS[NBROPTS] = {
   {"pm","popmode", 's', 0.0, 0, "population", "Population simulation Mode single | {population}", "population"},
   {"ps","popsize", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
   {"cf","closefiles", 'i', 0.0, 0, "", "close particle files between writes (slow when on)", "population"},
-  {"wf","writefiles", 'i', 0.0, 1, "", "write particle files", "population"},
+  {"wif","writeindfiles", 'i', 0.0, 1, "", "write individual particle simulation files", "population"},
+  {"wsf","writesingle", 'i', 0.0, 1, "", "write single simulation file", "population"},
   {"p","particle", 'i', 0.0, 0, "", "current Particle id", "population"},
   {"ssahmin","ssahmin", 'd', 0.0, 0, "", "SSA/tau-leap relative step threshold", "population"},
   {"aleap","aleap", 'd', 0.01, 0, "", "tau-leaping factor", "population"},
@@ -420,6 +421,7 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH-1);
     strncpy(s->stats_varnames,".odexp/stats_varnames.txt",MAXFILENAMELENGTH-1);
     strncpy(s->particle_varnames,".odexp/particle_varnames.txt",MAXFILENAMELENGTH-1);
+    strncpy(s->trajectories_buffer,".odexp/traj.dat",MAXFILENAMELENGTH-1);
 
     s->event[0] = -1;
     s->event[1] =  1;
@@ -538,7 +540,7 @@ int par_birth ( void )
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%d.dat",p->id);
     
-    if ( get_int("closefiles") == 0 && get_int("writefiles") )
+    if ( get_int("closefiles") == 0 && get_int("writeindfiles") )
     {
       if ( (p->fid = fopen(p->buffer,"w") ) == NULL )
       {
@@ -600,7 +602,7 @@ int par_repli (par *mother)
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%d.dat",p->id);
 
-    if ( get_int("closefiles") == 0 && get_int("writefiles") )
+    if ( get_int("closefiles") == 0 && get_int("writeindfiles") )
     {
       if ( ( p->fid = fopen(p->buffer,"w") ) == NULL )
       {
@@ -818,7 +820,7 @@ int fwrite_final_particle_state( void )
 int fclose_particle_files( void )
 {
     par *pars = SIM->pop->start;
-    if ( get_int("writefiles") )
+    if ( get_int("writeindfiles") )
     {
       while ( pars != NULL )  
       {
@@ -848,11 +850,25 @@ int fwrite_SIM(const double *restrict t)
 int fwrite_all_particles(const double *restrict t)
 {
     par *pars = SIM->pop->start;
-    if ( get_int("writefiles") )
+    if ( get_int("writeindfiles") )
     {
       while ( pars != NULL )
       {
           fwrite_particle_state(t, pars);
+          pars = pars->nextel;
+      }
+    }
+    if ( get_int("writesingle") )
+    {
+      pars = SIM->pop->start;
+      while ( pars != NULL )
+      {
+          fwrite(&(pars->id),sizeof(int),1,SIM->ftrajectories);
+          fwrite(t,sizeof(double),1,SIM->ftrajectories);
+          fwrite(pars->y,sizeof(double),pars->nbr_y,SIM->ftrajectories);
+          fwrite(pars->aux,sizeof(double),pars->nbr_aux,SIM->ftrajectories);
+          fwrite(pars->psi,sizeof(double),pars->nbr_psi,SIM->ftrajectories);
+          fwrite(pars->expr,sizeof(double),pars->nbr_expr,SIM->ftrajectories);
           pars = pars->nextel;
       }
     }
