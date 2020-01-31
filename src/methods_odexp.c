@@ -300,13 +300,10 @@ int odesolver( oderhs pop_ode_rhs,
             {
                 y[i+j] = pars->y[i];
             }
-            if ( get_int("closefiles") == 0 ) /* try to fopen all existing particle buffers */
-             {
-              if ( ( pars->fid = fopen(pars->buffer,"w") ) == NULL ) /* fopen buffers for existing particles */
-              {
+            if ( ( pars->fid = fopen(pars->buffer,"w") ) == NULL ) /* fopen buffers for existing particles */
+            {
                 PRINTERR("error: could not open particle file '%s', exiting...\n",pars->buffer);
                 exit ( EXIT_FAILURE );
-              }
             }
 
             j += ode_system_size;

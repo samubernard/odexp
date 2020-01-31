@@ -39,7 +39,6 @@ struct gen_option GOPTS[NBROPTS] = {
   {"lrmax","lrmax", 'i', 0.0, 31, "", "Low Rank approx MAX rank", "lowrank"},
   {"pm","popmode", 's', 0.0, 0, "population", "Population simulation Mode single | {population}", "population"},
   {"ps","popsize", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
-  {"cf","closefiles", 'i', 0.0, 0, "", "close particle files between writes (slow when on)", "population"},
   {"wif","writeindfiles", 'i', 0.0, 1, "", "write individual particle simulation files", "population"},
   {"wsf","writesingle", 'i', 0.0, 1, "", "write single simulation file", "population"},
   {"p","particle", 'i', 0.0, 0, "", "current Particle id", "population"},
@@ -540,7 +539,7 @@ int par_birth ( void )
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%d.dat",p->id);
     
-    if ( get_int("closefiles") == 0 && get_int("writeindfiles") )
+    if ( get_int("writeindfiles") )
     {
       if ( (p->fid = fopen(p->buffer,"w") ) == NULL )
       {
@@ -602,7 +601,7 @@ int par_repli (par *mother)
 
     snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%d.dat",p->id);
 
-    if ( get_int("closefiles") == 0 && get_int("writeindfiles") )
+    if ( get_int("writeindfiles") )
     {
       if ( ( p->fid = fopen(p->buffer,"w") ) == NULL )
       {
@@ -756,15 +755,6 @@ par * getpar( int with_id )
 
 int fwrite_particle_state(const double *restrict t, par *p)
 {
-    if ( get_int("closefiles") )
-    {
-      if ( (p->fid = fopen(p->buffer,"a") ) == NULL )
-      {
-        PRINTERR("error: could not open particle file '%s' for writing, exiting...\n",p->buffer);
-        exit ( EXIT_FAILURE );
-      }
-      p->is_file_open = 1;
-    }
 
     if ( p->fid == NULL ) 
     {
@@ -777,12 +767,6 @@ int fwrite_particle_state(const double *restrict t, par *p)
     fwrite(p->psi,sizeof(double),p->nbr_psi,p->fid);
     fwrite(p->expr,sizeof(double),p->nbr_expr,p->fid);
 
-    if ( get_int("closefiles") )
-    {
-      fclose(p->fid);
-      p->is_file_open = 0;
-    }
-    
     return 0;
 
 }
@@ -886,10 +870,24 @@ int list_particle(int with_id)
     char cmd_data[EXPRLENGTH];
     char cmd_print[EXPRLENGTH];
     snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
-    snprintf(cmd_data,EXPRLENGTH-1,\
+    if ( get_int("writeindfiles") )
+    {
+      snprintf(cmd_data,EXPRLENGTH-1,\
             "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
             nbr_cols, fix,  with_id, with_id);
-
+    }
+    else if ( get_int("writesingle") )
+    {
+      snprintf(cmd_data,EXPRLENGTH-1,\
+            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat | sed -n 's/^%d //p' >> .odexp/id%d.txt",\
+            nbr_cols, fix,  with_id, with_id);
+    }
+    else
+    {
+      PRINTERR("error: could not retrieve data for particle %d," \
+          "one of the options 'writeindfiles' or 'writesingle' must be on.\n",with_id);;
+      return 1;
+    }
     snprintf(cmd_print,EXPRLENGTH-1,"column -t .odexp/id%d.txt | less -S", with_id);
     s = system(cmd_varnames); 
     s = system(cmd_data); 
