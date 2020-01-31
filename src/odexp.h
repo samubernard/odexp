@@ -318,6 +318,15 @@ int mvar(const char *s, par *p, double *ptr);
        SIM->meanfield[index];                                             \
      })                                                     
 
+#define I_Y(name)                                             \
+    ({ static int index = 0;                                 \
+      while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
+      {                                                         \
+        index++; index %= SIM->nbr_var;                         \
+      }                                                         \
+      index;                                                    \
+    })
+
 #define I_EXPR(name)                                             \
     ({ static int index = 0;                                 \
       while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
@@ -353,6 +362,7 @@ int mvar(const char *s, par *p, double *ptr);
 #define ID      (myself_->id)
 #define OID     (other_->id)
 #define MID     (myself_->id) /* added for consistency - same a ID */
+#define FIRST   (SIM->pop->start)
 #if 0 /* in development */
 #define PREVIOUS (myself_->prevel)
 #define NEXT     (myself_->nextel)
