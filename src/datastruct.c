@@ -869,8 +869,18 @@ int list_particle(int with_id)
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
     char cmd_print[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
-    if ( get_int("writeindfiles") )
+    char id_pattern[EXPRLENGTH];
+    if ( with_id == -1 )
+    {
+      snprintf(id_pattern,EXPRLENGTH-1,"");
+      snprintf(cmd_varnames,EXPRLENGTH-1,"echo 'ID     ' | lam - .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
+    }
+    else
+    {
+      snprintf(id_pattern,EXPRLENGTH-1,"| sed -n 's/^%d //p'", with_id);
+      snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
+    } 
+    if ( get_int("writeindfiles") && with_id >= 0 )
     {
       snprintf(cmd_data,EXPRLENGTH-1,\
             "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
@@ -879,8 +889,9 @@ int list_particle(int with_id)
     else if ( get_int("writesingle") )
     {
       snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat | sed -n 's/^%d //p' >> .odexp/id%d.txt",\
-            nbr_cols, fix,  with_id, with_id);
+            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat"\
+            " %s >> .odexp/id%d.txt",\
+            nbr_cols, fix,  id_pattern, with_id);
     }
     else
     {
