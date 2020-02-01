@@ -48,10 +48,6 @@ typedef struct particle_state {
 
     int id;
 
-    FILE *fid;
-    int is_file_open;
-    char buffer[MAXFILENAMELENGTH];
-
     struct particle_state *sister;
 
     struct particle_state *nextel;

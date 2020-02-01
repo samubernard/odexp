@@ -37,6 +37,7 @@
 #define PRINTERR(...) \
     ({ fprintf(stderr, "%s", T_ERR); \
        fprintf(stderr,  __VA_ARGS__); \
-       fprintf(stderr, "%s",T_NOR); })
+       fprintf(stderr, "%s",T_NOR); \
+       printf("\n"); })
 
 #endif /* !FILE_MACROS_SEEN */

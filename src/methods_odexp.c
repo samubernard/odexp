@@ -300,11 +300,6 @@ int odesolver( oderhs pop_ode_rhs,
             {
                 y[i+j] = pars->y[i];
             }
-            if ( ( pars->fid = fopen(pars->buffer,"w") ) == NULL ) /* fopen buffers for existing particles */
-            {
-                PRINTERR("error: could not open particle file '%s', exiting...\n",pars->buffer);
-                exit ( EXIT_FAILURE );
-            }
 
             j += ode_system_size;
             pars = pars->nextel;
@@ -389,7 +384,7 @@ int odesolver( oderhs pop_ode_rhs,
     fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
     /* DBPRINT("  after quick file"); */
 
-    /* printf each particle in a binary file pars->buffer */
+    /* printf each particle in a binary file traj.dat */
     fwrite_all_particles(&t);
 
     /* sigaction -- detect Ctrl-C during the simulation  */
@@ -604,7 +599,7 @@ int odesolver( oderhs pop_ode_rhs,
                                                 *              SIM->pop_birth_rate 
                                                 */
             fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
-            /* printf each particle in a binary file pars->buffer */
+            /* printf each particle in a binary file traj.dat */
             fwrite_all_particles(&t);
             memset(SIM->event, 0, sizeof(SIM->event)); /* reset events */
             gsl_odeiv2_evolve_free(e);
@@ -660,7 +655,6 @@ int odesolver( oderhs pop_ode_rhs,
 
     fclose(SIM->ftrajectories);
     fclose(SIM->fid);
-    fclose_particle_files();
 
     gsl_odeiv2_evolve_free(e);
     gsl_odeiv2_control_free(c);

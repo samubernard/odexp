@@ -71,7 +71,7 @@ typedef struct steady_state
 
 
 /* number of global options */
-#define NBROPTS 59
+#define NBROPTS 57
 
 /* declare global options */
 extern struct gen_option GOPTS[NBROPTS];
@@ -117,14 +117,13 @@ double getv(char *name, par *p);
 
 par * getpar( int with_id );
 
-int fwrite_particle_state(const double *restrict t, par *p);
 int fwrite_final_particle_state( void ); 
-int fclose_particle_files( void );
 int fwrite_all_particles(const double *restrict t);
 int fwrite_SIM(const double *restrict t);
 int list_particle( int with_id );
 int list_stats( void );
 
+int generate_particle_file(int with_id);
 
 /* get the value of variable s, for particle p, into ptr */ 
 int mvar(const char *s, par *p, double *ptr);

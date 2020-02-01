@@ -157,12 +157,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   if ( ( logfr = fopen(logfilename, "a") ) == NULL ) /* create a log file or append an existing log file */
   {
-    PRINTERR("  Error: could not open log file '%s', exiting...\n",logfilename);
+    PRINTERR("  Error: could not open log file '%s', exiting...",logfilename);
     exit ( EXIT_FAILURE );
   }
   if ( ( dblogfr = fopen(dblogfilename, "w") ) == NULL ) /* create a debug log file or append an existing log file */
   {
-    PRINTERR("error: could not open log file '%s', exiting...\n",logfilename);
+    PRINTERR("error: could not open log file '%s', exiting...",logfilename);
     exit ( EXIT_FAILURE );
   }
   PRINTLOG("#--\nLog for model %s", odexp_filename); 
@@ -172,7 +172,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   {
     if (errno != EEXIST) 
     {
-      PRINTERR("%s\n", GFIFO);
+      PRINTERR("%s", GFIFO);
       unlink(GFIFO);
       return 1;
     }
@@ -181,7 +181,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                                                                                     persist mode with 
                                                                                     redirection of stderr > stdout */
   {
-    PRINTERR("gnuplot failed to open\n");
+    PRINTERR("gnuplot failed to open");
     pclose(GPLOTP);
     return 1;
   }
@@ -189,7 +189,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   fflush(GPLOTP);
   if ( ( GPIN = open(GFIFO, O_RDONLY | O_NONBLOCK) ) == -1 )
   {
-    PRINTERR("Could not open named pipe %s\n", GFIFO);
+    PRINTERR("Could not open named pipe %s", GFIFO);
     close(GPIN);
     return 1;
   }
@@ -289,7 +289,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     PRINTERR("\n  Error: Initial conditions not found.\n"
         "  File %s should contain initial condition for each dynamical variables "
         "with lines of the form\n"
-        "  INITIAL VAR VALUE\nExiting...\n\n", odexp_filename);
+        "  INITIAL VAR VALUE\nExiting...\n", odexp_filename);
     DBLOGPRINT("Error: Initial conditions not found.");
     exit ( EXIT_FAILURE );
   } 
@@ -310,10 +310,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   success = load_strings(eqfilename,eqn,"d",1,0,'=', exit_if_nofile);   
   if (!success)
   {
-    PRINTERR("\n  Error: Equations not found.\n"
+    PRINTERR("\n  Error: Equations not found."
         "  File %s should contain equations for each dynamical variables "
         "with lines of the form\n"
-        "  dX/dt = RHS\n  Exiting...\n\n", odexp_filename);
+        "  dX/dt = RHS\n  Exiting...\n", odexp_filename);
     DBLOGPRINT("Error: Equations not found.");
     exit ( EXIT_FAILURE );
   } 
@@ -494,6 +494,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
       printf("  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
       printf("  hexdump -e '%d \"%%5.2f \" \"\\n\"' idXX.dat\n\n", nbr_cols); 
+      printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_cols); 
       printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
       PRINTLOG("Quiet mode, will exit");
       break;
@@ -625,7 +626,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  %sUnknown command %s\n",T_ERR,T_NOR);
+              PRINTERR("  %sUnknown command %s",T_ERR,T_NOR);
             }
           }
           break;
@@ -721,7 +722,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             if ( nbr_read < 2 ) 
             {
-              PRINTERR("  Error: Requires 2 or 3 variable names/indices\n");
+              PRINTERR("  Error: Requires 2 or 3 variable names/indices");
               plot_mode = PM_UNDEFINED;
             }
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
@@ -737,7 +738,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  Error: x-axis index out of bound\n");
+              PRINTERR("  Error: x-axis index out of bound");
               plot_mode = PM_UNDEFINED;
             }
             if ( (ngy >= -1) && ngy < (int)total_nbr_x)
@@ -746,7 +747,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  Error: y-axis index out of bound\n");
+              PRINTERR("  Error: y-axis index out of bound");
               plot_mode = PM_UNDEFINED;
             }
             update_plot_options(ngx,ngy,ngz,dxv);
@@ -761,13 +762,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  error: z-axis index out of bound\n");
+              PRINTERR("  error: z-axis index out of bound");
               plot_mode = PM_UNDEFINED;
             }
           } 
           if ( nbr_read == 1 || nbr_read > 3 )
           {
-            PRINTERR("  Error: Requires 2 or 3 variable names/indices\n");
+            PRINTERR("  Error: Requires 2 or 3 variable names/indices");
             plot_mode = PM_UNDEFINED;
           }
           break;
@@ -796,7 +797,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           else 
           {
-            PRINTERR("  Error: Variable index out of bound\n");
+            PRINTERR("  Error: Variable index out of bound");
             plot_mode = PM_UNDEFINED;
           }
           break;
@@ -827,7 +828,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           else 
           {
-            PRINTERR("  Error: Variable index out of bound\n");
+            PRINTERR("  Error: Variable index out of bound");
             plot_mode = PM_UNDEFINED;
           }
           break;
@@ -952,7 +953,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  Error: End time point t1 %g should be greater than t0.\n",nvalue);
+              PRINTERR("  Error: End time point t1 %g should be greater than t0.",nvalue);
             }
           }
           else if ( nbr_read == 2 ) /* try to set t0 to nvalue and t1 to nvalue2 */
@@ -966,12 +967,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  Error: End time point t1 %g should be greater than t0 %g.\n",nvalue,nvalue2);
+              PRINTERR("  Error: End time point t1 %g should be greater than t0 %g.",nvalue,nvalue2);
             }
           }
           else /* value missing */
           {
-            PRINTERR("  Error: Numerical values for t1 or t0 t1 expected.\n");
+            PRINTERR("  Error: Numerical values for t1 or t0 t1 expected.");
           }
           break;
         case 'l' : /* list parameters */
@@ -1191,6 +1192,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
             printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
             printf("  hexdump -e '%d \"%%5.2f \" \"\\n\"' idXX.dat\n", nbr_cols); 
+            printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n", nbr_cols); 
             printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
           }
           else if (op == 'd') /* list descriptions */ 
@@ -1202,7 +1204,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           else 
           {
-            PRINTERR("  Error: Unknown command. Cannot list '%c'\n",op);
+            PRINTERR("  Error: Unknown command. Cannot list '%c'",op);
           }
           break;
         case 'p' : /* change current parameter */
@@ -1227,7 +1229,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  Error: Parameter index out of bound. Use lp to list parameters\n");
+              PRINTERR("  Error: Parameter index out of bound. Use lp to list parameters");
               printf("  (the active parameter %s = %s%lg)%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
             }
 
@@ -1268,7 +1270,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           else
           {
-            PRINTERR("  Error: Expected a numerical parameter value (double)\n");
+            PRINTERR("  Error: Expected a numerical parameter value (double)");
           }
           update_act_par_options(p, mu);
           break;
@@ -1295,7 +1297,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               }
               else 
               {
-                PRINTERR("  Error: Variable index out of bound.\n");
+                PRINTERR("  Error: Variable index out of bound.");
                 plot_mode = PM_UNDEFINED;
               }
             }
@@ -1324,7 +1326,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  Error: Too many arguments\n");
+              PRINTERR("  Error: Too many arguments");
               plot_mode = PM_UNDEFINED;
             }
           }
@@ -1339,7 +1341,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else 
             {
-              PRINTERR("  Error: Variable index out of bound\n");
+              PRINTERR("  Error: Variable index out of bound");
               plot_mode = PM_UNDEFINED;
             }
           }
@@ -1359,7 +1361,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              PRINTERR("  Error: Time span index out of bound\n");
+              PRINTERR("  Error: Time span index out of bound");
               plot_mode = PM_UNDEFINED;
             }
           }
@@ -1394,7 +1396,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               }
               else
               {
-                PRINTERR("  Error: Option index out of bound\n");
+                PRINTERR("  Error: Option index out of bound");
                 plot_mode = PM_UNDEFINED;
               }
             }
@@ -1434,7 +1436,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               }
               else
               {    
-                PRINTERR("  Error: Option name or number missing\n");
+                PRINTERR("  Error: Option name or number missing");
                 plot_mode = PM_UNDEFINED;
               }
             }
@@ -1461,7 +1463,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           nbr_read = sscanf(cmdline+2,"%s",par_filename);
           if ( nbr_read < 1 )
           {
-            PRINTERR("  Error: Name of parameter file missing.\n");
+            PRINTERR("  Error: Name of parameter file missing.");
           }
           else /* read par_filename for parameters, initial conditions, and tspan */
           {
@@ -1623,12 +1625,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           else
           {
-            PRINTERR("  Error: Name of file required .\n");
+            PRINTERR("  Error: Name of file required .");
           }
           plot_mode = PM_UNDEFINED;
           break;
         default :
-          printf("  Unknown command '%c'. Type q to quit, ? for help\n", c);
+          PRINTERR("  Unknown command '%c'. Type q to quit, ? for help", c);
       } /* end switch command */ 
 
 
@@ -1707,6 +1709,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
 
         case PM_REPLOT:
+          generate_particle_file(get_int("particle")); /* generate id.dat file for the current particle */
           fprintf(GPLOTP,"replot\n");
           fflush(GPLOTP);
           break;
@@ -1771,6 +1774,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) && 
                 (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) ) /* plot from idXX.dat */
             {
+              generate_particle_file(get_int("particle"));
               snprintf(plot_cmd,EXPRLENGTH,\
                   "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d "\
                   "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
@@ -1806,6 +1810,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) && 
                 (gz <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) ) /* plot from idXX.dat */
             {
+              generate_particle_file(get_int("particle"));
               snprintf(plot_cmd,EXPRLENGTH,\
                   "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
                   "with %s title \"(%d)\"\n",\
@@ -1911,6 +1916,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   free_namevalexp( psi );
   free_namevalexp( mfd );
   free_namevalexp( birth );
+  free_namevalexp( repli );
+  free_namevalexp( death );
   free_namevalexp( dxv );
   free_namevalexp( cst );
   free_namevalexp( dfl );
@@ -1928,7 +1935,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   if ( write_history(".odexp/history.txt") )
 
   {
-    PRINTERR( "\n  Error: could not write history\n");
+    PRINTERR( "\n  Error: could not write history");
   }
 
   PRINTLOG("History written");
@@ -1974,7 +1981,7 @@ int get_nbr_el(const char *filename, const char *sym,\
 
   if ( fr == NULL )
   {
-    PRINTERR("  Error: File %s not found, exiting...\n",filename);
+    PRINTERR("  Error: File %s not found, exiting...",filename);
     exit ( EXIT_FAILURE );
   }
 
@@ -2166,7 +2173,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 
   if ( fr == NULL )
   {
-    PRINTERR("  File %s could not be opened. Nothing was written\n",par_buffer);
+    PRINTERR("  File %s could not be opened. Nothing was written",par_buffer);
   }
   else
   {
@@ -2230,7 +2237,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     eqfr = fopen(".odexp/equations.pop","r");
     if ( eqfr == NULL )
     {
-      PRINTERR("  File %s could not be opened. Not writing equations\n",par_buffer);
+      PRINTERR("  File %s could not be opened. Not writing equations",par_buffer);
     }
     else
     {
@@ -2245,7 +2252,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     fprintf(fr,"\n# particles alive at the end of the simulation\n");
     while ( pars != NULL )
     {
-      fprintf(fr,"# %d %s\n",pars->id,pars->buffer); 
+      fprintf(fr,"# %d\n",pars->id); 
       pars = pars->nextel;
     }
 

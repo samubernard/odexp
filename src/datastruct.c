@@ -39,8 +39,6 @@ struct gen_option GOPTS[NBROPTS] = {
   {"lrmax","lrmax", 'i', 0.0, 31, "", "Low Rank approx MAX rank", "lowrank"},
   {"pm","popmode", 's', 0.0, 0, "population", "Population simulation Mode single | {population}", "population"},
   {"ps","popsize", 'i', 0.0, 1, "", "initial population size for particle simulations", "population"},
-  {"wif","writeindfiles", 'i', 0.0, 1, "", "write individual particle simulation files", "population"},
-  {"wsf","writesingle", 'i', 0.0, 1, "", "write single simulation file", "population"},
   {"p","particle", 'i', 0.0, 0, "", "current Particle id", "population"},
   {"ssahmin","ssahmin", 'd', 0.0, 0, "", "SSA/tau-leap relative step threshold", "population"},
   {"aleap","aleap", 'd', 0.01, 0, "", "tau-leaping factor", "population"},
@@ -285,7 +283,7 @@ int name2index( const char *name, nve var, int *n) /* get index of var.name == n
         }
         else
         {
-            fprintf(stderr,"  %sError: Unknown variable name: %s. List variables with 'lx'.%s\n",T_ERR,name,T_NOR);
+            PRINTERR("  Error: Unknown variable name '%s'. List variables with 'lx'.\n",name);
         }
         /* else do not change *n */
     }
@@ -451,14 +449,6 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     fprintf(s->fstats_varnames,"\tN\tPARENT_ID\tEVENT\tCHILD_ID\n");
     fclose(s->fstats_varnames); 
 
-    /* write names of variables in separate file
-     * idXX.dat:
-     *  t,sizeof(double),1,p->fid);
-     *  y,sizeof(double),p->nbr_y,p->fid);
-     *  aux,sizeof(double),p->nbr_aux,p->fid);
-     *  psi,sizeof(double),p->nbr_psi,p->fid);
-     *  expr,sizeof(double),p->nbr_expr,p->fid);
-     */
     if ( ( s->fparticle_varnames = fopen(s->particle_varnames, "w") ) == NULL )
     {
       PRINTERR("error: could not open file '%s', exiting...\n",s->particle_varnames);
@@ -537,23 +527,6 @@ int par_birth ( void )
         p->psi[i]    = 0.0;
     }
 
-    snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%d.dat",p->id);
-    
-    if ( get_int("writeindfiles") )
-    {
-      if ( (p->fid = fopen(p->buffer,"w") ) == NULL )
-      {
-        PRINTERR("error: could not open particle file '%s' while" \
-            " creating particle %d, exiting...\n",p->buffer,p->id);
-        exit ( EXIT_FAILURE );
-      }
-      p->is_file_open = 1;
-    }
-    else
-    {
-      p->is_file_open = 0;
-    }
-
     p->death_rate = 0.0;
     p->repli_rate = 0.0;
 
@@ -599,22 +572,6 @@ int par_repli (par *mother)
     p->death_rate = mother->death_rate;
     p->repli_rate = mother->repli_rate;
 
-    snprintf(p->buffer,MAXFILENAMELENGTH-1,".odexp/id%d.dat",p->id);
-
-    if ( get_int("writeindfiles") )
-    {
-      if ( ( p->fid = fopen(p->buffer,"w") ) == NULL )
-      {
-        PRINTERR("  error: could not open particle file '%s' while replicating" \
-                 " particle %d, exiting...\n",p->buffer,p->id);
-        exit ( EXIT_FAILURE );
-      }
-      p->is_file_open = 1;
-    }
-    else
-    {
-      p->is_file_open = 0;
-    }
     p->sister = mother; /* pointer to mother particle. 
                          * Warning: existence of mother not guarateed 
                          * p->sister is reset to NULL after replication
@@ -662,11 +619,6 @@ int delete_el( dlist *list, par *to_del)
     free(to_del->aux);
     free(to_del->y);
     free(to_del->psi);
-
-    if ( to_del->is_file_open )
-    {
-      fclose(to_del->fid);
-    }
 
     free(to_del);
     list->size--;
@@ -753,24 +705,6 @@ par * getpar( int with_id )
     }
 }
 
-int fwrite_particle_state(const double *restrict t, par *p)
-{
-
-    if ( p->fid == NULL ) 
-    {
-        return -1;
-    }
-
-    fwrite(t,sizeof(double),1,p->fid);
-    fwrite(p->y,sizeof(double),p->nbr_y,p->fid);
-    fwrite(p->aux,sizeof(double),p->nbr_aux,p->fid);
-    fwrite(p->psi,sizeof(double),p->nbr_psi,p->fid);
-    fwrite(p->expr,sizeof(double),p->nbr_expr,p->fid);
-
-    return 0;
-
-}
-
 int fwrite_final_particle_state( void )
 {
     par *p = SIM->pop->start;
@@ -801,26 +735,7 @@ int fwrite_final_particle_state( void )
     return 0;
 }
 
-int fclose_particle_files( void )
-{
-    par *pars = SIM->pop->start;
-    if ( get_int("writeindfiles") )
-    {
-      while ( pars != NULL )  
-      {
-          fclose(pars->fid);
-          pars->is_file_open = 0;
-          pars = pars->nextel;
-      }
-    }
-    else
-    {
-      /* nothing to do, files were not opened */
-    }
-    return 0;
-}
-
-int fwrite_SIM(const double *restrict t)
+int fwrite_SIM(const double *restrict t) /* stats.dat file */
 {
   /* update SIM file */
   fwrite(t,sizeof(double),1,SIM->fid);
@@ -834,27 +749,16 @@ int fwrite_SIM(const double *restrict t)
 int fwrite_all_particles(const double *restrict t)
 {
     par *pars = SIM->pop->start;
-    if ( get_int("writeindfiles") )
+    pars = SIM->pop->start;
+    while ( pars != NULL )
     {
-      while ( pars != NULL )
-      {
-          fwrite_particle_state(t, pars);
-          pars = pars->nextel;
-      }
-    }
-    if ( get_int("writesingle") )
-    {
-      pars = SIM->pop->start;
-      while ( pars != NULL )
-      {
-          fwrite(&(pars->id),sizeof(int),1,SIM->ftrajectories);
-          fwrite(t,sizeof(double),1,SIM->ftrajectories);
-          fwrite(pars->y,sizeof(double),pars->nbr_y,SIM->ftrajectories);
-          fwrite(pars->aux,sizeof(double),pars->nbr_aux,SIM->ftrajectories);
-          fwrite(pars->psi,sizeof(double),pars->nbr_psi,SIM->ftrajectories);
-          fwrite(pars->expr,sizeof(double),pars->nbr_expr,SIM->ftrajectories);
-          pars = pars->nextel;
-      }
+        fwrite(&(pars->id),sizeof(int),1,SIM->ftrajectories);
+        fwrite(t,sizeof(double),1,SIM->ftrajectories);
+        fwrite(pars->y,sizeof(double),pars->nbr_y,SIM->ftrajectories);
+        fwrite(pars->aux,sizeof(double),pars->nbr_aux,SIM->ftrajectories);
+        fwrite(pars->psi,sizeof(double),pars->nbr_psi,SIM->ftrajectories);
+        fwrite(pars->expr,sizeof(double),pars->nbr_expr,SIM->ftrajectories);
+        pars = pars->nextel;
     }
     
     return 0; 
@@ -880,25 +784,10 @@ int list_particle(int with_id)
       snprintf(id_pattern,EXPRLENGTH-1,"| sed -n 's/^%d //p'", with_id);
       snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
     } 
-    if ( get_int("writeindfiles") && with_id >= 0 )
-    {
-      snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
-            nbr_cols, fix,  with_id, with_id);
-    }
-    else if ( get_int("writesingle") )
-    {
-      snprintf(cmd_data,EXPRLENGTH-1,\
+    snprintf(cmd_data,EXPRLENGTH-1,\
             "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat"\
             " %s >> .odexp/id%d.txt",\
             nbr_cols, fix,  id_pattern, with_id);
-    }
-    else
-    {
-      PRINTERR("error: could not retrieve data for particle %d," \
-          "one of the options 'writeindfiles' or 'writesingle' must be on.\n",with_id);;
-      return 1;
-    }
     snprintf(cmd_print,EXPRLENGTH-1,"column -t .odexp/id%d.txt | less -S", with_id);
     s = system(cmd_varnames); 
     s = system(cmd_data); 
@@ -923,6 +812,42 @@ int list_stats( void )
     s = system("column -t .odexp/tmp.txt | less -s");
 
     return s;
+}
+
+int generate_particle_file(int with_id)
+{
+  int s = 0;
+  FILE *fh = NULL;
+  FILE *fid = NULL;
+  int id;
+  double *row = NULL;
+  char filename[MAXFILENAMELENGTH];
+  int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  row = malloc(nbr_cols*sizeof(double));
+  if ( ( fh = fopen(".odexp/traj.dat", "r") ) == NULL )
+  {
+    PRINTERR("error: could not open file '.odexp/traj.dat'.\n");
+    return 1;
+  }
+  snprintf(filename,MAXFILENAMELENGTH,".odexp/id%d.dat", with_id);
+  if ( ( fid = fopen(filename, "w") ) == NULL )
+  {
+    PRINTERR("error: could not open file '%s'.\n", filename);
+    return 1;
+  }
+
+  while ( (s = fread(&id,sizeof(int),1,fh)) )
+  {
+    fread(row,sizeof(double),nbr_cols,fh);
+    if ( id == with_id ) 
+    {
+      fwrite(row,sizeof(double),nbr_cols,fid);
+    }
+  }
+  fclose(fh);
+  fclose(fid);
+  free(row);
+  return s;
 }
 
 /* get the value of variable s, for particle p, into ptr */ 
