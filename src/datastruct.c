@@ -417,7 +417,6 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
 
     s->max_id = 0;
 
-
     strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH-1);
     strncpy(s->stats_varnames,".odexp/stats_varnames.txt",MAXFILENAMELENGTH-1);
     strncpy(s->particle_varnames,".odexp/particle_varnames.txt",MAXFILENAMELENGTH-1);
@@ -512,6 +511,7 @@ int par_birth ( void )
     p->y        = malloc(p->nbr_y*sizeof(double));
     p->psi      = malloc(p->nbr_psi*sizeof(double));
     p->id       = SIM->max_id++;
+    p->rank     = 0;
 
     for (i=0;i<p->nbr_expr;i++)
     {
@@ -555,6 +555,7 @@ int par_repli (par *mother)
     p->y        = malloc(p->nbr_y*sizeof(double));
     p->psi      = malloc(p->nbr_psi*sizeof(double));
     p->id       = SIM->max_id++;
+    p->rank     = 0;
 
     for (i=0;i<p->nbr_expr;i++)
     {

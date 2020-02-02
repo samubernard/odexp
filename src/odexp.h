@@ -48,6 +48,8 @@ typedef struct particle_state {
 
     int id;
 
+    int rank;
+
     struct particle_state *sister;
 
     struct particle_state *nextel;
@@ -238,7 +240,7 @@ int mvar(const char *s, par *p, double *ptr);
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
-       myself_->y[index];                                             \
+       *(y_+myself_->rank*myself_->nbr_y+index);              \
      })                                                     
 
 #define MC(name)                                          \

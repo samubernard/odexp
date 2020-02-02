@@ -702,7 +702,7 @@ int pop_rhs(double t, const double y_[], double f_[], void *params_)
 );
 	print $fch $s;
   set_population_birth_rate($modelode);
-  $s = qq(        i_++;
+  $s = qq(        myself_->rank = i_++;
         myself_ = myself_->nextel;
     }
 );
