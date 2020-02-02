@@ -213,7 +213,7 @@ int mvar(const char *s, par *p, double *ptr);
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
-       other_->y[index];                                             \
+       *(y_+other_->rank*other_->nbr_y+index);              \
      })                                                     
 
 #define MA(name)                                            \
@@ -303,7 +303,7 @@ int mvar(const char *s, par *p, double *ptr);
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
-       kpar_->y[index];                                             \
+       *(y_+kpar_->rank*kpar_->nbr_y+index);              \
      })                                                     
 
 

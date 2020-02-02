@@ -549,8 +549,8 @@ int odesolver( oderhs pop_ode_rhs,
                break;
             }   
                 
-            update_SIM_from_y(y);
         }
+        update_SIM_from_y(y);
         
         if (status != GSL_SUCCESS)
             break;    /* break out of main loop */
