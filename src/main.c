@@ -1602,7 +1602,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         case 'Q' :  /* quit with implicit save */
         case 'q' :  /* quit with save */
           quit = 1;
-        case '*' : /* save file */
+        case '*' : /* save snapshot of pop file */
           file_status = save_snapshot(ics,mu,tspan, odexp_filename);
           break;
         case '!' : /* print ! */
@@ -1611,11 +1611,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             fprintf(GPLOTP,"set term push\n"); /* save term settings */
             fprintf(GPLOTP,"unset term\n"); /* unset all term-specific settings */
-            fprintf(GPLOTP,"set term postscript eps color font \"%s,%d\"\n", \
-                get_str("font"), get_int("fontsize"));
+            fprintf(GPLOTP,"set term %s font \"%s,%d\"\n", \
+                get_str("printsettings"), get_str("font"), get_int("fontsize"));
             fprintf(GPLOTP,"set tics nomirror out font \"%s,%d\"\n", \
                 get_str("font"), get_int("fontsize"));
-            fprintf(GPLOTP,"set output \"%s.eps\"\n",svalue);
+            fprintf(GPLOTP,"set output \"%s\"\n",svalue);
             fprintf(GPLOTP,"replot\n");
             fprintf(GPLOTP,"set term pop\n");
             fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \

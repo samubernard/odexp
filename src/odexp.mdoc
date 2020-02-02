@@ -86,7 +86,7 @@ Interactive commands can be entered at the
 prompt. Multiple commands can be separated with && (does not
 work when command expects a string argument).
 .Bl -tag -width indent
-.It Ic \?              
+.It Ic "?"              
 Display this help.
 .It Ic C^y 
 Repeat last command.
@@ -122,22 +122,25 @@ Add to plot
 and 
 .Va coly
 from 
-.Va dataset
+.Va dataset .
 .
 .It Ic ! Ar filename   
 Save the current plot to 
 .Va filename
-in EPS format.
+in format given by option
+.Va printsettings
+(default postscript eps color).
 .It Ic $ Ar id   
 Print dataset for particle 
-.Va id
-. If 
+.Va id .
+. 
+If 
 .Va id
 is missing, print stats dataset 
 in population mode or particle in single mode.
 .It Ic * Op Ar msg         
 Snapshot of current simulation and parameter values with optional 
-.Va msg
+.Va msg .
 .
 .It Ic 0, n 
 Switch to/update normal plot. 
@@ -162,10 +165,12 @@ Reload the parameter file (usually to reset model parameters to their default va
 .It Ic E
 Decrease the time span by a factor 2.
 .It Ic e Op Ar val
-Multiply the time span by a factor.
-.I val 
-(default factor = 2). 
-.I val 
+Multiply the time span by a factor
+.Va val  
+(default 
+.Va val 
+= 2). Factor 
+.Va val 
 can be less than one.
 .It Ic f       
 Fit data (not implemented yet).
@@ -186,6 +191,7 @@ Loop through initial conditions for each variable.
 Set to I to revert to the default value, press 
 .Aq enter 
 to keep current initial condition.
+.It Ic is
 Set initial condition to steady state. 
 Steady state must have been computed with 
 .Ic ms .
@@ -198,7 +204,9 @@ List all auxiliary variables.
 .It Ic lc            
 List all constant arrays.
 .It Ic ld            
-Print file description (all lines starting with ## in Ar file).
+Print file description (all lines starting with ## in 
+.Ar file 
+).
 .It Ic le            
 List all parametric expressions.
 .It Ic lf            
@@ -241,11 +249,11 @@ otherwise, the initial conditions are set as usual.
 Find a steady state with starting guess given by initial conditions.
 .It Ic o Ar filename  
 Load parameters values and options from file 
-.Va filename
+.Va filename .
 .
 .It Ic P Ar val        
 Set current parameter to value 
-.Va val
+.Va val .
 .
 .It Ic p Oo Ar ind | Ar par Oc Op Ar val      
 Make parameter with index 
