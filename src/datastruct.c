@@ -113,7 +113,7 @@ int set_dou(const char *name, const double val)
     }
     else
     {
-      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+      PRINTERR("  Error: Could not assign option %s",name);
     }
 
     return success;
@@ -141,7 +141,7 @@ int set_int(const char *name, const int val)
     }
     else
     {
-      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+      PRINTERR("  Error: Could not assign option %s",name);
     }
 
     return success;
@@ -169,7 +169,7 @@ int set_str(const char *name, const char * val)
     }
     else
     {
-      fprintf(stderr,"  %sError: Could not assign option %s%s\n", T_ERR,name,T_NOR);
+      PRINTERR("  Error: Could not assign option %s",name);
     }
 
     return success;
@@ -283,7 +283,7 @@ int name2index( const char *name, nve var, int *n) /* get index of var.name == n
         }
         else
         {
-            PRINTERR("  Error: Unknown variable name '%s'. List variables with 'lx'.\n",name);
+            PRINTERR("  Error: Unknown variable name '%s'. List variables with 'lx'.",name);
         }
         /* else do not change *n */
     }
@@ -322,7 +322,7 @@ int option_name2index( const char *name, int *n) /* get index of option.name == 
         }
         else
         {
-            fprintf(stderr,"  %sError: Unknown option '%s' %s\n",T_ERR,name,T_NOR);
+            PRINTERR("  Error: Unknown option '%s'",name);
         }
         /* else do not change *n */
     }
