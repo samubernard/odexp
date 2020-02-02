@@ -855,7 +855,7 @@ int generate_particle_file(int with_id)
 }
 
 /* get the value of variable s, for particle p, into ptr */ 
-int mvar(const char *name, par *m, double *ptr)                        
+int mvar(const char *name, par *m, const double *y, double *ptr)                        
 {
   int index = 0;                                       
   while (  index < SIM->nbr_var )                       
@@ -866,7 +866,7 @@ int mvar(const char *name, par *m, double *ptr)
     }
     else
     {
-      *ptr = m->y[index];
+      *ptr = y[index+m->rank*m->nbr_y];
       return 0;
     }
   }                                                       

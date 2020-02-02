@@ -1287,7 +1287,7 @@ sub set_low_rank_expansion
       print $fch "    i_ = 0;\n";
       print $fch "    while ( myself_ != NULL ) /* initialize xxp_ for lrkern */\n";
       print $fch "    {\n";
-      print $fch "        mvar(\"$var\", myself_, (xxp_ + i_));\n";
+      print $fch "        mvar(\"$var\", myself_, y_, (xxp_ + i_));\n";
       print $fch "        myself_ = myself_->nextel;\n";
       print $fch "        ++i_;\n";
       print $fch "    }\n";

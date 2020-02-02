@@ -165,7 +165,7 @@ int lrwkern(const double *U, const double *V, int r, coupling_function f, double
 int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N);
 
 /* get the value of variable s, for particle p, into ptr */ 
-int mvar(const char *s, par *p, double *ptr);
+int mvar(const char *s, par *p, const double *y, double *ptr);
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \

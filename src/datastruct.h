@@ -126,5 +126,5 @@ int list_stats( void );
 int generate_particle_file(int with_id);
 
 /* get the value of variable s, for particle p, into ptr */ 
-int mvar(const char *s, par *p, double *ptr);
+int mvar(const char *name, par *m, const double *y, double *ptr);
 
