@@ -114,7 +114,7 @@ int odesolver( oderhs pop_ode_rhs,
         bd_alert                = 0,
         disc_alert              = 0,
         abort_odesolver_alert   = 0;
-    int nbr_out = get_int("res");
+    int nbr_out = 0;
 
     /* output files */
     FILE *quickfile;
@@ -212,6 +212,7 @@ int odesolver( oderhs pop_ode_rhs,
     /* it is assumed that the first and last values of tspan are t0 and t1 */
     t = tspan->array[0];
     t1 = tspan->array[tspan->length-1];
+    nbr_out = get_int("res");
     dt = (t1-t)/(double)(nbr_out-1); /* time interval at which the solution if recorded 
                                       * in addition to stopping times, if any
                                       */ 
@@ -510,6 +511,7 @@ int odesolver( oderhs pop_ode_rhs,
         }
 
         tnext = t + dt_next;
+        /* DBPRINT("bd_meth = %d, dt_next = %g",bd_meth, dt_next); */
 
         /* ODE solver - time step */
         clock_odeiv = clock();
@@ -528,6 +530,7 @@ int odesolver( oderhs pop_ode_rhs,
                  * at t+1, if tnext < t+1. 
                  */
                 status = iteration_apply(&sys,&t,y);
+                /* DBPRINT("t = %g, tnext = %g", t, tnext); */
                 break;
               case H_DDE:
                 status = dde_apply(&sys,&t,tnext,&h,y);
@@ -2028,17 +2031,20 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
 int iteration_apply( gsl_odeiv2_system *sys , double *t, double y[] )
 {
   /* this is just an iteration step */
-  int i;
-  double *f;
-  f = malloc(sys->dimension * sizeof(double));
-  sys->function(*t, y, f, sys->params);
-  for ( i=0; i<(int)sys->dimension; ++i)
-  {
-    y[i] = f[i];
-  }
+  /* 
+  * int i;
+  * double *f;
+  * f = malloc(sys->dimension * sizeof(double));
+  * sys->function(*t, y, f, sys->params);
+  * for ( i=0; i<(int)sys->dimension; ++i)
+  * {
+  *   y[i] = f[i];
+  * }
+  * *t += 1;
+  * free(f);
+  */
+  sys->function(*t, y, y, sys->params);
   *t += 1;
-
-  free(f);
   return GSL_SUCCESS;
 }
 
