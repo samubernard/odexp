@@ -699,10 +699,11 @@ int pop_rhs(double t, const double y_[], double f_[], void *params_)
     {
         ode_rhs(t, y_+i_*myself_->nbr_y, f_+i_*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate
                                                                       * first update myself_->repli_rate       */
+        memcpy(myself_->y,y_+i_*myself_->nbr_y,sizeof(double)*myself_->nbr_y);
 );
 	print $fch $s;
   set_population_birth_rate($modelode);
-  $s = qq(        myself_->rank = i_++;
+  $s = qq(        ++i_;
         myself_ = myself_->nextel;
     }
 );

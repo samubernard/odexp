@@ -511,7 +511,6 @@ int par_birth ( void )
     p->y        = malloc(p->nbr_y*sizeof(double));
     p->psi      = malloc(p->nbr_psi*sizeof(double));
     p->id       = SIM->max_id++;
-    p->rank     = 0;
 
     for (i=0;i<p->nbr_expr;i++)
     {
@@ -555,7 +554,6 @@ int par_repli (par *mother)
     p->y        = malloc(p->nbr_y*sizeof(double));
     p->psi      = malloc(p->nbr_psi*sizeof(double));
     p->id       = SIM->max_id++;
-    p->rank     = 0;
 
     for (i=0;i<p->nbr_expr;i++)
     {
@@ -777,22 +775,22 @@ int list_particle(int with_id)
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
     char cmd_print[EXPRLENGTH];
-    char id_pattern[EXPRLENGTH];
     if ( with_id == -1 )
     {
-      snprintf(id_pattern,EXPRLENGTH-1,"");
-      snprintf(cmd_varnames,EXPRLENGTH-1,"echo 'ID     ' | lam - .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
+      snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
+      snprintf(cmd_data,EXPRLENGTH,\
+            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/id%d.txt",\
+            nbr_cols, fix, with_id);
     }
     else
     {
-      snprintf(id_pattern,EXPRLENGTH-1,"| sed -n 's/^%d //p'", with_id);
-      snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
+      generate_particle_file(with_id); /* generate idXX.dat file for the current particle */
+      snprintf(cmd_varnames,EXPRLENGTH,"cat .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
+      snprintf(cmd_data,EXPRLENGTH,\
+            "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
+            nbr_cols, fix, with_id, with_id);
     } 
-    snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat"\
-            " %s >> .odexp/id%d.txt",\
-            nbr_cols, fix,  id_pattern, with_id);
-    snprintf(cmd_print,EXPRLENGTH-1,"column -t .odexp/id%d.txt | less -S", with_id);
+    snprintf(cmd_print,EXPRLENGTH,"column -t .odexp/id%d.txt | less -S", with_id);
     s = system(cmd_varnames); 
     s = system(cmd_data); 
     s = system(cmd_print);
@@ -855,7 +853,7 @@ int generate_particle_file(int with_id)
 }
 
 /* get the value of variable s, for particle p, into ptr */ 
-int mvar(const char *name, par *m, const double *y, double *ptr)                        
+int mvar(const char *name, par *m, double *ptr)                        
 {
   int index = 0;                                       
   while (  index < SIM->nbr_var )                       
@@ -866,7 +864,7 @@ int mvar(const char *name, par *m, const double *y, double *ptr)
     }
     else
     {
-      *ptr = y[index+m->rank*m->nbr_y];
+      *ptr = m->y[index]; 
       return 0;
     }
   }                                                       

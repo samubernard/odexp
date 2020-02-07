@@ -48,8 +48,6 @@ typedef struct particle_state {
 
     int id;
 
-    int rank;
-
     struct particle_state *sister;
 
     struct particle_state *nextel;
@@ -165,7 +163,7 @@ int lrwkern(const double *U, const double *V, int r, coupling_function f, double
 int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N);
 
 /* get the value of variable s, for particle p, into ptr */ 
-int mvar(const char *s, par *p, const double *y, double *ptr);
+int mvar(const char *s, par *p, double *ptr);
 
 #define max(a,b) \
        ({ __typeof__ (a) _a = (a); \
@@ -213,7 +211,7 @@ int mvar(const char *s, par *p, const double *y, double *ptr);
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
-       *(y_+other_->rank*other_->nbr_y+index);              \
+       other_->y[index];                                    \
      })                                                     
 
 #define MA(name)                                            \
@@ -240,7 +238,7 @@ int mvar(const char *s, par *p, const double *y, double *ptr);
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
-       *(y_+myself_->rank*myself_->nbr_y+index);              \
+       myself_->y[index];                                     \
      })                                                     
 
 #define MC(name)                                          \
@@ -303,7 +301,7 @@ int mvar(const char *s, par *p, const double *y, double *ptr);
        {                                                      \
            index++; index %= SIM->nbr_var;                    \
        }                                                      \
-       *(y_+kpar_->rank*kpar_->nbr_y+index);              \
+       kpar_->y[index];                                   \
      })                                                     
 
 

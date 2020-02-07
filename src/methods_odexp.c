@@ -1820,6 +1820,14 @@ void SSA_apply_birthdeath(const double t, odeic single_ic )
     /* cumsum and normalize r */
     ncumsum(r,(2*POP_SIZE+1),&sumr);
 
+    /* make sure sumr is strictly positive */
+    if ( sumr <= 0.0 )
+    {
+      free(r);
+      free(p);
+      return;
+    }
+
     /* choose wich event takes place */
     choose_event = rand01();
     while(choose_event>r[event_index])
@@ -2031,18 +2039,7 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
 int iteration_apply( gsl_odeiv2_system *sys , double *t, double y[] )
 {
   /* this is just an iteration step */
-  /* 
-  * int i;
-  * double *f;
-  * f = malloc(sys->dimension * sizeof(double));
-  * sys->function(*t, y, f, sys->params);
-  * for ( i=0; i<(int)sys->dimension; ++i)
-  * {
-  *   y[i] = f[i];
-  * }
-  * *t += 1;
-  * free(f);
-  */
+  /* y = f(y): f is returned in the second y parameter */
   sys->function(*t, y, y, sys->params);
   *t += 1;
   return GSL_SUCCESS;
