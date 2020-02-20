@@ -44,6 +44,8 @@ struct gen_option GOPTS[NBROPTS] = {
   {"cf","closefiles", 'i', 0.0, 0, "", "*Obsolete* close individual particle files between writes", "population"},
   {"ssahmin","ssahmin", 'd', 0.0, 0, "", "SSA/tau-leap relative step threshold", "population"},
   {"aleap","aleap", 'd', 0.01, 0, "", "tau-leaping factor", "population"},
+  {"pstyle","particlestyle", 's', 0.00, 0, "circles fillstyle transparent solid 0.1 noborder", "Particle STYLE", "population"},
+  {"pid","particleid", 'i', 0.00, 1, "", "display Particle ID in particle plots", "population"},
   {"seed","seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
   {"rs","reseed", 'i', 0.0, 1, "", "Reset rng to Seed at each run 0 | {1}", "random"},
   {"maxfail","maxfail", 'i', 10000.0, 10000, "", "max number of starting guesses for steady states", "steadyStates"},  

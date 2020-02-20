@@ -2328,7 +2328,9 @@ int gplot_data(const int x, const int y, const char *data_fn)
 
 int gplot_particles( const int gx, const int gy, const nve var )
 {
-  int tot = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_mfd;
+  char cmd_plt[EXPRLENGTH];
+  char cmd_labels[EXPRLENGTH];
+
   /* variables that can plotted
    * type   length    where
    * y      nbr_y     in p
@@ -2336,19 +2338,34 @@ int gplot_particles( const int gx, const int gy, const nve var )
    * psi    nbr_psi   in p
    * mfd    nbr_mfd   in SIM
    */
-  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "ID"); /* if x-axis is the independent variable,
-                                                                       * make it ID number instead--the ind var
-                                                                       * cannot be plotted */
+  int tot = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_mfd;
+
+  /* if x-axis is the independent variable,
+   * make it ID number instead--the ind var
+   * cannot be plotted 
+   */
+  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "ID"); 
+
   fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
   /* Plot each particle as a transparent circle 
    * with the ID number inside it 
    * No customization possible at the moment */
-  fprintf(GPLOTP, "plot \".odexp/particle_states.dat\" "
+  snprintf(cmd_plt,EXPRLENGTH,"plot \".odexp/particle_states.dat\" "
       "binary format=\"%%u%%%dlf\" using %d:%d with "
-      "circles fillstyle transparent solid 0.1 noborder title \"particles\", "
-      "\".odexp/particle_states.dat\" "
-      "binary format=\"%%u%%%dlf\" using %d:%d:(sprintf(\"%%u\",$1)) with "
-      "labels font \"%s,7\" textcolor rgb \"grey20\" notitle\n",tot,gx,gy,tot,gx,gy,get_str("font"));
+      "%s title \"particles\"",tot,gx,gy, get_str("particlestyle"));
+  if ( get_int("particleid") )
+  {
+    snprintf(cmd_labels,EXPRLENGTH,", \".odexp/particle_states.dat\" "
+        "binary format=\"%%u%%%dlf\" using %d:%d:(sprintf(\"%%u\",$1)) "
+        "with labels font \"%s,7\" textcolor rgb \"grey20\" notitle\n", 
+        tot,gx,gy,get_str("font"));
+  }
+  else
+  {
+    snprintf(cmd_labels,EXPRLENGTH,"\n");
+  }
+  strncat(cmd_plt,cmd_labels,EXPRLENGTH);
+  fprintf(GPLOTP, "%s", cmd_plt );
   fflush(GPLOTP);
 
   return 0;
