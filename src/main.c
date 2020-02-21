@@ -2347,25 +2347,49 @@ int gplot_particles( const int gx, const int gy, const nve var )
   fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "ID"); 
 
   fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
-  /* Plot each particle as a transparent circle 
-   * with the ID number inside it 
-   * No customization possible at the moment */
-  snprintf(cmd_plt,EXPRLENGTH,"plot \".odexp/particle_states.dat\" "
-      "binary format=\"%%u%%%dlf\" using %d:%d with "
-      "%s title \"particles\"",tot,gx,gy, get_str("particlestyle"));
-  if ( get_int("particleid") )
+
+  /* option: plot bivariate kernel density estimate */
+  if ( get_int("kdensity2d") )
   {
-    snprintf(cmd_labels,EXPRLENGTH,", \".odexp/particle_states.dat\" "
-        "binary format=\"%%u%%%dlf\" using %d:%d:(sprintf(\"%%u\",$1)) "
-        "with labels font \"%s,7\" textcolor rgb \"grey20\" notitle\n", 
-        tot,gx,gy,get_str("font"));
+    fprintf(GPLOTP,"set dgrid3d %d,%d, gauss kdensity 0.5\n",
+        get_int("kdensity2grid"),get_int("kdensity2grid"));
+    fprintf(GPLOTP,"set table \".odexp/griddata.txt\"\n");
+    fprintf(GPLOTP,"splot \".odexp/particle_states.dat\" "
+        "binary format=\"%%u%%%dlf\" using %d:%d:(1)\n",tot,gx,gy);
+    fprintf(GPLOTP,"unset table\n");
+    fprintf(GPLOTP,"unset dgrid3d\n");
+    fprintf(GPLOTP,"set view map\n");
+    fprintf(GPLOTP,"set autoscale fix\n");
+    fprintf(GPLOTP,"unset colorbox\n");
+    fprintf(GPLOTP,"splot \".odexp/griddata.txt\" with pm3d notitle\n");
+    fprintf(GPLOTP,"replot \".odexp/particle_states.dat\" "
+        "binary format=\"%%u%%%dlf\" using %d:%d:(-1) with points pt '.' notitle\n",
+        tot,gx,gy);
+    fprintf(GPLOTP,"unset view\n");
   }
   else
   {
-    snprintf(cmd_labels,EXPRLENGTH,"\n");
+    /* Plot each particle with style particlestyle 
+     * Optionally write ID number inside it 
+     */
+    snprintf(cmd_plt,EXPRLENGTH,"plot \".odexp/particle_states.dat\" "
+        "binary format=\"%%u%%%dlf\" using %d:%d with "
+        "%s title \"particles\"",tot,gx,gy, get_str("particlestyle"));
+    if ( get_int("particleid") )
+    {
+      snprintf(cmd_labels,EXPRLENGTH,", \".odexp/particle_states.dat\" "
+          "binary format=\"%%u%%%dlf\" using %d:%d:(sprintf(\"%%u\",$1)) "
+          "with labels font \"%s,7\" textcolor rgb \"grey20\" notitle\n", 
+          tot,gx,gy,get_str("font"));
+    }
+    else
+    {
+      snprintf(cmd_labels,EXPRLENGTH,"\n");
+    }
+    strncat(cmd_plt,cmd_labels,EXPRLENGTH);
+    fprintf(GPLOTP, "%s", cmd_plt );
   }
-  strncat(cmd_plt,cmd_labels,EXPRLENGTH);
-  fprintf(GPLOTP, "%s", cmd_plt );
+  
   fflush(GPLOTP);
 
   return 0;
