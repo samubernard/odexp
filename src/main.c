@@ -819,7 +819,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           else if (ngy > -1 && ngy < (int)total_nbr_x)
           {
-            gx = 1;
+            ngx = -1;
+            gx = ngx + 2;
             gy = ngy + 2;
             plot3d = 0;
             plot_mode = PM_NORMAL;
@@ -2351,8 +2352,8 @@ int gplot_particles( const int gx, const int gy, const nve var )
   /* option: plot bivariate kernel density estimate */
   if ( get_int("kdensity2d") )
   {
-    fprintf(GPLOTP,"set dgrid3d %d,%d, gauss kdensity 0.5\n",
-        get_int("kdensity2grid"),get_int("kdensity2grid"));
+    fprintf(GPLOTP,"set dgrid3d %d,%d, gauss kdensity %g\n",
+        get_int("kdensity2dgrid"),get_int("kdensity2dgrid"),get_dou("kdensity2dscale"));
     fprintf(GPLOTP,"set table \".odexp/griddata.txt\"\n");
     fprintf(GPLOTP,"splot \".odexp/particle_states.dat\" "
         "binary format=\"%%u%%%dlf\" using %d:%d:(1)\n",tot,gx,gy);
