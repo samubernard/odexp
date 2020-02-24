@@ -534,7 +534,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           mu.value[p] *= pow( get_dou("parstep"), rep_command );
           printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           update_act_par_options(p, mu);
           break;
         case '-' : /* decrement the parameter and run */
@@ -546,7 +546,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           mu.value[p] /= pow( get_dou("parstep"), rep_command );
           printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           update_act_par_options(p, mu);
           break;                
         case 'n' :
@@ -573,7 +573,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case 'R' :
           rerun = 1;
-          plot_mode = PM_REPLOT; 
+          /* plot_mode = PM_REPLOT;  */
           break;
         case 'h' : /* toggle hold */
           /* hold to hold the current plot 
@@ -636,12 +636,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         case '>' : /* increase resolution */
           set_int("res",2*get_int("res")-1);
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           break;
         case '<' : /* decrease resolution */
           set_int("res",(get_int("res")+1)/2);
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           break;
         case 'e' : /* extend the simulation */
           nbr_read = sscanf(cmdline+1,"%lf",&nvalue);
@@ -655,12 +655,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             tspan.array[tspan.length-1] += tspan.array[tspan.length-1]-tspan.array[0];
           }
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           break;
         case 'E' : /* shorten the simulation */
           tspan.array[tspan.length-1] -= (tspan.array[tspan.length-1]-tspan.array[0])/2;
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           break;
         case 'a' : /* set axis scale  */
           sscanf(cmdline+1,"%c%c",&op,&op2);
@@ -694,13 +694,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             set_str("xscale","linear");
           }
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           break;
         case 'A' : /* reset axis scales to normal */
           set_str("xscale","linear");
           set_str("yscale","linear");
           set_str("zscale","linear");
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           break;
         case '2' : /* set 2D */
         case '3' : /* set 3D */
@@ -932,7 +932,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               }
             }
             rerun = 1;
-            plot_mode = PM_REPLOT;
+            /* plot_mode = PM_REPLOT; */
           }
           break;
         case 'I' : /* set initial condition to defaults */
@@ -943,7 +943,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           strcat(cmdline," && li");
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           break;
         case 't':
           nbr_read = sscanf(cmdline+1,"%lf %lf",&nvalue,&nvalue2); /* try to read t0 and t1 */
@@ -953,7 +953,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             {
               tspan.array[tspan.length-1] = nvalue;
               rerun = 1;
-              plot_mode = PM_REPLOT;
+              /* plot_mode = PM_REPLOT; */
             }
             else
             {
@@ -967,7 +967,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               tspan.array[0] = nvalue;
               tspan.array[tspan.length-1] = nvalue2;
               rerun = 1;
-              plot_mode = PM_REPLOT;
+              /* plot_mode = PM_REPLOT; */
             }
             else
             {
@@ -1223,7 +1223,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               {
                 mu.value[p] = nvalue;
                 rerun = 1;
-                plot_mode = PM_REPLOT;
+                /* plot_mode = PM_REPLOT; */
                 printf("  active parameter %s set to %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
               }
               else /* new active parameter without new value */
@@ -1252,7 +1252,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               {
                 mu.value[p] = nvalue;
                 rerun = 1;
-                plot_mode = PM_REPLOT;
+                /* plot_mode = PM_REPLOT; */
                 printf("  new active parameter %s set to %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
               }
             }
@@ -1270,7 +1270,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             mu.value[p] = nvalue;
             printf("  set to %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
             rerun = 1;
-            plot_mode = PM_REPLOT;
+            /* plot_mode = PM_REPLOT; */
           }
           else
           {
@@ -1341,7 +1341,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             {
               NUM_IC[i] = 0;
               rerun = 1;
-              plot_mode = PM_REPLOT;
+              /* plot_mode = PM_REPLOT; */
             }
             else 
             {
@@ -1459,7 +1459,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           /* reset parameter values */
           load_nameval(parfilename, mu, "PAR", 3,exit_if_nofile);
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           update_act_par_options(p, mu);
           break;
         case 'o' : /* open a parameter file */
@@ -1502,7 +1502,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
           }
           rerun = 1;
-          plot_mode = PM_REPLOT;
+          /* plot_mode = PM_REPLOT; */
           break;
         case 'g' : /* issue a gnuplot command */
           fprintf(GPLOTP,"%s\n", cmdline+1);
@@ -1575,7 +1575,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             printf("  Dataset not found. plotting data off\n");
             set_int("plotdata", 0);
-            plot_mode = PM_REPLOT;
+            /* plot_mode = PM_REPLOT; */
           }
           break;
         case 'w' :  /* world */
