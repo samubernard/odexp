@@ -603,6 +603,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case 'u' : /* add curves on the plot */ 
           nbr_read = sscanf(cmdline+1,"%c",&op);               
+          plot_mode = PM_NORMAL;
           if ( (nbr_read == EOF) || (nbr_read == 1  &&  op == ' ') )
           {
             set_int("curves",1-get_int("curves"));
@@ -626,12 +627,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               nbr_hold = 0;
               set_int("curves",0);
               printf("  %sadd curves is off%s\n",T_DET,T_NOR);
-              plot_mode = PM_NORMAL;
             }
             else
             {
               PRINTERR("  %sUnknown command %s",T_ERR,T_NOR);
-              plot_mode = PM_UNDEFINED;
             }
           }
           break;
@@ -725,7 +724,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             if ( nbr_read < 2 ) 
             {
               PRINTERR("  Error: Requires 2 or 3 variable names/indices");
-              plot_mode = PM_UNDEFINED;
             }
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
             update_plot_options(ngx,ngy,ngz,dxv);
@@ -740,7 +738,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             else
             {
               PRINTERR("  Error: x-axis index out of bound");
-              plot_mode = PM_UNDEFINED;
             }
             if ( (ngy >= -1) && ngy < (int)total_nbr_x)
             {
@@ -749,7 +746,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             else
             {
               PRINTERR("  Error: y-axis index out of bound");
-              plot_mode = PM_UNDEFINED;
             }
             update_plot_options(ngx,ngy,ngz,dxv);
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
@@ -764,13 +760,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             else
             {
               PRINTERR("  error: z-axis index out of bound");
-              plot_mode = PM_UNDEFINED;
             }
           } 
           if ( nbr_read == 1 || nbr_read > 3 )
           {
             PRINTERR("  Error: Requires 2 or 3 variable names/indices");
-            plot_mode = PM_UNDEFINED;
           }
           break;
         case 'x' :
@@ -799,7 +793,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           else 
           {
             PRINTERR("  Error: Variable index out of bound");
-            plot_mode = PM_UNDEFINED;
           }
           break;
         case 'y' :
@@ -831,7 +824,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           else 
           {
             PRINTERR("  Error: Variable index out of bound");
-            plot_mode = PM_UNDEFINED;
           }
           break;
         case ']' : /* plot next x */
@@ -1207,7 +1199,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             PRINTERR("  Error: Unknown command. Cannot list '%c'",op);
           }
-          /* plot_mode = PM_UNDEFINED;   */
           break;
         case 'p' : /* change current parameter */
           nbr_read = sscanf(cmdline+1,"%d %lf",&np,&nvalue);
@@ -1296,7 +1287,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               else 
               {
                 PRINTERR("  Error: Variable index out of bound.");
-                plot_mode = PM_UNDEFINED;
               }
             }
             else if (nbr_read == 0) /* get option name or abbr and value */
@@ -1324,7 +1314,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             else
             {
               PRINTERR("  Error: Too many arguments");
-              plot_mode = PM_UNDEFINED;
             }
           }
           else if (op == 'I') /* revert initial condition i to expression */
@@ -1338,7 +1327,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             else 
             {
               PRINTERR("  Error: Variable index out of bound");
-              plot_mode = PM_UNDEFINED;
             }
           }
           else if ( op == 'l' )
@@ -1358,7 +1346,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             else
             {
               PRINTERR("  Error: Time span index out of bound");
-              plot_mode = PM_UNDEFINED;
             }
           }
           else if ( op == 'o'  || op == 'e' ) /* change options */
@@ -1392,7 +1379,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               else
               {
                 PRINTERR("  Error: Option index out of bound");
-                plot_mode = PM_UNDEFINED;
               }
             }
             else /* get option name or abbr and value */
@@ -1431,15 +1417,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               else
               {    
                 PRINTERR("  Error: Option name or number missing");
-                plot_mode = PM_UNDEFINED;
               }
             }
-            plot_mode = PM_UNDEFINED;
           }
           break;
         case '?' : /* help */
           system(helpcmd);
-          plot_mode = PM_UNDEFINED;
           break;
         case 'd' : /* reset parameters and initial cond to defaults */
           for ( i=0; i<ode_system_size; i++ )
@@ -1532,7 +1515,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             status = parameter_range(pop_ode_rhs, pop_ode_ic, NULL, ics, mu, fcn, tspan, GPLOTP);
           }
-          plot_mode = PM_UNDEFINED;
           break;
         case '#' : /* add data from file to plot */
           nbr_read = sscanf(cmdline+1,"%s %d %d",svalue,&colx,&coly);
@@ -1617,7 +1599,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             PRINTERR("  Error: Name of file required .");
           }
-          plot_mode = PM_UNDEFINED;
           break;
         default :
           PRINTERR("  Unknown command '%c'. Type q to quit, ? for help", c);
@@ -1752,7 +1733,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       fflush(stdin);
       runplot = 0;
       plotonly = 0;
-      /* plot_mode = PM_UNDEFINED; */
       rep_command = 1; /* reset to default = 1 */
 
       nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos);
