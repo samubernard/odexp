@@ -60,7 +60,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   char    *extracmd = (char *)NULL;
   char    par_details[32];
   char    list_msg[EXPRLENGTH];
-  char    plot_cmd[EXPRLENGTH];
   char    c,
           op,
           op2;
@@ -106,11 +105,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
    * plot mode:
    * 0: PM_UNDEFINED undefined
    * 1: PM_NORMAL normal update plot with new parameters/option
-   * 2: PM_CONTINUATION continuation plot continuation branch 
-   * 3: PM_RANGE range
-   * 4: PM_PARTICLES particles in phase space
-   * 5: PM_CURVES add curves 
-   * 6: PM_REPLOT replot just re-issue last plot command
+   * 2: PM_ANIMATE  like norma update plot with new parameters/option but animate solution
+   * 3: PM_CONTINUATION continuation plot continuation branch 
+   * 4: PM_RANGE range
+   * 5: PM_PARTICLES particles in phase space
+   * 6: PM_CURVES add curves 
+   * 7: PM_REPLOT replot just re-issue last plot command
    */
   enum plotmode plot_mode       = PM_UNDEFINED; 
 
@@ -564,6 +564,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         case 'C' :
         case '7' :
           plot_mode = PM_PARTICLES;
+          break;
+        case '6' :
+          plot_mode = PM_ANIMATE;
           break;
         case 'r' : /* replot */
           plot_mode = PM_REPLOT;
@@ -1622,7 +1625,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
                 get_str("font"), get_int("fontsize"));
             fflush(GPLOTP);
-            printf("  wrote %s.eps in current directory\n",svalue);
+            printf("  wrote %s in current directory\n",svalue);
           }
           else
           {
@@ -1717,130 +1720,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
         case PM_NORMAL: /* normal plot mode */
           /* This is where the plot is normally updated */
-          /* set axis labels and plot */
-          fprintf(GPLOTP,"unset xrange\n");
-          fprintf(GPLOTP,"unset yrange\n");
-          fprintf(GPLOTP,"unset zrange\n");
-          if ( get_int("hold") == 0 )
-          {
-            if (gx == 1) /* time evolution: xlabel = 'time' */
-            {
-              fprintf(GPLOTP,"set xlabel '%s'\n", get_str("indvar"));
-            }
-            else if ( (gx-2) < (int)total_nbr_x ) /* xlabel = name of variable  */
-            {
-              if ( get_attribute(dxv.attribute[gx-2],"tag",svalue) )
-              {
-                fprintf(GPLOTP,"set xlabel '%s'\n",svalue);
-              }
-              else
-              {
-                fprintf(GPLOTP,"set xlabel '%s'\n",dxv.name[gx-2]);
-              }
-            }
-            if ( (gy-2) < (int)total_nbr_x ) /* variable */
-            {
-              if ( get_attribute(dxv.attribute[gy-2],"tag",svalue) )
-              {
-                fprintf(GPLOTP,"set ylabel '%s'\n",svalue);
-              }
-              else
-              {
-                fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
-              }
-            }
-            if ( plot3d == 1 )
-            {
-              if ( (gz-2) < (int)total_nbr_x ) /* variable */
-              {
-                if ( get_attribute(dxv.attribute[gz-2],"tag",svalue) )
-                {
-                  fprintf(GPLOTP,"set zlabel '%s'\n",svalue);
-                }
-                else
-                {
-                  fprintf(GPLOTP,"set zlabel '%s'\n",dxv.name[gz-2]);
-                }
-              }
-            }
-          }
-          else if ( get_int("hold") )  /* hold is on - unset axis labels */
-          {
-            fprintf(GPLOTP,"set xlabel \"\"\n");
-            fprintf(GPLOTP,"set ylabel \"\"\n");
-            fprintf(GPLOTP,"set zlabel \"\"\n");
-          }
-          if ( plot3d == 0 )
-          {
-            if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) && 
-                (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) ) /* plot from idXX.dat */
-            {
-              generate_particle_file(get_int("particle"));
-              snprintf(plot_cmd,EXPRLENGTH,\
-                  "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d "\
-                  "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
-                  get_int("particle"), nbr_cols, gx, gy,\
-                  get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
-                  gx > 1 ? dxv.name[gx-2] : get_str("indvar"), \
-                  get_int("particle"));
-            }
-            else
-            {
-              snprintf(plot_cmd,EXPRLENGTH,\
-                  "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d "\
-                  "with %s title \"%s\".\" vs \".\"%s\". \" \"\n",\
-                  1 + mfd.nbr_el, 4,\
-                  gx > 1 ? gx - ode_system_size - fcn.nbr_el - psi.nbr_el : gx,\
-                  gy > 1 ? gy - ode_system_size - fcn.nbr_el - psi.nbr_el : gy,\
-                  get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
-                  gx > 1 ? dxv.name[gx-2] : get_str("indvar"));
+          setup_pm_normal(gx, gy, gz, plot3d, dxv);
+          gplot_normal(gx, gy, gz, plot3d, dxv);
+          break;
 
-            }
-            if ( get_int("hold") == 0 ) /* normal plot command: 2D, hold=0, curves=0 */
-            {
-              fprintf(GPLOTP,"plot %s", plot_cmd);
-            }
-            else if ( get_int("hold") )
-            {
-              fprintf(GPLOTP,"replot %s", plot_cmd);
-            }
-          } 
-          else /* plot3d == 1 */
-          {
-            if ( (gx <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) && 
-                (gy <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) && 
-                (gz <= ode_system_size + fcn.nbr_el + psi.nbr_el + 1) ) /* plot from idXX.dat */
-            {
-              generate_particle_file(get_int("particle"));
-              snprintf(plot_cmd,EXPRLENGTH,\
-                  "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
-                  "with %s title \"(%d)\"\n",\
-                  get_int("particle"), nbr_cols, gx, gy, gz,\
-                  get_str("style"),\
-                  get_int("particle"));
-            }
-            else
-            {
-              snprintf(plot_cmd,EXPRLENGTH,\
-                  "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d "\
-                  "with %s\n",\
-                  1 + mfd.nbr_el, 4,\
-                  gx > 1 ? gx - ode_system_size - fcn.nbr_el - psi.nbr_el : gx,\
-                  gy > 1 ? gy - ode_system_size - fcn.nbr_el - psi.nbr_el : gy,\
-                  gz > 1 ? gz - ode_system_size - fcn.nbr_el - psi.nbr_el : gz,\
-                  get_str("style") );
-
-            }
-            if ( get_int("hold") == 0 )
-            {
-              fprintf(GPLOTP,"splot %s", plot_cmd);
-            }
-            else
-            {
-              fprintf(GPLOTP,"replot %s", plot_cmd);
-            }
-          }
-          fflush(GPLOTP);
+        case PM_ANIMATE:
+          gplot_animate(gx, gy, gz, plot3d, dxv);
           break;
 
         case PM_CONTINUATION: /* try to plot continuation branch */
@@ -2315,6 +2200,230 @@ void printf_SIM( void )
     printf_particle(p);
     p = p->nextel;
   }
+}
+
+int setup_pm_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv)
+{
+  /* set axis labels and plot */
+  int total_nbr_x = dxv.nbr_el;
+  char svalue[NAMELENGTH];
+  fprintf(GPLOTP,"unset xrange\n");
+  fprintf(GPLOTP,"unset yrange\n");
+  fprintf(GPLOTP,"unset zrange\n");
+  if ( get_int("hold") == 0 )
+  {
+    if (gx == 1) /* time evolution: xlabel = 'time' */
+    {
+      fprintf(GPLOTP,"set xlabel '%s'\n", get_str("indvar"));
+    }
+    else if ( (gx-2) < (int)total_nbr_x ) /* xlabel = name of variable  */
+    {
+      if ( get_attribute(dxv.attribute[gx-2],"tag",svalue) )
+      {
+        fprintf(GPLOTP,"set xlabel '%s'\n",svalue);
+      }
+      else
+      {
+        fprintf(GPLOTP,"set xlabel '%s'\n",dxv.name[gx-2]);
+      }
+    }
+    if (gy == 1) /* time evolution: ylabel = 'time' */
+    {
+      fprintf(GPLOTP,"set ylabel '%s'\n", get_str("indvar"));
+    }
+    else if ( (gy-2) < (int)total_nbr_x ) /* variable */
+    {
+      if ( get_attribute(dxv.attribute[gy-2],"tag",svalue) )
+      {
+        fprintf(GPLOTP,"set ylabel '%s'\n",svalue);
+      }
+      else
+      {
+        fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
+      }
+    }
+    if ( plot3d == 1 )
+    {
+      if (gz == 1) /* time evolution: zlabel = 'time' */
+      {
+        fprintf(GPLOTP,"set zlabel '%s'\n", get_str("indvar"));
+      }
+      else if ( (gz-2) < (int)total_nbr_x ) /* variable */
+      {
+        if ( get_attribute(dxv.attribute[gz-2],"tag",svalue) )
+        {
+          fprintf(GPLOTP,"set zlabel '%s'\n",svalue);
+        }
+        else
+        {
+          fprintf(GPLOTP,"set zlabel '%s'\n",dxv.name[gz-2]);
+        }
+      }
+    }
+  }
+  else if ( get_int("hold") )  /* hold is on - unset axis labels */
+  {
+    fprintf(GPLOTP,"set xlabel \"\"\n");
+    fprintf(GPLOTP,"set ylabel \"\"\n");
+    fprintf(GPLOTP,"set zlabel \"\"\n");
+  }
+  return 0;
+}
+
+int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv)
+{
+  char    plot_cmd[EXPRLENGTH];
+  const int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  const int nbr_dyn = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
+  if ( plot3d == 0 )
+  {
+    if ( (gx <= nbr_dyn + 1) && 
+         (gy <= nbr_dyn + 1) ) /* plot from idXX.dat */
+    {
+      generate_particle_file(get_int("particle"));
+      snprintf(plot_cmd,EXPRLENGTH,\
+          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d "\
+          "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+          get_int("particle"), nbr_cols, gx, gy,\
+          get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
+          gx > 1 ? dxv.name[gx-2] : get_str("indvar"), \
+          get_int("particle"));
+    }
+    else
+    {
+      snprintf(plot_cmd,EXPRLENGTH,\
+          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d "\
+          "with %s title \"%s\".\" vs \".\"%s\". \" \"\n",\
+          1 + SIM->nbr_expr, 4,\
+          gx > 1 ? gx - nbr_dyn : gx,\
+          gy > 1 ? gy - nbr_dyn : gy,\
+          get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
+          gx > 1 ? dxv.name[gx-2] : get_str("indvar"));
+
+    }
+    if ( get_int("hold") == 0 ) /* normal plot command: 2D, hold=0, curves=0 */
+    {
+      fprintf(GPLOTP,"plot %s", plot_cmd);
+    }
+    else if ( get_int("hold") )
+    {
+      fprintf(GPLOTP,"replot %s", plot_cmd);
+    }
+  } 
+  else /* plot3d == 1 */
+  {
+    if ( (gx <= nbr_dyn + 1) && 
+         (gy <= nbr_dyn + 1) && 
+         (gz <= nbr_dyn + 1) ) /* plot from idXX.dat */
+    {
+      generate_particle_file(get_int("particle"));
+      snprintf(plot_cmd,EXPRLENGTH,\
+          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
+          "with %s title \"(%d)\"\n",\
+          get_int("particle"), nbr_cols, gx, gy, gz,\
+          get_str("style"),\
+          get_int("particle"));
+    }
+    else
+    {
+      snprintf(plot_cmd,EXPRLENGTH,\
+          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d "\
+          "with %s\n",\
+          1 + SIM->nbr_expr, 4,\
+          gx > 1 ? gx - nbr_dyn : gx,\
+          gy > 1 ? gy - nbr_dyn : gy,\
+          gz > 1 ? gz - nbr_dyn : gz,\
+          get_str("style") );
+
+    }
+    if ( get_int("hold") == 0 )
+    {
+      fprintf(GPLOTP,"splot %s", plot_cmd);
+    }
+    else
+    {
+      fprintf(GPLOTP,"replot %s", plot_cmd);
+    }
+  }
+  fflush(GPLOTP);
+  return 0;
+}
+
+int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, const nve dxv)
+{
+  char    plot_cmd[EXPRLENGTH];
+  const int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  const int nbr_dyn = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
+  set_int("hold",0); /* animate only works without hold at the moment */
+  if ( plot3d == 0 )
+  {
+    if ( (gx <= nbr_dyn + 1) && 
+         (gy <= nbr_dyn + 1) ) /* plot from idXX.dat */
+    {
+      generate_particle_file(get_int("particle"));
+      snprintf(plot_cmd,EXPRLENGTH,\
+          "do for [j=0:%d] {"
+          "plot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::0::j "
+          "with lines notitle, "
+          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::j::j "
+          "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"}\n",
+          get_int("res") - 1,
+          get_int("particle"), nbr_cols, gx, gy,
+          get_int("particle"), nbr_cols, gx, gy,
+          get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), get_int("particle"));
+    }
+    else
+    {
+      snprintf(plot_cmd,EXPRLENGTH,\
+          "do for [j=0:%d] {"
+          "plot \".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d every ::0::j "
+          "with lines notitle, "
+          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d every ::j::j "
+          "with %s title \"%s\".\" vs \".\"%s\"}\n",
+          get_int("res") - 1,
+          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
+          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
+          get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"));
+    }
+    fprintf(GPLOTP,"%s", plot_cmd);
+  } 
+  else /* plot3d == 1 */
+  {
+    if ( (gx <= nbr_dyn + 1) && 
+         (gy <= nbr_dyn + 1) && 
+         (gz <= nbr_dyn + 1) ) /* plot from idXX.dat */
+    {
+      generate_particle_file(get_int("particle"));
+      snprintf(plot_cmd,EXPRLENGTH,\
+          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
+          "with %s title \"(%d)\"\n",\
+          get_int("particle"), nbr_cols, gx, gy, gz,\
+          get_str("style"),\
+          get_int("particle"));
+    }
+    else
+    {
+      snprintf(plot_cmd,EXPRLENGTH,\
+          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d "\
+          "with %s\n",\
+          1 + SIM->nbr_expr, 4,\
+          gx > 1 ? gx - nbr_dyn : gx,\
+          gy > 1 ? gy - nbr_dyn : gy,\
+          gz > 1 ? gz - nbr_dyn : gz,\
+          get_str("style") );
+
+    }
+    if ( get_int("hold") == 0 )
+    {
+      fprintf(GPLOTP,"splot %s", plot_cmd);
+    }
+    else
+    {
+      fprintf(GPLOTP,"replot %s", plot_cmd);
+    }
+  }
+  fflush(GPLOTP);
+  return 0;
 }
 
 /* plot data from file 'data_fn', with column x as x-axis and column y as y-axis */
