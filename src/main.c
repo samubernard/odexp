@@ -97,7 +97,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           file_status;
 
   /* modes */
-  int     rerun                 = 0, /* run a new ODE simulation */
+  int     runplot                 = 0, /* run a new ODE simulation */
+          plotonly                = 0,
           plot3d                = 0,
           quit                  = 0;
 
@@ -533,8 +534,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           nbr_read = sscanf(cmdline+1,"%d",&rep_command); /* rep_command default value 1 */
           mu.value[p] *= pow( get_dou("parstep"), rep_command );
           printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           update_act_par_options(p, mu);
           break;
         case '-' : /* decrement the parameter and run */
@@ -545,35 +545,39 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           nbr_read = sscanf(cmdline+1,"%d",&rep_command);
           mu.value[p] /= pow( get_dou("parstep"), rep_command );
           printf("  %s = %s%f%s\n",mu.name[p],T_VAL,mu.value[p],T_NOR);
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           update_act_par_options(p, mu);
           break;                
         case 'n' :
         case '0' : /* update/switch to normal plot */
           plot_mode = PM_NORMAL;
+          plotonly = 1;
           break;
         case 'b' :
         case '9' : /* switch to continuation plot */
           plot_mode = PM_CONTINUATION;
+          plotonly = 1;
           break;
         case 'j' :
         case '8' : /* switch to range plot */
           plot_mode = PM_RANGE;
+          plotonly = 1;
           break;
         case 'C' :
         case '7' :
           plot_mode = PM_PARTICLES;
+          plotonly = 1;
           break;
         case '6' :
           plot_mode = PM_ANIMATE;
+          plotonly = 1;
           break;
-        case 'r' : /* replot */
+        case 'r' : /* switch to replot mode */
           plot_mode = PM_REPLOT;
+          plotonly = 1;
           break;
         case 'R' :
-          rerun = 1;
-          /* plot_mode = PM_REPLOT;  */
+          runplot = 1;
           break;
         case 'h' : /* toggle hold */
           /* hold to hold the current plot 
@@ -595,13 +599,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           else
           {
             printf("  %shold is off%s\n",T_DET,T_NOR);
-            /* plot_mode = PM_NORMAL; */
           }
-          plot_mode = PM_UNDEFINED;
           break;
         case 'u' : /* add curves on the plot */ 
           nbr_read = sscanf(cmdline+1,"%c",&op);               
-          plot_mode = PM_UNDEFINED; 
           if ( (nbr_read == EOF) || (nbr_read == 1  &&  op == ' ') )
           {
             set_int("curves",1-get_int("curves"));
@@ -630,18 +631,17 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             else
             {
               PRINTERR("  %sUnknown command %s",T_ERR,T_NOR);
+              plot_mode = PM_UNDEFINED;
             }
           }
           break;
         case '>' : /* increase resolution */
           set_int("res",2*get_int("res")-1);
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           break;
         case '<' : /* decrease resolution */
           set_int("res",(get_int("res")+1)/2);
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           break;
         case 'e' : /* extend the simulation */
           nbr_read = sscanf(cmdline+1,"%lf",&nvalue);
@@ -654,13 +654,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             tspan.array[tspan.length-1] += tspan.array[tspan.length-1]-tspan.array[0];
           }
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           break;
         case 'E' : /* shorten the simulation */
           tspan.array[tspan.length-1] -= (tspan.array[tspan.length-1]-tspan.array[0])/2;
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           break;
         case 'a' : /* set axis scale  */
           sscanf(cmdline+1,"%c%c",&op,&op2);
@@ -694,22 +692,23 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             set_str("xscale","linear");
           }
-          /* plot_mode = PM_REPLOT; */
+          plotonly = 1;
           break;
         case 'A' : /* reset axis scales to normal */
           set_str("xscale","linear");
           set_str("yscale","linear");
           set_str("zscale","linear");
-          /* plot_mode = PM_REPLOT; */
+          plotonly = 1;
           break;
         case '2' : /* set 2D */
         case '3' : /* set 3D */
         case 'v' : /* set 2D or 3D view */
           nbr_read = sscanf(cmdline+1,"%d %d %d",&ngx,&ngy,&ngz);
+          plot_mode = PM_NORMAL;
+          plotonly = 1;
           if ( nbr_read == 0 ) /* try reading two or three strings */
           {
             nbr_read = sscanf(cmdline+1,"%s %s %s", svalue, svalue2, svalue3);
-            plot_mode = PM_NORMAL;
             if ( nbr_read >= 2 )
             {
               plot3d = 0;
@@ -733,7 +732,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           else if ( nbr_read >= 2 )
           {
-            plot_mode = PM_NORMAL;
             plot3d = 0;
             if ( (ngx >= -1) && ngx < (int)total_nbr_x)
             {
@@ -777,6 +775,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case 'x' :
           nbr_read = sscanf(cmdline+1,"%d",&ngx);
+          plot_mode = PM_NORMAL;
+          plotonly = 1;
           if ( nbr_read == 0 ) /* try reading a string */
           {
             nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -786,7 +786,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
               gx = ngx + 2;
               plot3d = 0;
-              plot_mode = PM_NORMAL;
               update_plot_options(ngx,ngy,ngz,dxv);
             }
           }
@@ -794,7 +793,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             gx = ngx + 2;
             plot3d = 0;
-            plot_mode = PM_NORMAL;
             update_plot_options(ngx,ngy,ngz,dxv);
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
           }
@@ -806,6 +804,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case 'y' :
           nbr_read = sscanf(cmdline+1,"%d",&ngy);
+          plot_mode = PM_NORMAL;
+          plotonly = 1;
           if ( nbr_read == 0 ) /* try reading a string */
           {
             nbr_read = sscanf(cmdline+1,"%s", svalue);
@@ -817,7 +817,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               gx = ngx + 2;
               update_plot_options(ngx,ngy,ngz,dxv);
               plot3d = 0;
-              plot_mode = PM_NORMAL;
             }
           }
           else if (ngy > -1 && ngy < (int)total_nbr_x)
@@ -826,7 +825,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             gx = ngx + 2;
             gy = ngy + 2;
             plot3d = 0;
-            plot_mode = PM_NORMAL;
             update_plot_options(ngx,ngy,ngz,dxv);
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
           }
@@ -837,26 +835,30 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           break;
         case ']' : /* plot next x */
+          plot_mode = PM_NORMAL;
+          plotonly = 1;
           ngy=gy-2;
           ngy++;
           ngy %= (int)total_nbr_x;
           gy = ngy+2;
-          plot_mode = PM_NORMAL;
           update_plot_options(ngx,ngy,ngz,dxv);
           update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
           printf("  y-axis: [%s%d%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
           break;
         case '[' : /* plot previous x */
+          plot_mode = PM_NORMAL;
+          plotonly = 1;
           ngy = gy-2;
           ngy+= (int)total_nbr_x-1;
           ngy %= (int)total_nbr_x;
           gy = ngy+2;
-          plot_mode = PM_NORMAL;
           update_plot_options(ngx,ngy,ngz,dxv);
           update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
           printf("  y-axis: [%s%d%s] %s\n",T_IND,ngy,T_NOR,dxv.name[ngy]);
           break;    
         case '}' : /* plot next particle  */
+          plot_mode = PM_NORMAL;
+          plotonly = 1;
           if ( POP_SIZE )
           {
             pars = getpar(get_int("particle"));
@@ -865,7 +867,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               pars = SIM->pop->end;
             }
             set_int("particle",pars->nextel != NULL ? pars->nextel->id : SIM->pop->start->id);
-            plot_mode = PM_NORMAL;
             printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
                 T_IND, get_int("particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
           }
@@ -875,6 +876,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           break;
         case '{' : /* plot previous particle  */
+          plot_mode = PM_NORMAL;
+          plotonly = 1;
           if ( POP_SIZE )
           {
             pars = getpar(get_int("particle"));
@@ -883,7 +886,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               pars = SIM->pop->start;
             }
             set_int("particle",pars->prevel != NULL ? pars->prevel->id : SIM->pop->end->id);
-            plot_mode = PM_NORMAL;
             printf("  particle: %s%d%s, y-axis: [%s%d%s] %s\n",\
                 T_IND, get_int("particle"),  T_NOR, T_IND,ngy,T_NOR,dxv.name[ngy]);
           }
@@ -931,8 +933,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 }
               }
             }
-            rerun = 1;
-            /* plot_mode = PM_REPLOT; */
+            runplot = 1;
           }
           break;
         case 'I' : /* set initial condition to defaults */
@@ -942,8 +943,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             set_int("lasty", 0);  /* no last y IC */
           }
           strcat(cmdline," && li");
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           break;
         case 't':
           nbr_read = sscanf(cmdline+1,"%lf %lf",&nvalue,&nvalue2); /* try to read t0 and t1 */
@@ -952,8 +952,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             if ( nvalue > tspan.array[0] )
             {
               tspan.array[tspan.length-1] = nvalue;
-              rerun = 1;
-              /* plot_mode = PM_REPLOT; */
+              runplot = 1;
             }
             else
             {
@@ -966,8 +965,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             {
               tspan.array[0] = nvalue;
               tspan.array[tspan.length-1] = nvalue2;
-              rerun = 1;
-              /* plot_mode = PM_REPLOT; */
+              runplot = 1;
             }
             else
             {
@@ -981,7 +979,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case 'l' : /* list parameters */
           sscanf(cmdline+1,"%c",&op);               
-          plot_mode = PM_UNDEFINED;  
           if (op == 'p')
           {
             for (i=0; i<mu.nbr_el; i++)
@@ -1210,10 +1207,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             PRINTERR("  Error: Unknown command. Cannot list '%c'",op);
           }
+          /* plot_mode = PM_UNDEFINED;   */
           break;
         case 'p' : /* change current parameter */
           nbr_read = sscanf(cmdline+1,"%d %lf",&np,&nvalue);
-
           if (nbr_read >= 1)
           {
             if (np > -1 && np < mu.nbr_el) /* new active parameter */
@@ -1222,8 +1219,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               if ( nbr_read == 2 ) /* new active parameter with new value */ 
               {
                 mu.value[p] = nvalue;
-                rerun = 1;
-                /* plot_mode = PM_REPLOT; */
+                runplot = 1;
                 printf("  active parameter %s set to %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
               }
               else /* new active parameter without new value */
@@ -1251,8 +1247,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               if ( name2index(svalue,mu,&p) )
               {
                 mu.value[p] = nvalue;
-                rerun = 1;
-                /* plot_mode = PM_REPLOT; */
+                runplot = 1;
                 printf("  new active parameter %s set to %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
               }
             }
@@ -1269,8 +1264,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             mu.value[p] = nvalue;
             printf("  set to %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
-            rerun = 1;
-            /* plot_mode = PM_REPLOT; */
+            runplot = 1;
           }
           else
           {
@@ -1323,8 +1317,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 {
                   ics.value[i] = nvalue;
                   NUM_IC[i] = 1;
-                  rerun = 1;
-                  plot_mode = PM_NORMAL;
+                  runplot = 1;
                 }
               }
             }
@@ -1340,8 +1333,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             if (i<ode_system_size)
             {
               NUM_IC[i] = 0;
-              rerun = 1;
-              /* plot_mode = PM_REPLOT; */
+              runplot = 1;
             }
             else 
             {
@@ -1392,7 +1384,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   default:
                     PRINTWARNING("  warning: option not defined\n");
                 }
-                /* rerun = 1; */
                 update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                 update_act_par_index(&p, mu);
                 printf_option_line(i);
@@ -1431,7 +1422,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                       strncpy(GOPTS[i].strval,svalue2,NAMELENGTH-1);
                       break;
                   }
-                  /* rerun = 1; */
                   update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                   update_act_par_index(&p, mu);
                   printf_option_line(i);
@@ -1458,8 +1448,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           /* reset parameter values */
           load_nameval(parfilename, mu, "PAR", 3,exit_if_nofile);
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           update_act_par_options(p, mu);
           break;
         case 'o' : /* open a parameter file */
@@ -1501,8 +1490,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               PRINTWARNING("  warning: could not load options.\n");
             }
           }
-          rerun = 1;
-          /* plot_mode = PM_REPLOT; */
+          runplot = 1;
           break;
         case 'g' : /* issue a gnuplot command */
           fprintf(GPLOTP,"%s\n", cmdline+1);
@@ -1548,6 +1536,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case '#' : /* add data from file to plot */
           nbr_read = sscanf(cmdline+1,"%s %d %d",svalue,&colx,&coly);
+          plotonly = 1;
           if ( nbr_read > 0 )
           {
             i = 0;
@@ -1575,7 +1564,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             printf("  Dataset not found. plotting data off\n");
             set_int("plotdata", 0);
-            /* plot_mode = PM_REPLOT; */
           }
           break;
         case 'w' :  /* world */
@@ -1584,7 +1572,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             printf_SIM();
           }
-          plot_mode = PM_UNDEFINED;
           break;
         case '$' :  /* list particle dataset */
           nbr_read = sscanf(cmdline+1,"%d",&i);
@@ -1601,7 +1588,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               list_stats();
             }
           }
-          plot_mode = PM_UNDEFINED;
           break;
         case 'Q' :  /* quit with implicit save */
         case 'q' :  /* quit with save */
@@ -1645,7 +1631,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
       check_options();
 
-      if (rerun)
+      if (runplot)
       {
         if ( get_int("reseed") )
         {
@@ -1661,97 +1647,100 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
       /* PLOTTING */
 
-      if ( strncmp("log",get_str("xscale"),3)==0 )
+      if (plotonly || runplot)
       {
-        fprintf(GPLOTP,"set logscale x\n");   
-      }
-      else
-      {
-        fprintf(GPLOTP,"set nologscale x\n");   
-      }
-      if ( strncmp("log",get_str("yscale"),3)==0 )
-      {
-        fprintf(GPLOTP,"set logscale y\n");   
-      }
-      else
-      {
-        fprintf(GPLOTP,"set nologscale y\n");   
-      }
-      if ( strncmp("log",get_str("zscale"),3)==0 )
-      {
-        fprintf(GPLOTP,"set logscale z\n");   
-      }
-      else
-      {
-        fprintf(GPLOTP,"set nologscale z\n");   
-      }
-      fflush(GPLOTP);
+        if ( strncmp("log",get_str("xscale"),3)==0 )
+        {
+          fprintf(GPLOTP,"set logscale x\n");   
+        }
+        else
+        {
+          fprintf(GPLOTP,"set nologscale x\n");   
+        }
+        if ( strncmp("log",get_str("yscale"),3)==0 )
+        {
+          fprintf(GPLOTP,"set logscale y\n");   
+        }
+        else
+        {
+          fprintf(GPLOTP,"set nologscale y\n");   
+        }
+        if ( strncmp("log",get_str("zscale"),3)==0 )
+        {
+          fprintf(GPLOTP,"set logscale z\n");   
+        }
+        else
+        {
+          fprintf(GPLOTP,"set nologscale z\n");   
+        }
+        fflush(GPLOTP);
 
-      if ( get_int("curves") ) /* PM_CURVES overrides PM_REPLOT */
-      {
-        plot_mode = PM_CURVES;
-      }
+        if ( get_int("curves") ) /* PM_CURVES overrides PM_REPLOT */
+        {
+          plot_mode = PM_CURVES;
+        }
 
 
-      switch(plot_mode) 
-      {
-        case PM_UNDEFINED:
-          /* do nothing */
-          break;
+        switch(plot_mode) 
+        {
+          case PM_UNDEFINED:
+            /* do nothing */
+            break;
 
-        case PM_CURVES:
-          /* plot curve.0 to curve.nbr_hold-1 */
-          fprintf(GPLOTP,\
-              "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"0\"\n",get_str("style"));
-          for (i = 1; i < nbr_hold; i++)
-          {
+          case PM_CURVES:
+            /* plot curve.0 to curve.nbr_hold-1 */
             fprintf(GPLOTP,\
-                "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%d\"\n",\
-                (int)i,get_str("style"),(int)i);
-          }
-          fflush(GPLOTP);
-          break;
+                "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"0\"\n",get_str("style"));
+            for (i = 1; i < nbr_hold; i++)
+            {
+              fprintf(GPLOTP,\
+                  "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%d\"\n",\
+                  (int)i,get_str("style"),(int)i);
+            }
+            fflush(GPLOTP);
+            break;
 
-        case PM_REPLOT:
-          generate_particle_file(get_int("particle")); /* generate id.dat file for the current particle */
-          fprintf(GPLOTP,"replot\n");
-          fflush(GPLOTP);
-          break;
+          case PM_REPLOT:
+            generate_particle_file(get_int("particle")); /* generate id.dat file for the current particle */
+            fprintf(GPLOTP,"replot\n");
+            fflush(GPLOTP);
+            break;
 
-        case PM_NORMAL: /* normal plot mode */
-          /* This is where the plot is normally updated */
-          setup_pm_normal(gx, gy, gz, plot3d, dxv);
-          gplot_normal(gx, gy, gz, plot3d, dxv);
-          break;
+          case PM_NORMAL: /* normal plot mode */
+            /* This is where the plot is normally updated */
+            setup_pm_normal(gx, gy, gz, plot3d, dxv);
+            gplot_normal(gx, gy, gz, plot3d, dxv);
+            break;
 
-        case PM_ANIMATE:
-          gplot_animate(gx, gy, gz, plot3d, dxv);
-          break;
+          case PM_ANIMATE:
+            gplot_animate(gx, gy, gz, plot3d, dxv);
+            break;
 
-        case PM_CONTINUATION: /* try to plot continuation branch */
-          fprintf(GPLOTP,"set xlabel '%s'\n",mu.name[p]);
-          fprintf(GPLOTP,"set xrange[%lf:%lf]\n",get_dou("par0"),get_dou("par1"));
-          fprintf(GPLOTP,"plot \"stst_branches.tab\" u 2:%d w %s\n",gy+1,get_str("style"));
-          fflush(GPLOTP);
-          break;
+          case PM_CONTINUATION: /* try to plot continuation branch */
+            fprintf(GPLOTP,"set xlabel '%s'\n",mu.name[p]);
+            fprintf(GPLOTP,"set xrange[%lf:%lf]\n",get_dou("par0"),get_dou("par1"));
+            fprintf(GPLOTP,"plot \"stst_branches.tab\" u 2:%d w %s\n",gy+1,get_str("style"));
+            fflush(GPLOTP);
+            break;
 
-        case PM_RANGE: /* try to plot range */
-          /* */
-          break;
+          case PM_RANGE: /* try to plot range */
+            /* */
+            break;
 
-        case PM_PARTICLES:
-          gplot_particles(gx, gy, dxv );
-          break;
+          case PM_PARTICLES:
+            gplot_particles(gx, gy, dxv );
+            break;
 
-        default: 
-          break;
+          default: 
+            break;
+        }
+
+        /* plot data */
+        if ( get_int("plotdata")  && plot_mode == PM_NORMAL ) 
+        {
+          gplot_data(colx, coly, data_fn);
+        }    
       }
-
-      /* plot data */
-      if ( get_int("plotdata")  && plot_mode == PM_NORMAL ) 
-      {
-        gplot_data(colx, coly, data_fn);
-      }    
 
       /* update option x, y, z */
       update_plot_options(ngx,ngy,ngz,dxv);
@@ -1761,7 +1750,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       update_act_par_index(&p, mu);
 
       fflush(stdin);
-      rerun = 0;
+      runplot = 0;
+      plotonly = 0;
       /* plot_mode = PM_UNDEFINED; */
       rep_command = 1; /* reset to default = 1 */
 
@@ -2364,26 +2354,26 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
       snprintf(plot_cmd,EXPRLENGTH,\
           "do for [j=0:%d] {"
           "plot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::0::j "
-          "with lines notitle, "
+          "with dots notitle, "
           "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::j::j "
           "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"}\n",
           get_int("res") - 1,
           get_int("particle"), nbr_cols, gx, gy,
           get_int("particle"), nbr_cols, gx, gy,
-          get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), get_int("particle"));
+          get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), get_int("particle"));
     }
     else
     {
       snprintf(plot_cmd,EXPRLENGTH,\
           "do for [j=0:%d] {"
           "plot \".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d every ::0::j "
-          "with lines notitle, "
+          "with dots notitle, "
           "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d every ::j::j "
           "with %s title \"%s\".\" vs \".\"%s\"}\n",
           get_int("res") - 1,
           1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
           1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
-          get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"));
+          get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"));
     }
     fprintf(GPLOTP,"%s", plot_cmd);
   } 
@@ -2397,7 +2387,7 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
       snprintf(plot_cmd,EXPRLENGTH,\
           "do for [j=0:%d] {"
           "splot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::0::j "
-          "with lines notitle, "
+          "with dots notitle, "
           "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::j::j "
           "with %s title \"%s\".\", \".\"%s\".\", \".\"%s\". \" \" .\"(%d)\"}\n",
           get_int("res") - 1,
@@ -2410,12 +2400,12 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
       snprintf(plot_cmd,EXPRLENGTH,\
           "do for [j=0:%d] {"
           "plot \".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d every ::0::j "
-          "with lines notitle, "
+          "with dots notitle, "
           "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d%d every ::j::j "
           "with %s title \"%s\".\", \".\"%s\", \".\"%s\"}\n",
           get_int("res") - 1,
-          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
-          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
+          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy, gy > 1 ? gz - nbr_dyn : gz,
+          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy, gy > 1 ? gz - nbr_dyn : gz,
           get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"));
     }
     fprintf(GPLOTP,"%s", plot_cmd);
