@@ -2395,32 +2395,30 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
     {
       generate_particle_file(get_int("particle"));
       snprintf(plot_cmd,EXPRLENGTH,\
-          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
-          "with %s title \"(%d)\"\n",\
-          get_int("particle"), nbr_cols, gx, gy, gz,\
-          get_str("style"),\
-          get_int("particle"));
+          "do for [j=0:%d] {"
+          "splot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::0::j "
+          "with lines notitle, "
+          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::j::j "
+          "with %s title \"%s\".\", \".\"%s\".\", \".\"%s\". \" \" .\"(%d)\"}\n",
+          get_int("res") - 1,
+          get_int("particle"), nbr_cols, gx, gy, gz,
+          get_int("particle"), nbr_cols, gx, gy, gz,
+          get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"), get_int("particle"));
     }
     else
     {
       snprintf(plot_cmd,EXPRLENGTH,\
-          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d "\
-          "with %s\n",\
-          1 + SIM->nbr_expr, 4,\
-          gx > 1 ? gx - nbr_dyn : gx,\
-          gy > 1 ? gy - nbr_dyn : gy,\
-          gz > 1 ? gz - nbr_dyn : gz,\
-          get_str("style") );
-
+          "do for [j=0:%d] {"
+          "plot \".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d every ::0::j "
+          "with lines notitle, "
+          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d%d every ::j::j "
+          "with %s title \"%s\".\", \".\"%s\", \".\"%s\"}\n",
+          get_int("res") - 1,
+          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
+          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
+          get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"));
     }
-    if ( get_int("hold") == 0 )
-    {
-      fprintf(GPLOTP,"splot %s", plot_cmd);
-    }
-    else
-    {
-      fprintf(GPLOTP,"replot %s", plot_cmd);
-    }
+    fprintf(GPLOTP,"%s", plot_cmd);
   }
   fflush(GPLOTP);
   return 0;
