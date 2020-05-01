@@ -2264,7 +2264,7 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
       snprintf(plot_cmd,EXPRLENGTH,\
           "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d "\
           "with %s title \"%s\".\" vs \".\"%s\". \" \"\n",\
-          1 + SIM->nbr_expr, 4,\
+          1 + SIM->nbr_mfd, 4,\
           gx > 1 ? gx - nbr_dyn : gx,\
           gy > 1 ? gy - nbr_dyn : gy,\
           get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
@@ -2299,7 +2299,7 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
       snprintf(plot_cmd,EXPRLENGTH,\
           "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d "\
           "with %s\n",\
-          1 + SIM->nbr_expr, 4,\
+          1 + SIM->nbr_mfd, 4,\
           gx > 1 ? gx - nbr_dyn : gx,\
           gy > 1 ? gy - nbr_dyn : gy,\
           gz > 1 ? gz - nbr_dyn : gz,\
@@ -2351,8 +2351,8 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
           "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d every ::j::j "
           "with %s title \"%s\".\" vs \".\"%s\"}\n",
           get_int("res") - 1,
-          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
-          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
+          1 + SIM->nbr_mfd, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
+          1 + SIM->nbr_mfd, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
           get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"));
     }
     fprintf(GPLOTP,"%s", plot_cmd);
@@ -2384,8 +2384,8 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
           "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d%d every ::j::j "
           "with %s title \"%s\".\", \".\"%s\", \".\"%s\"}\n",
           get_int("res") - 1,
-          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy, gy > 1 ? gz - nbr_dyn : gz,
-          1 + SIM->nbr_expr, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy, gy > 1 ? gz - nbr_dyn : gz,
+          1 + SIM->nbr_mfd, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy, gy > 1 ? gz - nbr_dyn : gz,
+          1 + SIM->nbr_mfd, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy, gy > 1 ? gz - nbr_dyn : gz,
           get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"));
     }
     fprintf(GPLOTP,"%s", plot_cmd);
