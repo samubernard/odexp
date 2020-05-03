@@ -25,6 +25,11 @@ use Getopt::Std;
 # ---------------------------------------
 # valid identifiers start with a letter (Latin or Greek), and followed by 'word'
 # characters: alphanumeric characters, underscore _, or Greek letters.
+
+my $knownfunction = qr/
+ (a?sin|a?cos|a?tan|exp|log|pow|sqrt)
+/x;
+
 my $re_identifier = qr/[\p{L}Α-Ωα-ω][\wΑ-Ωα-ω]*/;
 my $re_iter_scalar = qr/
   \s*                   # whitespaces
@@ -159,6 +164,30 @@ my $re_scalar = qr/^
       \s*[^\[\S#\{]             # followed by something else that [, { or #
 /ix;
 
+
+my $mftext = qq(Mean fields are averages over all particles. 
+They are of the form
+
+\\begin{align*}
+\\langle M_i \\rangle_i = \\frac{1}{N_p} \\sum_{i \\in \\{\\text{particle index}\\} } M_i,
+\\end{align*}
+
+where \$M_i\$ is an expression that depends on particle \$i\$, and \$N_p\$ = `POP_SIZE`, 
+the number of particles.
+);
+my $ctext = qq(Couplings are averages over all pairs of particles. 
+They are of the form
+
+\\begin{align*}
+\\langle C_{i,j} \\rangle_j = \\frac{1}{N_p} \\sum_{j \\in \\{\\text{particle index}\\} } C_{i,j},
+\\end{align*}
+
+where \$C_{i,j}\$ is an expression that depends on particles \$i\$ and \$j\$, and \$N_p\$ = `POP_SIZE`, 
+the number of particles.
+);
+
+my @timespan;
+
 # ---------------------------------------
 
 # odexp optional parameters
@@ -200,234 +229,86 @@ open(my $fhmd, '>', $mdfile) or die "could not open file '$mdfile'. $!";
 # Print Header 
 # ====================================================================================
 print_ode_header();
-set_defines();
+# ====================================================================================
+# DEFINE LETS 
+# ====================================================================================
+print_scalar_or_array("LET","First assume that");
 # ====================================================================================
 # DEFINE PARAMETERS 
 # ====================================================================================
-define_parameters();  
+print_parameters_and_constants();  
+# ====================================================================================
+# DEFINE EQUATIONS 
+# ====================================================================================
+print_equations("D\.*/DT", $re_dxdt, "### Equations", "rhs");
 # ====================================================================================
 # DEFINE PARAMETRIC EXPRESSION/AUXILIARY FUNCTIONS...
 # ====================================================================================
-declare_scalar_or_array("EXPR","# Parametric expressions");
-declare_scalar_or_array("AUX","# Auxiliary functions");
-declare_scalar_or_array("%C","# Coupling functions");
-declare_scalar_or_array("%M","# Mean fields");
-declare_scalar_or_array("INIT","# Initial conditions");
-assign_output("D\.*/DT", $re_dxdt, "# Equations", "rhs");
+print_scalar_or_array("INIT","");
+print_scalar_or_array("EXPR","### Parametric expressions and auxiliary terms");
+print_scalar_or_array("AUX","");
+print_scalar_or_array("%M","### Mean fields");
+print_scalar_or_array("%C","### Coupling functions");
+# ====================================================================================
+# PRINT LAGS
+# ====================================================================================
+print_lags();
 # ====================================================================================
 # DEFINE POPULATION RATES 
 # ====================================================================================
-assign_pop_rate("%BIRTH", "### Birth rates");
-assign_pop_rate("%DEATH", "### Death rates");
-assign_pop_rate("%REPLI", "### Replication rates");
+print_pop_rates();
 # ====================================================================================
 # DECLARE AND DEFINE CONSTANT ARRAYS
-declare_array_from_file();
-# declare_constant_array();
+# ====================================================================================
+print_array_from_file();
+print_constant_array();
 # ====================================================================================
 # DECLARE AND DEFINE FUNCTIONS
-# define_functions();
 # ====================================================================================
-# ODE RHS
-# print_ode_rhs();
+print_functions();
+# ====================================================================================
+# PRINT OPTIONS 
+# ====================================================================================
+print_options("OPT","# Options");
 
 close $fhmd;
 
-exec ("pandoc -o ${bname}.pdf $mdfile") or print STDERR "could not convert to pdf $!";
+exec ("pandoc --pdf-engine=xelatex -o ${bname}.pdf $mdfile") or print STDERR "could not convert to pdf $!";
 
 sub print_ode_header
 {
   print $fhmd "---\n";
-  print $fhmd "title: $odefilename\n";
+  print $fhmd "title: Description of `$odefilename`\n";
+  print $fhmd "geometry:\n"; 
+  print $fhmd "- top=35mm\n";
+  print $fhmd "- left=30mm\n";
+  print $fhmd "- right=4cm\n";
+  print $fhmd "- heightrounded\n";
+  print $fhmd "fontfamily: fourier\n";
   print $fhmd "---\n\n";
-}
 
-# strip any blank space at the beginning of a line
-# append next line to all lines terminating with \
-# append next line to all lines terminating with ... followed by any number of whitespaces
-# replace all LET constants by their value
-# add PAR in front of each naked parameter (see $re_nakedpar)
-# add INIT in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
-# parse IC in attribute (see $re_attributeIC)
-# parse implicitly defined delayed variables (see $re_lag)
-# replace all ; in PAR, OPT by \n(PAR|OPT) 
-sub prescan
-{
-  my @lets;
-  my @letvals;
-  my $tmpfh = tempfile(); # make a first pass in temp file to remove linebreaks
-                          # and find lets
-  my $in_func = 0;
-  my $set_in_block = 0; 
-  my $in_block = 0;
-  while ( <> )    
-  {
-    $in_block = $set_in_block + $in_func;
-    $set_in_block = 0; 
-    $set_in_block = 1 if  /^\s*fun/i;
-    $set_in_block = 0 if ( /^\s*end/i or /^\s*fun.*?=/i );
-    $set_in_block = 1 if /\.\.\.\s*$/ or /\\\n/ ; 
-    $in_func = 1 if ($set_in_block and /^\s*fun/i );
-    $in_func = 0 if /^\s*end/i;
-    $in_block = 1 if /^\s{4}/;   
-    if ( $opt_i == 0 ) # check for common syntax errors 
-    {
-      /\{.*?unused.*?\}/ and die "error: change unused for impl on line ${.}: $_\n";
-      /\{.*?pop.*?\}/ and die "error: change pop for impl on line ${.}: $_\n";
-      /\{.*?inexpr.*?\}/ and die "error: change inexpr for init on line ${.}: $_\n";
-      /(MU|ME|MA|MY|OE|OA|OY|MF)\(\"($re_identifier)\"\)/ and 
-          die "error: macro $1 needs no quote around the variable '$2' on line ${.}. Try $1($2).\n";
-      /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
-          die "error: incomplete keyword '$1' on line ${.}: $_\n" unless $in_block;
-      /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
-      /^\s*($|#|PAR|EXPR|AUX|D|INIT|LET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI|END)/i
-        or die "error: wrong keyword on line ${.}: $_" 
-        unless $in_block;
-    } # end check common errors
-
-    # reformat pop file    
-    # first pass
-    chomp; # remove the newline \n # it will be added at the end of blocks 
-    s/^([^#].*?)(\\$|\.\.\.\s*$)/$1/;    # remove line continuation keywords 
-    s/^\s+(\S)/$1/;                      # trim space and tab at beginning of line
-    my @fields = split; 
-    if ( /^LET/i ) {
-      push @lets, $fields[1];
-      push @letvals, join(' ',@fields[2..$#fields]);
-      $letvals[$#letvals] =~ s/\s*?#.*?$//;
-    }
-    if ( /^@|^FUN/i && /\=/)  # this is a one liner function
-    {
-      s/\=/= return/;
-    }
-    if ( /^@|^FUN/i && not /\=/ ) # this is a multiline function
-    {
-      s/\s*$/ = /;
-    }
-    s/^END//i;                            # remove the END keyword
-    print $tmpfh "\n" if not $in_block;         # start a new line if not in block 
-    print $tmpfh "$_";
-  }
-  print $tmpfh "\n"; # add a final new line
-
-  # second pass
-  seek $tmpfh, 0, 0; # rewind temp file to rebreak lines at ';' and replace lets
-  print $fhmd "# begin of pop file entries vvvvvvvvvvvvvvvvvvvvvvvvv\n\n";
-  while ( <$tmpfh> )
-  {
-    /$re_nakedpar/ && s/^\s*/PAR /;     # insert PAR before naked parameters
-    if ( my ($varname) = ( $_ =~ /$re_nakedaux/ ) )
-      {
-        s/^\s*$varname\s*=/AUX $varname /;     # insert AUX before naked aux   
-      }
-    if ( my ($varname) = ( $_ =~ /$re_implicitIC/ ) )
-      {
-        s/$/\nINIT $varname ${varname}_0/;   # insert new line with initial condition  
-      }
-    if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
-      {
-        s/$/\nINIT $varname $ic/;   # insert new line with initial condition  
-      }
-    if ( my ($varname, $attr) = ( $_ =~ /$re_lag/ ) )
-      {
-        s/^/# /; # comment out the line
-        my ($rootvar) = ( $attr =~ /root\s*=\s*(.*?)([,\s]|$)/ );
-        my ($ic) = ( $attr =~ /init\s*=\s*(.*?)([,\s]|$)/ );
-        my ($len) = ( $attr =~ /len\s*=\s*(.*?)([,\s]|$)/ );
-        my ($mean) = ( $attr =~ /mean\s*=\s*(.*?)([,\s]|$)/ );
-        s+$+\nd${varname}_chain[i=0:$len]/dt = linchaindelay($rootvar,${varname}_chain,i,$mean,$len) {hidden}\nmacro ${varname}_end $len-1\nAUX $varname ${varname}_chain[${varname}_end]\nINIT ${varname}_chain[i=0:$len] $ic {hidden}+; # insert new lines
-      }
-    my @fields = split; 
-    foreach my $i ( 0..$#lets )
-    {
-        s/\b$lets[$i]\b/$letvals[$i]/g unless /^LET/i; # replace lets that don't start a line
-    }
-    s/;/\n$fields[0] /g if /^(PAR|OPT)/i;    # break lines at ; and remove ; if line starts with PAR or OPT 
-
-    print $fhmd "$_";
-  }
-  print $fhmd "# end of pop file entries ^^^^^^^^^^^^^^^^^^^^^^^^^\n\n";
-}
-
-sub init_check
-{
-  my @dynas;
-  my @inits;
-  while(<>)
-  {
-    if ( my ($type, $var) = ( $_ =~ /$re_pace/ ) ) 
-    {
-      push @inits, $var if ( $_ =~ /^INIT/i );
-    }
-    if ( my ($type, $var) = ( $_ =~ /$re_dxdt/ ) )
-    {
-      push @dynas, $var;
-    }
-  }
-  # perform check
-  die "error: more dynamical variables than initial conditions \n" if ( (0+@dynas) > (0+@inits) );
-  die "error: more initial conditions than dynamical variables \n" if ( (0+@dynas) < (0+@inits) );
-  while ( @inits ) 
-  {
-    my $init = shift @inits;
-    my $dyna = shift @dynas;
-    die "error: initial conditions don't match dynamical variables: $init, $dyna \n" if ( $init ne $dyna );
-  }
-}
-
-sub impl_check
-{
-  my @vars;
-  my @impls;
-  my @lines;
-  while(<>)
-  {
-    chomp;
-    if ( my ($type, $var) = ( $_ =~ /$re_pace/ ) ) 
-    {
-      push @vars, $var;
-    }
-    if ( my ($type, $impl) = ( $_ =~ /(MU|MY|ME|MA|MF|OY|OE|OA|SY|SE|SA)\(\s*(.*?)\s*\)/ ) )
-    {
-      push @impls, $impl;
-      push @lines, $_;
-    }
-  }
-  # perform check
-  while ( @impls ) 
-  {
-    my $found = 0;
-    my $i = 0;
-    my $impl = shift @impls;
-    my $line = shift @lines;
-    while ( ( not $found ) and ($i < (0+@vars) ) ) 
-    {
-      $found = 1 if ( $impl eq $vars[$i++] );
-    }
-    die "error: variable $impl, used implicitly on line \"$line\", was not declared\n" if not $found;
-  }
-
-}
-
-
-sub set_defines 
-{
   open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
-  while (<$fh>) 
-  {
-    if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
-    {
-      $type =~ /^MAC/i or next; 
-      $comment =~ s/#\s*//; # strip comment
-      print $fhmd $comment . ": " if length $comment;
-      print $fhmd $varname . "=" . $rhs . "\n";       
-    }
-  }
+  while ( <$fh> )    
+ 	{
+		/^##/i or next;   # match character or go to next line of file
+    s/^##\s*//; # strip comment symbols
+    print $fhmd $_; 
+	}	
+  print $fhmd "\n";
+
+  seek $fh, 0, 0; # rewind file 
+  while ( <$fh> )    
+ 	{
+		/^TIMES/i or next;   # match character or go to next line of file
+    @timespan = split; 
+    shift(@timespan);
+	}	
+
   close($fh);
 }
 
 
-sub declare_array_from_file
+sub print_array_from_file
 {
   # expecting: F my_array_name nRow nCols filename.dat 
   open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
@@ -438,9 +319,8 @@ sub declare_array_from_file
       my @fields = split; 
       if ( 0+@fields < 5 ) { die "missing something at line: $_" };
       my ($var, $nbr_rows, $nbr_cols, $data_filename) = @fields[1..4];
-      print $fhmd "Data array from `$data_filename` of size $nbr_rows x $nbr_cols\n";
-      print $fhmd "${var}\n        ";
-      print $fhmd "--------------\n";
+      print $fhmd "Data array ${var} from `$data_filename` of size $nbr_rows x $nbr_cols\n\n";
+      print $fhmd "```\n";
       open(my $datafh, '<', $data_filename) or die "Could not open file '$data_filename'. $!";
       while( <$datafh> )
       {
@@ -457,17 +337,31 @@ sub declare_array_from_file
             printf $fhmd "$datafields[$#datafields]\n\n";
           }
       }
+      print $fhmd "```\n";
       close($datafh);
     }
   }
   close($fh);
 }
 
-sub declare_constant_array
+sub print_constant_array
 {
   # declare and initialize constant array
-  print $fhmd "## Constant arrays\n\n";
-  while (<>) 
+  open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
+  my $varfound = 0;
+
+  while ( <$fh> )    
+  {
+    /^CONST/i or next;
+    $varfound = 1;
+  }
+  
+  close($fh) if not $varfound;
+  return if not $varfound;
+   
+  seek $fh, 0, 0; # rewind file 
+  print $fhmd "### Constant arrays\n\n";
+  while (<$fh>) 
   {
     if ( /^CONST/i )  
     {
@@ -476,521 +370,328 @@ sub declare_constant_array
       print $fhmd "$var = " . join(' ', @fields[2..$#fields]) . "\n\n";
     }
   }
+  close($fh);
 }
 
-sub define_functions
+sub print_functions
 {
   # declare and define user-defined functions
-  print $fhmd "## User-defined functions */\n\n";
-  print $fhmd "```{C}\n";
-  while (<>) 
+  open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
+  my $varfound = 0;
+
+  while ( <$fh> )    
   {
     /^(@|FUN)/i or next;  
-    my $output_type = "double";
-    if ( /return\s*\((int|long|char|float)\)/ )
+    $varfound = 1;
+  }
+  
+  close($fh) if not $varfound;
+  return if not $varfound;
+   
+  seek $fh, 0, 0; # rewind file 
+  print $fhmd "### User-defined `C` functions\n";
+  print $fhmd "```{C}\n";
+  my $infunc = 0;
+  while (<$fh>) 
+  {
+    (/^(@|FUN)/i or $infunc) or next;  
+    if ( $_ =~ /^(@|FUN)/i )
     {
-      $output_type = $1;
-    }
-    my @fields = split;                         # split line by whitespace
-    shift(@fields);                             # remove keyword @/fun
-    @fields = split /=/, join(' ', @fields);    # resplit line by =
-    my @fs = split /[(,)]/i, shift(@fields);    # split lhs 
-    @fs = grep /\S/, @fs;                       # remove empty elements
-    print $fhmd "$output_type " . shift(@fs) . "(";    # print func name and (
-    while( @fs )
-    {
-      my $s = shift(@fs);                       # get next argument 
-      $s =~ s/^\s*|\s*$//g;                     # trim whitespaces
-      if ( $s =~ /void|int|long|char|float|const/ )
+      $_ =~ s/^(@|FUN)/double/i;
+      if ( not ($_ =~ /=/) ) 
       {
-        print $fhmd $s;                          # print argument as is
+        $infunc = 1;
+        print $fhmd $_;
+        print $fhmd "{\n";
       }
-      else
+      else # one-liner
       {
-        print $fhmd "double " . $s;              # argument is double by default  
+        $_ =~ s/=/\n{\n  return /;
+        $_ =~ s/$/;\n}\n/;
+        print $fhmd $_;
       }
-      print $fhmd ", " if @fs;                   # , only if not last argument
     }
-    print $fhmd ")\n{\n";
-    my @rhs = split /;/ , join('=', @fields);   # put '=' back and split by ';' 
-    @rhs = grep /\S/, @rhs; # remove empty elements
-    while ( @rhs )                              # print all statements with ';'
+    elsif ( $infunc ) 
     {
-      my $s = shift(@rhs); 
-      $s =~ s/^\s*|\s*$//g; # trim
-      print $fhmd "    " . $s . ";\n"; 
+      if ( /^end/ ) 
+      {
+        $infunc = 0;
+        print $fhmd "}\n\n";
+      }
+      else 
+      {
+        print $fhmd $_;
+      }
     }
-    print $fhmd "}\n\n";
   }
   print $fhmd "```\n\n";
+  close($fh);
    
 }
 
-sub print_pop_rhs
-{
-	my $s = qq(/* POP_RHS replicate ode_rhs pop_size times. y_ and f_ are array of size pop_size*ode_system_size */
-int pop_rhs(double t, const double y_[], double f_[], void *params_)
-{
-    clock_t start = clock();
-    size_t i_ = 0, j_;
-    par *myself_ = SIM->pop->start;
-    par __attribute__((unused)) *other_ = (par *)NULL;
 
-    /* low-rank expansion */
-    double __attribute__((unused)) *xxp_, *yxp_;
-    /* low-rank expansion */
-
-    SIM->pop_birth_rate=0.0;
-    for(j_=0;j_<SIM->nbr_mfd;j_++)
-    {
-        SIM->meanfield[j_] = 0.0;
-    }
-    while ( myself_ != NULL )
-    {
-        ode_rhs(t, y_+i_*myself_->nbr_y, f_+i_*myself_->nbr_y, myself_); /* first update myself_->aux, myself_->death_rate
-                                                                      * first update myself_->repli_rate       */
-);
-	print $fhmd $s;
-  set_population_birth_rate();
-  $s = qq(        i_++;
-        myself_ = myself_->nextel;
-    }
-);
-	print $fhmd $s;	
-
-  set_low_rank_expansion();
-
-	set_population_meanfields();
-  $s = qq(    SIM->pop_birth_rate /= POP_SIZE;
-    myself_ = SIM->pop->start;
-    i_ = 0;
-    while ( myself_ != NULL )
-    {
-);
-  print $fhmd $s;
-
-  set_population_coupling();
-
-  $s = qq(        ode_rhs(t, y_+i_*myself_->nbr_y, f_+i_*myself_->nbr_y, myself_);
-        i_++;
-        myself_ = myself_->nextel;
-    }
-
-    SIM->time_in_ode_rhs += (clock()-start)*1000.0 / CLOCKS_PER_SEC;
-    return GSL_SUCCESS;
-}
-
-);
-	print $fhmd $s;	
-}
-
-sub set_population_birth_rate
-{
-	while ( <> )    
-	{
-		/^%BIRTH/i or next;
-    my @fields = split;
-    shift(@fields);
-		print $fhmd "        SIM->pop_birth_rate += " . join(' ', @fields) . ";\n";
-	}
-	
-}
-
-sub set_population_meanfields
-{
-  my $nv=0;
-	while ( <> )    
-	{
-		/^%M/i or next;
-    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-    my $s = strip_blanks($rhs) . ";";
-    $s .= " /* $attr */" if length $attr;
-    $s .= " /* $comment */" if length $comment;
-    if ( $attr =~ /\bvect\b/ ) # don't loop, just evaluate the rhs
-    {
-      print $fhmd "    SIM->meanfield[$nv] = $s\n"; 
-    }
-    else
-    {
-      print $fhmd "    myself_ = SIM->pop->start;\n";
-      print $fhmd "    while ( myself_ != NULL )\n";
-      print $fhmd "    {\n";
-      print $fhmd "        SIM->meanfield[$nv] += $s\n"; 
-      print $fhmd "        myself_ = myself_->nextel;\n";
-      print $fhmd "    }\n";
-      print $fhmd "    SIM->meanfield[$nv] /= POP_SIZE;\n";
-    }
-    ++$nv;
-	}
-
-}
-
-sub set_population_coupling
-{
-
-  my $nv=0;
-  my $nbr_n2_coupling=0;
-  
-  while ( <> )    
-  {
-		/^%C/i or next;
-    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-    $nbr_n2_coupling++ if $attr =! /lrw?exp/;
-  }
-
-  if ($nbr_n2_coupling > 0)
-  {
-    my $s = qq(        /* update coupling terms psi, O(N^2) */
-        for(j_=0;j_<myself_->nbr_psi;j_++)
-        {
-          myself_->psi[j_] = 0.0;
-        }
-        other_ = SIM->pop->start;
-        while ( other_ != NULL )
-        {
-);
-    print $fhmd $s;	
-
-    while ( <> )    
-    {
-      /^%C/i or next;
-      my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-      my $s = strip_blanks($rhs) . ";";
-      $s .= " /* $attr */" if length $attr;
-      $s .= " /* $comment */" if length $comment;
-      print $fhmd "          myself_->psi[$nv] += $s\n";
-      ++$nv;
-    }
-    $s = qq(          other_ = other_->nextel;
-        }
-        for (j_=0;j_<myself_->nbr_psi;j_++)
-        {
-          myself_->psi[j_] /= POP_SIZE;
-        }
-);
-    print $fhmd $s;
-  }
-	
-}
-
-sub print_pop_init_conds
-{
-	my $s = qq(/* POP_INIT_CONDITIONS replicate ode_init_conditions pop_size times. y_ is an array of size pop_size*ode_system_size */
-int pop_init_conditions(const double t, double y_[], void *params_)
-{
-    size_t i_ = 0, j_;
-    par *myself_ = SIM->pop->start;
-    while ( myself_ != NULL )
-    {
-        ode_init_conditions(t, y_+i_*myself_->nbr_y, myself_);
-        for(j_=0;j_<myself_->nbr_y;j_++)
-        {
-            myself_->y[j_] = *(y_+i_*myself_->nbr_y);
-        }
-        i_++;
-        myself_ = myself_->nextel;
-    }
-
-    return GSL_SUCCESS;
-}
-
-);
-	print $fhmd $s;	
-}
-
-
-
-
-# define_parameters
+# print_parameters_and_constants
 # take a line of the form 
 #   PAR mu VAL {attr} # comment
-sub define_parameters
+sub print_parameters_and_constants
 {
-  print $fhmd "## Model parameters\n\n";
-  print $fhmd "Parameter       Value       Comment\n";
-  print $fhmd "----------      --------    ----------\n";
   open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
+  my $varfound = 0;
+
+  while ( <$fh> )    
+  {
+    /^PAR/i or next;  
+    $varfound = 1;
+  }
+  
+  close($fh) if not $varfound;
+  return if not $varfound;
+   
+  seek $fh, 0, 0; # rewind file 
+  print $fhmd "### Model parameters and constants\n\n";
+  print $fhmd "Parameter                       Value       Comment\n";
+  print $fhmd "----------                      --------    ----------\n";
 	while ( <$fh> )    
 	{
-  	/^PAR/i or next;
+  	/^(PAR|MAC)/i or next;
     if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
     {
       ($comment) = ( $comment =~ /\# ?(.*)/ ); 
-      print $fhmd "$varname         $rhs      ";
+      printf $fhmd ("%-32s%-12s", "`" . $varname . "`", $rhs);
+      print $fhmd "$comment" if length $comment; 
+      print $fhmd "constant" if /^MAC/i;
+      print $fhmd "\n";
+    }
+	}
+  print $fhmd "\n";
+  close($fh);
+}
+
+# print_options
+# take a line of the form 
+#   PAR mu VAL {attr} # comment
+sub print_options 
+{
+  open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
+  my $varfound = 0;
+
+  while ( <$fh> )    
+  {
+    /^OPT/i or next;  
+    $varfound = 1;
+  }
+  
+  close($fh) if not $varfound;
+  return if not $varfound;
+
+  seek $fh, 0, 0; # rewind file 
+  print $fhmd "### Options\n\n";
+  print $fhmd "```\n";
+	while ( <$fh> )    
+	{
+  	/^OPT/i or next;
+    if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
+    {
+      ($comment) = ( $comment =~ /\# ?(.*)/ ); 
+      printf $fhmd ("%-16s%s", $varname, $rhs);
       print $fhmd "$comment" if length $comment; 
       print $fhmd "\n";
     }
 	}
+  print $fhmd "```\n";
   print $fhmd "\n";
   close($fh);
 }
 
-# TODO: handle definition of array in multiple declarations 
-# declare_scalar_or_array
+
 # takes a line EXPR array[i=0:10][j=0:15]
 # and declare
 #   double array[10][15];
-sub declare_scalar_or_array
+sub print_scalar_or_array
 {
   open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
 
   my ($character,$descr) = @_;
+  my $varfound = 0;
+  my $carryover = 0;
+  my $print_iter = 0;
+  my @it;
+
+  print $fhmd "Time span: `[@timespan]`\n\n" if ( $character =~ /INIT/i and @timespan );
+
+  while ( <$fh> )    
+  {
+    /^$character/i or next;
+    $varfound = 1;
+  }
+  
+  close($fh) if not $varfound;
+  return if not $varfound;
+   
+  seek $fh, 0, 0; # rewind file 
   print $fhmd "$descr\n";
+  print $fhmd $mftext if ( $character =~ /%M/i );
+  print $fhmd $ctext if ( $character =~ /%C/i );
+  print $fhmd "```\n";
   while ( <$fh> )    
  	{
-		/^$character/i or next;   # match character or go to next line of file
-    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-    ($comment) = ( $comment =~ /\# ?(.*)/ ); 
-    print $fhmd "$comment\n" if length $comment;
-    print $fhmd "\\begin\{align\}\n";
-    print $fhmd "\\mathit\{$name\}";
-    if ( my @it = ($_ =~ m/$re_iter/g) )
+    if ( $_ =~ /^$character/i )
     {
-      print $fhmd "_\{";
-      while ( @it )
+      $carryover = 1 if ( $_ =~ /(\.\.\.\s*$|\\$)/ ); #  carry over to next line
+      my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
+      ($attr) = ($attr =~ /{\s*(.*)\s*}/) if length $attr;
+      print $fhmd "# $name: $attr\n" if length $attr;
+      ($comment) = ( $comment =~ /\# ?(.*)/ ) if length $comment; 
+      print $fhmd "# $name: $comment\n" if length $comment;
+      $name =~ s/$/{i}/ if ( $character =~ /%C/i and length $name ); 
+      $name =~ s/$/($timespan[0])/ if ( $character =~ /INIT/i and length $name ); 
+      print $fhmd "$name" if length $name;
+      if ( @it = ($_ =~ m/$re_iter/g) )
       {
-        print $fhmd shift(@it);
-        shift(@it); 
-        shift(@it);
+        $print_iter = 1;
+        print $fhmd "[";
+        while ( @it )
+        {
+          print $fhmd shift(@it);
+          shift(@it); 
+          shift(@it);
+        }
+        print $fhmd "]";
+      }     
+      else
+      {
+        $print_iter = 0;
       }
-      print $fhmd "\}";
-    }     
-    print $fhmd " & = $rhs";
-    if ( my @it = ($_ =~ m/$re_iter/g) )
+      $rhs =~ s/[MSO][YAEFU]\(($re_identifier)\)/$1/g if length $rhs;
+      $rhs =~ s/MID/i/g if length $rhs;
+      $rhs =~ s/OID/j/g if length $rhs;
+      $rhs = strip_blanks($rhs);
+      $rhs =~ s+(.*)+< $1 >+ if ( $character =~ /(%M|%C)/ and length $rhs );
+      print $fhmd " = $rhs" . "\n";
+    }
+    elsif ( $carryover ) # print the carry over
     {
-      print $fhmd ", \\text\{ for \} ";
+      s/[MSO][YAEFU]\(($re_identifier)\)/$1/g; 
+      print $fhmd $_;  
+      # print $_;
+      $carryover = 0 if ( not ( $_ =~ /(\.\.\.\s*$|\\$)/ )); 
+    }
+    if ( $print_iter and not $carryover ) 
+    {
+      print $fhmd ", for ";
       while ( @it )
       {
         print $fhmd  shift(@it) . "=" . shift(@it) . ",...," . shift(@it) . ", "; 
       }
-    }     
-    print $fhmd "\n";
-    print $fhmd "\\end\{align\}\n";
+      print $fhmd "\n";
+    }
+    
 	}	
-  print $fhmd "\n";
+  print $fhmd "```\n\n";
   close($fh);
 
 }
 
-sub define_array_from_input
-{
-  my ($fname,$rhs,$pat_char,$pat_name,$descr) = @_;
-  print $fhmd "    /* $descr */\n";
-  my $ii = 0;
-  while ( <> )    
-  {
-    /^$pat_char/i or next;
-    my ($type, $name, $dummy, $attr, $comment) = ( $_ =~ $re_pace ) or print "no pace found";  
-    if ( my @it = ($_ =~ m/$re_iter/g) )
-    {
-      my $offset = qq();
-      my $j = 0;
-      while ( $j < (0+@it) )
-      {
-        my ($i, $a, $b) = @it[$j..$j+2];
-        $j += 3;
-        $offset = $offset . qq(    ); 
-        print $fhmd $offset . "for($i=$a;$i<$b;++$i)\n";
-        print $fhmd $offset . "{\n";
-      }
-      print $fhmd $offset . "    $name";
-      $j = 0;
-      while ( $j < (0+@it) )
-      {
-        my ($i, $a, $b) = @it[$j..$j+2];
-        $j += 3;
-        print $fhmd "[$i]";
-      }
-      print $fhmd " = " . "*(${rhs}++);"; # added
-      print $fhmd " /* $attr */" if length $attr;
-      print $fhmd " /* $comment */" if length $comment;
-      print $fhmd "\n";
-      $j = 0;
-      while ( $j < 0+@it )
-      {
-        print $fhmd $offset . "}\n";
-        $offset = substr $offset, 0, -4;
-        $j += 3;
-      }
-    } else
-    {
-      print $fhmd "    $name = *(${rhs}++)" . ";\n";
-      # ++$ii;
-    }
-  }
-  print $fhmd "\n";
-}
-
-sub define_array_functions
-{
-  my ($fname,$pat_char,$pat_nameiter,$descr) = @_;
-  print $fhmd "    /* $descr */\n";
-  while ( <> )    
-  {
-    /^$pat_char/i or next;
-    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-    my $rhs2print;
-    $rhs2print = strip_blanks($rhs) . ";";
-    $rhs2print .= " /* $attr */" if length $attr;
-    $rhs2print .= " /* $comment */" if length $comment;
-    if ( $attr =~ /\bvect\b/ ) # don't loop, just evaluate the rhs
-    {
-      print $fhmd "    $rhs2print\n";    
-    } else
-    {
-      if ( my @it = ($_ =~ m/$re_iter/g) )
-      {
-        my $offset = qq();
-        my $j = 0;
-        while ( $j < (0+@it) )
-        {
-          my ($i, $a, $b) = @it[$j..$j+2];
-          $j += 3;
-          $offset = $offset . qq(    ); 
-          print $fhmd $offset . "for($i=$a;$i<$b;++$i)\n";
-          print $fhmd $offset . "{\n";
-        }
-        print $fhmd $offset . "    $name";
-        $j = 0;
-        while ( $j < (0+@it) )
-        {
-          my ($i, $a, $b) = @it[$j..$j+2];
-          $j += 3;
-          print $fhmd "[$i]";
-        }
-        print $fhmd " = " . $rhs2print . "\n";
-        $j = 0;
-        while ( $j < 0+@it )
-        {
-          print $fhmd $offset . "}\n";
-          $offset = substr $offset, 0, -4;
-          $j += 3;
-        }
-      } else
-      {
-        print $fhmd "    $name = $rhs2print\n";
-      }
-    }
-  }
-  print $fhmd "\n";
-}
 
 
-sub assign_output 
+sub print_equations 
 {
 
   my ($pat_char,$pat_nameiter,$descr) = @_;
   print $fhmd "$descr\n";
   my $ii = 0;
   open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
+  print $fhmd "```\n";
   while ( <$fh> )    
   {
     /^$pat_char/i or next;
     my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $pat_nameiter );
     my $rhs2print;
-    $rhs2print = strip_blanks($rhs);
-    $rhs2print .= " /* $attr */" if length $attr;
-    $rhs2print .= " /* $comment */" if length $comment;
-    print $fhmd "$name";
-    print $fhmd " = " . $rhs2print; # added
-    print $fhmd "\n";
+    $rhs2print = format_rhs($rhs);
+    # print $rhs2print . "\n";
+    print $fhmd "# $name: $attr\n" if length $attr;
+    $comment =~ s/#\s*// if length $comment; # strip comment
+    print $fhmd "# $name: $comment\n" if length $comment;
+    print $fhmd "d$name/dt";
+    print $fhmd " = " . $rhs2print . "\n"; 
+  }
+  print $fhmd "```\n\n";
+  close($fh);
+
+}
+
+sub print_lags
+{
+
+  open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
+  my $varfound = 0;
+
+  while ( <$fh> )    
+  {
+    /^LAG/i or next;
+    $varfound = 1;
+  }
+  
+  close($fh) if not $varfound;
+  return if not $varfound;
+   
+  seek $fh, 0, 0; # rewind file 
+  print $fhmd "### Lags (delayed variables)\n\n";
+  while ( <$fh> )    
+  {
+    /^LAG/i or next;
+    my ($name, $attr, $comment) = ( $_ =~ $re_lag );
+    my ($root) = ( $attr =~ /root\s*=\s*($re_identifier)/ );
+    my ($mean) = ( $attr =~ /mean\s*=\s*(\w+)/ );
+    my ($len) = ( $attr =~ /len\s*=\s*(\w+)/ );
+    my ($init) = ( $attr =~ /init\s*=\s*(\w+)/ );
+    $comment =~ s/#\s*// if length $comment; # strip comment
+    print $fhmd "# $name: $comment\n" if length $comment;
+    print $fhmd "\\begin{align*}\n";
+    print $fhmd "\\mathit{$name} & = ";
+    print $fhmd "\\int_0^\\infty \\mathit{$root}(t-s) \\beta^q s^{q-1} \\exp^{-\\beta s} ds,\n";
+    print $fhmd "& \\text{where }\n";
+    print $fhmd "\\beta = \\frac{\\mathtt{$len}}{\\mathtt{$mean}} \\text{ and } q = \\mathtt{$len}.\n";
+    print $fhmd "\\end{align*}\n";
   }
   print $fhmd "\n";
   close($fh);
 
 }
 
-sub assign_pop_rate
+sub print_pop_rates
 {
-  my ($pat_char,$descr) = @_;
-  print $fhmd "$descr\n";
   open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
+  my $varfound = 0;
+
   while ( <$fh> )    
   {
-    /^$pat_char/i or next;
+    /^(%BIRTH|%DEATH|%REPLI)/i or next;
+    $varfound = 1;
+  }
+  
+  close($fh) if not $varfound;
+  return if not $varfound;
+   
+  seek $fh, 0, 0; # rewind file 
+  print $fhmd "### Population rates\n\n";
+  print $fhmd "Type            Value   \n";
+  print $fhmd "----------      --------\n";
+  while ( <$fh> )    
+  {
+    /^(%BIRTH|%DEATH|%REPLI)/i or next;
     if ( my ($type, $rhs, $attr, $comment) = ( /$re_pop/ ) )
     {
-      print $fhmd "$type = " . $rhs; 
-      print $fhmd " /* $attr */" if length $attr;
-      print $fhmd " /* $comment */" if length $comment;
-      print $fhmd "\n";
+      $type =~ s/^%//; # strip the % 
+      $rhs =~ s/[MSO][YAEFU]\(($re_identifier)\)/$1/g;
+      printf $fhmd ("%-16s%s\n", "`" . $type . "`", "`" . $rhs . "`"); 
+      printf $fhmd ("%-16s%s\n", "", $attr ) if length $attr;
+      $comment =~ s/#\s*// if length $comment; # strip comment
+      printf $fhmd ("%-16s%s\n", "", $comment ) if length $comment;
     }
   }
+  print $fhmd "\n";
   close($fh);
-}
-
-sub set_low_rank_expansion
-{
-  my $nv = 0;
-  my $s = qq(    /* update coupling terms psi,  O(NP^2) */
-);
-  print $fhmd $s;
-  while (<>) 
-  {
-    my ($varname, $rhs, $attr, $comment) = ( /$re_lrexp/ ) or next;
-    if ( $rhs =~ /lrexp/ )
-    {
-      my ($var) = ( $attr =~ /var\s*=\s*(.*?)([,\s}]|$)/ );
-      my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([,\s}]|$)/ );
-      print $fhmd "    xxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
-      print $fhmd "    yxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
-      print $fhmd "    myself_ = SIM->pop->start;\n";
-      print $fhmd "    i_ = 0;\n";
-      print $fhmd "    while ( myself_ != NULL ) /* initialize xxp_ for lrkern */\n";
-      print $fhmd "    {\n";
-      print $fhmd "        mvar(\"$var\", myself_, (xxp_ + i_));\n";
-      print $fhmd "        myself_ = myself_->nextel;\n";
-      print $fhmd "        ++i_;\n";
-      print $fhmd "    }\n";
-      print $fhmd "    lrkern($fun, xxp_, yxp_, POP_SIZE);\n";
-      print $fhmd "    myself_ = SIM->pop->start;\n";
-      print $fhmd "    i_ = 0;\n";
-      print $fhmd "    j_ = I_PSI($varname);\n";
-      print $fhmd "    while ( myself_ != NULL ) /* set psixp */\n";
-      print $fhmd "    {\n";
-      print $fhmd "        myself_->psi[j_] = yxp_[i_];\n"; 
-      print $fhmd "        myself_ = myself_->nextel;\n";
-      print $fhmd "        ++i_;\n";
-      print $fhmd "    }\n";
-      print $fhmd "    free(xxp_);\n";
-      print $fhmd "    free(yxp_);\n";
-    }
-    elsif ( $rhs =~ /lrwexp/ )
-    {
-      my ($U) = ( $attr =~ /U\s*=\s*(.*?)([,\s]|$)/ );
-      my ($V) = ( $attr =~ /V\s*=\s*(.*?)([,\s]|$)/ );
-      my ($rank) = ( $attr =~ /rank\s*=\s*(.*?)([,\s]|$)/ );
-      my ($var) = ( $attr =~ /var\s*=\s*(.*?)([,\s]|$)/ );
-      my ($fun) = ( $attr =~ /fun\s*=\s*(.*?)([,\s]|$)/ );
-      print $fhmd "    xxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
-      print $fhmd "    yxp_ = (double *)malloc(POP_SIZE*sizeof(double));\n";
-      print $fhmd "    myself_ = SIM->pop->start;\n";
-      print $fhmd "    i_ = 0;\n";
-      print $fhmd "    while ( myself_ != NULL ) /* initialize xxp_ for lrkern */\n";
-      print $fhmd "    {\n";
-      print $fhmd "        mvar(\"$var\", myself_, (xxp_ + i_));\n";
-      print $fhmd "        myself_ = myself_->nextel;\n";
-      print $fhmd "        ++i_;\n";
-      print $fhmd "    }\n";
-      print $fhmd "    lrwpkern(I_EXPR($U), I_EXPR($V), $rank, $fun, xxp_,yxp_, POP_SIZE);\n";
-      print $fhmd "    myself_ = SIM->pop->start;\n";
-      print $fhmd "    i_ = 0;\n";
-      print $fhmd "    j_ = I_PSI($varname);\n";
-      print $fhmd "    while ( myself_ != NULL ) /* set psixp */\n";
-      print $fhmd "    {\n";
-      print $fhmd "        myself_->psi[j_] = yxp_[i_];\n"; 
-      print $fhmd "        myself_ = myself_->nextel;\n";
-      print $fhmd "        ++i_;\n";
-      print $fhmd "    }\n";
-      print $fhmd "    free(xxp_);\n";
-      print $fhmd "    free(yxp_);\n";
-    }
-
-
-  }
-  $s = qq(    /* end - update coupling terms psi,  O(NP^2) */
-);
-  print $fhmd $s;
 }
 
 # try to parse author information
@@ -1037,6 +738,29 @@ sub find_authors
 
 }
 
+sub format_rhs
+{
+  my ($rhs) = @_;
+  $rhs = strip_blanks($rhs);
+
+  # match balanced parentheses
+  my $re_balparent = qr/
+    (                   # start of capture group 1
+    \(                  # match an opening angle bracket
+        (?:
+            [^()]++     # one or more non angle brackets, non backtracking
+              |
+            (?1)        # found < or >, so recurse to capture group 1
+        )*
+    \)                  # match a closing angle bracket
+    )                   # end of capture group 1
+  /x;
+  # $rhs =~ s/pow$re_balparent/{$1}/g;
+  $rhs =~ s/(.{60}\S*)/$1\n         /g;
+  # print $rhs;
+  return $rhs;
+}
+
 sub strip_blanks
 {
   my ($str) = @_; 
@@ -1044,6 +768,4 @@ sub strip_blanks
   $str =~ s/\s*$// if length $str;
   return $str;
 }
-
-
 
