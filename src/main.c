@@ -1735,12 +1735,20 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       plotonly = 0;
       rep_command = 1; /* reset to default = 1 */
 
-      nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos);
+      /* check for extra command: && cmd */
       free(extracmd);
-      if ( (nbr_read == 1) && strncmp(svalue,"&&",2) == 0 )
+      /* nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos); */
+      if ( ( sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos) == 1 ) && 
+           strncmp(svalue,"&&",2) == 0 )
       {
         extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
         strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
+      }
+      else if ( ( sscanf(cmdline,"%[][{}] %d",svalue,&rep_command) == 2 ) && 
+           rep_command > 1 )
+      {
+        extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
+        snprintf(extracmd,strlen(cmdline)+1,"%s%d",svalue,--rep_command);  
       }
       else
       {
@@ -1805,6 +1813,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     remove_id_files();
     DBLOGPRINT("id files removed");
   }
+  now = time(NULL);
+  PRINTLOG("%s", ctime( &now )); 
   PRINTLOG("Closing log file\n");
   DBLOGPRINT("Closing log file");
   fclose(logfr);
