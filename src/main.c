@@ -1735,17 +1735,18 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       plotonly = 0;
       rep_command = 1; /* reset to default = 1 */
 
-      /* check for extra command: && cmd */
       free(extracmd);
       /* nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos); */
       if ( ( sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos) == 1 ) && 
            strncmp(svalue,"&&",2) == 0 )
+      /* check for extra command: && cmd */
       {
         extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
         strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
       }
-      else if ( ( sscanf(cmdline,"%[][{}] %d",svalue,&rep_command) == 2 ) && 
+      else if ( ( sscanf(cmdline,"%[][{}R] %d",svalue,&rep_command) == 2 ) && 
            rep_command > 1 )
+      /* check for repeat command: []{}R<count>. do not use with && */
       {
         extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
         snprintf(extracmd,strlen(cmdline)+1,"%s%d",svalue,--rep_command);  
