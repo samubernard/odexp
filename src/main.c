@@ -494,7 +494,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       printf("\n  %syou are in quiet mode (option loudness quiet),\n"
           "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
       printf("  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
-      printf("  hexdump -e '%d \"%%5.2f \" \"\\n\"' idXX.dat\n\n", nbr_cols); 
       printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_cols); 
       printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
       PRINTLOG("Quiet mode, will exit");
@@ -1184,7 +1183,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             printf("  Number of particles           = %s%d%s\n",T_VAL,SIM->max_id,T_NOR);
             printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
             printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
-            printf("  hexdump -e '%d \"%%5.2f \" \"\\n\"' idXX.dat\n", nbr_cols); 
             printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n", nbr_cols); 
             printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
           }
