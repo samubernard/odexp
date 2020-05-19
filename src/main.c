@@ -634,11 +634,21 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           break;
         case '>' : /* increase resolution */
-          set_int("res",2*get_int("res")-1);
+          while ( cmdline[rep_command] == '>' )
+          {
+            rep_command++;
+          }
+          nbr_read = sscanf(cmdline+1,"%d",&rep_command); /* rep_command default value 1 */
+          set_int("res",pow(2,rep_command)*(get_int("res")-1)+1);
           runplot = 1;
           break;
         case '<' : /* decrease resolution */
-          set_int("res",(get_int("res")+1)/2);
+          while ( cmdline[rep_command] == '<' )
+          {
+            rep_command++;
+          }
+          nbr_read = sscanf(cmdline+1,"%d",&rep_command); /* rep_command default value 1 */
+          set_int("res",(get_int("res")-1)/pow(2,rep_command)+1);
           runplot = 1;
           break;
         case 'e' : /* extend the simulation */
@@ -1548,314 +1558,314 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case 'w' :  /* world */
           nbr_read = sscanf(cmdline+1," %d ",&i); 
-          if (nbr_read <= 0) /* list all */
-          {
-            printf_SIM();
-          }
-          break;
-        case '$' :  /* list particle dataset */
-          nbr_read = sscanf(cmdline+1,"%d",&i);
-          if ( nbr_read == 1 )
-            list_particle(i);
-          else
-          {
-            if ( strncmp(get_str("popmode"), "single", 3) == 0 ) /* list particle 0 */
-            {
-              list_particle(0);
-            }
-            else
-            {
-              list_stats();
-            }
-          }
-          break;
-        case 'Q' :  /* quit with implicit save */
-        case 'q' :  /* quit with save */
-          quit = 1;
-        case '*' : /* save snapshot of pop file */
-          file_status = save_snapshot(ics,mu,tspan, odexp_filename);
-          break;
-        case '!' : /* print ! */
-          nbr_read = sscanf(cmdline+1,"%s", svalue);
-          if ( nbr_read == 1 ) /* try saving plot with name given in svalue */
-          {
-            fprintf(GPLOTP,"set term push\n"); /* save term settings */
-            fprintf(GPLOTP,"unset term\n"); /* unset all term-specific settings */
-            fprintf(GPLOTP,"set term %s font \"%s,%d\"\n", \
-                get_str("printsettings"), get_str("font"), get_int("fontsize"));
-            fprintf(GPLOTP,"set tics nomirror out font \"%s,%d\"\n", \
-                get_str("font"), get_int("fontsize"));
-            fprintf(GPLOTP,"set output \"%s\"\n",svalue);
-            fprintf(GPLOTP,"replot\n");
-            fprintf(GPLOTP,"set term pop\n");
-            fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
-                get_str("font"), get_int("fontsize"));
-            fflush(GPLOTP);
-            printf("  wrote %s in current directory\n",svalue);
-          }
-          else
-          {
-            PRINTERR("  Error: Name of file required .");
-          }
-          break;
-        default :
-          PRINTERR("  Unknown command '%c'. Type q to quit, ? for help", c);
-      } /* end switch command */ 
-
-
-      if (quit)
-      {
+        if (nbr_read <= 0) /* list all */
+        {
+          printf_SIM();
+        }
         break;
-      } 
-
-      check_options();
-
-      if (runplot)
-      {
-        if ( get_int("reseed") )
+      case '$' :  /* list particle dataset */
+        nbr_read = sscanf(cmdline+1,"%d",&i);
+        if ( nbr_read == 1 )
+          list_particle(i);
+        else
         {
-          srand( (unsigned long)get_int("seed") );
+          if ( strncmp(get_str("popmode"), "single", 3) == 0 ) /* list particle 0 */
+          {
+            list_particle(0);
+          }
+          else
+          {
+            list_stats();
+          }
         }
-        status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
-        if ( get_int("curves") ) /* save current.plot */ 
+        break;
+      case 'Q' :  /* quit with implicit save */
+      case 'q' :  /* quit with save */
+        quit = 1;
+      case '*' : /* save snapshot of pop file */
+        file_status = save_snapshot(ics,mu,tspan, odexp_filename);
+        break;
+      case '!' : /* print ! */
+        nbr_read = sscanf(cmdline+1,"%s", svalue);
+        if ( nbr_read == 1 ) /* try saving plot with name given in svalue */
         {
-          snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
-          system(mv_plot_cmd);
-        }
-      }
-
-      /* PLOTTING */
-
-      if (plotonly || runplot)
-      {
-        if ( strncmp("log",get_str("xscale"),3)==0 )
-        {
-          fprintf(GPLOTP,"set logscale x\n");   
+          fprintf(GPLOTP,"set term push\n"); /* save term settings */
+          fprintf(GPLOTP,"unset term\n"); /* unset all term-specific settings */
+          fprintf(GPLOTP,"set term %s font \"%s,%d\"\n", \
+              get_str("printsettings"), get_str("font"), get_int("fontsize"));
+          fprintf(GPLOTP,"set tics nomirror out font \"%s,%d\"\n", \
+              get_str("font"), get_int("fontsize"));
+          fprintf(GPLOTP,"set output \"%s\"\n",svalue);
+          fprintf(GPLOTP,"replot\n");
+          fprintf(GPLOTP,"set term pop\n");
+          fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
+              get_str("font"), get_int("fontsize"));
+          fflush(GPLOTP);
+          printf("  wrote %s in current directory\n",svalue);
         }
         else
         {
-          fprintf(GPLOTP,"set nologscale x\n");   
+          PRINTERR("  Error: Name of file required .");
         }
-        if ( strncmp("log",get_str("yscale"),3)==0 )
-        {
-          fprintf(GPLOTP,"set logscale y\n");   
-        }
-        else
-        {
-          fprintf(GPLOTP,"set nologscale y\n");   
-        }
-        if ( strncmp("log",get_str("zscale"),3)==0 )
-        {
-          fprintf(GPLOTP,"set logscale z\n");   
-        }
-        else
-        {
-          fprintf(GPLOTP,"set nologscale z\n");   
-        }
-        fflush(GPLOTP);
-
-        if ( get_int("curves") ) /* PM_CURVES overrides PM_REPLOT */
-        {
-          plot_mode = PM_CURVES;
-        }
+        break;
+      default :
+        PRINTERR("  Unknown command '%c'. Type q to quit, ? for help", c);
+    } /* end switch command */ 
 
 
-        switch(plot_mode) 
-        {
-          case PM_UNDEFINED:
-            /* do nothing */
-            break;
+    if (quit)
+    {
+      break;
+    } 
 
-          case PM_CURVES:
-            /* plot curve.0 to curve.nbr_hold-1 */
-            fprintf(GPLOTP,\
-                "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"0\"\n",get_str("style"));
-            for (i = 1; i < nbr_hold; i++)
-            {
-              fprintf(GPLOTP,\
-                  "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%d\"\n",\
-                  (int)i,get_str("style"),(int)i);
-            }
-            fflush(GPLOTP);
-            break;
+    check_options();
 
-          case PM_REPLOT:
-            generate_particle_file(get_int("particle")); /* generate id.dat file for the current particle */
-            fprintf(GPLOTP,"replot\n");
-            fflush(GPLOTP);
-            break;
-
-          case PM_NORMAL: /* normal plot mode */
-            /* This is where the plot is normally updated */
-            setup_pm_normal(gx, gy, gz, plot3d, dxv);
-            gplot_normal(gx, gy, gz, plot3d, dxv);
-            break;
-
-          case PM_ANIMATE:
-            gplot_animate(gx, gy, gz, plot3d, dxv);
-            break;
-
-          case PM_CONTINUATION: /* try to plot continuation branch */
-            fprintf(GPLOTP,"set xlabel '%s'\n",mu.name[p]);
-            fprintf(GPLOTP,"set xrange[%lf:%lf]\n",get_dou("par0"),get_dou("par1"));
-            fprintf(GPLOTP,"plot \"stst_branches.tab\" u 2:%d w %s\n",gy+1,get_str("style"));
-            fflush(GPLOTP);
-            break;
-
-          case PM_RANGE: /* try to plot range */
-            /* */
-            break;
-
-          case PM_PARTICLES:
-            gplot_particles(gx, gy, dxv );
-            break;
-
-          default: 
-            break;
-        }
-
-        /* plot data */
-        if ( get_int("plotdata")  && plot_mode == PM_NORMAL ) 
-        {
-          gplot_data(colx, coly, data_fn);
-        }    
-      }
-
-      /* update option x, y, z */
-      update_plot_options(ngx,ngy,ngz,dxv);
-      update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-      /* system(postprocess); */
-      update_act_par_options(p, mu);
-      update_act_par_index(&p, mu);
-
-      fflush(stdin);
-      runplot = 0;
-      plotonly = 0;
-      rep_command = 1; /* reset to default = 1 */
-
-      free(extracmd);
-      /* nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos); */
-      if ( ( sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos) == 1 ) && 
-           strncmp(svalue,"&&",2) == 0 )
-      /* check for extra command: && cmd */
+    if (runplot)
+    {
+      if ( get_int("reseed") )
       {
-        extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
-        strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
+        srand( (unsigned long)get_int("seed") );
       }
-      else if ( ( sscanf(cmdline,"%[][{}R] %d",svalue,&rep_command) == 2 ) && 
-           rep_command > 1 )
-      /* check for repeat command: []{}R<count>. do not use with && */
+      status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
+      if ( get_int("curves") ) /* save current.plot */ 
       {
-        extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
-        snprintf(extracmd,strlen(cmdline)+1,"%s%d",svalue,--rep_command);  
+        snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
+        system(mv_plot_cmd);
+      }
+    }
+
+    /* PLOTTING */
+
+    if (plotonly || runplot)
+    {
+      if ( strncmp("log",get_str("xscale"),3)==0 )
+      {
+        fprintf(GPLOTP,"set logscale x\n");   
       }
       else
       {
-        extracmd = (char *)NULL; 
+        fprintf(GPLOTP,"set nologscale x\n");   
       }
-      free(rawcmdline);
+      if ( strncmp("log",get_str("yscale"),3)==0 )
+      {
+        fprintf(GPLOTP,"set logscale y\n");   
+      }
+      else
+      {
+        fprintf(GPLOTP,"set nologscale y\n");   
+      }
+      if ( strncmp("log",get_str("zscale"),3)==0 )
+      {
+        fprintf(GPLOTP,"set logscale z\n");   
+      }
+      else
+      {
+        fprintf(GPLOTP,"set nologscale z\n");   
+      }
+      fflush(GPLOTP);
+
+      if ( get_int("curves") ) /* PM_CURVES overrides PM_REPLOT */
+      {
+        plot_mode = PM_CURVES;
+      }
 
 
+      switch(plot_mode) 
+      {
+        case PM_UNDEFINED:
+          /* do nothing */
+          break;
+
+        case PM_CURVES:
+          /* plot curve.0 to curve.nbr_hold-1 */
+          fprintf(GPLOTP,\
+              "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"0\"\n",get_str("style"));
+          for (i = 1; i < nbr_hold; i++)
+          {
+            fprintf(GPLOTP,\
+                "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%d\"\n",\
+                (int)i,get_str("style"),(int)i);
+          }
+          fflush(GPLOTP);
+          break;
+
+        case PM_REPLOT:
+          generate_particle_file(get_int("particle")); /* generate id.dat file for the current particle */
+          fprintf(GPLOTP,"replot\n");
+          fflush(GPLOTP);
+          break;
+
+        case PM_NORMAL: /* normal plot mode */
+          /* This is where the plot is normally updated */
+          setup_pm_normal(gx, gy, gz, plot3d, dxv);
+          gplot_normal(gx, gy, gz, plot3d, dxv);
+          break;
+
+        case PM_ANIMATE:
+          gplot_animate(gx, gy, gz, plot3d, dxv);
+          break;
+
+        case PM_CONTINUATION: /* try to plot continuation branch */
+          fprintf(GPLOTP,"set xlabel '%s'\n",mu.name[p]);
+          fprintf(GPLOTP,"set xrange[%lf:%lf]\n",get_dou("par0"),get_dou("par1"));
+          fprintf(GPLOTP,"plot \"stst_branches.tab\" u 2:%d w %s\n",gy+1,get_str("style"));
+          fflush(GPLOTP);
+          break;
+
+        case PM_RANGE: /* try to plot range */
+          /* */
+          break;
+
+        case PM_PARTICLES:
+          gplot_particles(gx, gy, dxv );
+          break;
+
+        default: 
+          break;
+      }
+
+      /* plot data */
+      if ( get_int("plotdata")  && plot_mode == PM_NORMAL ) 
+      {
+        gplot_data(colx, coly, data_fn);
+      }    
     }
 
-    /* read fifo */
-    read_msg();
+    /* update option x, y, z */
+    update_plot_options(ngx,ngy,ngz,dxv);
+    update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+    /* system(postprocess); */
+    update_act_par_options(p, mu);
+    update_act_par_index(&p, mu);
+
+    fflush(stdin);
+    runplot = 0;
+    plotonly = 0;
+    rep_command = 1; /* reset to default = 1 */
+
+    free(extracmd);
+    /* nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos); */
+    if ( ( sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos) == 1 ) && 
+         strncmp(svalue,"&&",2) == 0 )
+    /* check for extra command: && cmd */
+    {
+      extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
+      strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
+    }
+    else if ( ( sscanf(cmdline,"%[][{}R] %d",svalue,&rep_command) == 2 ) && 
+         rep_command > 1 )
+    /* check for repeat command: []{}R<count>. do not use with && */
+    {
+      extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
+      snprintf(extracmd,strlen(cmdline)+1,"%s%d",svalue,--rep_command);  
+    }
+    else
+    {
+      extracmd = (char *)NULL; 
+    }
+    free(rawcmdline);
+
 
   }
 
-  printf("exiting...");
-  PRINTLOG("Exiting");
-  DBLOGPRINT("Exiting");
+  /* read fifo */
+  read_msg();
 
-  pclose(GPLOTP);
-  close(GPIN);
-  unlink(GFIFO);
+}
 
-  free_namevalexp( pex );
-  free_namevalexp( mu );
-  free_namevalexp( ics );
-  free_namevalexp( eqn );
-  free_namevalexp( fcn );
-  free_namevalexp( psi );
-  free_namevalexp( mfd );
-  free_namevalexp( birth );
-  free_namevalexp( repli );
-  free_namevalexp( death );
-  free_namevalexp( dxv );
-  free_namevalexp( cst );
-  free_namevalexp( dfl );
-  free_namevalexp( dsc );
-  free_steady_state( stst, nbr_stst );
-  free_double_array( tspan );
-  free(NUM_IC);
-  free(lastinit);
-  free_world(SIM);
+printf("exiting...");
+PRINTLOG("Exiting");
+DBLOGPRINT("Exiting");
 
-  PRINTLOG("Memory freed");
-  DBLOGPRINT("Memory freed");
+pclose(GPLOTP);
+close(GPIN);
+unlink(GFIFO);
 
-  /* write history */
-  if ( write_history(".odexp/history.txt") )
+free_namevalexp( pex );
+free_namevalexp( mu );
+free_namevalexp( ics );
+free_namevalexp( eqn );
+free_namevalexp( fcn );
+free_namevalexp( psi );
+free_namevalexp( mfd );
+free_namevalexp( birth );
+free_namevalexp( repli );
+free_namevalexp( death );
+free_namevalexp( dxv );
+free_namevalexp( cst );
+free_namevalexp( dfl );
+free_namevalexp( dsc );
+free_steady_state( stst, nbr_stst );
+free_double_array( tspan );
+free(NUM_IC);
+free(lastinit);
+free_world(SIM);
 
-  {
-    PRINTERR( "\n  Error: could not write history");
-  }
+PRINTLOG("Memory freed");
+DBLOGPRINT("Memory freed");
 
-  PRINTLOG("History written");
-  DBLOGPRINT("History written");
+/* write history */
+if ( write_history(".odexp/history.txt") )
 
-  /* try to remove frozen curves */
-  system("rm -f .odexp/curve.*");
-  if ( strncmp(get_str("loudness"),"loud",3) == 0 ) /* run loud mode  */
-  { 
-    /* try to remove idXX curves */
-    remove_id_files();
-    DBLOGPRINT("id files removed");
-  }
-  now = time(NULL);
-  PRINTLOG("%s", ctime( &now )); 
-  PRINTLOG("Closing log file\n");
-  DBLOGPRINT("Closing log file");
-  fclose(logfr);
-  fclose(dblogfr);
+{
+  PRINTERR( "\n  Error: could not write history");
+}
 
-  /* reset xterm title */
-  printf("\033]0;\007");
+PRINTLOG("History written");
+DBLOGPRINT("History written");
 
-  printf(" bye\n");
+/* try to remove frozen curves */
+system("rm -f .odexp/curve.*");
+if ( strncmp(get_str("loudness"),"loud",3) == 0 ) /* run loud mode  */
+{ 
+  /* try to remove idXX curves */
+  remove_id_files();
+  DBLOGPRINT("id files removed");
+}
+now = time(NULL);
+PRINTLOG("%s", ctime( &now )); 
+PRINTLOG("Closing log file\n");
+DBLOGPRINT("Closing log file");
+fclose(logfr);
+fclose(dblogfr);
 
-  return status;
+/* reset xterm title */
+printf("\033]0;\007");
+
+printf(" bye\n");
+
+return status;
 
 }
 
 int get_nbr_el(const char *filename, const char *sym,\
-    const int sym_len, int *nbr_el, int *nbr_expr)
+  const int sym_len, int *nbr_el, int *nbr_expr)
 {
-  int k = 0;
-  ssize_t linelength;
-  size_t linecap = 0;
-  char *line = NULL;
-  char key[NAMELENGTH]; 
-  int i, nbr_dim = 0;
-  int    has_read,
-         success = 0; 
-  int   *size_dim = malloc(sizeof(int));
-  int   multi_dim = 1;
-  FILE *fr;
-  fr = fopen (filename, "rt");
+int k = 0;
+ssize_t linelength;
+size_t linecap = 0;
+char *line = NULL;
+char key[NAMELENGTH]; 
+int i, nbr_dim = 0;
+int    has_read,
+       success = 0; 
+int   *size_dim = malloc(sizeof(int));
+int   multi_dim = 1;
+FILE *fr;
+fr = fopen (filename, "rt");
 
-  if ( fr == NULL )
-  {
-    PRINTERR("  Error: File %s not found, exiting...",filename);
-    exit ( EXIT_FAILURE );
-  }
+if ( fr == NULL )
+{
+  PRINTERR("  Error: File %s not found, exiting...",filename);
+  exit ( EXIT_FAILURE );
+}
 
-  *nbr_el = 0;
-  if ( nbr_expr ) 
-  {
-    *nbr_expr = 0;
-  }
-  while( (linelength = getline(&line,&linecap,fr)) > 0)
+*nbr_el = 0;
+if ( nbr_expr ) 
+{
+  *nbr_expr = 0;
+}
+while( (linelength = getline(&line,&linecap,fr)) > 0)
   {
     has_read = sscanf(line,"%s%n",key,&k);
     if ( (strncasecmp(key,sym,sym_len) == 0)  &&  (has_read == 1) ) /* keyword was found */
