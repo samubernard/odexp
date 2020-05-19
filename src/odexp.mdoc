@@ -112,10 +112,14 @@ Plot previous variable of current particle on the y-axis (cyclic).
 Plot next particle of current variable on the y-axis (cyclic).
 .It Ic {, C^{
 Plot previous particle of current variable on the y-axis (cyclic).
-.It Ic >
-Double the number of output time steps. 
-.It Ic <
-Halve the number of output time steps.
+.It Ic > Ar count
+Double 
+.Ar count
+times (default one) the number of output time steps. 
+.It Ic < Ar count
+Halve 
+.Ar count
+times (default one) the number of output time steps.
 .It Ic # Ar dataset Ar colx Ar coly 
 Add to plot 
 .Va colx
