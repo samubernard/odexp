@@ -277,8 +277,16 @@ exec ("pandoc --pdf-engine=xelatex -o ${bname}.pdf $mdfile") or print STDERR "co
 
 sub print_ode_header
 {
+  open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
   print $fhmd "---\n";
   print $fhmd "title: Description of `$odefilename`\n";
+  print $fhmd "author: \n";
+  while ( <$fh> )    
+ 	{
+		/^AUTHOR/i or next;   # match character or go to next line of file
+    s/^AUTHOR\s*//i; # strip comment symbols
+    print $fhmd "- $_";
+	}	
   print $fhmd "geometry:\n"; 
   print $fhmd "- top=35mm\n";
   print $fhmd "- left=30mm\n";
@@ -287,11 +295,11 @@ sub print_ode_header
   print $fhmd "fontfamily: fourier\n";
   print $fhmd "---\n\n";
 
-  open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
+  seek $fh, 0, 0; # rewind file 
   while ( <$fh> )    
  	{
 		/^##/i or next;   # match character or go to next line of file
-    s/^##\s*//; # strip comment symbols
+    s/^##\s?//; # strip comment symbols
     print $fhmd $_; 
 	}	
   print $fhmd "\n";
