@@ -639,7 +639,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             rep_command++;
           }
           nbr_read = sscanf(cmdline+1,"%d",&rep_command); /* rep_command default value 1 */
-          set_int("res",pow(2,rep_command)*(get_int("res")-1)+1);
+          set_int("res",powl(2,rep_command)*(get_int("res")-1)+1);
           runplot = 1;
           break;
         case '<' : /* decrease resolution */
@@ -648,7 +648,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             rep_command++;
           }
           nbr_read = sscanf(cmdline+1,"%d",&rep_command); /* rep_command default value 1 */
-          set_int("res",(get_int("res")-1)/pow(2,rep_command)+1);
+          set_int("res",(get_int("res")-1)/powl(2,rep_command)+1);
           runplot = 1;
           break;
         case 'e' : /* extend the simulation */
