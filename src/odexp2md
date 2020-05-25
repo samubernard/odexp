@@ -279,12 +279,12 @@ sub print_ode_header
 {
   open(my $fh, '<', $odefilename) or die "could not open file '$odefilename'. $!";
   print $fhmd "---\n";
-  print $fhmd "title: Description of `$odefilename`\n";
+  print $fhmd "title: \"`$bname`\"\n";
   print $fhmd "author: \n";
   while ( <$fh> )    
  	{
-		/^AUTHOR/i or next;   # match character or go to next line of file
-    s/^AUTHOR\s*//i; # strip comment symbols
+		/^#-AUTHOR/i or next;   # match character or go to next line of file
+    s/^#-AUTHOR\s*//i; # strip comment symbols
     print $fhmd "- $_";
 	}	
   print $fhmd "geometry:\n"; 
@@ -293,16 +293,16 @@ sub print_ode_header
   print $fhmd "- right=4cm\n";
   print $fhmd "- heightrounded\n";
   print $fhmd "fontfamily: fourier\n";
-  print $fhmd "---\n\n";
-
+  print $fhmd "abstract: |\n";
   seek $fh, 0, 0; # rewind file 
   while ( <$fh> )    
  	{
 		/^##/i or next;   # match character or go to next line of file
     s/^##\s?//; # strip comment symbols
-    print $fhmd $_; 
+    print $fhmd "  $_"; 
 	}	
   print $fhmd "\n";
+  print $fhmd "---\n\n";
 
   seek $fh, 0, 0; # rewind file 
   while ( <$fh> )    
@@ -457,6 +457,16 @@ sub print_parameters_and_constants
    
   seek $fh, 0, 0; # rewind file 
   print $fhmd "### Model parameters and constants\n\n";
+
+  while ( <$fh> )
+  {
+    /^(#-PAR|#-MAC)/i or next;
+    s/^#-\w+\s*//; # strip comment symbols
+    print $fhmd $_;
+  }
+  print $fhmd "\n";
+
+  seek $fh, 0, 0; # rewind file 
   print $fhmd "Parameter                       Value       Comment\n";
   print $fhmd "----------                      --------    ----------\n";
 	while ( <$fh> )    
@@ -535,11 +545,20 @@ sub print_scalar_or_array
   
   close($fh) if not $varfound;
   return if not $varfound;
-   
-  seek $fh, 0, 0; # rewind file 
+
   print $fhmd "$descr\n";
+  seek $fh, 0, 0; # rewind file 
   print $fhmd $mftext if ( $character =~ /%M/i );
   print $fhmd $ctext if ( $character =~ /%C/i );
+  while ( <$fh> )    
+  {
+    /^#-$character/i or next;
+    s/^#-$character\s*//; # strip comment symbols
+    print $fhmd $_;
+  }
+  print $fhmd "\n";
+  
+  seek $fh, 0, 0; # rewind file 
   print $fhmd "```\n";
   while ( <$fh> )    
  	{
