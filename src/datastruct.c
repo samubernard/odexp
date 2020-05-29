@@ -12,8 +12,9 @@
 /* options */
 struct gen_option GOPTS[NBROPTS] = { 
   {"x","x",'s',0.0,0, "", "variable to plot on the X-axis (default T)", "plot"},
-  {"y","y",'s',0.0,0, "", "variable to plot on the Y-axis (default x0)", "plot"},
-  {"z","z",'s',0.0,0, "", "variable to plot on the Z-axis (default x1)", "plot"},
+  {"y","y",'s',0.0,0, "", "variable to plot on the Y-axis (default [0])", "plot"},
+  {"z","z",'s',0.0,0, "", "variable to plot on the Z-axis (default [1])", "plot"},
+  {"3d","plot3d",'i',0.0,0, "", "plot in 3d (default 0)", "plot"},
   {"ind","indvar",'s',0.0,0, "time", "name of the INDependent variable {time}", "plot"},
   {"ho","hold", 'i', 0.0, 0, "", "HOld (1) or replace ({0}) variable on plot", "plot"},
   {"u","curves", 'i', 0.0, 0, "", "add (1) or replace ({0}) cUrves on plot", "plot"},

@@ -99,7 +99,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* modes */
   int     runplot                 = 0, /* run a new ODE simulation */
           plotonly                = 0,
-          plot3d                = 0,
           quit                  = 0;
 
   /* 
@@ -719,7 +718,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             nbr_read = sscanf(cmdline+1,"%s %s %s", svalue, svalue2, svalue3);
             if ( nbr_read >= 2 )
             {
-              plot3d = 0;
+              set_int("plot3d",0);
               set_str("x",svalue);
               set_str("y",svalue2);
               update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
@@ -728,7 +727,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             if ( nbr_read == 3 )
             {
               set_str("z",svalue3);
-              plot3d = 1;
+              set_int("plot3d",1);
             }
             if ( nbr_read < 2 ) 
             {
@@ -739,7 +738,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           else if ( nbr_read >= 2 )
           {
-            plot3d = 0;
+            set_int("plot3d",0);
             if ( (ngx >= -1) && ngx < (int)total_nbr_x)
             {
               gx = ngx + 2;
@@ -764,7 +763,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             if ( (ngz >= -1) && ngz < (int)total_nbr_x)
             {
               gz = ngz + 2;
-              plot3d = 1;
+              set_int("plot3d",1);
             }
             else
             {
@@ -788,14 +787,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               set_str("x",svalue);
               update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
               gx = ngx + 2;
-              plot3d = 0;
+              set_int("plot3d",0);
               update_plot_options(ngx,ngy,ngz,dxv);
             }
           }
           else if (ngx >= -1 && ngx < (int)total_nbr_x)
           {
             gx = ngx + 2;
-            plot3d = 0;
+            set_int("plot3d",0);
             update_plot_options(ngx,ngy,ngz,dxv);
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
           }
@@ -818,7 +817,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               ngx = -1;
               gx = ngx + 2;
               update_plot_options(ngx,ngy,ngz,dxv);
-              plot3d = 0;
+              set_int("plot3d",0);
             }
           }
           else if (ngy > -1 && ngy < (int)total_nbr_x)
@@ -826,7 +825,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             ngx = -1;
             gx = ngx + 2;
             gy = ngy + 2;
-            plot3d = 0;
+            set_int("plot3d",0);
             update_plot_options(ngx,ngy,ngz,dxv);
             update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
           }
@@ -1697,12 +1696,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
         case PM_NORMAL: /* normal plot mode */
           /* This is where the plot is normally updated */
-          setup_pm_normal(gx, gy, gz, plot3d, dxv);
-          gplot_normal(gx, gy, gz, plot3d, dxv);
+          setup_pm_normal(gx, gy, gz, get_int("plot3d"), dxv);
+          gplot_normal(gx, gy, gz, get_int("plot3d"), dxv);
           break;
 
         case PM_ANIMATE:
-          gplot_animate(gx, gy, gz, plot3d, dxv);
+          gplot_animate(gx, gy, gz, get_int("plot3d"), dxv);
           break;
 
         case PM_CONTINUATION: /* try to plot continuation branch */
