@@ -425,7 +425,7 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
 
     strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH-1);
     strncpy(s->stats_varnames,".odexp/stats_varnames.txt",MAXFILENAMELENGTH-1);
-    strncpy(s->particle_varnames,".odexp/particle_varnames.txt",MAXFILENAMELENGTH-1);
+    strncpy(s->traj_varnames,".odexp/traj_varnames.txt",MAXFILENAMELENGTH-1);
     strncpy(s->trajectories_buffer,".odexp/traj.dat",MAXFILENAMELENGTH-1);
 
     s->event[0] = -1;
@@ -457,30 +457,30 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     fprintf(s->fstats_varnames,"\tN\tPARENT_ID\tEVENT\tCHILD_ID\n");
     fclose(s->fstats_varnames); 
 
-    if ( ( s->fparticle_varnames = fopen(s->particle_varnames, "w") ) == NULL )
+    if ( ( s->ftraj_varnames = fopen(s->traj_varnames, "w") ) == NULL )
     {
-      PRINTERR("error: could not open file '%s', exiting...\n",s->particle_varnames);
+      PRINTERR("error: could not open file '%s', exiting...\n",s->traj_varnames);
       exit ( EXIT_FAILURE );
     }
     fprintf(s->fstats_varnames,"TIME");
     for(i=0; i<s->nbr_var; i++)
     {
-       fprintf(s->fparticle_varnames,"\t%s",s->varnames[i]);
+       fprintf(s->ftraj_varnames,"\t%s",s->varnames[i]);
     }
     for(i=0; i<s->nbr_aux; i++)
     {
-       fprintf(s->fparticle_varnames,"\t%s",s->auxnames[i]);
+       fprintf(s->ftraj_varnames,"\t%s",s->auxnames[i]);
     }
     for(i=0; i<s->nbr_psi; i++)
     {
-       fprintf(s->fparticle_varnames,"\t%s",s->psinames[i]);
+       fprintf(s->ftraj_varnames,"\t%s",s->psinames[i]);
     }
     for(i=0; i<s->nbr_expr; i++)
     {
-       fprintf(s->fparticle_varnames,"\t%s",s->exprnames[i]);
+       fprintf(s->ftraj_varnames,"\t%s",s->exprnames[i]);
     }
-    fprintf(s->fparticle_varnames,"\n");
-    fclose(s->fparticle_varnames); 
+    fprintf(s->ftraj_varnames,"\n");
+    fclose(s->ftraj_varnames); 
 
     s->pop = malloc(sizeof(dlist));
     init_dlist(s->pop);
@@ -783,7 +783,7 @@ int list_particle(int with_id)
     char cmd_print[EXPRLENGTH];
     if ( with_id == -1 )
     {
-      snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
+      snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - .odexp/traj_varnames.txt > .odexp/id%d.txt", with_id);
       snprintf(cmd_data,EXPRLENGTH,\
             "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/id%d.txt",\
             nbr_cols, fix, with_id);
@@ -791,7 +791,7 @@ int list_particle(int with_id)
     else
     {
       generate_particle_file(with_id); /* generate idXX.dat file for the current particle */
-      snprintf(cmd_varnames,EXPRLENGTH,"cat .odexp/particle_varnames.txt > .odexp/id%d.txt", with_id);
+      snprintf(cmd_varnames,EXPRLENGTH,"cat .odexp/traj_varnames.txt > .odexp/id%d.txt", with_id);
       snprintf(cmd_data,EXPRLENGTH,\
             "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
             nbr_cols, fix, with_id, with_id);
@@ -810,14 +810,14 @@ int list_stats( void )
     int nbr_cols = 1 + SIM->nbr_mfd; 
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/stats_varnames.txt > .odexp/tmp.txt");
+    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/stats_varnames.txt > .odexp/stats.csv");
     snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '%d \"%%5.2f\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/tmp.txt",\
+            "hexdump -e '%d \"%%5.2f\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/stats.csv",\
             nbr_cols);
 
     s = system(cmd_varnames); 
     s = system(cmd_data); 
-    s = system("column -t .odexp/tmp.txt | less -s");
+    s = system("column -t .odexp/stats.csv | less -s");
 
     return s;
 }

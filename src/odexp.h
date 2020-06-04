@@ -118,8 +118,8 @@ typedef struct system_state {
     char stats_varnames[MAXFILENAMELENGTH];
     FILE *fstats_varnames;
 
-    char particle_varnames[MAXFILENAMELENGTH];
-    FILE *fparticle_varnames;
+    char traj_varnames[MAXFILENAMELENGTH];
+    FILE *ftraj_varnames;
 
     char trajectories_buffer[MAXFILENAMELENGTH];
     FILE *ftrajectories;
