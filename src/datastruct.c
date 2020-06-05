@@ -796,7 +796,7 @@ int list_particle(int with_id)
             "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
             nbr_cols, fix, with_id, with_id);
     } 
-    snprintf(cmd_print,EXPRLENGTH,"column -t .odexp/id%d.txt | less -S", with_id);
+    snprintf(cmd_print,EXPRLENGTH,"column -t .odexp/id%d.txt | less -sS", with_id);
     s = system(cmd_varnames); 
     s = system(cmd_data); 
     s = system(cmd_print);
@@ -807,17 +807,38 @@ int list_particle(int with_id)
 int list_stats( void )
 {
     int s;
+    int fix = get_int("fix");
     int nbr_cols = 1 + SIM->nbr_mfd; 
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
     snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/stats_varnames.txt > .odexp/stats.csv");
     snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '%d \"%%5.2f\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/stats.csv",\
-            nbr_cols);
+            "hexdump -e '%d \"%%5.%df\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/stats.csv",\
+            nbr_cols, fix);
 
     s = system(cmd_varnames); 
     s = system(cmd_data); 
-    s = system("column -t .odexp/stats.csv | less -s");
+    s = system("column -t .odexp/stats.csv | less -sS");
+
+    return s;
+}
+
+
+int list_traj( void )
+{
+    int s;
+    int fix = get_int("fix");
+    int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr; 
+    char cmd_varnames[EXPRLENGTH];
+    char cmd_data[EXPRLENGTH];
+    snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - .odexp/traj_varnames.txt > .odexp/traj.csv");
+    snprintf(cmd_data,EXPRLENGTH-1,\
+            "hexdump -e '\"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/traj.csv",
+            nbr_cols, fix);
+
+    s = system(cmd_varnames); 
+    s = system(cmd_data); 
+    s = system("column -t .odexp/traj.csv | less -sS");
 
     return s;
 }

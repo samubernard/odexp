@@ -1564,17 +1564,28 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         break;
       case '$' :  /* list particle dataset */
         nbr_read = sscanf(cmdline+1,"%d",&i);
-        if ( nbr_read == 1 )
+        if ( nbr_read == 1 ) /* list a single particle */
           list_particle(i);
-        else
+        else 
         {
-          if ( strncmp(get_str("popmode"), "single", 3) == 0 ) /* list particle 0 */
+          nbr_read = sscanf(cmdline+1,"%c",&op);  
+          if ( nbr_read == 1 ) /* non-digit character */
           {
-            list_particle(0);
+            if ( op == '$' | op == 'a' | op == '.' | op == '_' ) /* list all trajectories */
+            {
+              list_traj(); 
+            }
           }
           else
           {
-            list_stats();
+            if ( strncmp(get_str("popmode"), "single", 3) == 0 ) /* list particle 0 */
+            {
+              list_particle(0);
+            }
+            else
+            {
+              list_stats();
+            }
           }
         }
         break;

@@ -122,6 +122,7 @@ int fwrite_all_particles(const double *restrict t);
 int fwrite_SIM(const double *restrict t);
 int list_particle( int with_id );
 int list_stats( void );
+int list_traj( void );
 
 int generate_particle_file(int with_id);
 
