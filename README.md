@@ -83,7 +83,7 @@ Interactive commands can be entered at the
 prompt. Multiple commands can be separated with && (does not
 work when command expects a string argument).
 
-**&#63;**
+?
 
 > Display this help.
 
@@ -125,13 +125,17 @@ work when command expects a string argument).
 
 > Plot previous particle of current variable on the y-axis (cyclic).
 
-**&gt;**
+**&gt;** *count*
 
-> Double the number of output time steps.
+> Double
+> *count*
+> times (default one) the number of output time steps.
 
-**&lt;**
+**&lt;** *count*
 
-> Halve the number of output time steps.
+> Halve
+> *count*
+> times (default one) the number of output time steps.
 
 **#** *dataset* *colx* *coly*
 
@@ -140,26 +144,34 @@ work when command expects a string argument).
 > and
 > *coly*
 > from
-> *dataset*
+> *dataset*.
 
 ! *filename*
 
 > Save the current plot to
 > *filename*
-> in EPS format.
+> in format given by option
+> *printsettings*
+> (default postscript eps color).
 
 **$** *id*
 
 > Print dataset for particle
-> *id*
+> *id*.
+> If
 > *id*
 > is missing, print stats dataset
 > in population mode or particle in single mode.
 
+**$$, $a, $., $\_**
+
+> Print all particles in tall format
+> *id*.
+
 **\*&zwnj;** \[*msg*]
 
 > Snapshot of current simulation and parameter values with optional
-> *msg*
+> *msg*.
 
 **0, n**
 
@@ -176,6 +188,10 @@ work when command expects a string argument).
 **7**
 
 > Switch to particle plot.
+
+**6**
+
+> Switch to animate lot.
 
 **A**
 
@@ -201,8 +217,12 @@ work when command expects a string argument).
 
 **e** \[*val*]
 
-> Multiply the time span by a factor.
-> (default factor = 2).
+> Multiply the time span by a factor
+> *val*
+> (default
+> *val*
+> &equals; 2). Factor
+> *val*
 > can be less than one.
 
 **f**
@@ -235,6 +255,9 @@ work when command expects a string argument).
 > Set to I to revert to the default value, press
 > &lt;enter&gt;
 > to keep current initial condition.
+
+**is**
+
 > Set initial condition to steady state.
 > Steady state must have been computed with
 > **ms**.
@@ -257,7 +280,9 @@ work when command expects a string argument).
 
 **ld**
 
-> Print file description (all lines starting with ## in Ar file).
+> Print file description (all lines starting with ## in
+> *file*
+> ).
 
 **le**
 
@@ -318,12 +343,12 @@ work when command expects a string argument).
 **o** *filename*
 
 > Load parameters values and options from file
-> *filename*
+> *filename*.
 
 **P** *val*
 
 > Set current parameter to value
-> *val*
+> *val*.
 
 **p** \[*ind* | *par*] \[*val*]
 
@@ -489,7 +514,7 @@ CONST
 
 > Constant arrays.
 
-SET
+LET
 
 > Prescan macro.
 
@@ -668,10 +693,10 @@ are discontinuous, and variable need to be reset at known timepoints.
 	TIMES 0 10
 	TIMES 0 10 20 50 100
 
-**SET**  
+**LET**  
 Set predefined constant. Useful to define system size.
 
-	SET N 100
+	LET N 100
 
 **CONST**  
 Constant array. Must be numerical array. Constant arrays cannot be modified.
@@ -1050,4 +1075,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - September 5, 2019
+DARWIN16 - June 5, 2020
