@@ -71,6 +71,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"term","terminal", 's', 0.0, 0, "qt noraise", "gnuplot TERMinal", "gnuplotSettings"},
   {"print","printsettings", 's', 0.0, 0, "postscript eps color", "gnuplot PRINT settings", "gnuplotSettings"},
   {"pal","palette", 's', 0.0, 0, "apple", "color palette acid | qual | {apple}", "gnuplotSettings"},
+  {"key","togglekey", 'i', 0.0, 1, "", "switch key on/off", "gnuplotSettings"},
   {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
   {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
   {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},

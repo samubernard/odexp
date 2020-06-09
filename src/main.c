@@ -2671,7 +2671,14 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   fprintf(GPLOTP,"set zlabel font \"%s Oblique\"\n", get_str("font"));
 #endif
   fprintf(GPLOTP,"set grid xtics ytics ztics\n");
-  fprintf(GPLOTP,"set key nobox noopaque\n");
+  if ( get_int("togglekey") )
+  {
+    fprintf(GPLOTP,"set key nobox noopaque\n");
+  }
+  else
+  {
+    fprintf(GPLOTP,"unset key\n");
+  }
   fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : get_str("indvar")); 
   fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
 
