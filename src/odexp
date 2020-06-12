@@ -1065,7 +1065,7 @@ sub define_array_from_input
   {
     /^$pat_char/i or next;
     my ($type, $name, $dummy, $attr, $comment) = ( $_ =~ $re_pace ) or print "no pace found";  
-    if ( my @it = ($_ =~ m/$re_iter/g) )
+    if ( my @it = ($_ =~ m/$re_iter/g) ) # array 
     {
       my $offset = qq();
       my $j = 0;
@@ -1086,24 +1086,9 @@ sub define_array_from_input
         print $fch "[$i]";
       }
       print $fch " = " . "*(${rhs}++);"; # added
-      # print $fch " = " . $rhs. "[$ii";
-      # my $starp = qq( + );
-      # my $iter_increment = 1;
-      # $j = 0;
-      # while ( $j < 0+@it )
-      # {
-      #   my ($i, $a, $b) = @it[$j..$j+2];
-      #   $j += 3;
-      #   print $fch "$starp$i";
-      #   $iter_increment *= ($b-$a);
-      #   $starp = qq/*(1+/;
-      # }
-      # print $fch qq/)/ x (@it/3-1);
-      # print $fch "];"; 
       print $fch " /* $attr */" if length $attr;
       print $fch " /* $comment */" if length $comment;
       print $fch "\n";
-      # $ii += $iter_increment;
       $j = 0;
       while ( $j < 0+@it )
       {
@@ -1114,7 +1099,6 @@ sub define_array_from_input
     } else
     {
       print $fch "    $name = *(${rhs}++)" . ";\n";
-      # ++$ii;
     }
   }
   print $fch "\n";
