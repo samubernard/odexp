@@ -25,7 +25,7 @@ double minus(double x, double y); /* subtraction */
 double plus(double x, double y); /* addition */
 double identity(double x);
 double sumxy(long len, double (*f)(double), double (*g)(double, double), const double *x, const double yi); 
-double kern(double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p, long len);
+double kern(const double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p, long len);
 double linchaindelay(const double root, const double *chain, const int link, const double delay, const int len);
 
 
