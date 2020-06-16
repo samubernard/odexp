@@ -87,7 +87,11 @@ message( "** Executable files will be installed in ${BINDIR}" )
 # ============================================================================
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Wno-sign-compare -O0")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wno-nullability-completeness")
-set(CMAKE_BUILD_TYPE Debug)
+
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall -Wextra -Wno-sign-compare -O3")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-nullability-completeness")
+
+# set(CMAKE_BUILD_TYPE Debug)
 
 
 # ============================================================================
