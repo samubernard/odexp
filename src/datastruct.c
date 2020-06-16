@@ -832,7 +832,7 @@ int list_traj( void )
     int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr; 
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - .odexp/traj_varnames.txt > .odexp/traj.csv");
+    snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | paste - .odexp/traj_varnames.txt > .odexp/traj.csv");
     snprintf(cmd_data,EXPRLENGTH-1,\
             "hexdump -e '\"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/traj.csv",
             nbr_cols, fix);
