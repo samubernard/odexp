@@ -206,7 +206,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   DBLOGPRINT("%d description",dsc.nbr_el);
 
   /* get tspan */
-  printf("\n%-25s%s\n","time span",HLINE);
+  /* printf("\n%-25s%s\n","time span",HLINE); */
   success = load_double_array(parfilename, &tspan, ts_string, ts_len, exit_if_nofile); 
   if (!success)
   {
@@ -221,39 +221,39 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   }
   else
   {
-    printf("  %d time points, of which %d stopping points\n", tspan.length, tspan.length - 2);
+    /* printf("  %d time points, of which %d stopping points\n", tspan.length, tspan.length - 2); */
     DBLOGPRINT("%d time points, of which %d stopping points", tspan.length, tspan.length - 2);
   }
 
   /* get constant arrays */
-  printf("\n%-25s%s\n", "constant arrays", HLINE);
+  /* printf("\n%-25s%s\n", "constant arrays", HLINE); */
   get_nbr_el(eqfilename,"CONST",5, &cst.nbr_el, NULL);
   alloc_namevalexp(&cst);
   success = load_strings(eqfilename,cst,"CONST",5,1,' ', exit_if_nofile);
   DBLOGPRINT("%d constants",cst.nbr_el);
 
   /* get data files */
-  printf("\n%-25s%s\n", "data files", HLINE);
+  /* printf("\n%-25s%s\n", "data files", HLINE); */
   get_nbr_el(eqfilename,"FI",2, &dfl.nbr_el, NULL);
   alloc_namevalexp(&dfl);
   success = load_strings(eqfilename,dfl,"FI",2,1,' ', exit_if_nofile);
   DBLOGPRINT("%d data files",dfl.nbr_el);
 
   /* get user-defined functions */
-  printf("\n%-25s%s\n", "user-defined functions", HLINE);
+  /* printf("\n%-25s%s\n", "user-defined functions", HLINE); */
   get_nbr_el(eqfilename,"FUN",3, &func.nbr_el, NULL);
   alloc_namevalexp(&func);
   success = load_strings(eqfilename,func,"FUN",3,1,'=', exit_if_nofile);
   DBLOGPRINT("%d user-defined function",func.nbr_el);
 
   /* get parameters */
-  printf("\n%-25s%s\n", "parameters", HLINE);
+  /* printf("\n%-25s%s\n", "parameters", HLINE); */
   get_nbr_el(parfilename,"PAR",3, &mu.nbr_el, &mu.nbr_expr);
   alloc_namevalexp(&mu);
   success = load_nameval(parfilename,mu,"PAR",3,exit_if_nofile);
   if (!success) /* then create a not_a_parameter parameter */
   {
-    printf("  no parameter\n");
+    /* printf("  no parameter\n"); */
     mu.value = realloc(mu.value,sizeof(double));
     mu.name = realloc(mu.name,sizeof(char*));
     mu.name[0] = malloc(NAMELENGTH*sizeof(char));
@@ -273,14 +273,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   DBLOGPRINT("%d parameters",mu.nbr_el);
 
   /* get parametric expressions */
-  printf("\n%-25s%s\n", "parametric expressions", HLINE);
+  /* printf("\n%-25s%s\n", "parametric expressions", HLINE); */
   get_nbr_el(eqfilename,"EXPR",4, &pex.nbr_el, &pex.nbr_expr);
   alloc_namevalexp(&pex);
   success = load_strings(eqfilename,pex,"EXPR",4,1,' ', exit_if_nofile);
   DBLOGPRINT("%d parametric expressions",pex.nbr_el);
 
   /* get initial conditions */
-  printf("\n%-25s%s\n", "initial conditions", HLINE);
+  /* printf("\n%-25s%s\n", "initial conditions", HLINE); */
   get_nbr_el(parfilename,"INIT",4, &ics.nbr_el, &ics.nbr_expr);
   alloc_namevalexp(&ics);
   success = load_strings(parfilename,ics,"INIT",4,1,' ', exit_if_nofile);
@@ -297,14 +297,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
 
   /* get nonlinear functions */
-  printf("\n%-25s%s\n", "auxiliary variables", HLINE);
+  /* printf("\n%-25s%s\n", "auxiliary variables", HLINE); */
   get_nbr_el(eqfilename,"AUX",3, &fcn.nbr_el, &fcn.nbr_expr);
   alloc_namevalexp(&fcn);
   success = load_strings(eqfilename,fcn,"AUX",3,1,' ', exit_if_nofile);
   DBLOGPRINT("%d auxiliary variables",fcn.nbr_el);
 
   /* get equations */
-  printf("\n%-25s%s\n", "equations", HLINE);
+  /* printf("\n%-25s%s\n", "equations", HLINE); */
   get_nbr_el(eqfilename,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
   alloc_namevalexp(&eqn);
   success = load_strings(eqfilename,eqn,"d",1,0,'=', exit_if_nofile);   
@@ -320,35 +320,35 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   DBLOGPRINT("%d equations",eqn.nbr_el);
 
   /* define psi */
-  printf("\n%-25s%s\n", "population couplings", HLINE);
+  /* printf("\n%-25s%s\n", "population couplings", HLINE); */
   get_nbr_el(eqfilename,"%C",2, &psi.nbr_el, &psi.nbr_expr);
   alloc_namevalexp(&psi);
   success = load_strings(eqfilename,psi,"%C",2,1,' ', exit_if_nofile);
   DBLOGPRINT("%d population couplings",psi.nbr_el);
 
   /* define mfd */
-  printf("\n%-25s%s\n", "population mean fields", HLINE);
+  /* printf("\n%-25s%s\n", "population mean fields", HLINE); */
   get_nbr_el(eqfilename,"%M",2, &mfd.nbr_el, &mfd.nbr_expr);
   alloc_namevalexp(&mfd);
   success = load_strings(eqfilename,mfd,"%M",2,1,' ', exit_if_nofile);
   DBLOGPRINT("%d population mean fields",mfd.nbr_el);
 
   /* define birth */
-  printf("\n%-25s%s\n", "population birth rates", HLINE);
+  /* printf("\n%-25s%s\n", "population birth rates", HLINE); */
   get_nbr_el(eqfilename,"%BIRTH",6, &birth.nbr_el, &birth.nbr_expr);
   alloc_namevalexp(&birth);
   success = load_strings(eqfilename,birth,"%BIRTH",6,0,' ', exit_if_nofile);
   DBLOGPRINT("%d population birth rates",birth.nbr_el);
 
   /* define repli */
-  printf("\n%-25s%s\n", "population replication rates", HLINE);
+  /* printf("\n%-25s%s\n", "population replication rates", HLINE); */
   get_nbr_el(eqfilename,"%REPLI",6, &repli.nbr_el, &repli.nbr_expr);
   alloc_namevalexp(&repli);
   success = load_strings(eqfilename,repli,"%REPLI",6,0,' ', exit_if_nofile);
   DBLOGPRINT("%d population replication rates",repli.nbr_el);
 
   /* define death */
-  printf("\n%-25s%s\n", "population death rates", HLINE);
+  /* printf("\n%-25s%s\n", "population death rates", HLINE); */
   get_nbr_el(eqfilename,"%DEATH",6, &death.nbr_el, &death.nbr_expr);
   alloc_namevalexp(&death);
   success = load_strings(eqfilename,death,"%DEATH",6,0,' ', exit_if_nofile);
@@ -389,7 +389,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
 
   /* get options */
-  printf("\n%-25s%s\n", "options", HLINE);
+  /* printf("\n%-25s%s\n", "options", HLINE); */
   success = load_options(parfilename, exit_if_nofile); 
   update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
   update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
@@ -401,7 +401,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     set_str("wintitle",odexp_filename);
   }
   /* printf_options(""); */
-  printf("  options loaded (type 'lo' to see all options)\n");
+  /* printf("  options loaded (type 'lo' to see all options)\n"); */
   DBLOGPRINT("Options loaded");
 
   /* set IC to their numerical values */
@@ -421,9 +421,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   srand( (unsigned long)get_int("seed") );
   PRINTLOG("Rand seed: %d",get_int("seed"));
   /* test rng */
-  printf("\nrandom number generator %s\n", HLINE);
-  printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR);
+  /* printf("\nrandom number generator %s\n", HLINE); */
+  /* printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR); */
   PRINTLOG("RAND_MAX %d",RAND_MAX);
+
+  printf("  logfiles: .odexp/log.txt and .odexp/dblog.txt\n");
 
   /* readline */
   if (strcmp("EditLine wrapper",rl_library_version) == 0)

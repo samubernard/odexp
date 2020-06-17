@@ -28,8 +28,6 @@ int get_multiindex(const char *line, int *nbr_dim, int **size_dim)
       line+=bracket1;
       /* scan for two integers, index0, index1 in [iter=i0:i1] */
       nbr_index = sscanf(line," [ %*[^=] = %d : %d ]%n",&index0,&index1,&bracket1);
-      /* printf("--nbr_dim %d, size_dim %d\n",*nbr_dim,(*size_dim)[*nbr_dim-1]); */
-      /* printf("--nbr_index %d\n",nbr_index); */
     } while ( nbr_index == 2 );
   }
   else if ( nbr_index == EOF || nbr_index == 0 )
@@ -125,7 +123,7 @@ int load_line(const char *filename, nve var, const char *sym, const int sym_len,
       var.expression[var_index] = 0; /* snprintf(var.expression[var_index],1,""); */
       var.value[var_index] = 0.0;
 
-      printf("  %s %s%s%s\n", sym,T_DET,var.comment[var_index],T_NOR);
+      /* DBLOGPRINT("  %s %s%s%s\n", sym,T_DET,var.comment[var_index],T_NOR);  */
       ++var_index;
     }
     k = 0; /* reset k */
@@ -194,8 +192,8 @@ int load_nameval(const char *filename, nve var, const char *sym, const int sym_l
           *var.max_name_length = length_name;
         }
 
-        printf("  %s[%s%d%s] %-*s=",sym,T_IND,var_index,T_NOR,*var.max_name_length+2,var.name[var_index]);
-        printf(" %s%f   %s%s%s\n",T_VAL,var.value[var_index],T_DET,attribute,T_NOR);
+        /* DBLOGPRINT("  %s[%s%d%s] %-*s=",sym,T_IND,var_index,T_NOR,*var.max_name_length+2,var.name[var_index]); */
+        /* DBLOGPRINT(" %s%f   %s%s%s\n",T_VAL,var.value[var_index],T_DET,attribute,T_NOR); */
         var_index++;
       }
       k = 0; /* reset k */
@@ -266,7 +264,7 @@ int load_options(const char *filename, int exit_if_nofile)
               break;
           }
           success = 1;
-          printf_option_line(idx_opt);
+          /* printf_option_line(idx_opt); */
         }
         else
         {
@@ -301,7 +299,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
   int k = 0;
   int success = 0;
   fr = fopen (filename, "rt");
-  printf("  %s: ",sym);
+  /* DBLOGPRINT("  %s: ",sym); */
 
   if ( fr == NULL )
   {
@@ -353,14 +351,14 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
 
       for (i=0;i<array_ptr->length;i++)
       {
-        printf("%s%.2f%s ", T_VAL,array_ptr->array[i],T_NOR );
+        /* DBLOGPRINT("%s%.2f%s ", T_VAL,array_ptr->array[i],T_NOR ); */
       }
 
       success = 1;
     }
     k = 0; /* reset k */
   }
-  printf("\n");
+  /* DBLOGPRINT("\n"); */
   fclose(fr);
   return success;
 
@@ -524,9 +522,9 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
       for (j=0;j<expr_size;j++)
       {
         var.expr_index[var_index+j] = var_index;
-        printf("  %s[%s%d%s] %-*s %c %s%s%s %s%s%s\n",\
+        /* DBLOGPRINT("  %s[%s%d%s] %-*s %c %s%s%s %s%s%s\n",\ 
             sym,T_IND,var_index+j,T_NOR,*var.max_name_length,var.name[var_index+j],\
-            sep,T_EXPR,var.expression[var_index+j],T_NOR,T_DET,var.attribute[var_index+j],T_NOR);
+            sep,T_EXPR,var.expression[var_index+j],T_NOR,T_DET,var.attribute[var_index+j],T_NOR); */
       }
       var_index += expr_size;
     }
