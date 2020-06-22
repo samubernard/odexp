@@ -158,9 +158,9 @@ double linchaindelay(const double root, const double *chain, const int link, con
 #ifndef _LREXP_H_
 typedef double (*coupling_function)(double, void *); 
 #endif
-int lrkern(coupling_function f, double *x, double *y, int N);
-int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
-int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N);
+int lrkern(coupling_function f, const double *x, double *y, const int N);
+int lrwkern(const double *U, const double *V, const int r, coupling_function f, const double *x, double *y, const int N);
+int lrwpkern(const int iu, const int iv, const int r, coupling_function f, const double *x, double *y, const int N);
 
 /* get the value of variable s, for particle p, into ptr */ 
 int mvar(const char *s, par *p, double *ptr);

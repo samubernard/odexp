@@ -516,42 +516,93 @@ int odesolver( oderhs pop_ode_rhs,
         /* ODE solver - time step */
         clock_odeiv = clock();
         sys = (gsl_odeiv2_system) {ode_rhs, ode_jac, sim_size, SIM->pop->start};
-        while ( t < tnext)
+        switch (solver)
         {
-            switch (solver)
+          case H_FE:
+            while ( t < tnext)
             {
-              case H_FE:
                 status = fe_apply(&sys,&t,tnext,&h,y);
-                break;
-              case H_ITERATION: 
-                /* **discrete iteration**:
-                 * the time is advanced by dt = 1, no matter what tnext is
-                 * this means that birth/death events will be resolved 
-                 * at t+1, if tnext < t+1. 
-                 */
+                if ( h < hmin )
+                {
+                  h = hmin;
+                  if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
+                  {
+                    snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
+                    hmin_alert = 1; 
+                  }
+                }
+                if (status != GSL_SUCCESS) 
+                {
+                   break;
+                }   
+                    
+            }
+            break;
+          case H_ITERATION: 
+            /* **discrete iteration**:
+             * the time is advanced by dt = 1, no matter what tnext is
+             * this means that birth/death events will be resolved 
+             * at t+1, if tnext < t+1. 
+             */
+            while ( t < tnext)
+            {
                 status = iteration_apply(&sys,&t,y);
-                /* DBPRINT("t = %g, tnext = %g", t, tnext); */
-                break;
-              case H_DDE:
+                if ( h < hmin )
+                {
+                  h = hmin;
+                  if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
+                  {
+                    snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
+                    hmin_alert = 1; 
+                  }
+                }
+                if (status != GSL_SUCCESS) 
+                {
+                   break;
+                }   
+                    
+            }
+            /* DBPRINT("t = %g, tnext = %g", t, tnext); */
+            break;
+          case H_DDE:
+            while ( t < tnext)
+            {
                 status = dde_apply(&sys,&t,tnext,&h,y);
-                break;
-              default: 
+                if ( h < hmin )
+                {
+                  h = hmin;
+                  if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
+                  {
+                    snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
+                    hmin_alert = 1; 
+                  }
+                }
+                if (status != GSL_SUCCESS) 
+                {
+                   break;
+                }   
+                    
+            }
+            break;
+          default: 
+            while ( t < tnext)
+            {
                 status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+                if ( h < hmin )
+                {
+                  h = hmin;
+                  if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
+                  {
+                    snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
+                    hmin_alert = 1; 
+                  }
+                }
+                if (status != GSL_SUCCESS) 
+                {
+                   break;
+                }   
+                    
             }
-            if ( h < hmin )
-            {
-              h = hmin;
-              if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
-              {
-                snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
-                hmin_alert = 1; 
-              }
-            }
-            if (status != GSL_SUCCESS) 
-            {
-               break;
-            }   
-                
         }
         update_SIM_from_y(y);
         

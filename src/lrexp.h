@@ -13,14 +13,13 @@
 typedef double (*coupling_function)(double, void *);
 #endif
 
-int lrexpars(double *x, int N, double *meanx, double *range);
-int lrexprank(coupling_function f,int N, int *p, double range);
-int lrexp(coupling_function f, double *x, double *y, int N, int p, double meanx, double range);
-int lrexpw(coupling_function f, const double *U, const double *V, int r, double *x, double *y, int N, int p, double meanx, double range);
-int lrexpwp(int iu, int iv, int r, coupling_function f, double *x, double *y, int N, int p, double meanx, double range);
-int lrkern(coupling_function f, double *x, double *y, int N);
-int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
-int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N);
-int lrw(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N);
+int lrexpars(const double *x, const int N, double *meanx, double *range);
+int lrexprank(coupling_function f, const int N, int *p, const double range);
+int lrexp(coupling_function f, const double *x, double *y, const int N, const int p, const double meanx, const double range);
+int lrexpw(coupling_function f, const double *U, const double *V, const int r, const double *x, double *y, const int N, const int p, const double meanx, const double range);
+int lrexpwp(const int iu, const int iv, const int r, coupling_function f, const double *x, double *y, const int N, const int p, const double meanx, const double range);
+int lrkern(coupling_function f, const double *x, double *y, const int N);
+int lrwkern(const double *U, const double *V, const int r, coupling_function f, const double *x, double *y, const int N);
+int lrwpkern(const int iu, const int iv, const int r, coupling_function f, const double *x, double *y, const int N);
 
 #endif

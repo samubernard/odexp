@@ -74,7 +74,7 @@ static const long TC[51][51] = { {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 /* takes state vector x and size N as input
  * and store meanx = mean(x) and range = range(x)
  */
-int lrexpars(double *x, int N, double *meanx, double *range)
+int lrexpars(const double *x, const int N, double *meanx, double *range)
 {
   int i;
 	double minx = x[0],  maxx = x[0];
@@ -98,7 +98,7 @@ int lrexpars(double *x, int N, double *meanx, double *range)
 /* lrexprank 
  * compute expansion rank 
  */
-int lrexprank(coupling_function f,int N, int *p, double range)
+int lrexprank(coupling_function f, const int N, int *p, const double range)
 {
   int         i;
   int         pmax = get_int("lrmax"); /* maximal polynomial order */ 
@@ -117,7 +117,7 @@ int lrexprank(coupling_function f,int N, int *p, double range)
   gsl_cheb_series *cs = gsl_cheb_alloc (pmax);
 
   F.function = f;
-  F.params = &range;
+  F.params = (void *)&range;
 
   /* approximate the function f on [-1,1] */
   gsl_cheb_init (cs, &F, -1.0, 1.0);
@@ -176,8 +176,8 @@ int lrexprank(coupling_function f,int N, int *p, double range)
  * direct method if N > P^2. Numerical tests show P up to 
  * 30. Advantageous if N > 2000
  */
-int lrexp(coupling_function f, double *x, double *y, 
-    int N, int p, double meanx, double range)
+int lrexp(coupling_function f, const double *x, double *y, 
+    const int N, const int p, const double meanx, const double range)
 {
   int i,k,m,j,l;
   double phi;
@@ -187,7 +187,7 @@ int lrexp(coupling_function f, double *x, double *y,
 
   gsl_function F;
   F.function = f;
-  F.params = &range;
+  F.params = (void *)&range;
 
   gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
 	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
@@ -270,8 +270,8 @@ int lrexp(coupling_function f, double *x, double *y,
  * the coupling term is return in the array y.
  *
  */
-int lrexpw(coupling_function f, const double *U, const double *V, int r, double *x, double *y, 
-    int N, int p, double meanx, double range)
+int lrexpw(coupling_function f, const double *U, const double *V, const int r, const double *x, double *y, 
+    const int N, const int p, const double meanx, const double range)
 {
   int i,k,m,j,l;
   int p1 = p+1;
@@ -283,7 +283,7 @@ int lrexpw(coupling_function f, const double *U, const double *V, int r, double 
 
   gsl_function F;
   F.function = f;
-  F.params = &range;
+  F.params = (void *)&range;
 
   gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
 	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
@@ -370,8 +370,8 @@ int lrexpw(coupling_function f, const double *U, const double *V, int r, double 
  * the coupling term is return in the array y.
  *
  */
-int lrexpwp(int iu, int iv, int r, coupling_function f, double *x, double *y, 
-    int N, int p, double meanx, double range)
+int lrexpwp(const int iu, const int iv, const int r, coupling_function f, const double *x, double *y, 
+    const int N, const int p, const double meanx, const double range)
 {
   int i,k,m,j,l;
   int p1 = p+1;
@@ -397,7 +397,7 @@ int lrexpwp(int iu, int iv, int r, coupling_function f, double *x, double *y,
 
   gsl_function F;
   F.function = f;
-  F.params = &range;
+  F.params = (void *)&range;
 
   gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
 	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
@@ -476,7 +476,7 @@ int lrexpwp(int iu, int iv, int r, coupling_function f, double *x, double *y,
  *
  * in the most efficient way
  */
-int lrkern(coupling_function f, double *x, double *y, int N)
+int lrkern(coupling_function f, const double *x, double *y, const int N)
 {
   int         p; /* polynomial order */ 
 	double      range,
@@ -498,7 +498,7 @@ int lrkern(coupling_function f, double *x, double *y, int N)
  * where W_ij can be factorized as U_i*V_j
  * in the most efficient way
  */
-int lrwkern(const double *U, const double *V, int r, coupling_function f, double *x, double *y, int N)
+int lrwkern(const double *U, const double *V, const int r, coupling_function f, const double *x, double *y, const int N)
 {
   int         p; /* polynomial order */ 
 	double      range,
@@ -520,7 +520,7 @@ int lrwkern(const double *U, const double *V, int r, coupling_function f, double
  * where W_ij can be factorized as U_i*V_j
  * in the most efficient way
  */
-int lrwpkern(int iu, int iv, int r, coupling_function f, double *x, double *y, int N)
+int lrwpkern(const int iu, const int iv, const int r, coupling_function f, const double *x, double *y, const int N)
 {
   int         p; /* polynomial order */ 
 	double      range,
