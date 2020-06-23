@@ -602,15 +602,34 @@ sub define_functions
       print $fch ", " if @fs;                   # , only if not last argument
     }
     print $fch ")\n{\n";
-    my @rhs = split /;/ , join('=', @fields);   # put '=' back and split by ';' 
-    @rhs = grep /\S/, @rhs; # remove empty elements
+    my @rhs = split(/([;:{}])/ ,join('=', @fields));   # put '=' back and split by ';' 
+    print join "|", @rhs;
+    print "\n";
+    my $in_for = 0;
+    my $in_for_count = 0;
+    my $offset = qq/    /;
     while ( @rhs )                              # print all statements with ';'
     {
       my $s = shift(@rhs); 
-      $s =~ s/^\s*|\s*$//g; # trim
-      print $fch "    " . $s . ";\n"; 
+      next if $s =~ /^\s*$/;
+      $in_for = 1 if ( $s =~ /\bfor\b/ );
+      $in_for_count = 3 if ($in_for);
+      my $open = $s =~ /^[{:]/; 
+      my $close = $s =~ /^}/; 
+      my $ending =  ( $s =~ /^;/ and $in_for_count <= 0 );
+      print $fch "\n" if (  $s =~ /^{/);
+      $offset =~ s/(.*)    $/$1/ if ( $close or ( $s =~ /\bcase\b|\bdefault\b/ ) );
+      print $fch $offset unless ( $s =~ /[;:]/ or $in_for_count == 2 or $in_for_count == 1 );
+      $s =~ s/^\s*//;
+      print $fch $s;
+      print $fch "\n" if ( $open or $close or $ending );
+    
+      $offset = $offset . qq/    / if ( $open );
+      $in_for_count-- if ( $s =~ /^;/ );
+      $in_for_count-- if ( $s =~ /\)/ );  
+      $in_for = 0;
     }
-    print $fch "}\n\n";
+    print $fch "\n}\n\n";
   }
   close($fh);
    
