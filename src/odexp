@@ -603,8 +603,6 @@ sub define_functions
     }
     print $fch ")\n{\n";
     my @rhs = split(/([;:{}])/ ,join('=', @fields));   # put '=' back and split by ';' 
-    print join "|", @rhs;
-    print "\n";
     my $in_for = 0;
     my $in_for_count = 0;
     my $offset = qq/    /;
