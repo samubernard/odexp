@@ -652,6 +652,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           set_int("res",(get_int("res")-1)/powl(2,rep_command)+1);
           runplot = 1;
           break;
+        case '!' : /* pass a command to the shell */
+          printf("\n");
+          system(cmdline+1);
+          break;
         case 'e' : /* extend the simulation */
           nbr_read = sscanf(cmdline+1,"%lf",&nvalue);
           if ( nbr_read > 0 )
@@ -1620,29 +1624,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       case '*' : /* save snapshot of pop file */
         file_status = save_snapshot(ics,mu,tspan, odexp_filename);
         break;
-      case '!' : /* print ! */
-        nbr_read = sscanf(cmdline+1,"%s", svalue);
-        if ( nbr_read == 1 ) /* try saving plot with name given in svalue */
-        {
-          fprintf(GPLOTP,"set term push\n"); /* save term settings */
-          fprintf(GPLOTP,"unset term\n"); /* unset all term-specific settings */
-          fprintf(GPLOTP,"set term %s font \"%s,%d\"\n", \
-              get_str("printsettings"), get_str("font"), get_int("fontsize"));
-          fprintf(GPLOTP,"set tics nomirror out font \"%s,%d\"\n", \
-              get_str("font"), get_int("fontsize"));
-          fprintf(GPLOTP,"set output \"%s\"\n",svalue);
-          fprintf(GPLOTP,"replot\n");
-          fprintf(GPLOTP,"set term pop\n");
-          fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
-              get_str("font"), get_int("fontsize"));
-          fflush(GPLOTP);
-          printf("  wrote %s in current directory\n",svalue);
-        }
-        else
-        {
-          PRINTERR("  Error: Name of file required .");
-        }
-        break;
       default :
         PRINTERR("  Unknown command '%c'. Type q to quit, ? for help", c);
     } /* end switch command */ 
@@ -1776,6 +1757,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     fflush(stdin);
     runplot = 0;
     plotonly = 0;
+    nbr_read = 0;
     rep_command = 1; /* reset to default = 1 */
 
     free(extracmd);
@@ -2055,6 +2037,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
   char rootname[MAXROOTLENGTH];
   int  rootnamescanned = 0;
   char par_buffer[MAXFILENAMELENGTH];
+  char print_buffer[MAXFILENAMELENGTH];
   int len = *mu.max_name_length;
   clock_t time_stamp;
 
@@ -2072,10 +2055,12 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
   if (rootnamescanned > 0)
   {
     snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.par",rootname,(uintmax_t)time_stamp);
+    snprintf(print_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.eps",rootname,(uintmax_t)time_stamp);
   }  
   else
   {  
     snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.par", odexp_filename, (uintmax_t)time_stamp);
+    snprintf(print_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.eps", odexp_filename, (uintmax_t)time_stamp);
   }
 
   /* open buffer parameter file (par) */
@@ -2094,6 +2079,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     fprintf(fr,"# odexp> o %s\n", par_buffer);
     fprintf(fr,"\n# To run %s using parameters in %s,\n# use the following command from the prompt:\n",odexp_filename,par_buffer);
     fprintf(fr,"# prompt$ odexp -p %s %s\n",par_buffer,odexp_filename);
+    fprintf(fr,"#\n# associated figure file: %s of type %s\n",print_buffer,get_str("printsettings"));
     fprintf(fr,"# --------------------------------------------------\n");
 
     fprintf(fr,"\n# parameters/values\n");
@@ -2172,6 +2158,23 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 
     success = 1;
   }
+
+
+   /* try saving plot with name given in svalue */
+  fprintf(GPLOTP,"set term push\n"); /* save term settings */
+  fprintf(GPLOTP,"unset term\n"); /* unset all term-specific settings */
+  fprintf(GPLOTP,"set term %s font \"%s,%d\"\n", \
+      get_str("printsettings"), get_str("font"), get_int("fontsize"));
+  fprintf(GPLOTP,"set tics nomirror out font \"%s,%d\"\n", \
+      get_str("font"), get_int("fontsize"));
+  fprintf(GPLOTP,"set output \"%s\"\n",print_buffer);
+  fprintf(GPLOTP,"replot\n");
+  fprintf(GPLOTP,"set term pop\n");
+  fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
+      get_str("font"), get_int("fontsize"));
+  fflush(GPLOTP);
+  printf("  wrote %s in current directory\n",print_buffer);
+
   return success;
 }
 

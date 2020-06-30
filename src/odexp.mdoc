@@ -128,12 +128,6 @@ and
 from 
 .Va dataset .
 .
-.It Ic ! Ar filename   
-Save the current plot to 
-.Va filename
-in format given by option
-.Va printsettings
-(default postscript eps color).
 .It Ic $ Ar id   
 Print dataset for particle 
 .Va id .
@@ -148,7 +142,20 @@ Print all particles in tall format
 .It Ic * Op Ar msg         
 Snapshot of current simulation and parameter values with optional 
 .Va msg .
+and save the current plot to 
+in format given by option
+.Va printsettings
+(default postscript eps color).
+The filenames are made from the first word of 
+.Va msg 
+or the current model filename if 
+.Va msg 
+is absent.
 .
+.It Ic ! Ar command
+Pass the argument
+.Ar command 
+to the shell.
 .It Ic 0, n 
 Switch to/update normal plot. 
 .It Ic 9, b
