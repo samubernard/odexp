@@ -146,7 +146,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   nve death;   /* particle death rates */
 
   /* particle */
-  par *pars = (par *)NULL;
+  /* par *pars = (par *)NULL; */
 
   /* steady states */
   steady_state    *stst = NULL;
@@ -366,7 +366,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   {
     strcpy(dxv.name[i],ics.name[i]);
     strcpy(dxv.expression[i],ics.expression[i]);
-    strcpy(dxv.attribute[i],eqn.attribute[i]);
+    strcpy(dxv.attribute[i],ics.attribute[i]);
   }
   for (i = ode_system_size; i < ode_system_size + fcn.nbr_el; i++)
   {
@@ -861,8 +861,19 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         case '}' : /* plot next particle  */
           plot_mode = PM_NORMAL;
           plotonly = 1;
+          if ( SIM->max_id )
+          {
+            set_int("particle", (get_int("particle") + 1) % SIM->max_id);
+          }
+          else
+          {
+            set_int("particle", 0);
+          }
+#if 0  
+          /* select next particle alive */
           if ( POP_SIZE )
           {
+
             pars = getpar(get_int("particle"));
             if ( pars == NULL )
             {
@@ -876,10 +887,21 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             printf("  population contains no particle\n");
           }
+#endif
           break;
         case '{' : /* plot previous particle  */
           plot_mode = PM_NORMAL;
           plotonly = 1;
+          if ( SIM->max_id )
+          {
+            set_int("particle", (get_int("particle") + SIM->max_id - 1) % SIM->max_id);
+          }
+          else
+          {
+            set_int("particle", 0);
+          }
+#if 0  
+          /* select previous particle alive */
           if ( POP_SIZE )
           {
             pars = getpar(get_int("particle"));
@@ -895,6 +917,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             printf("  population contains no particle\n");
           }
+#endif
           break;    
         case 'i' : /* run with initial conditions */
           nbr_read = sscanf(cmdline+1,"%c",&op);
