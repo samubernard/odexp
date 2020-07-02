@@ -1375,7 +1375,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           else if ( op == 't' )
           {
             sscanf(cmdline+2,"%d %lf",&i,&nvalue);
-            if (i < tspan.length )
+            if (i<tspan.length)
             {
               tspan.array[i] = nvalue;
             }
@@ -1634,6 +1634,33 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       break;
     } 
 
+    free(extracmd);
+    extracmd = (char *)NULL; 
+    /* check loop cmd @ a:b */
+    if ( sscanf(cmdline,"%[][{}] for %d:%d",svalue,&i,&j) == 3 )
+    {
+      DBPRINT("a loop!");
+      switch(svalue[0])
+      {
+        case '}':
+        case '{':
+          set_int("particle",i);
+          break;
+        case ']':
+        case '[':
+          ngy = i;
+          ngy %= (int)total_nbr_x;
+          gy = ngy+2;
+          update_plot_options(ngx,ngy,ngz,dxv);
+          update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
+          break;
+        default:
+          break;
+      }
+      extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
+      snprintf(extracmd,strlen(cmdline)+1,"%s%d",svalue,j-i);  
+    }
+
     check_options();
 
     if (runplot)
@@ -1760,7 +1787,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     nbr_read = 0;
     rep_command = 1; /* reset to default = 1 */
 
-    free(extracmd);
     /* nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos); */
     if ( ( sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos) == 1 ) && 
          strncmp(svalue,"&&",2) == 0 )
@@ -1775,10 +1801,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
       extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
       snprintf(extracmd,strlen(cmdline)+1,"%s%d",svalue,--rep_command);  
-    }
-    else
-    {
-      extracmd = (char *)NULL; 
     }
     free(rawcmdline);
 
