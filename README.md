@@ -146,14 +146,6 @@ work when command expects a string argument).
 > from
 > *dataset*.
 
-! *filename*
-
-> Save the current plot to
-> *filename*
-> in format given by option
-> *printsettings*
-> (default postscript eps color).
-
 **$** *id*
 
 > Print dataset for particle
@@ -172,6 +164,21 @@ work when command expects a string argument).
 
 > Snapshot of current simulation and parameter values with optional
 > *msg*.
+> and save the current plot to
+> in format given by option
+> *printsettings*
+> (default postscript eps color).
+> The filenames are made from the first word of
+> *msg*
+> or the current model filename if
+> *msg*
+> is absent.
+
+! *command*
+
+> Pass the argument
+> *command*
+> to the shell.
 
 **0, n**
 
@@ -1075,4 +1082,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - June 5, 2020
+DARWIN16 - July 5, 2020
