@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/select.h>
+#include <sys/ioctl.h>
 
 #include "main.h"
 #include "odexpConfig.h"
@@ -28,6 +29,8 @@ FILE *dblogfr = (FILE *)NULL;
 FILE *GPLOTP = (FILE *)NULL;
 const char *GFIFO = ".odexp/gfifo";
 int GPIN; /* file descriptor for fifo */
+
+FILE *plotkeyfr = (FILE *)NULL;
 
 /* world */
 world *SIM = (world *)NULL;
@@ -50,11 +53,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   const char *eqfilename = ".odexp/equations.pop";    /* */
   const char *parfilename = ".odexp/parameters.pop";    /* */
   char       par_filename[MAXFILENAMELENGTH];
-  char data_fn[NAMELENGTH]; /* dataset filename */
+  char       data_fn[NAMELENGTH]; /* dataset filename */
 
   /* system commands */
   const char *helpcmd = "man odexp";
-  char mv_plot_cmd[EXPRLENGTH];
 
   /* commands and options */
   char    *extracmd = (char *)NULL;
@@ -67,8 +69,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   double  nvalue,
           nvalue2;
   char    svalue[NAMELENGTH],
-  svalue2[NAMELENGTH],
-  svalue3[NAMELENGTH];
+          svalue2[NAMELENGTH],
+          svalue3[NAMELENGTH];
   int     exit_if_nofile=1,
           no_exit=0,
           np,
@@ -87,6 +89,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           colx = 1,
           coly = 2;
   int  p = 0; /* active parameter index */
+  char plotkeys[100][EXPRLENGTH];
 
   /* iterators */
   int  i,j;
@@ -611,8 +614,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             {
               set_int("hold",0); /* unset hold */
               printf("  %sadd curves is on%s\n",T_DET,T_NOR);
-              snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
-              system(mv_plot_cmd);
+              update_curves(&nbr_hold, plotkeys);
             }
             else
             {
@@ -1633,7 +1635,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
       break;
     } 
-
+    
+    /* Check for extra command: for loop */
     free(extracmd);
     extracmd = (char *)NULL; 
     /* check loop cmd @ a:b */
@@ -1672,8 +1675,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
       if ( get_int("curves") ) /* save current.plot */ 
       {
-        snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",nbr_hold++);
-        system(mv_plot_cmd);
+        update_curves(&nbr_hold, plotkeys);
       }
     }
 
@@ -1722,12 +1724,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         case PM_CURVES:
           /* plot curve.0 to curve.nbr_hold-1 */
           fprintf(GPLOTP,\
-              "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"0\"\n",get_str("style"));
+              "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"%s\"\n",get_str("style"),plotkeys[0]);
           for (i = 1; i < nbr_hold; i++)
           {
             fprintf(GPLOTP,\
-                "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%d\"\n",\
-                (int)i,get_str("style"),(int)i);
+                "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%s\"\n",\
+                (int)i,get_str("style"),plotkeys[i]);
           }
           fflush(GPLOTP);
           break;
@@ -2019,6 +2021,24 @@ int update_act_par_options(const int p, const nve mu)
     set_str("actpar","no parameter defined");
   }
   return s;
+}
+
+int update_curves(int *nbr_hold, char plotkeys[100][EXPRLENGTH])
+{
+  char mv_plot_cmd[EXPRLENGTH];
+  snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",*nbr_hold);
+  system(mv_plot_cmd);
+  if ( strlen(get_str("plotkey") ) )
+  {
+    snprintf(plotkeys[*nbr_hold],EXPRLENGTH,"%s",get_str("plotkey")); 
+  }
+  else
+  {
+    snprintf(plotkeys[*nbr_hold],EXPRLENGTH,"%d",*nbr_hold); 
+  }
+  (*nbr_hold)++;
+
+  return 0;
 }
 
 int check_options( void )

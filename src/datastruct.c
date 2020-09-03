@@ -23,6 +23,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"xs","xscale", 's', 0.0, 0, "linear", "X-axis Scale {linear} | log", "plot"},
   {"ys","yscale", 's', 0.0, 0, "linear", "Y-axis Scale {linear} | log", "plot"},
   {"zs","zscale", 's', 0.0, 0, "linear", "Z-axis Scale {linear} | log", "plot"},
+  {"k","plotkey", 's', 0.0, 0, "", "plot key", "plot"},
   {"dp","data2plot", 's', 0.0, 0, "", "Data variable to Plot", "plot"},
   {"d","plotdata", 'i', 0.0, 0, "", "do we plot Data {0} | 1", "plot"},
   {"dpt","datapt", 'i', 0.0, 1, "", "data point type (integer)", "plot"},
