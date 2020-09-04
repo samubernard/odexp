@@ -441,7 +441,12 @@ work when command expects a string argument).
 
 **u**
 
-> Toggle add curves to plot (on/off)
+> Toggle add curves to plot (on/off).
+> This works only when simulations are updated, for instance when parameters are changed. To plot many variables on the same axes, use
+> **h**
+> (hold) instead. Curves can be labelled with custom keys, by adding
+> *#* *key*
+> to the plot command.
 
 **ur**
 

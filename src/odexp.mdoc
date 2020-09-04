@@ -335,7 +335,12 @@ The final time
 must be larger than 
 .Ar t0 .
 .It Ic u              
-Toggle add curves to plot (on/off) 
+Toggle add curves to plot (on/off).
+This works only when simulations are updated, for instance when parameters are changed. To plot many variables on the same axes, use 
+.Ic h 
+(hold) instead. Curves can be labelled with custom keys, by adding 
+.Ar # Ar key
+to the plot command.
 .It Ic ur              
 Remove all curves and set curves off.
 .It Ic v, 2, 3 { Ar i | Ar x } { Ar j | Ar y } Op { Ar k | Ar z }      

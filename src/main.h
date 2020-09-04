@@ -46,6 +46,9 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
 int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);
 int gplot_particles( const int gx, const int gy, const nve var); 
 
+int get_plottitle(char *cmd);
+
+
 /* readline */
 void initialize_readline(void);
 /* readline completion list */
