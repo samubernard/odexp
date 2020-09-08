@@ -1717,6 +1717,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           plot_mode = PM_CURVES;
         }
 
+        if ( get_int("hold") && sscanf(cmdline,"%[^][yv23]",svalue) ) /* just replot  */
+        {
+          plot_mode = PM_REPLOT;
+        }
 
         switch(plot_mode) 
         {
