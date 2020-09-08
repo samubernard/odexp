@@ -143,6 +143,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   nve cst;     /* constant arrays */
   nve dfl;     /* data files */
   nve dsc;     /* short description */
+  nve xcd;     /* extra gnuplot commands */
 
   nve birth;   /* population birth rates */
   nve repli;   /* particle replication rates */
@@ -207,6 +208,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   alloc_namevalexp(&dsc);
   success = load_line(eqfilename,dsc,"##",2, exit_if_nofile);
   DBLOGPRINT("%d description",dsc.nbr_el);
+
+  /* extra commands */
+  get_nbr_el(eqfilename,"CMD",3, &xcd.nbr_el, NULL);
+  alloc_namevalexp(&xcd);
+  success = load_line(eqfilename,xcd,"CMD",3, exit_if_nofile);
+  DBLOGPRINT("%d extra commands",xcd.nbr_el);
 
   /* get tspan */
   /* printf("\n%-25s%s\n","time span",HLINE); */
@@ -1233,6 +1240,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               printf("  %s%s%s\n", T_DET, dsc.comment[i], T_NOR);
             }
           }
+          else if (op == '.') /* list descriptions */ 
+          {
+            for (i=0; i<xcd.nbr_el; i++)
+            {
+              printf("  %s%s%s\n", T_DET, xcd.comment[i], T_NOR);
+            }
+          }
           else 
           {
             PRINTERR("  Error: Unknown command. Cannot list '%c'",op);
@@ -1847,6 +1861,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   free_namevalexp( cst );
   free_namevalexp( dfl );
   free_namevalexp( dsc );
+  free_namevalexp( xcd );
   free_steady_state( stst, nbr_stst );
   free_double_array( tspan );
   free(NUM_IC);

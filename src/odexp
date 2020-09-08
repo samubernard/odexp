@@ -308,7 +308,7 @@ sub prescan
       /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
           die "error: incomplete keyword '$1' on line ${.}: $_\n" unless $in_block;
       /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
-      /^\s*($|#|PAR|EXPR|AUX|D|INIT|LET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI|END)/i
+      /^\s*($|#|PAR|EXPR|AUX|D|INIT|LET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI|END|CMD)/i
         or die "error: wrong keyword on line ${.}: $_" 
         unless $in_block;
     } # end check common errors
