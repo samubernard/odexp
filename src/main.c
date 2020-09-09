@@ -1744,7 +1744,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
           case PM_CURVES:
             /* plot curve.0 to curve.nbr_hold-1 */
-            DBPRINT("nbr_hold = %d", nbr_hold);
             if ( nbr_hold == 1 )
             {
               fprintf(GPLOTP,\
