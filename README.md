@@ -158,7 +158,6 @@ work when command expects a string argument).
 **$$, $a, $., $\_**
 
 > Print all particles in tall format
-> *id*.
 
 **\*&zwnj;** \[*msg*]
 
@@ -1087,4 +1086,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - September 8, 2020
+DARWIN16 - September 9, 2020
