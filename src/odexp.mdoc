@@ -467,14 +467,35 @@ a 0.1; b 0.2 # not ok
 .Ed
 .Pp
 .Em Implicit initial condition 
+.Pp
 If 
 .Va var
 is a dynamical variable, the declaration 
+.Pp
 .D1 PAR var_0 0.5 
+.Pp
 declares the parameter 
 .Va var_0 ,
 sets it to value 0.5 and implicitly declares the initial condition INIT 
 .Va var var_0 .
+.Pp
+Optional attributes for auxiliary variables are 
+.Ar init[ial] 
+if the parameter occurs in the initial conditions or parametric expression but not in the dynamical equations,
+.Ar impl[icit]
+if the parameter is only accessed through 
+.Fn MU var  
+in population rates, or in user-defined functions. Attribute 
+.Ar impl 
+can also be used for parameters that are unused, to prevent warning from the C compiler.
+The attribute 
+.Ar ever 
+is used if the parameter occurs in the initial conditions and in the dynamical equations.
+Attributes 
+.Ar int
+and 
+.Ar long
+are used to cast parameters as integers. They are still stored as doubles.
 .It Ic EXPR
 Expressions are functions of parameters. They cannot be modified interactively. 
 Syntax:
@@ -495,6 +516,13 @@ EXPR c a*a
 EXPR rand_array[i=0:5] -1 + 2*rand01[i]
 EXPR is_ancestor ATBIRTH*1 + ATREPLI*0
 .Ed
+.Pp
+Optional attributes for expression are 
+.Ar vect 
+for evaluating the rhs outside a loop. This is useful for arrays that are filled by a function
+.Bd -literal
+EXPR arr[i=0:5] myfunc(arr) {vect} 
+.Ed
 .It Ic AUX 
 Auxiliary variables. Auxiliary variables depend on parameters, expressions and dynamical variables. 
 Syntax:
@@ -511,6 +539,13 @@ AUX a[i=0:5] X[i]*X[i]
 AUX norm_x sqrt(sum(a,5))
 AUX norm_x2 dotprod(X,X,5)
 .Ed
+.Pp
+Optional attributes for auxiliary variables are 
+.Ar vect 
+for evaluating the rhs outside a loop. This is useful for arrays that are filled by a function
+.Bd -literal
+AUX arr[i=0:5] myfunc(arr) {vect} 
+.Ed
 .It Ic D/DT
 Dynamical variables. Dynamical variables are the dependent variables of the ODE system.
 Syntax:
@@ -526,6 +561,18 @@ is declared as d
 of the equation. Example
 .Pp
 .D1 dx/dt = -a*x
+.Pp
+Optional attributes for dynamical variables are 
+.Ar hidden  
+to hide the variable from being listed,
+.Ar tag 
+= 
+.Va tag
+for giving a name to the variable
+.Ar init 
+= 
+.Va value
+for setting the initial condition.
 .It Ic INIT 
 Initial conditions. 
 Syntax:
@@ -541,6 +588,12 @@ If initial conditions are expressions, their values can be overruled or reset in
 INIT x 1.0
 INIT x b 
 .Ed
+.Pp
+Optional attributes for dynamical variables are 
+.Ar tag 
+= 
+.Va tag
+for giving a name to the variable
 .It Ic OPT
 Options. Options can be preset. 
 .Bd -literal

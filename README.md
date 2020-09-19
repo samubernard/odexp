@@ -611,6 +611,7 @@ These examples are not valid
 	a 0.1; b 0.2 # not ok
 
 *Implicit initial condition*
+
 If
 *var*
 is a dynamical variable, the declaration
@@ -621,6 +622,24 @@ declares the parameter
 *var\_0*,
 sets it to value 0.5 and implicitly declares the initial condition INIT
 *var var\_0*.
+
+Optional attributes for auxiliary variables are
+*init\[ial]*
+if the parameter occurs in the initial conditions or parametric expression but not in the dynamical equations,
+*impl\[icit]*
+if the parameter is only accessed through
+**MU**(*var*)
+in population rates, or in user-defined functions. Attribute
+*impl*
+can also be used for parameters that are unused, to prevent warning from the C compiler.
+The attribute
+*ever*
+is used if the parameter occurs in the initial conditions and in the dynamical equations.
+Attributes
+*int*
+and
+*long*
+are used to cast parameters as integers. They are still stored as doubles.
 
 **EXPR**  
 Expressions are functions of parameters. They cannot be modified interactively.
@@ -642,6 +661,12 @@ Examples
 	EXPR rand_array[i=0:5] -1 + 2*rand01[i]
 	EXPR is_ancestor ATBIRTH*1 + ATREPLI*0
 
+Optional attributes for expression are
+*vect*
+for evaluating the rhs outside a loop. This is useful for arrays that are filled by a function
+
+	EXPR arr[i=0:5] myfunc(arr) {vect}
+
 **AUX**  
 Auxiliary variables. Auxiliary variables depend on parameters, expressions and dynamical variables.
 Syntax:
@@ -660,6 +685,12 @@ Auxiliary functions are particle-dependent. They are evaluated at each time step
 	AUX norm_x sqrt(sum(a,5))
 	AUX norm_x2 dotprod(X,X,5)
 
+Optional attributes for auxiliary variables are
+*vect*
+for evaluating the rhs outside a loop. This is useful for arrays that are filled by a function
+
+	AUX arr[i=0:5] myfunc(arr) {vect}
+
 **D/DT**  
 Dynamical variables. Dynamical variables are the dependent variables of the ODE system.
 Syntax:
@@ -676,6 +707,18 @@ of the equation. Example
 
 > dx/dt = -a\*x
 
+Optional attributes for dynamical variables are
+*hidden*
+to hide the variable from being listed,
+*tag*
+&equals;
+*tag*
+for giving a name to the variable
+*init*
+&equals;
+*value*
+for setting the initial condition.
+
 **INIT**  
 Initial conditions.
 Syntax:
@@ -689,6 +732,12 @@ If initial conditions are expressions, their values can be overruled or reset in
 
 	INIT x 1.0
 	INIT x b
+
+Optional attributes for dynamical variables are
+*tag*
+&equals;
+*tag*
+for giving a name to the variable
 
 **OPT**  
 Options. Options can be preset.
