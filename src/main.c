@@ -30,8 +30,6 @@ FILE *GPLOTP = (FILE *)NULL;
 const char *GFIFO = ".odexp/gfifo";
 int GPIN; /* file descriptor for fifo */
 
-FILE *plotkeyfr = (FILE *)NULL;
-
 /* world */
 world *SIM = (world *)NULL;
 
@@ -1574,14 +1572,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           if ( nbr_read > 0 )
           {
             i = 0;
-            while ( strcmp(svalue,dfl.name[i])  &&  (i<dfl.nbr_el))
+            while ( (i<dfl.nbr_el) && strcmp(svalue,dfl.name[i]) )
             {
               i++;
             }
             if (i<dfl.nbr_el) /* found the dataset to plot */
             {
               /* DBPRINT("%s %d %d\n", svalue, colx, coly); */
-              if ( sscanf(dfl.expression[i]," %*lu %*lu %s ",data_fn) )
+              if ( sscanf(dfl.expression[i]," %s ",data_fn) )
               {
                 /* DBPRINT("data_fn=%s\n", data_fn); */
                 set_str("data2plot", dfl.name[i]);

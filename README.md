@@ -715,18 +715,23 @@ Constant arrays can be of any dimensions. Useful for arrays of small sizes.
 
 	CONST MY_ARRAY[2][3] { {1.1, 1.2, 1.3}, {2.1, 2.2, 2.3} }
 
-**FI**  
+**FILE**  
 Constant array from file. Syntax:
 
-> FI *varname* *nrows* *ncols* *filename*
+> FILE *varname* *filename {* *nrow,* *ncol,* *sep }*
 
 where
-*nrows*
-*ncols*
-are the number of rows and columns in the file
+*nrow*
+*ncol*
+are the optional numbers of rows and column to scan from
 *filename*.
 *filename*
-is a text file containing a bare space delimited array of doubles.
+is a text file containing a Ar sep delimited array of doubles. Example
+
+	FILE my_array  my_datafile.cav { nrow = 13, ncol = 2, sep = "," }
+
+will load the first 13 rows and first 2 columns of a comma-separated of the file
+*my\_datafile.csv*.
 
 **FUN**  
 User-defined function. Simple, one-line functions can be defined this way
@@ -1086,4 +1091,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - September 9, 2020
+DARWIN16 - September 19, 2020

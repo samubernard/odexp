@@ -118,6 +118,17 @@ my $re_lag = qr/^
   (?:|\#.*)?            # nothing or comment
 $/ix;
 
+my $re_datafile= qr/^
+  \s*FI(?:LE)?          # file keyword
+  \s+                   # whitespaces
+  ($re_identifier)      # varname
+  \s+                   # whitespaces
+  ([^\{#\n]+)           # filename until bracket comment or newline 
+  (|\{.*?\})?           # nothing or attribute
+  \s+                   # whitespaces
+  (?:|\#.*)?            # nothing or comment
+$/ix;
+
 my $re_dxdt = qr/^
   \s*(D)                # first derivative
   ($re_identifier)      # var name
@@ -354,7 +365,9 @@ sub prescan
       }
     if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
       {
-        s/$/\nINIT $varname $ic/;   # insert new line with initial condition  
+        my $tag = "";
+        /\bTAG\b\s*=\s*(.*?)[, }]/i and $tag = "{tag = $1}";
+        s/$/\nINIT $varname $ic $tag/;   # insert new line with initial condition  
       }
     if ( my ($varname, $attr) = ( $_ =~ /$re_lag/ ) )
       {
@@ -517,34 +530,50 @@ sub set_defines
 
 sub declare_array_from_file
 {
-  # expecting: F my_array_name nRow nCols filename.dat 
   open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while (<$fh>) 
   {
     if ( /^FI/i )  
     {
-      my @fields = split; 
-      if ( 0+@fields < 5 ) { die "missing something at line: $_" };
-      my ($var, $nbr_rows, $nbr_cols, $data_filename) = @fields[1..4];
-      print $fch "/* array from file: $data_filename */\n";
-      print $fch "static const double ${var}[$nbr_rows][$nbr_cols] __attribute__((unused)) = {\n        ";
+      my ($var, $data_filename, $attr, $comment) = ( /$re_datafile/ ); 
+      my $sep = " "; # default
+      if ( $attr =~ m/SEP\s*=\s*\"(.)\"/i ) 
+      {
+        $sep = $1;
+      }
+      my $nbr_rows = 0;
+      my $nbr_cols = 0;
+      $data_filename = strip_blanks($data_filename); 
       open(my $datafh, '<', $data_filename) or die "Could not open file '$data_filename'. $!";
       while( <$datafh> )
       {
-          my @datafields = split;
-          print $fch "{";
-          for( my $j = 0; $j<$nbr_cols-1; ++$j )
-          {
-            print $fch "$datafields[$j], ";
-          }
-          if ( $. < $nbr_rows ) 
-          {
-            printf $fch "$datafields[$#datafields]},\\\n        "; 
-          } else
-          {
-            printf $fch "$datafields[$#datafields]}}; /* source: $data_filename */\n\n";
-          }
+          chomp;
+          my @datafields = split /$sep/;
+          $nbr_rows++ if scalar @datafields;
+          $nbr_cols = @datafields if scalar @datafields > $nbr_cols;
       }
+      if ( $attr =~ m/\bNROW\b\s*=\s*(\d+)/i and $nbr_rows > $1 )
+      { 
+        $nbr_rows = $1; 
+      }
+      if ( $attr =~ m/\bNCOL\b\s*=\s*(\d+)/i and $nbr_cols > $1 )
+      { 
+        $nbr_cols = $1; 
+      }
+      seek $datafh, 0, 0; # rewind file 
+      $. = 0; # reset line counter
+      print $fch "/* array from file: $data_filename */\n";
+      print $fch "static const double ${var}[$nbr_rows][$nbr_cols] __attribute__((unused)) = {";
+      while( <$datafh> )
+      {
+          last if $. > $nbr_rows;
+          chomp;
+          my @datafields = split /$sep/;
+          print $fch "," if $. > 1;
+          print $fch "\n    ";
+          print $fch "{" . join(',', @datafields[0..$nbr_cols-1]) . "}";
+      }
+      printf $fch "}; /* source: $data_filename */\n\n";
       close($datafh);
     }
   }
