@@ -39,7 +39,7 @@ void printf_SIM( void );
 
 int printf_status_bar( double_array *tspan );
 
-int gplot_data(const int colx, const int coly, const char *datafile_plotted );
+int gplot_data(const char *plot_str, const char *datafile_plotted );
 
 int setup_pm_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);
 int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);

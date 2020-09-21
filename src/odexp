@@ -123,7 +123,10 @@ my $re_datafile= qr/^
   \s+                   # whitespaces
   ($re_identifier)      # varname
   \s+                   # whitespaces
-  ([^\{#\n]+)           # filename until bracket comment or newline 
+  "?                    # optional quotes
+  ([^\{#"\n]+)          # filename until bracket comment or newline 
+  "?                    # optional quotes
+  \s*                   # whitespaces
   (|\{.*?\})?           # nothing or attribute
   \s+                   # whitespaces
   (?:|\#.*)?            # nothing or comment
@@ -537,16 +540,23 @@ sub declare_array_from_file
     {
       my ($var, $data_filename, $attr, $comment) = ( /$re_datafile/ ); 
       my $sep = " "; # default
-      if ( $attr =~ m/SEP\s*=\s*\"(.)\"/i ) 
+      if ( $attr =~ m/\bSEP\b\s*=\s*\"(.*?)\"/i ) 
       {
         $sep = $1;
+      }
+      my $skip = 0;
+      if ( $attr =~ m/\bSKIP\b\s*=\s*(\d+)/i ) 
+      {
+        $skip = $1;
       }
       my $nbr_rows = 0;
       my $nbr_cols = 0;
       $data_filename = strip_blanks($data_filename); 
       open(my $datafh, '<', $data_filename) or die "Could not open file '$data_filename'. $!";
+      my $skiprem = $skip;
       while( <$datafh> )
       {
+          ($skiprem-- > 0) and next;
           chomp;
           my @datafields = split /$sep/;
           $nbr_rows++ if scalar @datafields;
@@ -562,14 +572,16 @@ sub declare_array_from_file
       }
       seek $datafh, 0, 0; # rewind file 
       $. = 0; # reset line counter
+      $skiprem = $skip;
       print $fch "/* array from file: $data_filename */\n";
       print $fch "static const double ${var}[$nbr_rows][$nbr_cols] __attribute__((unused)) = {";
       while( <$datafh> )
       {
-          last if $. > $nbr_rows;
+          ($skiprem-- > 0) and next;
+          last if $. > ($nbr_rows + $skip);
           chomp;
           my @datafields = split /$sep/;
-          print $fch "," if $. > 1;
+          print $fch "," if $. > 1 + $skip;
           print $fch "\n    ";
           print $fch "{" . join(',', @datafields[0..$nbr_cols-1]) . "}";
       }

@@ -60,6 +60,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   char    *extracmd = (char *)NULL;
   char    par_details[32];
   char    list_msg[EXPRLENGTH];
+  char    data_plot_str[EXPRLENGTH];
   char    c,
           op,
           op2;
@@ -67,7 +68,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   double  nvalue,
           nvalue2;
   char    svalue[NAMELENGTH],
-          svalue2[NAMELENGTH],
+          svalue2[EXPRLENGTH],
           svalue3[NAMELENGTH];
   int     exit_if_nofile=1,
           no_exit=0,
@@ -1569,7 +1570,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         case '#' : /* add data from file to plot */
           nbr_read = sscanf(cmdline+1,"%s %d %d",svalue,&colx,&coly);
           plotonly = 1;
-          if ( nbr_read > 0 )
+          if ( nbr_read ) /* got the dataset name */
           {
             i = 0;
             while ( (i<dfl.nbr_el) && strcmp(svalue,dfl.name[i]) )
@@ -1578,18 +1579,25 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             if (i<dfl.nbr_el) /* found the dataset to plot */
             {
-              /* DBPRINT("%s %d %d\n", svalue, colx, coly); */
               if ( sscanf(dfl.expression[i]," %s ",data_fn) )
               {
-                /* DBPRINT("data_fn=%s\n", data_fn); */
                 set_str("data2plot", dfl.name[i]);
                 set_int("plotdata", 1);
               }
             }
-            if ( nbr_read < 3 ) /* set colx=1, coly=2 */
+            switch(nbr_read)
             {
-              colx = 1;
-              coly = 2;
+              case 1:
+              case 2:
+                sscanf(cmdline+1,"%s %s",svalue,svalue2);
+                strncpy(data_plot_str,svalue2,EXPRLENGTH);
+                break;
+              case 3:
+                snprintf(data_plot_str,EXPRLENGTH,"%d:%d", colx, coly);
+                break;
+              default:
+                PRINTERR("wrong arguments");
+                set_int("plotdata", 0);
             }
           }
           else 
@@ -1794,9 +1802,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         }
 
         /* plot data */
-        if ( get_int("plotdata")  && plot_mode == PM_NORMAL ) 
+        if ( get_int("plotdata") ) 
         {
-          gplot_data(colx, coly, data_fn);
+          gplot_data(data_plot_str, data_fn);
         }    
       }
 
@@ -2237,7 +2245,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
   fprintf(GPLOTP,"set output \"%s\"\n",print_buffer);
   fprintf(GPLOTP,"replot\n");
   fprintf(GPLOTP,"set term pop\n");
-  fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
+  fprintf(GPLOTP,"set tics nomirror out font \"%s,%d\"\n", \
       get_str("font"), get_int("fontsize"));
   fflush(GPLOTP);
   printf("  wrote %s in current directory\n",print_buffer);
@@ -2519,11 +2527,11 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
 }
 
 /* plot data from file 'data_fn', with column x as x-axis and column y as y-axis */
-int gplot_data(const int x, const int y, const char *data_fn)
+int gplot_data(const char *plot_str, const char *data_fn)
 {
   int success = fprintf(GPLOTP,\
-      "replot \"%s\" u %d:%d w p pt %d title \"%s\"\n",\
-      data_fn,x,y,get_int("datapt"), get_str("data2plot"));
+      "replot \"%s\" u %s w p pt %d title \"%s\"\n",\
+      data_fn,plot_str,get_int("datapt"), get_str("data2plot"));
   fflush(GPLOTP);
   return success;
 }
@@ -2770,15 +2778,15 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ztics textcolor rgb \"grey20\"\n");
-  fprintf(GPLOTP,"set tics nomirror out font \"%s Oblique,%d\"\n", \
+  fprintf(GPLOTP,"set tics nomirror out font \"%s,%d\"\n", \
       get_str("font"), get_int("fontsize"));
   fprintf(GPLOTP,"set mxtics\n");
   fprintf(GPLOTP,"set mytics\n");
   fprintf(GPLOTP,"set mztics\n");
 #if 0
-  fprintf(GPLOTP,"set xlabel font \"%s Oblique\"\n", get_str("font"));
-  fprintf(GPLOTP,"set ylabel font \"%s Oblique\"\n", get_str("font"));
-  fprintf(GPLOTP,"set zlabel font \"%s Oblique\"\n", get_str("font"));
+  fprintf(GPLOTP,"set xlabel font \"%s\"\n", get_str("font"));
+  fprintf(GPLOTP,"set ylabel font \"%s\"\n", get_str("font"));
+  fprintf(GPLOTP,"set zlabel font \"%s\"\n", get_str("font"));
 #endif
   fprintf(GPLOTP,"set grid xtics ytics ztics\n");
   if ( get_int("togglekey") )
