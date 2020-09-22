@@ -60,7 +60,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   char    *extracmd = (char *)NULL;
   char    par_details[32];
   char    list_msg[EXPRLENGTH];
-  char    data_plot_str[EXPRLENGTH];
+  char    plot_str_arg[EXPRLENGTH];
   char    c,
           op,
           op2;
@@ -108,12 +108,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
    * 0: PM_UNDEFINED undefined
    * 1: PM_NORMAL normal update plot with new parameters/option
    * 2: PM_DATA like normal update plo with but with datasetst
-   * 3: PM_ANIMATE  like normal update plot with new parameters/option but animate solution
-   * 4: PM_CONTINUATION continuation plot continuation branch 
-   * 5: PM_RANGE range
-   * 6: PM_PARTICLES particles in phase space
-   * 7: PM_CURVES add curves 
-   * 8: PM_REPLOT replot just re-issue last plot command
+   * 3: PM_FUN  like normal plot but with function of variables 
+   * 4: PM_ANIMATE  like normal update plot with new parameters/option but animate solution
+   * 5: PM_CONTINUATION continuation plot continuation branch 
+   * 6: PM_RANGE range
+   * 7: PM_PARTICLES particles in phase space
+   * 8: PM_CURVES add curves 
+   * 9: PM_REPLOT replot just re-issue last plot command
    */
   enum plotmode plot_mode       = PM_UNDEFINED; 
 
@@ -473,6 +474,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   /* GNUPLOT SETUP */
   gnuplot_config(gx, gy, dxv);
+  /* define gnuplot variables corresponding to plottable variables */
+  nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  fprintf(GPLOTP,"%s = \"$1\"\n", get_str("indvar"));
+  for (i = 0; i < nbr_cols-1; i++)
+  {
+    fprintf(GPLOTP,"%s = \"$%d\"\n", dxv.name[i],i+2);
+  }
   /* END GNUPLOT SETUP */ 
 
   sim_to_array(lastinit);
@@ -722,8 +730,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           set_str("zscale","linear");
           plotonly = 1;
           break;
-        case '2' : /* set 2D */
-        case '3' : /* set 3D */
         case 'v' : /* set 2D or 3D view */
           nbr_read = sscanf(cmdline+1,"%d %d %d",&ngx,&ngy,&ngz);
           plot_mode = PM_NORMAL;
@@ -788,6 +794,20 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           if ( nbr_read == 1 || nbr_read > 3 )
           {
             PRINTERR("  Error: Requires 2 or 3 variable names/indices");
+          }
+          break;
+        case 'V' : /* use gnuplot syntax to plot 2D/3D */
+          nbr_read = sscanf(cmdline+1,"%s",svalue2);
+          plot_mode = PM_FUN;
+          plotonly = 1;
+          if ( nbr_read == 1 ) 
+          {
+             plot_mode = PM_FUN;
+             strncpy(plot_str_arg,svalue2,EXPRLENGTH);
+          }
+          else
+          {
+            PRINTERR("sorry, didn't get that...");
           }
           break;
         case 'x' :
@@ -1590,10 +1610,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               case 1:
               case 2:
                 sscanf(cmdline+1,"%s %s",svalue,svalue2);
-                strncpy(data_plot_str,svalue2,EXPRLENGTH);
+                strncpy(plot_str_arg,svalue2,EXPRLENGTH);
                 break;
               case 3:
-                snprintf(data_plot_str,EXPRLENGTH,"%d:%d", colx, coly);
+                snprintf(plot_str_arg,EXPRLENGTH,"%d:%d", colx, coly);
                 break;
               default:
                 PRINTERR("wrong arguments");
@@ -1739,7 +1759,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
         /* if hold==1, and the last command does NOT add a new curve, just replot 
          * instead of repeating the last plot command */
-        if ( get_int("hold") && sscanf(cmdline,"%[^][{}yv23#]",svalue) ) /* just replot  */
+        if ( get_int("hold") && sscanf(cmdline,"%[^][{}yvV#]",svalue) ) /* just replot  */
         {
           plot_mode = PM_REPLOT;
         }
@@ -1779,7 +1799,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             break;
 
           case PM_DATA: /* plot data */
-            gplot_data(data_plot_str, data_fn);
+            gplot_data(plot_str_arg, data_fn);
+            break;
+
+          case PM_FUN: /* plot data */
+            gplot_fun(plot_str_arg);
             break;
 
           case PM_ANIMATE:
@@ -2545,6 +2569,40 @@ int gplot_data(const char *plot_str, const char *data_fn)
   return success;
 }
 
+int gplot_fun(const char *plot_str)
+{
+  int success;
+  const int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  char key[EXPRLENGTH];
+  generate_particle_file(get_int("particle"));
+  if ( strlen(get_str("plotkey")) )
+  {
+    strncpy(key,get_str("plotkey"),EXPRLENGTH);
+  }
+  else
+  {
+    strncpy(key,plot_str,EXPRLENGTH);
+  }
+  if ( get_int("hold") )
+  {
+    success = fprintf(GPLOTP,\
+          "replot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %s "\
+          "with %s title \"%s (%d)\"\n",\
+          get_int("particle"), nbr_cols, plot_str,\
+          get_str("style"), key, get_int("particle"));
+  }
+  else
+  {
+    success = fprintf(GPLOTP,\
+          "plot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %s "\
+          "with %s title \"%s (%d)\"\n",\
+          get_int("particle"), nbr_cols, plot_str,\
+          get_str("style"), key, get_int("particle"));
+  }
+  fflush(GPLOTP);
+  return success;
+}
+
 int gplot_particles( const int gx, const int gy, const nve var )
 {
   char cmd_plt[EXPRLENGTH];
@@ -2626,7 +2684,7 @@ int get_plottitle(char *cmd)
   {
     set_str("plotkey","");
   }
-  return 0;
+  return has_read;
 }
 
 void initialize_readline()

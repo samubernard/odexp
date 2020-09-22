@@ -451,7 +451,7 @@ work when command expects a string argument).
 
 > Remove all curves and set curves off.
 
-**v, 2, 3 {** *i* | *x } {* *j* | *y }* \[{ *k* | *z }*]
+v { *i* | *x } {* *j* | *y }* \[{ *k* | *z }*]
 
 > Set 2D/3D view, x-axis to index
 > *i*

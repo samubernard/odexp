@@ -11,7 +11,9 @@
 /* size of message buffer */
 #define SIZEMSG  10000
 
-enum plotmode { PM_UNDEFINED, PM_NORMAL, PM_DATA, PM_ANIMATE, PM_CONTINUATION, PM_RANGE, PM_PARTICLES, PM_CURVES, PM_REPLOT };
+enum plotmode { PM_UNDEFINED, PM_NORMAL, PM_DATA, PM_FUN, 
+  PM_ANIMATE, PM_CONTINUATION, PM_RANGE, 
+  PM_PARTICLES, PM_CURVES, PM_REPLOT };
 
 /* function declaration */
 int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, const char *odexp_filename );
@@ -39,10 +41,11 @@ void printf_SIM( void );
 
 int printf_status_bar( double_array *tspan );
 
-int gplot_data(const char *plot_str, const char *datafile_plotted );
 
 int setup_pm_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);
 int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);
+int gplot_data(const char *plot_str, const char *datafile_plotted );
+int gplot_fun(const char *plot_str);
 int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);
 int gplot_particles( const int gx, const int gy, const nve var); 
 
