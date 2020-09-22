@@ -107,12 +107,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
    * plot mode:
    * 0: PM_UNDEFINED undefined
    * 1: PM_NORMAL normal update plot with new parameters/option
-   * 2: PM_ANIMATE  like norma update plot with new parameters/option but animate solution
-   * 3: PM_CONTINUATION continuation plot continuation branch 
-   * 4: PM_RANGE range
-   * 5: PM_PARTICLES particles in phase space
-   * 6: PM_CURVES add curves 
-   * 7: PM_REPLOT replot just re-issue last plot command
+   * 2: PM_DATA like normal update plo with but with datasetst
+   * 3: PM_ANIMATE  like normal update plot with new parameters/option but animate solution
+   * 4: PM_CONTINUATION continuation plot continuation branch 
+   * 5: PM_RANGE range
+   * 6: PM_PARTICLES particles in phase space
+   * 7: PM_CURVES add curves 
+   * 8: PM_REPLOT replot just re-issue last plot command
    */
   enum plotmode plot_mode       = PM_UNDEFINED; 
 
@@ -1582,7 +1583,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
               if ( sscanf(dfl.expression[i]," %s ",data_fn) )
               {
                 set_str("data2plot", dfl.name[i]);
-                set_int("plotdata", 1);
               }
             }
             switch(nbr_read)
@@ -1597,13 +1597,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 break;
               default:
                 PRINTERR("wrong arguments");
-                set_int("plotdata", 0);
             }
+            plot_mode = PM_DATA;
           }
           else 
           {
             printf("  Dataset not found. plotting data off\n");
-            set_int("plotdata", 0);
+            plot_mode = PM_UNDEFINED;
           }
           break;
         case 'w' :  /* world */
@@ -1739,7 +1739,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
         /* if hold==1, and the last command does NOT add a new curve, just replot 
          * instead of repeating the last plot command */
-        if ( get_int("hold") && sscanf(cmdline,"%[^][{}yv23]",svalue) ) /* just replot  */
+        if ( get_int("hold") && sscanf(cmdline,"%[^][{}yv23#]",svalue) ) /* just replot  */
         {
           plot_mode = PM_REPLOT;
         }
@@ -1778,6 +1778,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             gplot_normal(gx, gy, gz, get_int("plot3d"), dxv);
             break;
 
+          case PM_DATA: /* plot data */
+            gplot_data(data_plot_str, data_fn);
+            break;
+
           case PM_ANIMATE:
             gplot_animate(gx, gy, gz, get_int("plot3d"), dxv);
             break;
@@ -1801,11 +1805,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             break;
         }
 
-        /* plot data */
-        if ( get_int("plotdata") ) 
-        {
-          gplot_data(data_plot_str, data_fn);
-        }    
       }
 
       /* update option x, y, z */
@@ -2526,12 +2525,22 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
   return 0;
 }
 
-/* plot data from file 'data_fn', with column x as x-axis and column y as y-axis */
+/* plot data from file data_fn */
 int gplot_data(const char *plot_str, const char *data_fn)
 {
-  int success = fprintf(GPLOTP,\
+  int success;
+  if ( get_int("hold") )
+  {
+    success = fprintf(GPLOTP,\
       "replot \"%s\" u %s w p pt %d title \"%s\"\n",\
       data_fn,plot_str,get_int("datapt"), get_str("data2plot"));
+  }
+  else
+  {
+    success = fprintf(GPLOTP,\
+      "plot \"%s\" u %s w p pt %d title \"%s %s\"\n",\
+      data_fn,plot_str,get_int("datapt"), get_str("data2plot"), plot_str);
+  }
   fflush(GPLOTP);
   return success;
 }

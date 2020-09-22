@@ -25,7 +25,6 @@ struct gen_option GOPTS[NBROPTS] = {
   {"zs","zscale", 's', 0.0, 0, "linear", "Z-axis Scale {linear} | log", "plot"},
   {"k","plotkey", 's', 0.0, 0, "", "plot key", "plot"},
   {"dp","data2plot", 's', 0.0, 0, "", "Data variable to Plot", "plot"},
-  {"d","plotdata", 'i', 0.0, 0, "", "do we plot Data {0} | 1", "plot"},
   {"dpt","datapt", 'i', 0.0, 1, "", "data point type (integer)", "plot"},
   {"step","parstep", 'd', 1.1, 0, "", "parameter STEP multiplicative increment", "par"},
   {"act","actpar", 's', 0.0, 0, "", "ACTive parameter", "par"},
