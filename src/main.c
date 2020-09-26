@@ -474,13 +474,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   /* GNUPLOT SETUP */
   gnuplot_config(gx, gy, dxv);
-  /* define gnuplot variables corresponding to plottable variables */
-  nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
-  fprintf(GPLOTP,"%s = \"$1\"\n", get_str("indvar"));
-  for (i = 0; i < nbr_cols-1; i++)
-  {
-    fprintf(GPLOTP,"%s = \"$%d\"\n", dxv.name[i],i+2);
-  }
   /* END GNUPLOT SETUP */ 
 
   sim_to_array(lastinit);
@@ -2553,17 +2546,26 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
 int gplot_data(const char *plot_str, const char *data_fn)
 {
   int success;
+  char key[EXPRLENGTH];
+  if ( strlen(get_str("plotkey")) )
+  {
+    strncpy(key,get_str("plotkey"),EXPRLENGTH);
+  }
+  else
+  {
+    strncpy(key,get_str("data2plot"),EXPRLENGTH);
+  }
   if ( get_int("hold") )
   {
     success = fprintf(GPLOTP,\
-      "replot \"%s\" u %s w p pt %d title \"%s\"\n",\
-      data_fn,plot_str,get_int("datapt"), get_str("data2plot"));
+      "replot \"%s\" u %s w %s title \"%s\"\n",\
+      data_fn,plot_str,get_str("datastyle"), key);
   }
   else
   {
     success = fprintf(GPLOTP,\
-      "plot \"%s\" u %s w p pt %d title \"%s %s\"\n",\
-      data_fn,plot_str,get_int("datapt"), get_str("data2plot"), plot_str);
+      "plot \"%s\" u %s w %s title \"%s\"\n",\
+      data_fn,plot_str,get_str("datastyle"), key);
   }
   fflush(GPLOTP);
   return success;
@@ -2676,7 +2678,7 @@ int get_plottitle(char *cmd)
 {
   int has_read = 0;
   char val[EXPRLENGTH];
-  if ( ( has_read = sscanf(cmd,"%*[^#] # %[^\n]",val) ) == 1 )
+  if ( ( has_read = sscanf(cmd+1,"%*[^#] # %[^\n]",val) ) == 1 )
   {
     set_str("plotkey",val);
   }
@@ -2808,7 +2810,8 @@ int read_msg( void )
 
 int gnuplot_config(const int gx, const int gy, nve dxv)
 {
-  int i;
+  int i, nbr_cols;
+  static int first_exec = 1;
   /* color palette */
   if ( strncmp("acid",get_str("palette"),3) == 0 )
   {
@@ -2866,6 +2869,32 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   }
   fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : get_str("indvar")); 
   fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
+
+  /* run only at first execution */
+  /* define gnuplot variables corresponding to plottable variables */
+  if ( first_exec )
+  {
+    nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+    fprintf(GPLOTP,"%s = \"$1\"\n", get_str("indvar"));
+    for (i = 0; i < SIM->nbr_var; i++)
+    {
+      fprintf(GPLOTP,"%s = \"$%d\"\n", SIM->varnames[i],i+2);
+    }
+    for (i = 0; i < SIM->nbr_aux; i++)
+    {
+      fprintf(GPLOTP,"%s = \"$%d\"\n", SIM->auxnames[i],SIM->nbr_var+i+2);
+    }
+    for (i = 0; i < SIM->nbr_psi; i++)
+    {
+      fprintf(GPLOTP,"%s = \"$%d\"\n", SIM->psinames[i],SIM->nbr_var+SIM->nbr_aux+i+2);
+    }
+    for (i = 0; i < SIM->nbr_expr; i++)
+    {
+      fprintf(GPLOTP,"%s = \"$%d\"\n", SIM->exprnames[i],SIM->nbr_var+SIM->nbr_aux+SIM->nbr_psi+i+2);
+    }
+    printf("\n  assigning variables to gnuplot\n");
+    first_exec = 0;
+  }
 
   return 0;
 }
