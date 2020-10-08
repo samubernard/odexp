@@ -110,6 +110,8 @@ typedef struct system_state {
 
     double *h;     /* current time step */
 
+    unsigned int nbrsteps; /* number of times steps written in output traj.dat */
+
     int (*ode_rhs)(double, const double *, double *, void *);
 
     char stats_buffer[MAXFILENAMELENGTH];

@@ -435,6 +435,7 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
 
     s->time_in_ode_rhs = 0.0;
     s->ode_rhs = ode_rhs;
+    s->nbrsteps = 0;
 
     /* write names of variables in separate file
      * stats.dat:
@@ -761,6 +762,7 @@ int fwrite_all_particles(const double *restrict t)
     pars = SIM->pop->start;
     while ( pars != NULL )
     {
+        fwrite(&(SIM->nbrsteps),sizeof(unsigned int),1,SIM->ftrajectories);
         fwrite(&(pars->id),sizeof(int),1,SIM->ftrajectories);
         fwrite(t,sizeof(double),1,SIM->ftrajectories);
         fwrite(pars->y,sizeof(double),pars->nbr_y,SIM->ftrajectories);
@@ -769,6 +771,7 @@ int fwrite_all_particles(const double *restrict t)
         fwrite(pars->expr,sizeof(double),pars->nbr_expr,SIM->ftrajectories);
         pars = pars->nextel;
     }
+    (SIM->nbrsteps)++;
     
     return 0; 
 }
@@ -832,9 +835,9 @@ int list_traj( void )
     int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr; 
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | paste - .odexp/traj_varnames.txt > .odexp/traj.csv");
+    snprintf(cmd_varnames,EXPRLENGTH,"echo 'STEP     ID     ' | paste - .odexp/traj_varnames.txt > .odexp/traj.csv");
     snprintf(cmd_data,EXPRLENGTH-1,\
-            "hexdump -e '\"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/traj.csv",
+            "hexdump -e '\"%%u \" \"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/traj.csv",
             nbr_cols, fix);
 
     s = system(cmd_varnames); 
@@ -847,38 +850,79 @@ int list_traj( void )
 int generate_particle_file(int with_id)
 {
   int s = 0;
-  FILE *fh = NULL;
-  FILE *fid = NULL;
-  int id;
+  FILE *fin = NULL;
+  FILE *fout = NULL;
+  int id,st;
   double *row = NULL;
   char filename[MAXFILENAMELENGTH];
   int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
   row = malloc(nbr_cols*sizeof(double));
-  if ( ( fh = fopen(".odexp/traj.dat", "r") ) == NULL )
+  if ( ( fin = fopen(".odexp/traj.dat", "r") ) == NULL )
   {
     PRINTERR("error: could not open file '.odexp/traj.dat'.\n");
     return 1;
   }
   snprintf(filename,MAXFILENAMELENGTH,".odexp/id%d.dat", with_id);
-  if ( ( fid = fopen(filename, "w") ) == NULL )
+  if ( ( fout = fopen(filename, "w") ) == NULL )
   {
     PRINTERR("error: could not open file '%s'.\n", filename);
     return 1;
   }
 
-  while ( (s = fread(&id,sizeof(int),1,fh)) )
+  while ( (s = fread(&st,sizeof(int),1,fin)) )
   {
-    fread(row,sizeof(double),nbr_cols,fh);
+    fread(&id,sizeof(int),1,fin);
+    fread(row,sizeof(double),nbr_cols,fin);
     if ( id == with_id ) 
     {
-      fwrite(row,sizeof(double),nbr_cols,fid);
+      fwrite(row,sizeof(double),nbr_cols,fout);
     }
   }
-  fclose(fh);
-  fclose(fid);
+  fclose(fin);
+  fclose(fout);
   free(row);
   return s;
 }
+
+
+int generate_particle_states(int timestep)
+{
+  int s = 0;
+  FILE *fin = NULL;
+  FILE *fout = NULL;
+  int id,st;
+  double *row = NULL;
+  char filename[MAXFILENAMELENGTH];
+  int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  row = malloc(nbr_cols*sizeof(double));
+  if ( ( fin = fopen(".odexp/traj.dat", "r") ) == NULL )
+  {
+    PRINTERR("error: could not open file '.odexp/traj.dat'.\n");
+    return 1;
+  }
+  snprintf(filename,MAXFILENAMELENGTH,".odexp/states.dat");
+  if ( ( fout = fopen(filename, "w") ) == NULL )
+  {
+    PRINTERR("error: could not open file '%s'.\n", filename);
+    return 1;
+  }
+
+  while ( (s = fread(&st,sizeof(int),1,fin)) )
+  {
+    fread(&id,sizeof(int),1,fin);
+    fread(row,sizeof(double),nbr_cols,fin);
+    if ( st == timestep )
+    {
+      fwrite(&id,sizeof(int),1,fout);
+      fwrite(row,sizeof(double),nbr_cols,fout);
+    }
+  }
+  fclose(fin);
+  fclose(fout);
+  free(row);
+  return s;
+}
+
 
 /* get the value of variable s, for particle p, into ptr */ 
 int mvar(const char *name, par *m, double *ptr)                        

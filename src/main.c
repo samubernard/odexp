@@ -1243,7 +1243,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             printf("  Number of particles           = %s%d%s\n",T_VAL,SIM->max_id,T_NOR);
             printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
             printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
-            printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n", nbr_cols); 
+            printf("  hexdump -e '\"%%u \" \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n", nbr_cols); 
             printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
           }
           else if (op == 'd') /* list descriptions */ 
@@ -1750,9 +1750,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           plot_mode = PM_CURVES;
         }
 
-        /* if hold==1, and the last command does NOT add a new curve, just replot 
+        /* if hold==1 or curves==1, and the last command does NOT add a new curve, just replot 
          * instead of repeating the last plot command */
-        if ( get_int("hold") && sscanf(cmdline,"%[^][{}yvV#]",svalue) ) /* just replot  */
+        if ( get_int("hold")  && sscanf(cmdline,"%[^][{}yvV#]",svalue) ) /* just replot  */
         {
           plot_mode = PM_REPLOT;
         }
@@ -2674,11 +2674,11 @@ int gplot_particles( const int gx, const int gy, const nve var )
   return 0;
 }
 
-int get_plottitle(char *cmd)
+int get_plottitle(char *cmd) /* set plot key string between " " if found */
 {
   int has_read = 0;
   char val[EXPRLENGTH];
-  if ( ( has_read = sscanf(cmd+1,"%*[^#] # %[^\n]",val) ) == 1 )
+  if ( ( has_read = sscanf(cmd+1,"%*[^\"] \"%[^\"]\"",val) ) == 1 )
   {
     set_str("plotkey",val);
   }
