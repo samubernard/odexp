@@ -717,7 +717,7 @@ int odesolver( oderhs pop_ode_rhs,
     free(y);
     free(tstops);
 
-    fwrite_final_particle_state();
+    /* fwrite_final_particle_state(); */
 
     return status;
 

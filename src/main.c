@@ -124,7 +124,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* sizes */
   int ode_system_size; /* number of dynamical variables */
   int total_nbr_x;  /* number of dependent and auxiliary variables */
-  int nbr_cols;     /* number of columns written in particle files id.dat */
+  int nbr_col;     /* number of columns written in particle files id.dat */
 
   /* tspan parameters */
   const char      ts_string[] = "TIMESPAN"; 
@@ -367,12 +367,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   /* define dxv */
   ode_system_size = ics.nbr_el;
-  total_nbr_x = ode_system_size + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; /* nbr of plottable elements */
-  nbr_cols = 1 + ode_system_size + fcn.nbr_el + psi.nbr_el + pex.nbr_el;
-  dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr + mfd.nbr_expr;
+  /* total number of dependent variables: y, aux, psi, mfd, pex */
+  total_nbr_x = ics.nbr_el + fcn.nbr_el + psi.nbr_el + mfd.nbr_el + pex.nbr_el; 
+  nbr_col = 1 + total_nbr_x; 
+  dxv.nbr_expr = ics.nbr_expr + fcn.nbr_expr + psi.nbr_expr + mfd.nbr_expr + pex.nbr_expr;
   dxv.nbr_el = total_nbr_x;
   alloc_namevalexp(&dxv);
-  *dxv.max_name_length = max(*mfd.max_name_length,max(*psi.max_name_length, max(*ics.max_name_length, *fcn.max_name_length)));
+  *dxv.max_name_length = max(*pex.max_name_length,max(*mfd.max_name_length,max(*psi.max_name_length, max(*ics.max_name_length, *fcn.max_name_length))));
   for (i = 0; i < ode_system_size; i++)
   {
     strcpy(dxv.name[i],ics.name[i]);
@@ -391,7 +392,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     strcpy(dxv.expression[i],psi.expression[i-ode_system_size-fcn.nbr_el]);
     strcpy(dxv.attribute[i],psi.attribute[i-ode_system_size-fcn.nbr_el]);
   }
-  for (i = ode_system_size + fcn.nbr_el + psi.nbr_el; i < dxv.nbr_el; i++)
+  for (i = ode_system_size + fcn.nbr_el + psi.nbr_el; i < ode_system_size + + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; i++)
+  {
+    strcpy(dxv.name[i],mfd.name[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
+    strcpy(dxv.expression[i],mfd.expression[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
+    strcpy(dxv.attribute[i],mfd.attribute[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
+  }
+  for (i = ode_system_size + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; i < dxv.nbr_el; i++)
   {
     strcpy(dxv.name[i],mfd.name[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
     strcpy(dxv.expression[i],mfd.expression[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
@@ -506,7 +513,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       printf("\n  %syou are in quiet mode (option loudness quiet),\n"
           "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
       printf("  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
-      printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_cols); 
+      printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_col); 
       printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
       PRINTLOG("Quiet mode, will exit");
       break;
@@ -1237,13 +1244,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             printf("  Number of expressions         = %s%d%s\n",T_VAL,pex.nbr_expr,T_NOR);
             printf("  Number of constants           = %s%d%s\n",T_VAL,cst.nbr_el,T_NOR);
             printf("  Number of data files          = %s%d%s\n",T_VAL,dfl.nbr_el,T_NOR);
-            printf("  Number of columns in id.dat   = %s%d%s\n",T_VAL,nbr_cols,T_NOR);
+            printf("  Number of columns in id.dat   = %s%d%s\n",T_VAL,nbr_col,T_NOR);
             printf("  Initial population size       = %s%d%s\n",T_VAL,(int)get_int("popsize"),T_NOR);
             printf("  Final population size         = %s%d%s\n",T_VAL,POP_SIZE,T_NOR);
             printf("  Number of particles           = %s%d%s\n",T_VAL,SIM->max_id,T_NOR);
             printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
             printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
-            printf("  hexdump -e '\"%%u \" \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n", nbr_cols); 
+            printf("  hexdump -e '\"%%u \" \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n", nbr_col); 
             printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
           }
           else if (op == 'd') /* list descriptions */ 
@@ -2391,7 +2398,7 @@ int setup_pm_normal(const int gx, const int gy, const int gz, const int plot3d, 
 int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv)
 {
   char    plot_cmd[EXPRLENGTH];
-  const int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  const int nbr_col = SIM->nbr_col; 
   const int nbr_dyn = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
   if ( plot3d == 0 )
   {
@@ -2402,7 +2409,7 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
       snprintf(plot_cmd,EXPRLENGTH,\
           "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d "\
           "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
-          get_int("particle"), nbr_cols, gx, gy,\
+          get_int("particle"), nbr_col, gx, gy,\
           get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
           gx > 1 ? dxv.name[gx-2] : get_str("indvar"), \
           get_int("particle"));
@@ -2438,7 +2445,7 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
       snprintf(plot_cmd,EXPRLENGTH,\
           "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
           "with %s title \"(%d)\"\n",\
-          get_int("particle"), nbr_cols, gx, gy, gz,\
+          get_int("particle"), nbr_col, gx, gy, gz,\
           get_str("style"),\
           get_int("particle"));
     }
@@ -2470,7 +2477,7 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
 int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, const nve dxv)
 {
   char    plot_cmd[EXPRLENGTH];
-  const int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  const int nbr_col = SIM->nbr_col; 
   const int nbr_dyn = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
   set_int("hold",0); /* animate only works without hold at the moment */
   if ( plot3d == 0 )
@@ -2486,8 +2493,8 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
           "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::j::j "
           "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"}\n",
           get_int("res") - 1,
-          get_int("particle"), nbr_cols, gx, gy,
-          get_int("particle"), nbr_cols, gx, gy,
+          get_int("particle"), nbr_col, gx, gy,
+          get_int("particle"), nbr_col, gx, gy,
           get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), get_int("particle"));
     }
     else
@@ -2519,8 +2526,8 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
           "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::j::j "
           "with %s title \"%s\".\", \".\"%s\".\", \".\"%s\". \" \" .\"(%d)\"}\n",
           get_int("res") - 1,
-          get_int("particle"), nbr_cols, gx, gy, gz,
-          get_int("particle"), nbr_cols, gx, gy, gz,
+          get_int("particle"), nbr_col, gx, gy, gz,
+          get_int("particle"), nbr_col, gx, gy, gz,
           get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"), get_int("particle"));
     }
     else
@@ -2574,7 +2581,7 @@ int gplot_data(const char *plot_str, const char *data_fn)
 int gplot_fun(const char *plot_str)
 {
   int success;
-  const int nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+  const int nbr_col = SIM->nbr_col; 
   char key[EXPRLENGTH];
   generate_particle_file(get_int("particle"));
   if ( strlen(get_str("plotkey")) )
@@ -2590,7 +2597,7 @@ int gplot_fun(const char *plot_str)
     success = fprintf(GPLOTP,\
           "replot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %s "\
           "with %s title \"%s (%d)\"\n",\
-          get_int("particle"), nbr_cols, plot_str,\
+          get_int("particle"), nbr_col, plot_str,\
           get_str("style"), key, get_int("particle"));
   }
   else
@@ -2598,7 +2605,7 @@ int gplot_fun(const char *plot_str)
     success = fprintf(GPLOTP,\
           "plot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %s "\
           "with %s title \"%s (%d)\"\n",\
-          get_int("particle"), nbr_cols, plot_str,\
+          get_int("particle"), nbr_col, plot_str,\
           get_str("style"), key, get_int("particle"));
   }
   fflush(GPLOTP);
@@ -2612,12 +2619,13 @@ int gplot_particles( const int gx, const int gy, const nve var )
 
   /* variables that can plotted
    * type   length    where
-   * y      nbr_y     in p
+   * y      nbr_var   in p
    * aux    nbr_aux   in p
    * psi    nbr_psi   in p
    * mfd    nbr_mfd   in SIM
+   * pex    nbr_expr  in p
    */
-  int tot = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_mfd;
+  int tot = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_mfd + SIM->nbr_expr;
 
   /* if x-axis is the independent variable,
    * make it ID number instead--the ind var
@@ -2626,6 +2634,8 @@ int gplot_particles( const int gx, const int gy, const nve var )
   fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? var.name[gx-2] : "ID"); 
 
   fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
+
+  generate_particle_states(SIM->nbrsteps-1);
 
   /* option: plot bivariate kernel density estimate */
   if ( get_int("kdensity2d") )
@@ -2810,7 +2820,7 @@ int read_msg( void )
 
 int gnuplot_config(const int gx, const int gy, nve dxv)
 {
-  int i, nbr_cols;
+  int i, nbr_col;
   static int first_exec = 1;
   /* color palette */
   if ( strncmp("acid",get_str("palette"),3) == 0 )
@@ -2874,7 +2884,7 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   /* define gnuplot variables corresponding to plottable variables */
   if ( first_exec )
   {
-    nbr_cols = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
+    nbr_col = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_expr;
     fprintf(GPLOTP,"%s = \"$1\"\n", get_str("indvar"));
     for (i = 0; i < SIM->nbr_var; i++)
     {

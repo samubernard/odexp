@@ -77,6 +77,7 @@ typedef struct system_state {
     int nbr_aux;
     int nbr_psi;
     int nbr_mfd;
+    int nbr_col;
 
     nve *pex_ptr;     /* parametric expressions */
     nve *func_ptr;    /* user-defined functions */
