@@ -2559,7 +2559,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
    * mfd    nbr_mfd   in SIM
    * pex    nbr_expr  in p
    */
-  int tot = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi + SIM->nbr_mfd + SIM->nbr_expr;
+  const int nbr_col = SIM->nbr_col;  
 
   /* if x-axis is the independent variable,
    * make it ID number instead--the ind var

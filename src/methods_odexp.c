@@ -265,6 +265,7 @@ int odesolver( oderhs pop_ode_rhs,
 
     SIM->time_in_ode_rhs = 0.0;
     SIM->h = &h;
+    SIM->nbrsteps = 0;
     /* Set up SIM 
      * reset SIM with an empty pop 
      * If option lasty is on, first
