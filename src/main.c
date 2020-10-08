@@ -380,29 +380,33 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     strcpy(dxv.expression[i],ics.expression[i]);
     strcpy(dxv.attribute[i],ics.attribute[i]);
   }
-  for (i = ode_system_size; i < ode_system_size + fcn.nbr_el; i++)
+  j = ode_system_size;
+  for (i = 0; i < fcn.nbr_el; i++)
   {
-    strcpy(dxv.name[i],fcn.name[i-ode_system_size]);
-    strcpy(dxv.expression[i],fcn.expression[i-ode_system_size]);
-    strcpy(dxv.attribute[i],fcn.attribute[i-ode_system_size]);
+    strcpy(dxv.name[j+i],fcn.name[i]);
+    strcpy(dxv.expression[j+i],fcn.expression[i]);
+    strcpy(dxv.attribute[j+i],fcn.attribute[i]);
   }
-  for (i = ode_system_size + fcn.nbr_el; i < ode_system_size + fcn.nbr_el + psi.nbr_el; i++)
+  j += fcn.nbr_el;
+  for (i = 0; i < psi.nbr_el; i++)
   {
-    strcpy(dxv.name[i],psi.name[i-ode_system_size-fcn.nbr_el]);
-    strcpy(dxv.expression[i],psi.expression[i-ode_system_size-fcn.nbr_el]);
-    strcpy(dxv.attribute[i],psi.attribute[i-ode_system_size-fcn.nbr_el]);
+    strcpy(dxv.name[j+i],psi.name[i]);
+    strcpy(dxv.expression[j+i],psi.expression[i]);
+    strcpy(dxv.attribute[j+i],psi.attribute[i]);
   }
-  for (i = ode_system_size + fcn.nbr_el + psi.nbr_el; i < ode_system_size + + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; i++)
+  j += psi.nbr_el;
+  for (i = 0; i < mfd.nbr_el; i++)
   {
-    strcpy(dxv.name[i],mfd.name[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
-    strcpy(dxv.expression[i],mfd.expression[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
-    strcpy(dxv.attribute[i],mfd.attribute[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
+    strcpy(dxv.name[j+i],mfd.name[i]);
+    strcpy(dxv.expression[j+i],mfd.expression[i]);
+    strcpy(dxv.attribute[j+i],mfd.attribute[i]);
   }
-  for (i = ode_system_size + fcn.nbr_el + psi.nbr_el + mfd.nbr_el; i < dxv.nbr_el; i++)
+  j += mfd.nbr_el;
+  for (i = 0; i < pex.nbr_el; i++)
   {
-    strcpy(dxv.name[i],mfd.name[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
-    strcpy(dxv.expression[i],mfd.expression[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
-    strcpy(dxv.attribute[i],mfd.attribute[i-ode_system_size-fcn.nbr_el-psi.nbr_el]);
+    strcpy(dxv.name[j+i],pex.name[i]);
+    strcpy(dxv.expression[j+i],pex.expression[i]);
+    strcpy(dxv.attribute[j+i],pex.attribute[i]);
   }
 
 
@@ -2399,33 +2403,16 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
 {
   char    plot_cmd[EXPRLENGTH];
   const int nbr_col = SIM->nbr_col; 
-  const int nbr_dyn = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
   if ( plot3d == 0 )
   {
-    if ( (gx <= nbr_dyn + 1) && 
-         (gy <= nbr_dyn + 1) ) /* plot from idXX.dat */
-    {
-      generate_particle_file(get_int("particle"));
-      snprintf(plot_cmd,EXPRLENGTH,\
-          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d "\
-          "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
-          get_int("particle"), nbr_col, gx, gy,\
-          get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
-          gx > 1 ? dxv.name[gx-2] : get_str("indvar"), \
-          get_int("particle"));
-    }
-    else
-    {
-      snprintf(plot_cmd,EXPRLENGTH,\
-          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d "\
-          "with %s title \"%s\".\" vs \".\"%s\". \" \"\n",\
-          1 + SIM->nbr_mfd, 4,\
-          gx > 1 ? gx - nbr_dyn : gx,\
-          gy > 1 ? gy - nbr_dyn : gy,\
-          get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
-          gx > 1 ? dxv.name[gx-2] : get_str("indvar"));
-
-    }
+    generate_particle_file(get_int("particle"));
+    snprintf(plot_cmd,EXPRLENGTH,\
+        "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d "\
+        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+        get_int("particle"), nbr_col, gx, gy,\
+        get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
+        gx > 1 ? dxv.name[gx-2] : get_str("indvar"), \
+        get_int("particle"));
     if ( get_int("hold") == 0 ) /* normal plot command: 2D, hold=0, curves=0 */
     {
       fprintf(GPLOTP,"plot %s", plot_cmd);
@@ -2437,30 +2424,13 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
   } 
   else /* plot3d == 1 */
   {
-    if ( (gx <= nbr_dyn + 1) && 
-         (gy <= nbr_dyn + 1) && 
-         (gz <= nbr_dyn + 1) ) /* plot from idXX.dat */
-    {
-      generate_particle_file(get_int("particle"));
-      snprintf(plot_cmd,EXPRLENGTH,\
-          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
-          "with %s title \"(%d)\"\n",\
-          get_int("particle"), nbr_col, gx, gy, gz,\
-          get_str("style"),\
-          get_int("particle"));
-    }
-    else
-    {
-      snprintf(plot_cmd,EXPRLENGTH,\
-          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d "\
-          "with %s\n",\
-          1 + SIM->nbr_mfd, 4,\
-          gx > 1 ? gx - nbr_dyn : gx,\
-          gy > 1 ? gy - nbr_dyn : gy,\
-          gz > 1 ? gz - nbr_dyn : gz,\
-          get_str("style") );
-
-    }
+    generate_particle_file(get_int("particle"));
+    snprintf(plot_cmd,EXPRLENGTH,\
+        "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
+        "with %s title \"(%d)\"\n",\
+        get_int("particle"), nbr_col, gx, gy, gz,\
+        get_str("style"),\
+        get_int("particle"));
     if ( get_int("hold") == 0 )
     {
       fprintf(GPLOTP,"splot %s", plot_cmd);
@@ -2478,71 +2448,35 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
 {
   char    plot_cmd[EXPRLENGTH];
   const int nbr_col = SIM->nbr_col; 
-  const int nbr_dyn = SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
   set_int("hold",0); /* animate only works without hold at the moment */
   if ( plot3d == 0 )
   {
-    if ( (gx <= nbr_dyn + 1) && 
-         (gy <= nbr_dyn + 1) ) /* plot from idXX.dat */
-    {
-      generate_particle_file(get_int("particle"));
-      snprintf(plot_cmd,EXPRLENGTH,\
-          "do for [j=0:%d] {"
-          "plot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::0::j "
-          "with dots notitle, "
-          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::j::j "
-          "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"}\n",
-          get_int("res") - 1,
-          get_int("particle"), nbr_col, gx, gy,
-          get_int("particle"), nbr_col, gx, gy,
-          get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), get_int("particle"));
-    }
-    else
-    {
-      snprintf(plot_cmd,EXPRLENGTH,\
-          "do for [j=0:%d] {"
-          "plot \".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d every ::0::j "
-          "with dots notitle, "
-          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d every ::j::j "
-          "with %s title \"%s\".\" vs \".\"%s\"}\n",
-          get_int("res") - 1,
-          1 + SIM->nbr_mfd, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
-          1 + SIM->nbr_mfd, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy,
-          get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"));
-    }
+    generate_particle_file(get_int("particle"));
+    snprintf(plot_cmd,EXPRLENGTH,\
+        "do for [j=0:%d] {"
+        "plot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::0::j "
+        "with dots notitle, "
+        "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::j::j "
+        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"}\n",
+        get_int("res") - 1,
+        get_int("particle"), nbr_col, gx, gy,
+        get_int("particle"), nbr_col, gx, gy,
+        get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), get_int("particle"));
     fprintf(GPLOTP,"%s", plot_cmd);
   } 
   else /* plot3d == 1 */
   {
-    if ( (gx <= nbr_dyn + 1) && 
-         (gy <= nbr_dyn + 1) && 
-         (gz <= nbr_dyn + 1) ) /* plot from idXX.dat */
-    {
-      generate_particle_file(get_int("particle"));
-      snprintf(plot_cmd,EXPRLENGTH,\
-          "do for [j=0:%d] {"
-          "splot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::0::j "
-          "with dots notitle, "
-          "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::j::j "
-          "with %s title \"%s\".\", \".\"%s\".\", \".\"%s\". \" \" .\"(%d)\"}\n",
-          get_int("res") - 1,
-          get_int("particle"), nbr_col, gx, gy, gz,
-          get_int("particle"), nbr_col, gx, gy, gz,
-          get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"), get_int("particle"));
-    }
-    else
-    {
-      snprintf(plot_cmd,EXPRLENGTH,\
-          "do for [j=0:%d] {"
-          "plot \".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d:%d every ::0::j "
-          "with dots notitle, "
-          "\".odexp/stats.dat\" binary format=\"%%%dlf%%%dd\" using %d:%d%d every ::j::j "
-          "with %s title \"%s\".\", \".\"%s\", \".\"%s\"}\n",
-          get_int("res") - 1,
-          1 + SIM->nbr_mfd, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy, gy > 1 ? gz - nbr_dyn : gz,
-          1 + SIM->nbr_mfd, 4, gx > 1 ? gx - nbr_dyn : gx, gy > 1 ? gy - nbr_dyn : gy, gy > 1 ? gz - nbr_dyn : gz,
-          get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"));
-    }
+    generate_particle_file(get_int("particle"));
+    snprintf(plot_cmd,EXPRLENGTH,\
+        "do for [j=0:%d] {"
+        "splot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::0::j "
+        "with dots notitle, "
+        "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::j::j "
+        "with %s title \"%s\".\", \".\"%s\".\", \".\"%s\". \" \" .\"(%d)\"}\n",
+        get_int("res") - 1,
+        get_int("particle"), nbr_col, gx, gy, gz,
+        get_int("particle"), nbr_col, gx, gy, gz,
+        get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"), get_int("particle"));
     fprintf(GPLOTP,"%s", plot_cmd);
   }
   fflush(GPLOTP);
