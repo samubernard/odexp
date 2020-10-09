@@ -125,7 +125,7 @@ int list_stats( void );
 int list_traj( void );
 
 int generate_particle_file(int with_id);
-int generate_particle_states(int timestep);
+int generate_particle_states(int timestep, double *time);
 
 /* get the value of variable s, for particle p, into ptr */ 
 int mvar(const char *name, par *m, double *ptr);
