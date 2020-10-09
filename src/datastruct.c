@@ -50,6 +50,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"k2d","kdensity2d", 'i', 0.00, 0, "", "display bivariate (2D) kernel density estimate", "population"},
   {"k2dgrid","kdensity2dgrid", 'i', 0.00, 25, "", "kernel density grid resolution", "population"},
   {"k2dscale","kdensity2dscale", 'd', 0.5, 0, "", "kernel density scale parameter", "population"},
+  {"tframe","timeframe", 's', 0.0, 0, "default", "time frame for particle plot", "population"},
   {"seed","seed", 'i', 0.0, 3141592, "", "seed for the random number generator", "random"},
   {"rs","reseed", 'i', 0.0, 1, "", "Reset rng to Seed at each run 0 | {1}", "random"},
   {"maxfail","maxfail", 'i', 10000.0, 10000, "", "max number of starting guesses for steady states", "steadyStates"},  

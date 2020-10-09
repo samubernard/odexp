@@ -71,7 +71,7 @@ typedef struct steady_state
 
 
 /* number of global options */
-#define NBROPTS 68
+#define NBROPTS 69
 
 /* declare global options */
 extern struct gen_option GOPTS[NBROPTS];

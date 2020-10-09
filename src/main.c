@@ -587,6 +587,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case 'C' :
         case '7' :
+          nbr_read = sscanf(cmdline,"%s %s %s",svalue,svalue2,svalue3); /* try to read an optional string  */
+          if ( nbr_read == 2 )
+          {
+            set_str("timeframe",svalue2);
+          }
+          else if ( nbr_read == 3 )
+          {
+            set_str("timeframe",strncat(svalue2,svalue3,EXPRLENGTH));
+          }
           plot_mode = PM_PARTICLES;
           plotonly = 1;
           break;
@@ -1255,6 +1264,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
             printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
             printf("  hexdump -e '\"%%u \" \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n", nbr_col); 
+            printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' particle_states.dat\n", nbr_col); 
             printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
           }
           else if (op == 'd') /* list descriptions */ 
@@ -2551,6 +2561,8 @@ int gplot_particles( const int gx, const int gy, const nve var )
   char cmd_plt[EXPRLENGTH];
   char cmd_labels[EXPRLENGTH];
 
+  FILE *fin = NULL;
+
   /* variables that can plotted
    * type   length    where
    * y      nbr_var   in p
@@ -2561,6 +2573,12 @@ int gplot_particles( const int gx, const int gy, const nve var )
    */
   const int nbr_col = SIM->nbr_col;  
 
+  static unsigned int timestep = 0;
+
+  double t;
+
+  int tmp;
+
   /* if x-axis is the independent variable,
    * make it ID number instead--the ind var
    * cannot be plotted 
@@ -2569,7 +2587,34 @@ int gplot_particles( const int gx, const int gy, const nve var )
 
   fprintf(GPLOTP,"set ylabel '%s'\n",var.name[gy-2]);
 
-  generate_particle_states(SIM->nbrsteps-1);
+  /* select particle plot time step */ 
+  if ( strncmp(get_str("timeframe"),"first", 5) == 0 )
+  {
+    timestep = 0;
+  }
+  else if ( strncmp(get_str("timeframe"),"last", 4) == 0 )
+  {
+    timestep = SIM->nbrsteps-1;
+  }
+  else if ( strncmp(get_str("timeframe"),"next", 4) == 0 )
+  {
+    timestep++;
+  }
+  else if ( strncmp(get_str("timeframe"),"previous", 8) == 0 )
+  {
+    timestep--;
+  }
+  else if ( strncmp(get_str("timeframe"),"frame", 5) == 0 )
+  {
+    sscanf(get_str("timeframe"),"%*s %u",&timestep); 
+  }
+  else
+  {
+    timestep = (unsigned int)strtol(get_str("timeframe"),NULL,10);
+  }
+  
+
+  generate_particle_states(timestep);
 
   /* option: plot bivariate kernel density estimate */
   if ( get_int("kdensity2d") )
@@ -2578,7 +2623,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
         get_int("kdensity2dgrid"),get_int("kdensity2dgrid"),get_dou("kdensity2dscale"));
     fprintf(GPLOTP,"set table \".odexp/griddata.txt\"\n");
     fprintf(GPLOTP,"splot \".odexp/particle_states.dat\" "
-        "binary format=\"%%u%%%dlf\" using %d:%d:(1)\n",tot,gx,gy);
+        "binary format=\"%%u%%%dlf\" using %d:%d:(1)\n",nbr_col,gx,gy);
     fprintf(GPLOTP,"unset table\n");
     fprintf(GPLOTP,"unset dgrid3d\n");
     fprintf(GPLOTP,"set view map\n");
@@ -2587,7 +2632,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
     fprintf(GPLOTP,"splot \".odexp/griddata.txt\" with pm3d notitle\n");
     fprintf(GPLOTP,"replot \".odexp/particle_states.dat\" "
         "binary format=\"%%u%%%dlf\" using %d:%d:(-1) with points pt '.' notitle\n",
-        tot,gx,gy);
+        nbr_col,gx+1,gy+1);
     fprintf(GPLOTP,"unset view\n");
   }
   else
@@ -2597,13 +2642,13 @@ int gplot_particles( const int gx, const int gy, const nve var )
      */
     snprintf(cmd_plt,EXPRLENGTH,"plot \".odexp/particle_states.dat\" "
         "binary format=\"%%u%%%dlf\" using %d:%d with "
-        "%s title \"particles\"",tot,gx,gy, get_str("particlestyle"));
+        "%s title \"particles\"",nbr_col,gx+1,gy+1, get_str("particlestyle"));
     if ( get_int("particleid") )
     {
       snprintf(cmd_labels,EXPRLENGTH,", \".odexp/particle_states.dat\" "
           "binary format=\"%%u%%%dlf\" using %d:%d:(sprintf(\"%%u\",$1)) "
           "with labels font \"%s,7\" textcolor rgb \"grey20\" notitle\n", 
-          tot,gx,gy,get_str("font"));
+          nbr_col,gx+1,gy+1,get_str("font"));
     }
     else
     {
@@ -2612,6 +2657,17 @@ int gplot_particles( const int gx, const int gy, const nve var )
     strncat(cmd_plt,cmd_labels,EXPRLENGTH);
     fprintf(GPLOTP, "%s", cmd_plt );
   }
+
+  if ( ( fin = fopen(".odexp/particle_states.dat", "r") ) == NULL )
+  {
+    PRINTERR("error: could not open file '%s', exiting...\n",".odexp/particle_states.dat");
+    exit ( EXIT_FAILURE );
+  }
+  fread(&tmp,sizeof(int),1,fin);
+  fread(&t,sizeof(double),1,fin);
+  fclose(fin);
+
+  printf("  t = %g (time frame %u)\n", t, timestep);
   
   fflush(GPLOTP);
 
