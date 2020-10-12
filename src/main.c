@@ -1453,7 +1453,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                     GOPTS[i].intval = strtol(svalue,NULL,10);
                     break;
                   case 's':
-                    strncpy(GOPTS[i].strval,svalue,NAMELENGTH-1);
+                    strncpy(GOPTS[i].strval,svalue,NAMELENGTH);
                     break;
                   default:
                     PRINTWARNING("  warning: option not defined\n");
@@ -2620,7 +2620,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
 
   generate_particle_states(timestep, &t);
 
-  if ( strlen(get_str("particleweight")) )
+  if ( strncmp("none",get_str("particleweight"),4) )
   {
     snprintf(opt_circle,EXPRLENGTH,":(%s)",get_str("particleweight"));
   }
