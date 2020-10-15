@@ -280,8 +280,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     mu.comment[0] = malloc(EXPRLENGTH*sizeof(char*));
     mu.nbr_el = 1;
     mu.nbr_expr = 1;
-    strncpy(mu.name[0],"--",NAMELENGTH-1);
-    strncpy(mu.attribute[0],"not a parameter",NAMELENGTH-1);
+    strncpy(mu.name[0],"--",NAMELENGTH);
+    strncpy(mu.attribute[0],"not a parameter",NAMELENGTH);
     mu.value[0] = NAN;
     *mu.max_name_length = 15; 
   } 
@@ -1496,7 +1496,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                       GOPTS[i].numval = strtod(svalue2,NULL);
                       break;
                     case 's':
-                      strncpy(GOPTS[i].strval,svalue2,NAMELENGTH-1);
+                      strncpy(GOPTS[i].strval,svalue2,NAMELENGTH);
                       break;
                   }
                   update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
@@ -2034,17 +2034,17 @@ int update_plot_options(int ngx, int ngy, int ngz, nve dxv)
 int update_plot_index(int *ngx, int *ngy, int *ngz, int *gx, int *gy, int *gz, nve dxv)
 {
   char sval[NAMELENGTH];
-  strncpy(sval,get_str("x"),NAMELENGTH-1);
+  strncpy(sval,get_str("x"),NAMELENGTH);
   if ( strlen(sval) )
   {
     name2index(sval,dxv,ngx);
   }
-  strncpy(sval,get_str("y"),NAMELENGTH-1);
+  strncpy(sval,get_str("y"),NAMELENGTH);
   if ( strlen(sval) )
   {
     name2index(sval,dxv,ngy);
   }
-  strncpy(sval,get_str("z"),NAMELENGTH-1);
+  strncpy(sval,get_str("z"),NAMELENGTH);
   if ( strlen(sval) )
   {
     name2index(sval,dxv,ngz);
@@ -2066,7 +2066,7 @@ int update_act_par_index(int *p, const nve mu)
   char sval[NAMELENGTH];
   if ( mu.nbr_el > 0 )
   {
-    strncpy(sval,get_str("actpar"),NAMELENGTH-1);
+    strncpy(sval,get_str("actpar"),NAMELENGTH);
     if ( strlen(sval) )
     {
       name2index(sval,mu,p);
@@ -2922,9 +2922,9 @@ int get_attribute(const char *s, const char *key, char *val)
       found = 1;
       if ( sscanf(s + k, "%*s = \"%[^\"]\"", val) )
       {
-        /* val is ok */
+        /* val is between double-quotes ""; nothing to do */
       }
-      else
+      else /* val is not between double-quotes, scan until ',' or '}' */
       {
         sscanf(s + k, "%*s = %[^,}]", val);
       }

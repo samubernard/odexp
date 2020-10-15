@@ -176,7 +176,7 @@ int set_str(const char *name, const char * val)
     }
     if (idx_opt < NBROPTS)
     {
-      strncpy(GOPTS[idx_opt].strval,val,NAMELENGTH-1);
+      strncpy(GOPTS[idx_opt].strval,val,NAMELENGTH);
       success = 1;
     }
     else
@@ -427,10 +427,10 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
 
     s->max_id = 0;
 
-    strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH-1);
-    strncpy(s->stats_varnames,".odexp/stats_varnames.txt",MAXFILENAMELENGTH-1);
-    strncpy(s->traj_varnames,".odexp/traj_varnames.txt",MAXFILENAMELENGTH-1);
-    strncpy(s->trajectories_buffer,".odexp/traj.dat",MAXFILENAMELENGTH-1);
+    strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH);
+    strncpy(s->stats_varnames,".odexp/stats_varnames.txt",MAXFILENAMELENGTH);
+    strncpy(s->traj_varnames,".odexp/traj_varnames.txt",MAXFILENAMELENGTH);
+    strncpy(s->trajectories_buffer,".odexp/traj.dat",MAXFILENAMELENGTH);
 
     s->event[0] = -1;
     s->event[1] =  1;
@@ -824,8 +824,8 @@ int list_stats( void )
     int nbr_col = 1 + SIM->nbr_mfd; 
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH-1,"cat .odexp/stats_varnames.txt > .odexp/stats.csv");
-    snprintf(cmd_data,EXPRLENGTH-1,\
+    snprintf(cmd_varnames,EXPRLENGTH,"cat .odexp/stats_varnames.txt > .odexp/stats.csv");
+    snprintf(cmd_data,EXPRLENGTH,\
             "hexdump -e '%d \"%%5.%df\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/stats.csv",\
             nbr_col, fix);
 
@@ -845,7 +845,7 @@ int list_traj( void )
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
     snprintf(cmd_varnames,EXPRLENGTH,"echo 'STEP     ID     ' | paste - .odexp/traj_varnames.txt > .odexp/traj.csv");
-    snprintf(cmd_data,EXPRLENGTH-1,\
+    snprintf(cmd_data,EXPRLENGTH,\
             "hexdump -e '\"%%u \" \"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/traj.csv",
             nbr_col, fix);
 

@@ -178,8 +178,8 @@ int load_nameval(const char *filename, nve var, const char *sym, const int sym_l
         /* try to read comments */
         has_read = sscanf(line,"%*[^#] # %[^\n]",comment);
         var.expr_index[var_index] = var_index;
-        strncpy(var.attribute[var_index],attribute,NAMELENGTH-1);
-        strncpy(var.comment[var_index],comment,NAMELENGTH-1);
+        strncpy(var.attribute[var_index],attribute,NAMELENGTH);
+        strncpy(var.comment[var_index],comment,NAMELENGTH);
 
         length_name = strlen(var.name[var_index]);                       /* length of second word */
         if (length_name > NAMELENGTH)
@@ -458,8 +458,8 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
 
       for(j=0;j<expr_size;j++)
       {
-        strncpy(var.name[var_index+j],rootvarname,NAMELENGTH-1); 
-        strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH-1);
+        strncpy(var.name[var_index+j],rootvarname,NAMELENGTH); 
+        strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH);
       }
       index_factor = 1;
       do
@@ -507,7 +507,7 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
 #if 0
       for(j=0;j<expr_size;j++)
       {
-        strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH-1);
+        strncpy(var.expression[var_index+j], baseexpression,EXPRLENGTH);
       }
 #endif
 
@@ -515,8 +515,8 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
       /* copy comment into var.comment */
       for(j=0;j<expr_size;j++)
       {
-        strncpy(var.attribute[var_index+j], attribute,EXPRLENGTH-1);
-        strncpy(var.comment[var_index+j], comment,EXPRLENGTH-1);
+        strncpy(var.attribute[var_index+j], attribute,EXPRLENGTH);
+        strncpy(var.comment[var_index+j], comment,EXPRLENGTH);
       }
 
       for (j=0;j<expr_size;j++)
