@@ -818,7 +818,7 @@ sub set_population_meanfields
     my $s = strip_blanks($rhs) . ";";
     $s .= " /* $attr */" if length $attr;
     $s .= " /* $comment */" if length $comment;
-    if ( $attr =~ /\bvect\b/ ) # don't loop, just evaluate the rhs
+    if ( $attr =~ /(\bvect\b|\bnoloop\b)/ ) # don't loop, just evaluate the rhs
     {
       print $fch "    SIM->meanfield[$nv] = $s\n"; 
     }
@@ -1176,7 +1176,7 @@ sub define_array_functions
     $rhs2print = strip_blanks($rhs) . ";";
     $rhs2print .= " /* $attr */" if length $attr;
     $rhs2print .= " /* $comment */" if length $comment;
-    if ( $attr =~ /\bvect\b/ ) # don't loop, just evaluate the rhs
+    if ( $attr =~ /(\bvect\b|\bnoloop\b)/ ) # don't loop, just evaluate the rhs
     {
       print $fch "    $rhs2print\n";    
     } else
