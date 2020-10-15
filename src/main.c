@@ -208,6 +208,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   get_nbr_el(eqfilename,"##",2, &dsc.nbr_el, NULL);
   alloc_namevalexp(&dsc);
   success = load_line(eqfilename,dsc,"##",2, exit_if_nofile);
+  for ( i = 0; i<dsc.nbr_el; i++ )
+  {
+    printf("%s\n",dsc.comment[i]);  
+  }
   DBLOGPRINT("%d description",dsc.nbr_el);
 
   /* extra commands */
@@ -2916,7 +2920,14 @@ int get_attribute(const char *s, const char *key, char *val)
     {
       /* key found */
       found = 1;
-      sscanf(s + k, "%*s = %[^,}]", val);
+      if ( sscanf(s + k, "%*s = \"%[^\"]\"", val) )
+      {
+        /* val is ok */
+      }
+      else
+      {
+        sscanf(s + k, "%*s = %[^,}]", val);
+      }
       break;
     }
     else
