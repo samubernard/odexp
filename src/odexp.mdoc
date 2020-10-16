@@ -342,7 +342,7 @@ This works only when simulations are updated, for instance when parameters are c
 to the plot command.
 .It Ic ur              
 Remove all curves and set curves off.
-.It v { Ar i | Ar x } { Ar j | Ar y } Op { Ar k | Ar z }      
+.It Ic v { Ar i | Ar x } { Ar j | Ar y } Op { Ar k | Ar z }      
 Set 2D/3D view, x-axis to index 
 .Va i
 (variable 
@@ -362,6 +362,13 @@ Set variable to T or index -1 for time.
 takes only the first two arguments, and 
 .Ic 3 
 takes the three arguments
+.It Ic V Ar gnuplot-expression 
+Plot according to
+.Ar gnuplot-expression. 
+The format @var can be used in place of the corresponding column number. For arrays, the subscripted variable array[i] is named array_i. 
+For example, if x[0],... x[9] are dynamical variables, then 
+.Ic V Ar (@x_2):(@x_3/@x_4) 
+would plot the ratio x[3]/x[4] vs x[2]
 .It Ic w 
 List all particle states 
 .It Ic x { Ar ind | Ar var }

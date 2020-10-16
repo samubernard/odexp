@@ -549,6 +549,25 @@ int trim_whitespaces(char *s)
   return 0;
 }
 
+/* replace all occurences of chars in 'search' by chars in 'replace' in 'source' and copy
+ * result in dest */
+int translate(char *dest, const char* source, const char* search, const char* replace, size_t len)
+{
+  size_t i,j;
+  for ( i=0; i<min(strlen(source),len); i++ )
+  {
+    dest[i] = source[i];
+    for ( j=0; j<strlen(search); j++)
+    {
+      if (source[i] == search[j])
+      {
+        dest[i] = replace[j];
+      } 
+    }
+  }
+  dest[i+1] = '\0';
+  return 0;
+}
 
 /* replace full word 'search' by 'replace' in 'strings' */
 int replace_word(char* string, const char* search, const char* replace, int max_len) 

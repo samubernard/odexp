@@ -451,7 +451,7 @@ work when command expects a string argument).
 
 > Remove all curves and set curves off.
 
-v { *i* | *x } {* *j* | *y }* \[{ *k* | *z }*]
+**v {** *i* | *x } {* *j* | *y }* \[{ *k* | *z }*]
 
 > Set 2D/3D view, x-axis to index
 > *i*
@@ -472,6 +472,15 @@ v { *i* | *x } {* *j* | *y }* \[{ *k* | *z }*]
 > takes only the first two arguments, and
 > **3**
 > takes the three arguments
+
+**V** *gnuplot-expression*
+
+> Plot according to
+> *gnuplot-expression.*
+> The format @var can be used in place of the corresponding column number. For arrays, the subscripted variable array\[i] is named array\_i.
+> For example, if x\[0],... x\[9] are dynamical variables, then
+> **V** *(@x\_2):(@x\_3/@x\_4)*
+> would plot the ratio x\[3]/x\[4] vs x\[2]
 
 **w**
 

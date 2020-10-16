@@ -11,5 +11,6 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
 int load_line(const char *filename, nve var, const char *sym, const int sym_len, int exit_if_nofile);
 int load_options(const char *filename, int exit_if_nofile);
 int trim_whitespaces(char *s);
+int translate(char *dest, const char* source, const char* search, const char* replace, size_t len);
 int replace_word(char* string, const char* search, const char* replace, int dest_len);
 int is_full_word(const char *match, int len);

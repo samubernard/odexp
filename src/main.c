@@ -2821,6 +2821,7 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   int i;
   int  nbr_col; 
   static int first_exec = 1;
+  char varname[NAMELENGTH];
   /* color palette */
   if ( strncmp("acid",get_str("palette"),3) == 0 )
   {
@@ -2887,19 +2888,23 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
     fprintf(GPLOTP,"%s = \"$1\"\n", get_str("indvar"));
     for (i = 0; i < SIM->nbr_var; i++)
     {
-      fprintf(GPLOTP,"%s = \"$%d\"\n", SIM->varnames[i],i+2);
+      translate(varname,SIM->varnames[i],"[]","_ ",NAMELENGTH);
+      fprintf(GPLOTP,"%s = \"$%d\"\n", varname,i+2);
     }
     for (i = 0; i < SIM->nbr_aux; i++)
     {
-      fprintf(GPLOTP,"%s = \"$%d\"\n", SIM->auxnames[i],SIM->nbr_var+i+2);
+      translate(varname,SIM->auxnames[i],"[]","_ ",NAMELENGTH);
+      fprintf(GPLOTP,"%s = \"$%d\"\n", varname,SIM->nbr_var+i+2);
     }
     for (i = 0; i < SIM->nbr_psi; i++)
     {
-      fprintf(GPLOTP,"%s = \"$%d\"\n", SIM->psinames[i],SIM->nbr_var+SIM->nbr_aux+i+2);
+      translate(varname,SIM->psinames[i],"[]","_ ",NAMELENGTH);
+      fprintf(GPLOTP,"%s = \"$%d\"\n", varname,SIM->nbr_var+SIM->nbr_aux+i+2);
     }
     for (i = 0; i < SIM->nbr_expr; i++)
     {
-      fprintf(GPLOTP,"%s = \"$%d\"\n", SIM->exprnames[i],SIM->nbr_var+SIM->nbr_aux+SIM->nbr_psi+i+2);
+      translate(varname,SIM->exprnames[i],"[]","_ ",NAMELENGTH);
+      fprintf(GPLOTP,"%s = \"$%d\"\n", varname,SIM->nbr_var+SIM->nbr_aux+SIM->nbr_psi+i+2);
     }
     printf("\n  assigning variables to gnuplot\n");
     first_exec = 0;
