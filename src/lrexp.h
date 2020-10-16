@@ -10,7 +10,7 @@
 #define _LREXP_H_
 
 #ifndef _ODEXP_H_
-typedef double (*coupling_function)(double, void *);
+typedef double (*coupling_function)(double);
 #endif
 
 int lrexpars(const double *x, const int N, double *meanx, double *range);

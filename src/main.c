@@ -2818,7 +2818,8 @@ int read_msg( void )
 
 int gnuplot_config(const int gx, const int gy, nve dxv)
 {
-  int i, nbr_col;
+  int i;
+  int  nbr_col; 
   static int first_exec = 1;
   /* color palette */
   if ( strncmp("acid",get_str("palette"),3) == 0 )
@@ -2903,6 +2904,7 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
     printf("\n  assigning variables to gnuplot\n");
     first_exec = 0;
   }
+
 
   return 0;
 }

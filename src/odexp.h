@@ -159,7 +159,7 @@ double linchaindelay(const double root, const double *chain, const int link, con
 
 /* low rank expansion */
 #ifndef _LREXP_H_
-typedef double (*coupling_function)(double, void *); 
+typedef double (*coupling_function)(double); 
 #endif
 int lrkern(coupling_function f, const double *x, double *y, const int N);
 int lrwkern(const double *U, const double *V, const int r, coupling_function f, const double *x, double *y, const int N);

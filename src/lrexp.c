@@ -70,6 +70,11 @@ static const long TC[51][51] = { {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                           {-1, 0, 1250, 0, -260000, 0, 21528000, 0, -947232000, 0, 25638412800, 0, -466152960000, 0, 6034375680000, 0, -57930006528000, 0, 424820047872000, 0, -2432653747814400, 0, 11057517035520000, 0, -40383975260160000, 0, 119536566770073600, 0, -288405684905574400, 0, 568855350917201920, 0, -917508630511616000, 0, 1206989963132928000, 0, -1287455960675123200, 0, 1102487181118668800, 0, -746299014911098880, 0, 390051749953536000, 0, -151732604633088000, 0, 41341637204377600, 0, -7036874417766400, 0, 562949953421312},
                         };
 
+double funfun(double x, void *p)
+{
+  double (*f)(double) = **(double (*)(double))p;
+  return f(x);
+}
 
 /* takes state vector x and size N as input
  * and store meanx = mean(x) and range = range(x)
@@ -116,11 +121,11 @@ int lrexprank(coupling_function f, const int N, int *p, const double range)
   gsl_function     F;
   gsl_cheb_series *cs = gsl_cheb_alloc (pmax);
 
-  F.function = f;
-  F.params = (void *)&range;
+  F.function = funfun;
+  F.params = (void *)f;
 
   /* approximate the function f on [-1,1] */
-  gsl_cheb_init (cs, &F, -1.0, 1.0);
+  gsl_cheb_init (cs, &F, -range, range);
 
   /* find out if f is even of odd */
   for (i = 0; i < pmax+1; i+=2)
@@ -186,10 +191,10 @@ int lrexp(coupling_function f, const double *x, double *y,
   gsl_cheb_series *cs = gsl_cheb_alloc (p);
 
   gsl_function F;
-  F.function = f;
-  F.params = (void *)&range;
+  F.function = funfun;
+  F.params = (void *)f;
 
-  gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
+  gsl_cheb_init (cs, &F, -range, range); /* approximate the function f on [-1,1] */
 	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
   /* The Chebychev series is computed using the convention
    *
@@ -282,10 +287,10 @@ int lrexpw(coupling_function f, const double *U, const double *V, const int r, c
   gsl_cheb_series *cs = gsl_cheb_alloc (p);
 
   gsl_function F;
-  F.function = f;
-  F.params = (void *)&range;
+  F.function = funfun;
+  F.params = (void *)f;
 
-  gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
+  gsl_cheb_init (cs, &F, -range, range); /* approximate the function f on [-1,1] */
 	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
   /* The Chebychev series is computed using the convention
    *
@@ -396,10 +401,10 @@ int lrexpwp(const int iu, const int iv, const int r, coupling_function f, const 
   }
 
   gsl_function F;
-  F.function = f;
-  F.params = (void *)&range;
+  F.function = funfun;
+  F.params = (void *)f;
 
-  gsl_cheb_init (cs, &F, -1.0, 1.0); /* approximate the function f on [-1,1] */
+  gsl_cheb_init (cs, &F, -range, range); /* approximate the function f on [-1,1] */
 	double *cc = gsl_cheb_coeffs (cs); /* get the coefficients cc */
   /* The Chebychev series is computed using the convention
    *
