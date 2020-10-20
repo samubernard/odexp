@@ -30,6 +30,7 @@ extern const char PALETTE_QUAL[9][7];
 extern const char PALETTE_APPLE[8][7];
 extern const char PALETTE_MONO[1][7];
 
+#define PINK "0xFFEEE2" 
 
 typedef struct gen_option
 {

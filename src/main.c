@@ -1884,7 +1884,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     } /* end if (cmdline && *cmdline)  check if cmdline is not empty */
 
     /* READ FIFO */
-    read_msg();
+    if ( read_msg() )
+    {
+      read_msg(); /* try to catch end more of the message */ 
+    };
 
   } /* END MAIN LOOP */
 
@@ -2659,7 +2662,8 @@ int gplot_particles( const int gx, const int gy, const nve var )
      */
     snprintf(cmd_plt,EXPRLENGTH,"plot \".odexp/particle_states.dat\" "
         "binary format=\"%%u%%%dlf\" using %d:%d%s with "
-        "%s title \"particles\"",nvar,gx,gy,opt_circle, get_str("particlestyle"));
+        "%s title \"%s=%g (step %d)\"",nvar,gx,gy,opt_circle, get_str("particlestyle"),
+        get_str("indvar"),t,timestep);
     if ( get_int("particleid") )
     {
       snprintf(cmd_labels,EXPRLENGTH,", \".odexp/particle_states.dat\" "
@@ -2805,14 +2809,14 @@ int read_msg( void )
   {
     return rd;
   }
-  printf("  [gnuplot]\n%s",T_GPL);
+  printf("%s",T_GPL);
   while ( read(GPIN, &gpchar, 1) > 0 ) /* read return 0 on EOF and -1 (err) 
                                           if file was marked for non-blocking I/O, 
                                           and no data were ready to be read */
   {
     putchar(gpchar);
   }
-  printf("%s  [gnuplot]\n",T_NOR);
+  printf("%s\n",T_NOR); 
   return rd;
 }
 
@@ -2852,9 +2856,10 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
     }
   }
 
-  fprintf(GPLOTP,"set term %s title \"odexp - %s\" font \"%s,%d\"\n", \
+  fprintf(GPLOTP,"set term %s title \"odexp | %s\" font \"%s,%d\"\n", \
       get_str("terminal"), get_str("wintitle"), get_str("font"), get_int("fontsize"));
-  fprintf(GPLOTP,"set border 1+2+16 lw 0.5 lc rgb \"black\"\n");
+  fprintf(GPLOTP,"set border 1+2+16 lw 0.5 lc rgb \"grey20\"\n");
+  fprintf(GPLOTP,"set border 1+2+16 lw 0.5 lc rgb \"grey20\"\n");
   fprintf(GPLOTP,"set xtics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ytics textcolor rgb \"grey20\"\n");
   fprintf(GPLOTP,"set ztics textcolor rgb \"grey20\"\n");
@@ -2863,6 +2868,8 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   fprintf(GPLOTP,"set mxtics\n");
   fprintf(GPLOTP,"set mytics\n");
   fprintf(GPLOTP,"set mztics\n");
+  fprintf(GPLOTP,"set object 99 rectangle from screen 0,0 to screen 1,1 fillcolor rgb "
+      "\"" PINK "\" behind\n");
 #if 0
   fprintf(GPLOTP,"set xlabel font \"%s\"\n", get_str("font"));
   fprintf(GPLOTP,"set ylabel font \"%s\"\n", get_str("font"));
@@ -2906,7 +2913,7 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
       translate(varname,SIM->exprnames[i],"[]","_ ",NAMELENGTH);
       fprintf(GPLOTP,"%s = \"$%d\"\n", varname,SIM->nbr_var+SIM->nbr_aux+SIM->nbr_psi+i+2);
     }
-    printf("\n  assigning variables to gnuplot\n");
+    printf("\n  assigning variables to gnuplot, type 'gshow variable' to see them\n");
     first_exec = 0;
   }
 

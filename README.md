@@ -157,7 +157,8 @@ work when command expects a string argument).
 
 **$$, $a, $., $\_**
 
-> Print all particles in tall format
+> Print all particles in tall format, using
+> **less**
 
 **\*&zwnj;** \[*msg*]
 
@@ -191,9 +192,26 @@ work when command expects a string argument).
 
 > Switch to range plot.
 
-**7**
+**7** \[*timestep* | \[*first* | *last* | *previous* | *next* \[*skip*]]]
 
-> Switch to particle plot.
+> Switch to particle plot. Optional
+> *timestep*
+> sets the timestep to plot. Options
+> *first*
+> and
+> *last*
+> set timesteps to 0 and the last one. Options
+> *previous*
+> and
+> *next*
+> set the timestep to previous or next one. With option
+> *skip*,
+> *previous*
+> and
+> *next*
+> jump
+> *skip*
+> steps
 
 **6**
 
@@ -1149,4 +1167,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - October 16, 2020
+DARWIN16 - October 20, 2020

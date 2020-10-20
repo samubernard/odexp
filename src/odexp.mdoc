@@ -137,7 +137,8 @@ If
 is missing, print stats dataset 
 in population mode or particle in single mode.
 .It Ic $$, $a, $., $_    
-Print all particles in tall format 
+Print all particles in tall format, using 
+.Ic less
 .It Ic * Op Ar msg         
 Snapshot of current simulation and parameter values with optional 
 .Va msg .
@@ -161,8 +162,25 @@ Switch to/update normal plot.
 Switch to continuation plot.
 .It Ic 8, j
 Switch to range plot.
-.It Ic 7 
-Switch to particle plot.
+.It Ic 7 Op Ar timestep | Op Ar first | last | previous | next  Op Ar skip 
+Switch to particle plot. Optional 
+.Ar timestep 
+sets the timestep to plot. Options 
+.Ar first 
+and
+.Ar last
+set timesteps to 0 and the last one. Options
+.Ar previous 
+and
+.Ar next 
+set the timestep to previous or next one. With option 
+.Ar skip ,
+.Ar previous 
+and
+.Ar next 
+jump 
+.Ar skip 
+steps
 .It Ic 6 
 Switch to animate lot.
 .It Ic A 

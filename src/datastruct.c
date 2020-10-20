@@ -82,19 +82,19 @@ struct gen_option GOPTS[NBROPTS] = {
   {"r1st","runfirst", 's', 0.0, 1, "", "Run 1st, command to execute after startup", "generalSettings"} };
 
 /* formatting strings */
-const char *T_IND = "\033[38;5;130m";  /* index */
-const char *T_DET = "\033[0;36m";  /* description/comment/detail */
-const char *T_VAL = "\033[38;5;130m";  /* numerical values */
-const char *T_EXPR = "\033[0;33m"; /* expressions */
-const char *T_NOR = "\033[0m";     /* normal */
-const char *T_ERR = "\033[0;31m";  /* error */
-const char *T_OPT = "\033[0;32m";  /* option */
-const char *T_GPL = "\033[0;34m";  /* option */
-const char *T_BLD = "\033[2;0m";   /* bold */
-const char *T_PR  = "\033[2m";   /* SIMULATION PROGRESS */
-const char *T_HEAD = "\033[2m"; /* HEADER */
-const char *T_BAR = "\033[7;90m"; /* STATUS BAR */
-const char *HLINE = "--------------------------";
+const char *T_IND =  "\033[38;5;130m";  /* foreground, color 130, index */
+const char *T_DET =  "\033[0;36m";      /* foreground cyan, description/comment/detail */
+const char *T_VAL =  "\033[0;32m";      /* foreground green, values */
+const char *T_EXPR = "\033[0;90m";      /* foreground bright black, expressions */
+const char *T_NOR =  "\033[0m";         /* normal */
+const char *T_ERR =  "\033[0;31m";      /* foreground red, error */
+const char *T_OPT =  "\033[2;32m";      /* faint foreground green, option */
+const char *T_GPL =  "\033[0;94m";      /* foreground bright blue, gnuplot messages */
+const char *T_BLD =  "\033[1m";         /* bold */
+const char *T_PR  =  "\033[2m";         /* faint, SIMULATION PROGRESS */
+const char *T_HEAD = "\033[2m";         /* faint, HEADER */
+const char *T_BAR =  "\033[7;90m";      /* reverse bright gray, STATUS BAR */
+const char *HLINE =  "--------------------------";
 const char *LINEUP_AND_CLEAR = "\033[F\033[J";
 
 const char PALETTE_ACID[8][7] = {"#002313", "#0000cc", "#cc0000", "#00cc00", "#cccc00", "#00cccc", "#cc00cc", "#cccccc"};
