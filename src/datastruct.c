@@ -94,8 +94,6 @@ const char *T_BLD =  "\033[1m";         /* bold */
 const char *T_PR  =  "\033[2m";         /* faint, SIMULATION PROGRESS */
 const char *T_HEAD = "\033[2m";         /* faint, HEADER */
 const char *T_BAR =  "\033[7;90m";      /* reverse bright gray, STATUS BAR */
-const char *HLINE =  "--------------------------";
-const char *LINEUP_AND_CLEAR = "\033[F\033[J";
 
 const char PALETTE_ACID[8][7] = {"#002313", "#0000cc", "#cc0000", "#00cc00", "#cccc00", "#00cccc", "#cc00cc", "#cccccc"};
 const char PALETTE_QUAL[9][7] = {"#1E659F", "#CB0002", "#339631", "#7F358A", "#E66600", "#E6E61A", "#8D3D0E", "#DE68A6", "#808080"};

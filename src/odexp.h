@@ -6,11 +6,31 @@
 /* includes */
 #include <gsl/gsl_vector.h>
 
+/* lengths */
 #define MAXFILENAMELENGTH 64
 #define NAMELENGTH        64
+#define MAXROOTLENGTH     64 
+#define EXPRLENGTH        1024                            
 
-/* size of history buffer */
-#define SIZEHIST 100
+/* waiting time for gnuplot messages, in microsec */
+#define GP_WAIT 20000 
+
+#define NAME_COL_WIDTH    20
+#define HISTORY_SIZE      200
+#define MAX_PLOT_KEY      100
+
+/* filenames */
+#define HISTORY_FILENAME ".odexp/history.txt"
+#define LOG_FILENAME     ".odexp/log.txt"
+#define DB_LOG_FILENAME  ".odexp/dblog.txt"
+#define GP_FIFONAME      ".odexp/gfifo"
+#define EQ_FILENAME      ".odexp/equations.pop"
+#define PAR_FILENAME     ".odexp/parameters.pop"
+#define QUICK_BUFFER     "current.plot"
+
+/* colors */
+#define TERM_BG_COLOR "0xFFEEE2" 
+#define ODEXP_PROMPT  "οдεⅹп> "
 
 typedef long RANDINT;
 #define POISSON_RAND_MAX RAND_MAX
@@ -26,22 +46,22 @@ typedef struct namevalexp
     char   **expression;       /* expressions (only string, not evaluated) */
     char   **attribute;        /* attributes: to be better defined */
     char   **comment;          /* comment: to be better defined */
-    int   nbr_el;           /* nbr of elements */
-    int   nbr_expr;         /* nbr of expression <= nbr_el */
-    int  *expr_index;       /* index of expression */
+    int      nbr_el;           /* nbr of elements */
+    int      nbr_expr;         /* nbr of expression <= nbr_el */
+    int     *expr_index;       /* index of expression */
     int     *max_name_length;  /* length of longest name */
 
 } nve;
 
 typedef struct particle_state {
     double *expr;
-    int nbr_expr;
+    int     nbr_expr;
     double *aux;
-    int nbr_aux;
+    int     nbr_aux;
     double *y;
-    int nbr_y;
+    int     nbr_y;
     double *psi;
-    int nbr_psi;
+    int     nbr_psi;
 
     double death_rate;
     double repli_rate;
@@ -71,13 +91,13 @@ typedef struct system_state {
     char **auxnames;
     char **psinames;
     char **mfdnames;
-    int nbr_par;
-    int nbr_var;
-    int nbr_expr;
-    int nbr_aux;
-    int nbr_psi;
-    int nbr_mfd;
-    int nbr_col;
+    int    nbr_par;
+    int    nbr_var;
+    int    nbr_expr;
+    int    nbr_aux;
+    int    nbr_psi;
+    int    nbr_mfd;
+    int    nbr_col;
 
     nve *pex_ptr;     /* parametric expressions */
     nve *func_ptr;    /* user-defined functions */
@@ -94,9 +114,9 @@ typedef struct system_state {
     double *mu;        /* simulation parameter values; common to all particles */ 
     double *meanfield; /* meand fields; common to all particles */
 
-    int max_id;
+    int     max_id;
 
-    double pop_birth_rate; /* this is the computed population birth rate (=0 if no birth rate set) */
+    double  pop_birth_rate; /* this is the computed population birth rate (=0 if no birth rate set) */
 
     /* event[3] describes birth/death event 
      * IDParent event IDChild
@@ -105,27 +125,27 @@ typedef struct system_state {
      * event[2]: id of the daughter particle, or 0 if event[1]==0
      * When nothing happens, on a regular time step, event is set to 0 everywhere
      */
-    int event[3]; 
+    int     event[3]; 
 
-    double time_in_ode_rhs; /* time spent in ode_rhs so far */
+    double  time_in_ode_rhs; /* time spent in ode_rhs so far */
 
     double *h;     /* current time step */
 
     unsigned int nbrsteps; /* number of times steps written in output traj.dat */
 
-    int (*ode_rhs)(double, const double *, double *, void *);
+    int   (*ode_rhs)(double, const double *, double *, void *);
 
-    char stats_buffer[MAXFILENAMELENGTH];
-    FILE *fid;
+    char    stats_buffer[MAXFILENAMELENGTH];
+    FILE   *fid;
     
-    char stats_varnames[MAXFILENAMELENGTH];
-    FILE *fstats_varnames;
+    char    stats_varnames[MAXFILENAMELENGTH];
+    FILE   *fstats_varnames;
 
-    char traj_varnames[MAXFILENAMELENGTH];
-    FILE *ftraj_varnames;
+    char    traj_varnames[MAXFILENAMELENGTH];
+    FILE   *ftraj_varnames;
 
-    char trajectories_buffer[MAXFILENAMELENGTH];
-    FILE *ftrajectories;
+    char    trajectories_buffer[MAXFILENAMELENGTH];
+    FILE   *ftrajectories;
 
 } world;
 

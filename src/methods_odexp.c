@@ -43,12 +43,13 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
       return;
     }
 
-    printf("\n%s",LINEUP_AND_CLEAR);               /* clear the msg line */
-    printf("%s",LINEUP_AND_CLEAR);                 /* clear one line above  */
+    printf("\n");
+    PR_LINEUP_AND_CLEAR;               /* clear the msg line */
+    PR_LINEUP_AND_CLEAR;                 /* clear one line above  */
     if ( get_int("progress") > 2 )                 /* if level 3: clear two more lines above */
     {
-      printf("%s",LINEUP_AND_CLEAR);  
-      printf("%s",LINEUP_AND_CLEAR);  
+      PR_LINEUP_AND_CLEAR;                 
+      PR_LINEUP_AND_CLEAR;                
     }
     if ( get_int("progress") > 0 )  /* level 1: print time elapsed and percent complete */
     {
@@ -118,7 +119,6 @@ int odesolver( oderhs pop_ode_rhs,
 
     /* output files */
     FILE *quickfile;
-    const char quick_buffer[] = "current.plot"; 
     int  ngx,
          ngy,
          ngz;
@@ -365,9 +365,9 @@ int odesolver( oderhs pop_ode_rhs,
     
     /* DBPRINT("SIM set up done"); */
 
-    if ( ( quickfile = fopen(quick_buffer,"w") ) == NULL )
+    if ( ( quickfile = fopen(QUICK_BUFFER,"w") ) == NULL )
     {
-      PRINTERR("  error: could not open current output file '%s', exiting...\n",quick_buffer);
+      PRINTERR("  error: could not open current output file '" QUICK_BUFFER "', exiting...\n");
       exit ( EXIT_FAILURE );
     }
     

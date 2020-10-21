@@ -3,12 +3,6 @@
 #ifndef FILE_MACROS_SEEN
 #define FILE_MACROS_SEEN
 
-
-#define NAMELENGTH        64
-#define MAXROOTLENGTH     64 
-#define EXPRLENGTH        1024                            
-
-
 /* debug log file */
 #define DBLOGPRINT(...) \
     ({ fprintf(dblogfr,"%s: ",__FUNCTION__); \

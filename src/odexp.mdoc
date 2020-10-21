@@ -232,20 +232,16 @@ Steady state must have been computed with
 List all user-defined functions.
 .It Ic l%            
 List population birth, replication and death rates.
-.It Ic la            
-List all auxiliary variables.
 .It Ic lc            
 List all constant arrays.
 .It Ic ld            
 Print file description (all lines starting with ## in 
 .Ar file 
 ).
-.It Ic le            
-List all parametric expressions.
 .It Ic lf            
 List all array files (nrows ncols and filenames).
 .It Ic li            
-List all variables with initial conditions. 
+List all initial conditions. 
 .It Ic ll          
 List file name and various information.
 .It Ic lo Op Ar optiontype         
@@ -258,8 +254,8 @@ is missing.
 List all parameters. 
 .It Ic ls            
 List steady states.
-.It Ic lx            
-List all equations and auxiliary variables.
+.It Ic lx Op DACME    
+List all equations, auxiliary variables, coupling terms, mean fields and parametric expression. Optional subset of DACME to list only those types. 
 .It Ic mm            
 Try to find all steady states.
 .It Ic mr 

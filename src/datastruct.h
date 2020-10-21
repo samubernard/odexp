@@ -9,6 +9,14 @@
 #include "macros.h"
 #include "odexp.h"
 
+/* number of global options */
+#define NBROPTS 69
+
+#define HLINE "--------------------------"
+
+/* ansi escape sequences */
+#define PR_LINEUP_AND_CLEAR printf("\033[F\033[J") 
+
 extern const char *T_IND; /* INDEX */
 extern const char *T_DET; /* DETAILS */
 extern const char *T_VAL; /* VALUE */
@@ -21,8 +29,6 @@ extern const char *T_GPL;  /* MSG GPLOT */
 extern const char *T_PR;   /* SIMULATION PROGRESS */
 extern const char *T_HEAD; /* HEADER */
 extern const char *T_BAR;  /* STATUS BAR */
-extern const char *HLINE;  /* horizontal line */
-extern const char *LINEUP_AND_CLEAR; /* go up one line and clear it */
 
 /* color palettes */
 extern const char PALETTE_ACID[8][7];
@@ -30,7 +36,6 @@ extern const char PALETTE_QUAL[9][7];
 extern const char PALETTE_APPLE[8][7];
 extern const char PALETTE_MONO[1][7];
 
-#define PINK "0xFFEEE2" 
 
 typedef struct gen_option
 {
@@ -68,11 +73,6 @@ typedef struct steady_state
     int size;
     int status;
 } steady_state;
-
-
-
-/* number of global options */
-#define NBROPTS 69
 
 /* declare global options */
 extern struct gen_option GOPTS[NBROPTS];

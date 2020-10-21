@@ -294,10 +294,6 @@ work when command expects a string argument).
 
 > List population birth, replication and death rates.
 
-**la**
-
-> List all auxiliary variables.
-
 **lc**
 
 > List all constant arrays.
@@ -308,17 +304,13 @@ work when command expects a string argument).
 > *file*
 > ).
 
-**le**
-
-> List all parametric expressions.
-
 **lf**
 
 > List all array files (nrows ncols and filenames).
 
 **li**
 
-> List all variables with initial conditions.
+> List all initial conditions.
 
 **ll**
 
@@ -340,9 +332,9 @@ work when command expects a string argument).
 
 > List steady states.
 
-**lx**
+**lx** \[DACME]
 
-> List all equations and auxiliary variables.
+> List all equations, auxiliary variables, coupling terms, mean fields and parametric expression. Optional subset of DACME to list only those types.
 
 **mm**
 
@@ -1167,4 +1159,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - October 20, 2020
+DARWIN16 - October 21, 2020
