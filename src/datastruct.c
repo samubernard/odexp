@@ -425,11 +425,6 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
 
     s->max_id = 0;
 
-    strncpy(s->stats_buffer,".odexp/stats.dat",MAXFILENAMELENGTH);
-    strncpy(s->stats_varnames,".odexp/stats_varnames.txt",MAXFILENAMELENGTH);
-    strncpy(s->traj_varnames,".odexp/traj_varnames.txt",MAXFILENAMELENGTH);
-    strncpy(s->trajectories_buffer,".odexp/traj.dat",MAXFILENAMELENGTH);
-
     s->event[0] = -1;
     s->event[1] =  1;
     s->event[2] =  0;
@@ -446,9 +441,9 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
      *  birth death
      *  child id
      */
-    if ( ( s->fstats_varnames = fopen(s->stats_varnames, "w") ) == NULL )
+    if ( ( s->fstats_varnames = fopen(STATVAR_FILENAME, "w") ) == NULL )
     {
-      PRINTERR("error: could not open file '%s', exiting...\n",s->stats_varnames);
+      PRINTERR("error: could not open file '" STATVAR_FILENAME "', exiting...\n");
       exit ( EXIT_FAILURE );
     }
 
@@ -460,9 +455,9 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     fprintf(s->fstats_varnames,"\tN\tPARENT_ID\tEVENT\tCHILD_ID\n");
     fclose(s->fstats_varnames); 
 
-    if ( ( s->ftraj_varnames = fopen(s->traj_varnames, "w") ) == NULL )
+    if ( ( s->ftraj_varnames = fopen(TRAJVAR_FILENAME, "w") ) == NULL )
     {
-      PRINTERR("error: could not open file '%s', exiting...\n",s->traj_varnames);
+      PRINTERR("error: could not open file '" TRAJVAR_FILENAME "', exiting...\n");
       exit ( EXIT_FAILURE );
     }
     fprintf(s->fstats_varnames,"TIME");
@@ -720,37 +715,6 @@ par * getpar( int with_id )
     }
 }
 
-/* obsolete */
-int fwrite_final_particle_state( void )
-{
-    par *p = SIM->pop->start;
-    FILE *fid;
-    if ( ( fid = fopen(".odexp/particle_states.dat","w") ) == NULL )
-    {
-      PRINTERR("error: could not open file 'particle_states.txt', exiting...\n");;
-      exit ( EXIT_FAILURE );
-    }
-    /* variables that can plotted
-     * type   length    where
-     * y      nbr_y     in p
-     * aux    nbr_aux   in p
-     * psi    nbr_psi   in p
-     * mfd    nbr_mfd   in SIM
-     */
-    while ( p != NULL )
-    {
-      fwrite(&(p->id),sizeof(unsigned int),1,fid);
-      fwrite(p->y,sizeof(double),p->nbr_y,fid);
-      fwrite(p->aux,sizeof(double),p->nbr_aux,fid);
-      fwrite(p->psi,sizeof(double),p->nbr_psi,fid);
-      fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,fid);
-      p = p->nextel;
-    }
-    fclose(fid);
-
-    return 0;
-}
-
 int fwrite_SIM(const double *restrict t) /* stats.dat file */
 {
   /* update SIM file */
@@ -794,15 +758,15 @@ int list_particle(int with_id)
     char cmd_print[EXPRLENGTH];
     if ( with_id == -1 )
     {
-      snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - .odexp/traj_varnames.txt > .odexp/id%d.txt", with_id);
+      snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - " TRAJVAR_FILENAME " > .odexp/id%d.txt", with_id);
       snprintf(cmd_data,EXPRLENGTH,\
-            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/id%d.txt",\
+            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' " TRAJ_FILENAME " >> .odexp/id%d.txt",\
             nbr_col, fix, with_id);
     }
     else
     {
       generate_particle_file(with_id); /* generate idXX.dat file for the current particle */
-      snprintf(cmd_varnames,EXPRLENGTH,"cat .odexp/traj_varnames.txt > .odexp/id%d.txt", with_id);
+      snprintf(cmd_varnames,EXPRLENGTH,"cat " TRAJVAR_FILENAME " > .odexp/id%d.txt", with_id);
       snprintf(cmd_data,EXPRLENGTH,\
             "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
             nbr_col, fix, with_id, with_id);
@@ -822,9 +786,9 @@ int list_stats( void )
     int nbr_col = 1 + SIM->nbr_mfd; 
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH,"cat .odexp/stats_varnames.txt > .odexp/stats.csv");
+    snprintf(cmd_varnames,EXPRLENGTH,"cat " STATVAR_FILENAME " > .odexp/stats.csv");
     snprintf(cmd_data,EXPRLENGTH,\
-            "hexdump -e '%d \"%%5.%df\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' .odexp/stats.dat >> .odexp/stats.csv",\
+            "hexdump -e '%d \"%%5.%df\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' " STATS_FILENAME " >> .odexp/stats.csv",\
             nbr_col, fix);
 
     s = system(cmd_varnames); 
@@ -842,14 +806,14 @@ int list_traj( void )
     int nbr_col = SIM->nbr_col;
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH,"echo 'STEP     ID     ' | paste - .odexp/traj_varnames.txt > .odexp/traj.csv");
+    snprintf(cmd_varnames,EXPRLENGTH,"echo 'STEP     ID     ' | paste - " TRAJVAR_FILENAME " > .odexp/traj.csv");
     snprintf(cmd_data,EXPRLENGTH,\
-            "hexdump -e '\"%%u \" \"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' .odexp/traj.dat >> .odexp/traj.csv",
+            "hexdump -e '\"%%u \" \"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' " TRAJ_FILENAME " >> .odexp/traj.csv",
             nbr_col, fix);
 
     s = system(cmd_varnames); 
     s = system(cmd_data); 
-    s = system("column -t .odexp/traj.csv | less -sS");
+    s = system("column -t " TRAJ_FILENAME " | less -sS");
 
     return s;
 }
@@ -864,9 +828,9 @@ int generate_particle_file(int with_id)
   char filename[MAXFILENAMELENGTH];
   int nbr_col = SIM->nbr_col; 
   row = malloc(nbr_col*sizeof(double));
-  if ( ( fin = fopen(".odexp/traj.dat", "r") ) == NULL )
+  if ( ( fin = fopen(TRAJ_FILENAME, "r") ) == NULL )
   {
-    PRINTERR("error: could not open file '.odexp/traj.dat'.\n");
+    PRINTERR("error: could not open file '" TRAJ_FILENAME "'.\n");
     return 1;
   }
   snprintf(filename,MAXFILENAMELENGTH,".odexp/id%d.dat", with_id);
@@ -899,18 +863,16 @@ int generate_particle_states(int timestep, double *time)
   FILE *fout = NULL;
   int id,st;
   double *row = NULL;
-  char filename[MAXFILENAMELENGTH];
   int nbr_col = SIM->nbr_col; 
   row = malloc(nbr_col*sizeof(double));
-  if ( ( fin = fopen(".odexp/traj.dat", "r") ) == NULL )
+  if ( ( fin = fopen(TRAJ_FILENAME, "r") ) == NULL )
   {
-    PRINTERR("error: could not open file '.odexp/traj.dat'.\n");
+    PRINTERR("error: could not open file '" TRAJ_FILENAME "'.\n");
     return 1;
   }
-  snprintf(filename,MAXFILENAMELENGTH,".odexp/particle_states.dat");
-  if ( ( fout = fopen(filename, "w") ) == NULL )
+  if ( ( fout = fopen(PSTATE_FILENAME,"w") ) == NULL )
   {
-    PRINTERR("error: could not open file '%s'.\n", filename);
+    PRINTERR("error: could not open file '" PSTATE_FILENAME "'.\n");
     return 1;
   }
 

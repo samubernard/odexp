@@ -252,14 +252,14 @@ int odesolver( oderhs pop_ode_rhs,
 
     /* Initialize SIM */
     remove_id_files(); /* remove files before fopen'ing again. Do not report errors, files might be absent */
-    if ( ( SIM->fid = fopen(SIM->stats_buffer, "w") ) == NULL )
+    if ( ( SIM->fid = fopen(STATS_FILENAME, "w") ) == NULL )
     {
-      PRINTERR("  error: could not open file stat file %s', exiting...\n",SIM->stats_buffer);
+      PRINTERR("  error: could not open stats file '" STATS_FILENAME "', exiting...\n");
       exit ( EXIT_FAILURE );
     }
-    if ( ( SIM->ftrajectories = fopen(SIM->trajectories_buffer, "w") ) == NULL )
+    if ( ( SIM->ftrajectories = fopen(TRAJ_FILENAME, "w") ) == NULL )
     {
-      PRINTERR("  error: could not open file stat file %s', exiting...\n",SIM->trajectories_buffer);
+      PRINTERR("  error: could not open trajectories file '" TRAJ_FILENAME "', exiting...\n");
       exit ( EXIT_FAILURE );
     }
 
@@ -717,8 +717,6 @@ int odesolver( oderhs pop_ode_rhs,
     
     free(y);
     free(tstops);
-
-    /* fwrite_final_particle_state(); */
 
     return status;
 

@@ -17,6 +17,9 @@
 #include "main.h"
 #include "odexpConfig.h"
 
+#define EXIT_IF_NO_FILE      1
+#define DONT_EXIT_IF_NO_FILE 0
+
 /* static variable for holding the command line string */
 static char *rawcmdline = (char *)NULL;
 static char *cmdline  = (char *)NULL;
@@ -65,9 +68,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   char    svalue[NAMELENGTH],
           svalue2[EXPRLENGTH],
           svalue3[NAMELENGTH];
-  int     exit_if_nofile=1,
-          no_exit=0,
-          np,
+  int     np,
           padding,
           charpos,
           nbr_read,
@@ -201,7 +202,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   printf("\n%-25s" HLINE "\n", "model description");
   get_nbr_el(EQ_FILENAME,"##",2, &dsc.nbr_el, NULL);
   alloc_namevalexp(&dsc);
-  success = load_line(EQ_FILENAME,dsc,"##",2, exit_if_nofile);
+  success = load_line(EQ_FILENAME,dsc,"##",2, EXIT_IF_NO_FILE);
   for ( i = 0; i<dsc.nbr_el; i++ )
   {
     printf("%s\n",dsc.comment[i]);  
@@ -211,11 +212,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* extra commands */
   get_nbr_el(EQ_FILENAME,"CMD",3, &xcd.nbr_el, NULL);
   alloc_namevalexp(&xcd);
-  success = load_line(EQ_FILENAME,xcd,"CMD",3, exit_if_nofile);
+  success = load_line(EQ_FILENAME,xcd,"CMD",3, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d extra commands",xcd.nbr_el);
 
   /* get tspan */
-  success = load_double_array(PAR_FILENAME, &tspan, ts_string, ts_len, exit_if_nofile); 
+  success = load_double_array(PAR_FILENAME, &tspan, ts_string, ts_len, EXIT_IF_NO_FILE); 
   if (!success)
   {
     PRINTWARNING("\n  Warning: time span not found. Time span will be set to default [0,1]\n"
@@ -236,25 +237,25 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* get constant arrays */
   get_nbr_el(EQ_FILENAME,"CONST",5, &cst.nbr_el, NULL);
   alloc_namevalexp(&cst);
-  success = load_strings(EQ_FILENAME,cst,"CONST",5,1,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,cst,"CONST",5,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d constants",cst.nbr_el);
 
   /* get data files */
   get_nbr_el(EQ_FILENAME,"FI",2, &dfl.nbr_el, NULL);
   alloc_namevalexp(&dfl);
-  success = load_strings(EQ_FILENAME,dfl,"FI",2,1,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,dfl,"FI",2,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d data files",dfl.nbr_el);
 
   /* get user-defined functions */
   get_nbr_el(EQ_FILENAME,"FUN",3, &func.nbr_el, NULL);
   alloc_namevalexp(&func);
-  success = load_strings(EQ_FILENAME,func,"FUN",3,1,'=', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,func,"FUN",3,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d user-defined function",func.nbr_el);
 
   /* get parameters */
   get_nbr_el(PAR_FILENAME,"PAR",3, &mu.nbr_el, &mu.nbr_expr);
   alloc_namevalexp(&mu);
-  success = load_nameval(PAR_FILENAME,mu,"PAR",3,exit_if_nofile);
+  success = load_nameval(PAR_FILENAME,mu,"PAR",3,EXIT_IF_NO_FILE);
   if (!success) /* then create a not_a_parameter parameter */
   {
     /* printf("  no parameter\n"); */
@@ -279,19 +280,19 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* get parametric expressions */
   get_nbr_el(EQ_FILENAME,"EXPR",4, &pex.nbr_el, &pex.nbr_expr);
   alloc_namevalexp(&pex);
-  success = load_strings(EQ_FILENAME,pex,"EXPR",4,1,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,pex,"EXPR",4,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d parametric expressions",pex.nbr_el);
 
   /* get initial conditions */
   get_nbr_el(PAR_FILENAME,"INIT",4, &ics.nbr_el, &ics.nbr_expr);
   alloc_namevalexp(&ics);
-  success = load_strings(PAR_FILENAME,ics,"INIT",4,1,' ', exit_if_nofile);
+  success = load_strings(PAR_FILENAME,ics,"INIT",4,1, EXIT_IF_NO_FILE);
   if (!success)
   {
     PRINTERR("\n  Error: Initial conditions not found.\n"
         "  File %s should contain initial condition for each dynamical variables "
         "with lines of the form\n"
-        "  INITIAL VAR VALUE\nExiting...\n", odexp_filename);
+        "  INIT VAR VALUE\nExiting...\n", odexp_filename);
     DBLOGPRINT("Error: Initial conditions not found.");
     exit ( EXIT_FAILURE );
   } 
@@ -301,13 +302,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* get nonlinear functions */
   get_nbr_el(EQ_FILENAME,"AUX",3, &fcn.nbr_el, &fcn.nbr_expr);
   alloc_namevalexp(&fcn);
-  success = load_strings(EQ_FILENAME,fcn,"AUX",3,1,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,fcn,"AUX",3,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d auxiliary variables",fcn.nbr_el);
 
   /* get equations */
   get_nbr_el(EQ_FILENAME,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
   alloc_namevalexp(&eqn);
-  success = load_strings(EQ_FILENAME,eqn,"d",1,0,'=', exit_if_nofile);   
+  success = load_strings(EQ_FILENAME,eqn,"d",1,0, EXIT_IF_NO_FILE);   
   if (!success)
   {
     PRINTERR("\n  Error: Equations not found."
@@ -322,31 +323,31 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* define psi */
   get_nbr_el(EQ_FILENAME,"%C",2, &psi.nbr_el, &psi.nbr_expr);
   alloc_namevalexp(&psi);
-  success = load_strings(EQ_FILENAME,psi,"%C",2,1,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,psi,"%C",2,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population couplings",psi.nbr_el);
 
   /* define mfd */
   get_nbr_el(EQ_FILENAME,"%M",2, &mfd.nbr_el, &mfd.nbr_expr);
   alloc_namevalexp(&mfd);
-  success = load_strings(EQ_FILENAME,mfd,"%M",2,1,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,mfd,"%M",2,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population mean fields",mfd.nbr_el);
 
   /* define birth */
   get_nbr_el(EQ_FILENAME,"%BIRTH",6, &birth.nbr_el, &birth.nbr_expr);
   alloc_namevalexp(&birth);
-  success = load_strings(EQ_FILENAME,birth,"%BIRTH",6,0,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,birth,"%BIRTH",6,0, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population birth rates",birth.nbr_el);
 
   /* define repli */
   get_nbr_el(EQ_FILENAME,"%REPLI",6, &repli.nbr_el, &repli.nbr_expr);
   alloc_namevalexp(&repli);
-  success = load_strings(EQ_FILENAME,repli,"%REPLI",6,0,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,repli,"%REPLI",6,0, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population replication rates",repli.nbr_el);
 
   /* define death */
   get_nbr_el(EQ_FILENAME,"%DEATH",6, &death.nbr_el, &death.nbr_expr);
   alloc_namevalexp(&death);
-  success = load_strings(EQ_FILENAME,death,"%DEATH",6,0,' ', exit_if_nofile);
+  success = load_strings(EQ_FILENAME,death,"%DEATH",6,0, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population death rates",repli.nbr_el);
 
   /* define dxv */
@@ -395,7 +396,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
 
   /* get options */
-  success = load_options(PAR_FILENAME, exit_if_nofile); 
+  success = load_options(PAR_FILENAME, EXIT_IF_NO_FILE); 
   update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
   update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
   update_act_par_index(&p, mu);
@@ -429,7 +430,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR); */
   PRINTLOG("RAND_MAX %d",RAND_MAX);
 
-  printf("  logfiles: .odexp/log.txt and .odexp/dblog.txt\n");
+  printf("  logfiles: " LOG_FILENAME " and " DB_LOG_FILENAME "\n");
 
   /* readline */
   if (strcmp("EditLine wrapper",rl_library_version) == 0)
@@ -519,7 +520,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     else
     {
       printf_status_bar( &tspan );
-      rawcmdline = readline("οдεⅹп> ");
+      rawcmdline = readline(ODEXP_PROMPT);
       printf("%s","\033[J"); /* clear to the end of screen */
     }
     sscanf(rawcmdline," %c%n",&c,&charpos);
@@ -1449,7 +1450,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             NUM_IC[i] = 0;
           }
           /* reset parameter values */
-          load_nameval(PAR_FILENAME, mu, "PAR", 3,exit_if_nofile);
+          load_nameval(PAR_FILENAME, mu, "PAR", 3,EXIT_IF_NO_FILE);
           runplot = 1;
           update_act_par_options(p, mu);
           break;
@@ -1463,12 +1464,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           else /* read new_par_filename for parameters, initial conditions, and tspan */
           {
             /* load parameter values */
-            success = load_nameval(new_par_filename, mu, "PAR", 3,no_exit);
+            success = load_nameval(new_par_filename, mu, "PAR", 3,DONT_EXIT_IF_NO_FILE);
             if ( success == 0 )
             {
               PRINTWARNING("  warning: could not load parameters.\n");
             }
-            success = load_nameval(new_par_filename, ics, "INIT", 4,no_exit); /* load initial conditions value from file */
+            success = load_nameval(new_par_filename, ics, "INIT", 4,DONT_EXIT_IF_NO_FILE); /* load initial conditions value from file */
             if ( success == 1)
             {
               /* reset initial condtitions */
@@ -1481,12 +1482,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             {
               PRINTWARNING("  warning: could not load initial conditions.\n");
             }
-            success = load_double_array(new_par_filename, &tspan, ts_string, ts_len, no_exit); 
+            success = load_double_array(new_par_filename, &tspan, ts_string, ts_len, DONT_EXIT_IF_NO_FILE); 
             if ( success == 0 )
             {
               PRINTWARNING("  warning: could not load tspan.\n");
             }
-            success = load_options(new_par_filename, no_exit);
+            success = load_options(new_par_filename, DONT_EXIT_IF_NO_FILE);
             if ( success == 0 )
             {
               PRINTWARNING("  warning: could not load options.\n");

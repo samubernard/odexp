@@ -101,7 +101,7 @@ my $re_attributeIC = qr/^
   ($re_identifier       # var name
   (?:\s*\[.*?\])?)      # optional brackets
   \/DT                  # second part of derivative
-  \s*=\s*               # equal
+  \s*=?\s*              # equal
   [^\{#\n]+             # rhs until bracket comment or newline 
   \{.*?init\s*=\s*(.*?)(?:,.*?\}|\s*\}) # attribute containing init=ic;
   \s*                   # whitespace(s)
@@ -137,7 +137,7 @@ my $re_dxdt = qr/^
   ($re_identifier)      # var name
   (?:\s*\[.*?\])?       # optional brackets do not capture
   \/DT                  # second part of derivative
-  \s*=\s*               # equal
+  \s*=?\s*              # equal
   ([^\{#\n]+)           # rhs until bracket comment or newline 
   (|\{.*?\})?           # nothing or attribute
   \s*                   # whitespace(s)

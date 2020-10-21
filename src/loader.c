@@ -364,7 +364,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
 
 }
 
-int load_strings(const char *filename, nve var, const char *sym, const int sym_len, int prefix, char sep, int exit_if_nofile)
+int load_strings(const char *filename, nve var, const char *sym, const int sym_len, int prefix, int exit_if_nofile)
 {
   int  var_index = 0,
           j = 0,
@@ -392,6 +392,7 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
   char index_str[NAMELENGTH];
   char new_index[NAMELENGTH];
   char baseexpression[EXPRLENGTH];
+  char sep;
   FILE *fr;
   int k = 0, has_read;
   int success = 0;
@@ -430,10 +431,15 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
       /* find the name root and expression */
       if ( prefix ) /* prefix is something like aux, %C, expr, ... */
       {
-        snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^%c]%%n %c %%[^#{\n] {%%[^}]}", sep, sep);
+        snprintf(str2match,NAMELENGTH,"%%*s %%n %%[^ ]%%n %%[^#{\n] {%%[^}]}");
       }
       else /* prefix ==  0 is for dx/dt = [expression] */
       {
+        sscanf(line,"%*s %c",&sep);
+        if ( sep != '=' )
+        {
+          sep = ' ';
+        }
         snprintf(str2match,NAMELENGTH,"%%n %%s%%n %c %%[^#{\n] {%%[^}]}", sep); 
       }
       attribute[0] = 0; /* snprintf(attribute,1,""); */
@@ -522,9 +528,6 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
       for (j=0;j<expr_size;j++)
       {
         var.expr_index[var_index+j] = var_index;
-        /* DBLOGPRINT("  %s[%s%d%s] %-*s %c %s%s%s %s%s%s\n",\ 
-            sym,T_IND,var_index+j,T_NOR,*var.max_name_length,var.name[var_index+j],\
-            sep,T_EXPR,var.expression[var_index+j],T_NOR,T_DET,var.attribute[var_index+j],T_NOR); */
       }
       var_index += expr_size;
     }

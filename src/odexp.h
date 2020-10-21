@@ -27,6 +27,11 @@
 #define EQ_FILENAME      ".odexp/equations.pop"
 #define PAR_FILENAME     ".odexp/parameters.pop"
 #define QUICK_BUFFER     "current.plot"
+#define STATVAR_FILENAME ".odexp/stats_varnames.txt"
+#define TRAJVAR_FILENAME ".odexp/traj_varnames.txt"
+#define STATS_FILENAME   ".odexp/stats.dat"
+#define TRAJ_FILENAME    ".odexp/traj.dat"
+#define PSTATE_FILENAME  ".odexp/particle_states.dat"
 
 /* colors */
 #define TERM_BG_COLOR "0xFFEEE2" 
@@ -135,16 +140,9 @@ typedef struct system_state {
 
     int   (*ode_rhs)(double, const double *, double *, void *);
 
-    char    stats_buffer[MAXFILENAMELENGTH];
-    FILE   *fid;
-    
-    char    stats_varnames[MAXFILENAMELENGTH];
+    FILE   *fid; /* -> STATS_FILENAME */
     FILE   *fstats_varnames;
-
-    char    traj_varnames[MAXFILENAMELENGTH];
     FILE   *ftraj_varnames;
-
-    char    trajectories_buffer[MAXFILENAMELENGTH];
     FILE   *ftrajectories;
 
 } world;
