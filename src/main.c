@@ -96,7 +96,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* modes */
   int     runplot                 = 0, /* run a new ODE simulation */
           plotonly                = 0,
-          quit                  = 0;
+          quit                    = 0;
 
   /* 
    * plot mode:
@@ -153,6 +153,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   int             nbr_stst = 0;
   /* end variable declaration */
 
+  /* set xterm title */
+  printf("\033]0;odexp\007");
 
 
   if ( ( logfr = fopen(LOG_FILENAME, "a") ) == NULL ) /* create a log file or append an existing log file */
@@ -465,6 +467,16 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
     PRINTLOG("First simulation done.");
   }
+  if ( strncmp(get_str("loudness"),"quiet",3) == 0 ) /* run quiet mode, break out of while loop  */
+  {
+    printf("\n  %syou are in quiet mode (option loudness quiet),\n"
+        "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
+    printf("  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
+    printf("  hexdump -e '2 \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_col); 
+    printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
+    PRINTLOG("Quiet mode, will exit");
+    quit = 1;
+  }
 
   /* GNUPLOT SETUP */
   gnuplot_config(gx, gy, dxv);
@@ -487,29 +499,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     strncpy(extracmd+5,get_str("runfirst"),strlen(get_str("runfirst")));
   }
 
-
-
-  /* set xterm title */
-  printf("\033]0;odexp\007");
-
   PRINTLOG("Main loop");
-  while(1)  /* MAIN LOOP */
+  while(!quit)  /* MAIN LOOP */
   {
+
     while ( read_msg() ) /* try to read and print FIFO */
     {
       /* if already caught a message, try to catch more of the message */ 
     };
 
-    if ( strncmp(get_str("loudness"),"quiet",3) == 0 ) /* run quiet mode, break out of while loop  */
-    {
-      printf("\n  %syou are in quiet mode (option loudness quiet),\n"
-          "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
-      printf("  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
-      printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_col); 
-      printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
-      PRINTLOG("Quiet mode, will exit");
-      break;
-    }
     printf("%s",T_NOR);
     if ( extracmd != NULL )
     {
@@ -2900,20 +2898,12 @@ int printf_status_bar( double_array *tspan)
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"%s=%g  t=%g…%g ", get_str("actpar"), SIM->mu[get_int("actpar")], tspan->array[0], tspan->array[tspan->length-1]);
     k = strlen(status_str);
-    snprintf(status_str+k,80-k,"%.3s ", get_str("popmode"));
+    snprintf(status_str+k,80-k,"%.1s ", get_str("popmode"));
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"∫%s ", get_str("solver"));
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"•%d ", get_int("res"));
     k = strlen(status_str);
-#if 0
-    snprintf(status_str+k,80-k,"(%.4s,", get_str("x"));
-    k = strlen(status_str);
-    snprintf(status_str+k,80-k,"%.4s,", get_str("y"));
-    k = strlen(status_str);
-    snprintf(status_str+k,80-k,"%.4s) ", get_str("z"));
-    k = strlen(status_str);
-#endif 
     snprintf(status_str+k,80-k,"|%g| ", get_dou("abstol"));
     k = strlen(status_str);
     snprintf(status_str+k,80-k,"%%%g ", get_dou("reltol"));

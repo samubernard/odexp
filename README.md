@@ -7,9 +7,11 @@ ODEXP(1) - General Commands Manual
 # SYNOPSIS
 
 **odexp**
-\[**-o**&nbsp;*optimization*]
-\[**-p**&nbsp;*parfile*]
+\[**-a**&nbsp;*additional&nbsp;odexp&nbsp;options*]
 \[**-i**]
+\[**-o**&nbsp;*compiler&nbsp;options*]
+\[**-p**&nbsp;*parfile*]
+\[**-q**]
 *file*
 
 # DESCRIPTION
@@ -43,17 +45,29 @@ Solutions are plotted with
 
 # OPTIONS
 
-**-o** *optimization*
+**-a** *options*
 
-> Optimization level of the compiler. Default 'g' for debugging.
+> Add options to odexp.
+> *options*
+> comes as 'option1=value1, option2=value2, ...'
 
-**-p** *parfile*
+**-o** *options*
 
-> Optional parameter file.
+> Add
+> *option*
+> to the compiler command. Default 'g' for debugging.
 
 **-i**
 
 > Ignore syntax errors try to parse the file anyway.
+
+**-p** *parfile*
+
+> Optional parameter file. This overrides parameters, timespan and options in the source file.
+
+**-q**
+
+> Quiet mode. Quit after the first run and leave simulation files in place.
 
 # USAGE
 
@@ -1159,4 +1173,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - October 21, 2020
+DARWIN16 - October 22, 2020
