@@ -1182,7 +1182,7 @@ The file
 *traj.dat*
 lists at each time step all particles, and has columns
 
-> STEP ID TIME D/DT AUX %C %M EXPR
+> STEP ID TIME DYN AUX CPL MF EXPR
 
 # EXAMPLES
 
