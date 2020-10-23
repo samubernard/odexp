@@ -10,7 +10,7 @@
 #include "odexp.h"
 
 /* number of global options */
-#define NBROPTS 69
+#define NBROPTS 70
 
 #define HLINE "--------------------------"
 

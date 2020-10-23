@@ -61,6 +61,6 @@ char *completion_list_generator(const char *, int);
 /* gnuplot fifo */
 int read_msg( void );
 
-int gnuplot_config( const int gx, const int gy, nve dxv);
+int gnuplot_config( );
 
 int get_attribute(const char *s, const char *key, char *val);

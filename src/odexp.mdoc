@@ -963,6 +963,46 @@ Explicit Forward Euler with fixed time steps. Combined the macro DWDT, this is t
 Not an ODE stepper. The stepper assigns the RHS of the equation to the updated state variable.
 .El
 .
+.Sh OUTPUT
+.Pp
+There are two primary output files: 
+.Ar traj.dat 
+and
+.Ar stats.dat .
+The file 
+.Ar stats.dat 
+stores at each time step the following information
+.Pp
+.D1 TIME MFs N EVENTs 
+.Pp
+where 
+.Ar TIME 
+is the time (double),
+.Ar MFs
+are all the mean fields (double),
+.N
+is the number of particles (int).
+.Ar EVENTs 
+have three int columns describing birth/death/replication events: 
+.Ar PARENT_ID, EVENT, CHILD_ID .
+.Ar EVENT 
+is 1 if birth or replication, -1 if death, and 0 if no event occurred (a fixed output time steps) 
+.Ar PARENT_ID 
+is the ID of particle that dies or replicate, -1 if
+.Ar EVENT 
+is a birth, and 0 if no event occurred.
+.Ar CHILD_ID 
+is the ID of the newly created particle, if
+.Ar EVENT 
+= 1, -1 if a particle dies and 0 otherwise.
+.Pp
+The file 
+.Ar traj.dat
+lists at each time step all particles, and has columns
+.Pp
+.D1 STEP ID TIME DYN AUX CPL MF EXPR
+.Pp
+.
 .Sh EXAMPLES
 .Pp
 Here is an example of an odexp file for the Lotka-Volterra equations.

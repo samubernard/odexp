@@ -1784,7 +1784,7 @@ int remove_id_files()
     char pathtofile[EXPRLENGTH];
     for (i = 0; i < SIM->max_id; i++)
     {
-        snprintf(pathtofile,EXPRLENGTH,".odexp/id%d.dat",i);
+        snprintf(pathtofile,EXPRLENGTH, ODEXPDIR "id%d.dat",i);
         if ( remove(pathtofile) )
         {
           /* DBPRINT("error removing id file %d.", i); */

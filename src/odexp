@@ -193,7 +193,7 @@ if ( $nbr_argv == 0 ) {
 }
 
 # ---------------------------------------
-# Files created in .odexp
+# Files created in $odedir
 # equations.pop:   equation, constants, datafile ... where all constants are replaced by their values
 # parameters.pop:  contains parameter, initial condition, tspan and options
 # model.c:         C file implementation 

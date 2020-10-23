@@ -1146,6 +1146,44 @@ iteration
 
 > Not an ODE stepper. The stepper assigns the RHS of the equation to the updated state variable.
 
+# OUTPUT
+
+There are two primary output files:
+*traj.dat*
+and
+*stats.dat*.
+The file
+*stats.dat*
+stores at each time step the following information
+
+> TIME MFs N EVENTs
+
+where
+*TIME*
+is the time (double),
+*MFs*
+are all the mean fields (double),
+is the number of particles (int).
+*EVENTs*
+have three int columns describing birth/death/replication events:
+*PARENT\_ID, EVENT, CHILD\_ID*.
+*EVENT*
+is 1 if birth or replication, -1 if death, and 0 if no event occurred (a fixed output time steps)
+*PARENT\_ID*
+is the ID of particle that dies or replicate, -1 if
+*EVENT*
+is a birth, and 0 if no event occurred.
+*CHILD\_ID*
+is the ID of the newly created particle, if
+*EVENT*
+&equals; 1, -1 if a particle dies and 0 otherwise.
+
+The file
+*traj.dat*
+lists at each time step all particles, and has columns
+
+> STEP ID TIME D/DT AUX %C %M EXPR
+
 # EXAMPLES
 
 Here is an example of an odexp file for the Lotka-Volterra equations.
@@ -1173,4 +1211,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - October 22, 2020
+DARWIN16 - October 23, 2020

@@ -20,21 +20,25 @@
 #define MAX_PLOT_KEY      100
 
 /* filenames */
-#define HISTORY_FILENAME ".odexp/history.txt"
-#define LOG_FILENAME     ".odexp/log.txt"
-#define DB_LOG_FILENAME  ".odexp/dblog.txt"
-#define GP_FIFONAME      ".odexp/gfifo"
-#define EQ_FILENAME      ".odexp/equations.pop"
-#define PAR_FILENAME     ".odexp/parameters.pop"
+#ifndef ODEXPDIR
+#define ODEXPDIR         ".odexp/"
+#endif
+#define HISTORY_FILENAME ODEXPDIR "history.txt"
+#define LOG_FILENAME     ODEXPDIR "log.txt"
+#define DB_LOG_FILENAME  ODEXPDIR "dblog.txt"
+#define GP_FIFONAME      ODEXPDIR "gfifo"
+#define EQ_FILENAME      ODEXPDIR "equations.pop"
+#define PAR_FILENAME     ODEXPDIR "parameters.pop"
 #define QUICK_BUFFER     "current.plot"
-#define STATVAR_FILENAME ".odexp/stats_varnames.txt"
-#define TRAJVAR_FILENAME ".odexp/traj_varnames.txt"
-#define STATS_FILENAME   ".odexp/stats.dat"
-#define TRAJ_FILENAME    ".odexp/traj.dat"
-#define PSTATE_FILENAME  ".odexp/particle_states.dat"
+#define STATVAR_FILENAME ODEXPDIR "stats_varnames.txt"
+#define TRAJVAR_FILENAME ODEXPDIR "traj_varnames.txt"
+#define STATS_FILENAME   ODEXPDIR "stats.dat"
+#define TRAJ_FILENAME    ODEXPDIR "traj.dat"
+#define PSTATE_FILENAME  ODEXPDIR "particle_states.dat"
 
 /* colors */
-#define TERM_BG_COLOR "0xFFEEE2" 
+#define TERM_BG_COLOR1 "0xFFEEE2" 
+#define TERM_BG_COLOR2 "0xFFF5F2" 
 #define ODEXP_PROMPT  "οдεⅹп> "
 
 typedef long RANDINT;

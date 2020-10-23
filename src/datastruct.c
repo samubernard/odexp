@@ -74,6 +74,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"print","printsettings", 's', 0.0, 0, "postscript eps color", "gnuplot PRINT settings", "gnuplotSettings"},
   {"pal","palette", 's', 0.0, 0, "apple", "color palette acid | qual | {apple}", "gnuplotSettings"},
   {"key","togglekey", 'i', 0.0, 1, "", "switch key on/off", "gnuplotSettings"},
+  {"bg","background", 's', 0.0, 0, "none", "terminal background {none} | fancy", "gnuplotSettings"},
   {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
   {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
   {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},
@@ -758,20 +759,20 @@ int list_particle(int with_id)
     char cmd_print[EXPRLENGTH];
     if ( with_id == -1 )
     {
-      snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - " TRAJVAR_FILENAME " > .odexp/id%d.txt", with_id);
+      snprintf(cmd_varnames,EXPRLENGTH,"echo 'ID     ' | lam - " TRAJVAR_FILENAME " > " ODEXPDIR "id%d.txt", with_id);
       snprintf(cmd_data,EXPRLENGTH,\
-            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' " TRAJ_FILENAME " >> .odexp/id%d.txt",\
+            "hexdump -e '\"%%d \" %d \"%%5.%df\t\" \"\\n\"' " TRAJ_FILENAME " >> " ODEXPDIR "id%d.txt",\
             nbr_col, fix, with_id);
     }
     else
     {
       generate_particle_file(with_id); /* generate idXX.dat file for the current particle */
-      snprintf(cmd_varnames,EXPRLENGTH,"cat " TRAJVAR_FILENAME " > .odexp/id%d.txt", with_id);
+      snprintf(cmd_varnames,EXPRLENGTH,"cat " TRAJVAR_FILENAME " > " ODEXPDIR "id%d.txt", with_id);
       snprintf(cmd_data,EXPRLENGTH,\
-            "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' .odexp/id%d.dat >> .odexp/id%d.txt",\
+            "hexdump -e '%d \"%%5.%df\t\" \"\\n\"' " ODEXPDIR "id%d.dat >> " ODEXPDIR "id%d.txt",\
             nbr_col, fix, with_id, with_id);
     } 
-    snprintf(cmd_print,EXPRLENGTH,"column -t .odexp/id%d.txt | less -sS", with_id);
+    snprintf(cmd_print,EXPRLENGTH,"column -t " ODEXPDIR "id%d.txt | less -sS", with_id);
     s = system(cmd_varnames); 
     s = system(cmd_data); 
     s = system(cmd_print);
@@ -786,14 +787,14 @@ int list_stats( void )
     int nbr_col = 1 + SIM->nbr_mfd; 
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH,"cat " STATVAR_FILENAME " > .odexp/stats.csv");
+    snprintf(cmd_varnames,EXPRLENGTH,"cat " STATVAR_FILENAME " > " ODEXPDIR "stats.csv");
     snprintf(cmd_data,EXPRLENGTH,\
-            "hexdump -e '%d \"%%5.%df\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' " STATS_FILENAME " >> .odexp/stats.csv",\
+            "hexdump -e '%d \"%%5.%df\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' " STATS_FILENAME " >> " ODEXPDIR "stats.csv",\
             nbr_col, fix);
 
     s = system(cmd_varnames); 
     s = system(cmd_data); 
-    s = system("column -t .odexp/stats.csv | less -sS");
+    s = system("column -t " ODEXPDIR "stats.csv | less -sS");
 
     return s;
 }
@@ -806,14 +807,14 @@ int list_traj( void )
     int nbr_col = SIM->nbr_col;
     char cmd_varnames[EXPRLENGTH];
     char cmd_data[EXPRLENGTH];
-    snprintf(cmd_varnames,EXPRLENGTH,"echo 'STEP     ID     ' | paste - " TRAJVAR_FILENAME " > .odexp/traj.csv");
+    snprintf(cmd_varnames,EXPRLENGTH,"echo 'STEP     ID     ' | paste - " TRAJVAR_FILENAME " > " ODEXPDIR "traj.csv");
     snprintf(cmd_data,EXPRLENGTH,\
-            "hexdump -e '\"%%u \" \"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' " TRAJ_FILENAME " >> .odexp/traj.csv",
+            "hexdump -e '\"%%u \" \"%%d\t\" %d \"%%5.%df\t\" \"\\n\"' " TRAJ_FILENAME " >> " ODEXPDIR "traj.csv",
             nbr_col, fix);
 
     s = system(cmd_varnames); 
     s = system(cmd_data); 
-    s = system("column -t " TRAJ_FILENAME " | less -sS");
+    s = system("column -t " ODEXPDIR "traj.csv | less -sS");
 
     return s;
 }
@@ -833,7 +834,7 @@ int generate_particle_file(int with_id)
     PRINTERR("error: could not open file '" TRAJ_FILENAME "'.\n");
     return 1;
   }
-  snprintf(filename,MAXFILENAMELENGTH,".odexp/id%d.dat", with_id);
+  snprintf(filename,MAXFILENAMELENGTH, ODEXPDIR "id%d.dat", with_id);
   if ( ( fout = fopen(filename, "w") ) == NULL )
   {
     PRINTERR("error: could not open file '%s'.\n", filename);

@@ -179,7 +179,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       return 1;
     }
   }
-  if ( ( GPLOTP = popen("gnuplot -persist >>.odexp/gfifo  2>&1","w") ) == NULL ) /* open gnuplot in 
+  if ( ( GPLOTP = popen("gnuplot -persist >>" GP_FIFONAME " 2>&1","w") ) == NULL ) /* open gnuplot in 
                                                                                     persist mode with 
                                                                                     redirection of stderr > stdout */
   {
@@ -441,7 +441,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     PRINTWARNING("         inputrc will not work and you will not be able to use the keyboard shortcuts\n\n");
     DBLOGPRINT("warning: You are using the EditLine wrapper of the readline library.");    
   }
-  else if ( rl_read_init_file (".odexp/.inputrc") ) /* readline init file */
+  else if ( rl_read_init_file (ODEXPDIR ".inputrc") ) /* readline init file */
   {
     PRINTWARNING("\n  warning: inputrc file for readline not found\n");
     DBLOGPRINT("warning: inputrc file for readline not found");
@@ -640,7 +640,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             if ( op == 'c' || op == 'r' ) /* try to clear or reset curves */
             {
-              system("rm -f .odexp/curve.*");
+              system("rm -f " ODEXPDIR "curve.*");
               nbr_hold = 0;
               set_int("curves",0);
               printf("  %sadd curves is off%s\n",T_DET,T_NOR);
@@ -1180,13 +1180,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           else if (op == 'l') /* list fiLe and various information */
           {
             printf("  File name: %s%s%s\n",T_EXPR,odexp_filename,T_NOR);
-            printf("  ODE system size               = %s%d%s\n",T_VAL,ode_system_size,T_NOR);
+            printf("  odexp directory: " ODEXPDIR "\n");
+            printf("  Number of dynamical variables = %s%d%s\n",T_VAL,ode_system_size,T_NOR);
             printf("  Number of auxiliary functions = %s%d%s\n",T_VAL,fcn.nbr_el,T_NOR);
-            printf("  Number of couplings           = %s%d%s\n",T_VAL,psi.nbr_el,T_NOR);
+            printf("  Number of coupling terms      = %s%d%s\n",T_VAL,psi.nbr_el,T_NOR);
             printf("  Number of mean fields         = %s%d%s\n",T_VAL,mfd.nbr_el,T_NOR);
-            printf("  Number of variables           = %s%d%s\n",T_VAL,total_nbr_x,T_NOR);
+            printf("  Number of param. expressions  = %s%d%s\n",T_VAL,pex.nbr_expr,T_NOR);
+            printf("  Number of plottable variables = %s%d%s\n",T_VAL,total_nbr_x,T_NOR);
             printf("  Number of parameters          = %s%d%s\n",T_VAL,mu.nbr_el,T_NOR);
-            printf("  Number of expressions         = %s%d%s\n",T_VAL,pex.nbr_expr,T_NOR);
             printf("  Number of constants           = %s%d%s\n",T_VAL,cst.nbr_el,T_NOR);
             printf("  Number of data files          = %s%d%s\n",T_VAL,dfl.nbr_el,T_NOR);
             printf("  Number of columns in id.dat   = %s%d%s\n",T_VAL,nbr_col,T_NOR);
@@ -1721,12 +1722,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             if ( nbr_hold == 1 )
             {
               fprintf(GPLOTP,\
-                  "plot \".odexp/curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"%s\"\n",get_str("style"),plotkeys[0]);
+                  "plot \"" ODEXPDIR "curve.0\" binary format=\"%%3lf\" using 1:2 with %s title \"%s\"\n",get_str("style"),plotkeys[0]);
             }
             else
             {
               fprintf(GPLOTP,\
-                  "replot \".odexp/curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%s\"\n",\
+                  "replot \"" ODEXPDIR "curve.%d\" binary format=\"%%3lf\" using 1:2 with %s title \"%s\"\n",\
                   nbr_hold-1,get_str("style"),plotkeys[nbr_hold-1]);
             }
             fflush(GPLOTP);
@@ -1855,7 +1856,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   DBLOGPRINT("History written");
 
   /* try to remove frozen curves */
-  system("rm -f .odexp/curve.*");
+  system("rm -f " ODEXPDIR "curve.*");
   if ( strncmp(get_str("loudness"),"loud",3) == 0 ) /* run loud mode  */
   { 
     /* try to remove idXX curves */
@@ -2025,7 +2026,7 @@ int update_act_par_options(const int p, const nve mu)
 int update_curves(int *nbr_hold, char plotkeys[100][EXPRLENGTH])
 {
   char mv_plot_cmd[EXPRLENGTH];
-  snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot .odexp/curve.%d",*nbr_hold);
+  snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot " ODEXPDIR "curve.%d",*nbr_hold);
   system(mv_plot_cmd);
   if ( strlen(get_str("plotkey") ) )
   {
@@ -2095,13 +2096,13 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 
   if (rootnamescanned > 0)
   {
-    snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.par",rootname,(uintmax_t)time_stamp);
-    snprintf(print_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.eps",rootname,(uintmax_t)time_stamp);
+    snprintf(par_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.par",rootname,(uintmax_t)time_stamp);
+    snprintf(print_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.eps",rootname,(uintmax_t)time_stamp);
   }  
   else
   {  
-    snprintf(par_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.par", odexp_filename, (uintmax_t)time_stamp);
-    snprintf(print_buffer,MAXFILENAMELENGTH,".odexp/%s.%ju.eps", odexp_filename, (uintmax_t)time_stamp);
+    snprintf(par_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.par", odexp_filename, (uintmax_t)time_stamp);
+    snprintf(print_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.eps", odexp_filename, (uintmax_t)time_stamp);
   }
 
   /* open buffer parameter file (par) */
@@ -2171,7 +2172,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     fprintf(fr,"\n# --------------------------------------------------\n");
     fprintf(fr,"# original equations, auxiliary variables and parametric expressions\n\n");
 
-    eqfr = fopen(".odexp/equations.pop","r");
+    eqfr = fopen(EQ_FILENAME,"r");
     if ( eqfr == NULL )
     {
       PRINTERR("  File %s could not be opened. Not writing equations",par_buffer);
@@ -2342,16 +2343,31 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
 {
   char    plot_cmd[EXPRLENGTH];
   const int nbr_col = SIM->nbr_col; 
+  char key[EXPRLENGTH];
+  if ( strlen(get_str("plotkey")) )
+  {
+    snprintf(key,EXPRLENGTH,"\"%s\"", get_str("plotkey"));  
+  }
+  else if ( plot3d == 0 )
+  {
+    snprintf(key,EXPRLENGTH, "\"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"",
+        gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
+        gx > 1 ? dxv.name[gx-2] : get_str("indvar"),
+        get_int("particle"));
+  }
+  else
+  {
+    snprintf(key,EXPRLENGTH,"(%d)", get_int("particle")); 
+  }
+
   if ( plot3d == 0 )
   {
     generate_particle_file(get_int("particle"));
     snprintf(plot_cmd,EXPRLENGTH,\
-        "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d "\
-        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"\n",\
+        "\"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d "\
+        "with %s title %s\n",\
         get_int("particle"), nbr_col, gx, gy,\
-        get_str("style"),  gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
-        gx > 1 ? dxv.name[gx-2] : get_str("indvar"), \
-        get_int("particle"));
+        get_str("style"),  key);
     if ( get_int("hold") == 0 ) /* normal plot command: 2D, hold=0, curves=0 */
     {
       fprintf(GPLOTP,"plot %s", plot_cmd);
@@ -2365,11 +2381,10 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
   {
     generate_particle_file(get_int("particle"));
     snprintf(plot_cmd,EXPRLENGTH,\
-        "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
-        "with %s title \"(%d)\"\n",\
+        "\"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d "\
+        "with %s title \"%s\"\n",\
         get_int("particle"), nbr_col, gx, gy, gz,\
-        get_str("style"),\
-        get_int("particle"));
+        get_str("style"),key);
     if ( get_int("hold") == 0 )
     {
       fprintf(GPLOTP,"splot %s", plot_cmd);
@@ -2393,9 +2408,9 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
     generate_particle_file(get_int("particle"));
     snprintf(plot_cmd,EXPRLENGTH,\
         "do for [j=0:%d] {"
-        "plot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::0::j "
+        "plot \"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::0::j "
         "with dots notitle, "
-        "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::j::j "
+        "\"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::j::j "
         "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"}\n",
         get_int("res") - 1,
         get_int("particle"), nbr_col, gx, gy,
@@ -2408,9 +2423,9 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
     generate_particle_file(get_int("particle"));
     snprintf(plot_cmd,EXPRLENGTH,\
         "do for [j=0:%d] {"
-        "splot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::0::j "
+        "splot \"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::0::j "
         "with dots notitle, "
-        "\".odexp/id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::j::j "
+        "\"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::j::j "
         "with %s title \"%s\".\", \".\"%s\".\", \".\"%s\". \" \" .\"(%d)\"}\n",
         get_int("res") - 1,
         get_int("particle"), nbr_col, gx, gy, gz,
@@ -2468,7 +2483,7 @@ int gplot_fun(const char *plot_str)
   if ( get_int("hold") )
   {
     success = fprintf(GPLOTP,\
-          "replot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %s "\
+          "replot \"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %s "\
           "with %s title \"%s (%d)\"\n",\
           get_int("particle"), nbr_col, plot_str,\
           get_str("style"), key, get_int("particle"));
@@ -2476,7 +2491,7 @@ int gplot_fun(const char *plot_str)
   else
   {
     success = fprintf(GPLOTP,\
-          "plot \".odexp/id%d.dat\" binary format=\"%%%dlf\" using %s "\
+          "plot \"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %s "\
           "with %s title \"%s (%d)\"\n",\
           get_int("particle"), nbr_col, plot_str,\
           get_str("style"), key, get_int("particle"));
@@ -2562,16 +2577,16 @@ int gplot_particles( const int gx, const int gy, const nve var )
   {
     fprintf(GPLOTP,"set dgrid3d %d,%d, gauss kdensity %g\n",
         get_int("kdensity2dgrid"),get_int("kdensity2dgrid"),get_dou("kdensity2dscale"));
-    fprintf(GPLOTP,"set table \".odexp/griddata.txt\"\n");
-    fprintf(GPLOTP,"splot \".odexp/particle_states.dat\" "
+    fprintf(GPLOTP,"set table \"" ODEXPDIR "griddata.txt\"\n");
+    fprintf(GPLOTP,"splot \"" ODEXPDIR "particle_states.dat\" "
         "binary format=\"%%u%%%dlf\" using %d:%d:(1)\n",nvar,gx,gy);
     fprintf(GPLOTP,"unset table\n");
     fprintf(GPLOTP,"unset dgrid3d\n");
     fprintf(GPLOTP,"set view map\n");
     fprintf(GPLOTP,"set autoscale fix\n");
     fprintf(GPLOTP,"unset colorbox\n");
-    fprintf(GPLOTP,"splot \".odexp/griddata.txt\" with pm3d notitle\n");
-    fprintf(GPLOTP,"replot \".odexp/particle_states.dat\" "
+    fprintf(GPLOTP,"splot \"" ODEXPDIR "griddata.txt\" with pm3d notitle\n");
+    fprintf(GPLOTP,"replot \"" ODEXPDIR "particle_states.dat\" "
         "binary format=\"%%u%%%dlf\" using %d:%d:(-1) with points pt '.' notitle\n",
         nvar,gx,gy);
     fprintf(GPLOTP,"unset view\n");
@@ -2581,13 +2596,13 @@ int gplot_particles( const int gx, const int gy, const nve var )
     /* Plot each particle with style particlestyle 
      * Optionally write ID number inside it 
      */
-    snprintf(cmd_plt,EXPRLENGTH,"plot \".odexp/particle_states.dat\" "
+    snprintf(cmd_plt,EXPRLENGTH,"plot \"" ODEXPDIR "particle_states.dat\" "
         "binary format=\"%%u%%%dlf\" using %d:%d%s with "
         "%s title \"%s=%g (step %d)\"",nvar,gx,gy,opt_circle, get_str("particlestyle"),
         get_str("indvar"),t,timestep);
     if ( get_int("particleid") )
     {
-      snprintf(cmd_labels,EXPRLENGTH,", \".odexp/particle_states.dat\" "
+      snprintf(cmd_labels,EXPRLENGTH,", \"" ODEXPDIR "particle_states.dat\" "
           "binary format=\"%%u%%%dlf\" using %d:%d:(sprintf(\"%%u\",$1)) "
           "with labels font \"%s,7\" textcolor rgb \"grey20\" notitle\n", 
           nvar,gx,gy,get_str("font"));
@@ -2741,7 +2756,7 @@ int read_msg( void )
   return rd;
 }
 
-int gnuplot_config(const int gx, const int gy, nve dxv)
+int gnuplot_config()
 {
   int i;
   int  nbr_col; 
@@ -2789,8 +2804,24 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   fprintf(GPLOTP,"set mxtics\n");
   fprintf(GPLOTP,"set mytics\n");
   fprintf(GPLOTP,"set mztics\n");
-  fprintf(GPLOTP,"set object 99 rectangle from screen 0,0 to screen 1,1 fillcolor rgb "
-      "\"" TERM_BG_COLOR "\" behind\n");
+
+  /* background */
+  if ( strncmp("fancy",get_str("background"),5) == 0 )
+  {
+    fprintf(GPLOTP,"set object 99 circle at screen 0.75, -0.75 size screen 1 fillcolor rgb \""\
+                    TERM_BG_COLOR2 "\" fillstyle solid behind\n");
+    fprintf(GPLOTP,"set object 98 rectangle from screen 0,0 to screen 1,1 fillcolor rgb " "\""\
+                    TERM_BG_COLOR1 "\" behind\n");
+  }
+  else if ( strncmp("none",get_str("background"),5) == 0 )
+  {
+    fprintf(GPLOTP,"unset object 98\nunset object 99\n"); 
+  }
+  else 
+  {
+    fprintf(GPLOTP,"unset object 98\nunset object 99\n"); 
+  }
+
   fprintf(GPLOTP,"set grid xtics ytics ztics\n");
   if ( get_int("togglekey") )
   {
@@ -2800,8 +2831,6 @@ int gnuplot_config(const int gx, const int gy, nve dxv)
   {
     fprintf(GPLOTP,"unset key\n");
   }
-  fprintf(GPLOTP,"set xlabel '%s'\n",gx > 1 ? dxv.name[gx-2] : get_str("indvar")); 
-  fprintf(GPLOTP,"set ylabel '%s'\n",dxv.name[gy-2]);
 
   /* run only at first execution */
   /* define gnuplot variables corresponding to plottable variables */
