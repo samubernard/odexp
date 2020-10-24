@@ -2344,9 +2344,9 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
   char    plot_cmd[EXPRLENGTH];
   char key[EXPRLENGTH];
   int index_mfd = 1 + SIM->nbr_var + SIM->nbr_aux + SIM->nbr_psi;
-  int use_stats = 0;
   char filename[NAMELENGTH];
   char fileformat[NAMELENGTH];
+  char mode[16];
   int cx = gx, cy = gy, cz = gz;
 
   /* generate the data to plot: if gx, gy or gz are MF then use STATS_FILENAME file
@@ -2356,15 +2356,15 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
        ( gz <= index_mfd || gz > (index_mfd + SIM->nbr_mfd) || plot3d == 0 ) )
   {
     generate_particle_file(get_int("particle"));
-    use_stats = 0;
     snprintf(filename,NAMELENGTH,"id%d.dat",get_int("particle"));
     snprintf(fileformat,NAMELENGTH,"%%%dlf",SIM->nbr_col);
+    snprintf(mode,16,"%d",get_int("particle"));
   }
   else
   {
-    use_stats = 1;
     snprintf(filename,NAMELENGTH,"stats.dat");
     snprintf(fileformat,NAMELENGTH,"%%%dlf%%4d",1 + SIM->nbr_mfd);
+    snprintf(mode,16,"%s","pop avg");
     if ( gx > index_mfd && gx <= (index_mfd + SIM->nbr_mfd) ) cx -= index_mfd - 1;
     if ( gy > index_mfd && gy <= (index_mfd + SIM->nbr_mfd) ) cy -= index_mfd - 1;
     if ( gz > index_mfd && gz <= (index_mfd + SIM->nbr_mfd) ) cz -= index_mfd - 1;
@@ -2377,10 +2377,10 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
   }
   else if ( plot3d == 0 )
   {
-    snprintf(key,EXPRLENGTH, "\"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"",
+    snprintf(key,EXPRLENGTH, "\"%s\".\" vs \".\"%s\". \" \" .\"(%s)\"",
         gy > 1 ? dxv.name[gy-2] : get_str("indvar"), \
         gx > 1 ? dxv.name[gx-2] : get_str("indvar"),
-        get_int("particle"));
+        mode);
   }
   else
   {
