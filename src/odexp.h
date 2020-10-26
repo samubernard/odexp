@@ -136,6 +136,8 @@ typedef struct system_state {
      */
     int     event[3]; 
 
+    int     stop_flag; /* set to 1 to stop integration and re-evaluate ics */ 
+
     double  time_in_ode_rhs; /* time spent in ode_rhs so far */
 
     double *h;     /* current time step */
@@ -203,6 +205,7 @@ int mvar(const char *s, par *p, double *ptr);
 
 #define POP_SIZE SIM->pop->size
 
+/* MU: returns the value of parameter 'name' */
 #define MU(name)                                            \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->parnames[index], NAMELENGTH) ) \
@@ -212,6 +215,7 @@ int mvar(const char *s, par *p, double *ptr);
        SIM->mu[index];                                    \
      })
 
+/* OA: returns the value of other's aux variable 'name' */
 #define OA(name)                                            \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
@@ -221,6 +225,7 @@ int mvar(const char *s, par *p, double *ptr);
        other_->aux[index];                                    \
      })
 
+/* OE: returns the value of other's param expr 'name' */
 #define OE(name)                                          \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
@@ -230,6 +235,7 @@ int mvar(const char *s, par *p, double *ptr);
        other_->expr[index];                                             \
      })                                                     
 
+/* OY: returns the value of other's dynamical variable 'name' */
 #define OY(name)                                          \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
@@ -239,6 +245,7 @@ int mvar(const char *s, par *p, double *ptr);
        other_->y[index];                                    \
      })                                                     
 
+/* MA: returns the value of myself's aux variable 'name' */
 #define MA(name)                                            \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
@@ -248,6 +255,7 @@ int mvar(const char *s, par *p, double *ptr);
        myself_->aux[index];                                        \
      })
 
+/* ME: returns the value of myself's param expr 'name' */
 #define ME(name)                                          \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
@@ -257,6 +265,7 @@ int mvar(const char *s, par *p, double *ptr);
        myself_->expr[index];                                             \
      })                                                     
 
+/* MY: returns the value of myself's dyn variable 'name' */
 #define MY(name)                                          \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
@@ -266,6 +275,7 @@ int mvar(const char *s, par *p, double *ptr);
        myself_->y[index];                                     \
      })                                                     
 
+/* MC: returns the value of myself's cpl variable 'name' */
 #define MC(name)                                          \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->psinames[index], NAMELENGTH) ) \
@@ -275,6 +285,7 @@ int mvar(const char *s, par *p, double *ptr);
        myself_->psi[index];                                             \
      })                                                     
 
+/* SA: returns the value of sister's cpl variable 'name' */
 #define SA(name)                                            \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
@@ -284,6 +295,7 @@ int mvar(const char *s, par *p, double *ptr);
        myself_->sister == NULL ? 0.0 : myself_->sister->aux[index]; \
      })
 
+/* SE: returns the value of sister's param expr   'name' */
 #define SE(name)                                          \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
@@ -293,6 +305,7 @@ int mvar(const char *s, par *p, double *ptr);
        myself_->sister == NULL ? 0.0 : myself_->sister->expr[index]; \
      })                                                     
 
+/* SY: returns the value of sister's dyn variable 'name' */
 #define SY(name)                                          \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
@@ -303,6 +316,7 @@ int mvar(const char *s, par *p, double *ptr);
      })                                                     
 
 
+/* KY: returns the value of K'th neighbour dyn variable 'name' */
 #define KY(name,degree)                                      \
     ({ static int index = 0;                               \
        par *kpar_ = myself_;                                       \
@@ -330,6 +344,7 @@ int mvar(const char *s, par *p, double *ptr);
      })                                                     
 
 
+/* MF: returns the value of mean field 'name' */
 #define MF(name)                                          \
     ({ static int index = 0;                               \
        while ( strncmp(#name, SIM->mfdnames[index], NAMELENGTH) ) \
@@ -339,6 +354,7 @@ int mvar(const char *s, par *p, double *ptr);
        SIM->meanfield[index];                                             \
      })                                                     
 
+/* I_Y: returns the index of dynamical variable 'name' */
 #define I_Y(name)                                             \
     ({ static int index = 0;                                 \
       while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
@@ -348,6 +364,7 @@ int mvar(const char *s, par *p, double *ptr);
       index;                                                    \
     })
 
+/* I_EXPR: returns the index of param expr 'name' */
 #define I_EXPR(name)                                             \
     ({ static int index = 0;                                 \
       while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
@@ -357,6 +374,7 @@ int mvar(const char *s, par *p, double *ptr);
       index;                                                    \
     })
 
+/* I_AUX: returns the index of aux variable 'name' */
 #define I_AUX(name)                                             \
     ({ static int index = 0;                                 \
       while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
@@ -366,6 +384,7 @@ int mvar(const char *s, par *p, double *ptr);
       index;                                                    \
     })
 
+/* I_PSI: returns the index of cpl variable 'name' */
 #define I_PSI(name)                                             \
     ({ static int index = 0;                                 \
       while ( strncmp(#name, SIM->psinames[index], NAMELENGTH) ) \
@@ -395,6 +414,16 @@ int mvar(const char *s, par *p, double *ptr);
 
 /*  White noise */ 
 #define DWDT (randN(0,1)/sqrt(*SIM->h))        
+
+/* stopping times */
+#define STOP_FLAG        SIM->stop_flag
+#define SET_STOP_FLAG(condition) ({ \
+    if ( condition )                \
+    {                               \
+      STOP_FLAG = 1;                \
+    }                               \
+    condition;                      \
+  })
 
 
 /* print */

@@ -113,7 +113,6 @@ int odesolver( oderhs pop_ode_rhs,
     enum bd_method bd_meth = SSA;
     int hmin_alert              = 0,
         bd_alert                = 0,
-        disc_alert              = 0,
         abort_odesolver_alert   = 0;
     int nbr_out = 0;
 
@@ -435,9 +434,8 @@ int odesolver( oderhs pop_ode_rhs,
         if ( (t<=nextstop) && (dt_dyn>=(nextstop-t)) )
         {
             dt_dyn = nextstop-t;
-            disc_alert = 1;
-            printf("\n  stopping time = %g (t = %g)", nextstop, t);
-            fflush(stdout);
+            STOP_FLAG = 1;
+            sprintf(msg,"  stopping time = %g (t = %g)", nextstop, t);
         }
         /* BIRTH and DEATH 
          * particles are set to advance from t -> tnext 
@@ -482,12 +480,12 @@ int odesolver( oderhs pop_ode_rhs,
         switch (bd_meth)
         {
           case SSA:
-            msg[0] = 0; /* snprintf(msg,EXPRLENGTH,""); set message to empty string */
+            /* msg[0] = 0; */ /* snprintf(msg,EXPRLENGTH,""); set message to empty string */
             if ( dt_ssa < dt_dyn )
             {
               dt_next = dt_ssa; /* advance to time of event */
               bd_alert = 1;
-              disc_alert = 0;
+              STOP_FLAG = 0;
             }
             else
             {
@@ -523,6 +521,14 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = fe_apply(&sys,&t,tnext,&h,y);
+                if (STOP_FLAG)
+                {
+                   break;
+                }
+                if (status != GSL_SUCCESS) 
+                {
+                   break;
+                }   
                 if ( h < hmin )
                 {
                   h = hmin;
@@ -532,11 +538,6 @@ int odesolver( oderhs pop_ode_rhs,
                     hmin_alert = 1; 
                   }
                 }
-                if (status != GSL_SUCCESS) 
-                {
-                   break;
-                }   
-                    
             }
             break;
           case H_ITERATION: 
@@ -548,6 +549,14 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = iteration_apply(&sys,&t,y);
+                if (STOP_FLAG)
+                {
+                   break;
+                }
+                if (status != GSL_SUCCESS) 
+                {
+                   break;
+                }   
                 if ( h < hmin )
                 {
                   h = hmin;
@@ -557,11 +566,6 @@ int odesolver( oderhs pop_ode_rhs,
                     hmin_alert = 1; 
                   }
                 }
-                if (status != GSL_SUCCESS) 
-                {
-                   break;
-                }   
-                    
             }
             /* DBPRINT("t = %g, tnext = %g", t, tnext); */
             break;
@@ -569,6 +573,14 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = dde_apply(&sys,&t,tnext,&h,y);
+                if (STOP_FLAG)
+                {
+                   break;
+                }
+                if (status != GSL_SUCCESS) 
+                {
+                   break;
+                }   
                 if ( h < hmin )
                 {
                   h = hmin;
@@ -578,17 +590,20 @@ int odesolver( oderhs pop_ode_rhs,
                     hmin_alert = 1; 
                   }
                 }
-                if (status != GSL_SUCCESS) 
-                {
-                   break;
-                }   
-                    
             }
             break;
           default: 
             while ( t < tnext)
             {
                 status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
+                if (STOP_FLAG)
+                {
+                   break;
+                }
+                if (status != GSL_SUCCESS) 
+                {
+                   break;
+                }   
                 if ( h < hmin )
                 {
                   h = hmin;
@@ -598,11 +613,6 @@ int odesolver( oderhs pop_ode_rhs,
                     hmin_alert = 1; 
                   }
                 }
-                if (status != GSL_SUCCESS) 
-                {
-                   break;
-                }   
-                    
             }
         }
         update_SIM_from_y(y);
@@ -663,7 +673,7 @@ int odesolver( oderhs pop_ode_rhs,
             e = gsl_odeiv2_evolve_alloc(sim_size);
 
         }
-        if (disc_alert == 1)
+        if (STOP_FLAG == 1)
         {
           /* reset dynamical variables */
           ode_ic(t, y, SIM->pop->start);
@@ -683,7 +693,7 @@ int odesolver( oderhs pop_ode_rhs,
         printf_progress(t,tspan->array[0],t1, start, msg);
 
         hmin_alert = 0;
-        disc_alert = 0;
+        STOP_FLAG = 0;
         bd_alert = 0;
 
         if (abort_odesolver_flag)
@@ -736,7 +746,6 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
            eps_abs  = get_dou("abstol"),
            eps_rel  = get_dou("reltol");
     int hmin_alert              = 0,
-        disc_alert              = 0,
         abort_odesolver_alert   = 0;
     int nbr_out = (int)get_int("res");
     FILE *file;
@@ -923,7 +932,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
         if ( (t<nextstop) && (tnext>=nextstop) )
         {
           tnext = nextstop;
-          disc_alert = 1;
+          STOP_FLAG = 1;
           printf(" ts =%.2e", nextstop);
           fflush(stdout);
         }
@@ -949,7 +958,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
             }   
         }
 
-        if (disc_alert == 1)
+        if (STOP_FLAG == 1)
         {
           /* reset dynamical variables */
           pop_ode_ic(t, y, &mu);
@@ -986,7 +995,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
         }
 
         hmin_alert = 0;
-        disc_alert = 0;
+        STOP_FLAG = 0;
 
 
     } /* END ODE SOLVER */

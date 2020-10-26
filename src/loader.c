@@ -283,9 +283,9 @@ int load_options(const char *filename, int exit_if_nofile)
 
 int load_double_array(const char *filename, double_array *array_ptr, const char *sym, int sym_len, int exit_if_nofile)
 {
-  /* Find the last line starting with string sym and copy doubles on 
-   * that line into *array_ptr. If no line starts with sym, *array_ptr is not assigned.
-   * len is the number of doubles assigned. 
+  /* Find the first line starting with string SYM and copy doubles on 
+   * that line into *ARRAY_PTR. If no line starts with SYM, *ARRAY_PTR is not assigned.
+   * ARRAY_PTR is a pointer to a double_array struct. 
    */
   ssize_t linelength;
   size_t linecap = 0;
@@ -322,43 +322,31 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     has_read = sscanf(line,"%s%n",key,&k);
     if ( (strncasecmp(key,sym,sym_len) == 0)  &&  (has_read == 1) ) /* keyword was found */
     {
-      array_ptr->length = 1;
-      array_ptr->array = malloc(array_ptr->length*sizeof(double));
       current_ptr = line+k;
       i = 0;
-      r = 0.0;
-      do
+
+      /* allocate memory */
+      array_ptr->length = 1;
+      array_ptr->array = malloc(array_ptr->length*sizeof(double));
+      while ( sscanf(current_ptr,"%lf%n",&r,&k) ) /* try to read a double */
       {
-
-        has_read = sscanf(current_ptr,"%lf%n",&r,&k); 
         current_ptr += k;
-        if (has_read > 0)
+        array_ptr->array[i] = r;
+        i++;
+        if ( i > (array_ptr->length - 1) ) /* dynamic realloc */
         {
-          array_ptr->array[i] = r;
-          i++;
-          if ( i > (array_ptr->length - 1) )
-          {
-            array_ptr->length *= 2;  
-            array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
-          }
+          array_ptr->length *= 2;  
+          array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
         }
-
       }
-      while ( has_read > 0 );
 
       array_ptr->length = i;
       array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
-
-      for (i=0;i<array_ptr->length;i++)
-      {
-        /* DBLOGPRINT("%s%.2f%s ", T_VAL,array_ptr->array[i],T_NOR ); */
-      }
 
       success = 1;
     }
     k = 0; /* reset k */
   }
-  /* DBLOGPRINT("\n"); */
   fclose(fr);
   return success;
 
