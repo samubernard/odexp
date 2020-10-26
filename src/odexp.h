@@ -424,6 +424,13 @@ int mvar(const char *s, par *p, double *ptr);
     }                               \
     condition;                      \
   })
+#define STOPIF(var,condition) ({ \
+    if ( condition )                \
+    {                               \
+      STOP_FLAG = 1;                \
+    }                               \
+    var = condition;                \
+  })
 
 
 /* print */
