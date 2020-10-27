@@ -328,7 +328,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
       /* allocate memory */
       array_ptr->length = 1;
       array_ptr->array = malloc(array_ptr->length*sizeof(double));
-      while ( sscanf(current_ptr,"%lf%n",&r,&k) ) /* try to read a double */
+      while ( sscanf(current_ptr,"%lf%n",&r,&k) > 0 ) /* try to read a double */
       {
         current_ptr += k;
         array_ptr->array[i] = r;
