@@ -26,6 +26,7 @@ static void set_abort_odesolver_flag( int sig )
 {
     (void)sig;
     abort_odesolver_flag = 1;
+    EVENT_TYPE = EVENT_ABORT;
 }
 
 /* print progress */
@@ -112,7 +113,6 @@ int odesolver( oderhs pop_ode_rhs,
     struct sigaction abort_act;
     enum bd_method bd_meth = SSA;
     int hmin_alert              = 0,
-        bd_alert                = 0,
         abort_odesolver_alert   = 0;
     int nbr_out = 0;
 
@@ -211,12 +211,13 @@ int odesolver( oderhs pop_ode_rhs,
     /* it is assumed that the first and last values of tspan are t0 and t1 */
     t = tspan->array[0];
     t1 = tspan->array[tspan->length-1];
+    EVENT_TYPE = EVENT_T0;
     nbr_out = get_int("res");
     dt = (t1-t)/(double)(nbr_out-1); /* time interval at which the solution if recorded 
                                       * in addition to stopping times, if any
                                       */ 
 
-    /* stopping time (discontinuities for example) */
+    /* stopping times set in tspan                 */
     /* printf("--tspan->length=%d\n",tspan->length); */
     if ( tspan->length > 2 )
     {
@@ -225,15 +226,13 @@ int odesolver( oderhs pop_ode_rhs,
        for(i=0;i<nbr_stops;i++)
        {
           tstops[i] = tspan->array[i+1];
-          /* printf("--tstop[%d]=%g\n",i,tstops[i]); */
        }
        mergesort(tstops, nbr_stops, sizeof(double),compare);
-       nextstop = tstops[idx_stop];
-       idx_stop++;
+       nextstop = tstops[idx_stop++];
     }
     else
     {
-        nextstop = INFINITY; /* set nextstop outside the integration range */
+       nextstop = INFINITY; /* set nextstop outside the integration range */
     }
 
 
@@ -360,6 +359,7 @@ int odesolver( oderhs pop_ode_rhs,
         fwrite_SIM(&t);
     }
     memset(SIM->event, 0, sizeof(SIM->event));
+    EVENT_TYPE = EVENT_NO;
     
     
     /* DBPRINT("SIM set up done"); */
@@ -434,7 +434,7 @@ int odesolver( oderhs pop_ode_rhs,
         if ( (t<=nextstop) && (dt_dyn>=(nextstop-t)) )
         {
             dt_dyn = nextstop-t;
-            STOP_FLAG = 1;
+            EVENT_TYPE = EVENT_TSPAN;
             sprintf(msg,"  stopping time = %g (t = %g)", nextstop, t);
         }
         /* BIRTH and DEATH 
@@ -484,8 +484,7 @@ int odesolver( oderhs pop_ode_rhs,
             if ( dt_ssa < dt_dyn )
             {
               dt_next = dt_ssa; /* advance to time of event */
-              bd_alert = 1;
-              STOP_FLAG = 0;
+              EVENT_TYPE = EVENT_POP_MASK;
             }
             else
             {
@@ -493,7 +492,7 @@ int odesolver( oderhs pop_ode_rhs,
             }
             break;
           case TAU_LEAPING:
-            bd_alert = 1;
+            EVENT_TYPE = EVENT_POP_MASK;
             snprintf(msg,EXPRLENGTH,"  tau-leaping"); 
             /* set dt_leaping so that the mean number of 
              * events is max(1,c_leaping*N) = dt_leaping * sum_rates 
@@ -521,12 +520,13 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = fe_apply(&sys,&t,tnext,&h,y);
-                if (STOP_FLAG)
+                if (EVENT_TYPE & EVENT_COND)
                 {
                    break;
                 }
-                if (status != GSL_SUCCESS) 
+                else if (status != GSL_SUCCESS) 
                 {
+                   EVENT_TYPE = EVENT_GSL;
                    break;
                 }   
                 if ( h < hmin )
@@ -549,12 +549,13 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = iteration_apply(&sys,&t,y);
-                if (STOP_FLAG)
+                if (EVENT_TYPE & EVENT_COND)
                 {
                    break;
                 }
-                if (status != GSL_SUCCESS) 
+                else if (status != GSL_SUCCESS) 
                 {
+                   EVENT_TYPE = EVENT_GSL;
                    break;
                 }   
                 if ( h < hmin )
@@ -573,12 +574,13 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = dde_apply(&sys,&t,tnext,&h,y);
-                if (STOP_FLAG)
+                if (EVENT_TYPE & EVENT_COND)
                 {
                    break;
                 }
-                if (status != GSL_SUCCESS) 
+                else if (status != GSL_SUCCESS) 
                 {
+                   EVENT_TYPE = EVENT_GSL;
                    break;
                 }   
                 if ( h < hmin )
@@ -596,12 +598,13 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
-                if (STOP_FLAG)
+                if (EVENT_TYPE & EVENT_COND)
                 {
                    break;
                 }
-                if (status != GSL_SUCCESS) 
+                else if (status != GSL_SUCCESS) 
                 {
+                   EVENT_TYPE = EVENT_GSL;
                    break;
                 }   
                 if ( h < hmin )
@@ -617,16 +620,17 @@ int odesolver( oderhs pop_ode_rhs,
         }
         update_SIM_from_y(y);
         
+        fwrite_SIM(&t);
+
         if (status != GSL_SUCCESS)
             break;    /* break out of main loop */
                 
         tot_odeiv += (clock()-clock_odeiv)*1000.0 / CLOCKS_PER_SEC;
 
         fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
-        fwrite_SIM(&t);
         fwrite_all_particles(&t);
 
-        if ( bd_alert == 1 )
+        if ( EVENT_TYPE & EVENT_POP_MASK )
         {
             /* DBPRINT("birth/death");  */
             /* delete or insert particle 
@@ -673,7 +677,7 @@ int odesolver( oderhs pop_ode_rhs,
             e = gsl_odeiv2_evolve_alloc(sim_size);
 
         }
-        if (STOP_FLAG == 1)
+        if (EVENT_TYPE & ( EVENT_COND | EVENT_TSPAN ) )
         {
           /* reset dynamical variables */
           ode_ic(t, y, SIM->pop->start);
@@ -682,19 +686,18 @@ int odesolver( oderhs pop_ode_rhs,
 
           fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
           fwrite_all_particles(&t);
-
-          /* calculating next stop */
-          nextstop = tstops[idx_stop];
-          idx_stop++;
-             
         }
 
-        
+          /* calculating next stop */
+        if ( EVENT_TYPE & EVENT_TSPAN ) 
+        {
+          nextstop = tstops[idx_stop++];
+        }
+             
         printf_progress(t,tspan->array[0],t1, start, msg);
 
         hmin_alert = 0;
-        STOP_FLAG = 0;
-        bd_alert = 0;
+        EVENT_TYPE = EVENT_NO;
 
         if (abort_odesolver_flag)
         {
@@ -895,6 +898,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
     t1 = tspan.array[tspan.length-1];
     dt = (t1-t)/(double)(nbr_out-1);
     nextstop = t;
+    EVENT_TYPE = EVENT_T0;
     /* initial conditions */
     if ( get_int("rric") ) /* set initial conditions to those specified in pop_ode_ic */
     {
@@ -932,7 +936,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
         if ( (t<nextstop) && (tnext>=nextstop) )
         {
           tnext = nextstop;
-          STOP_FLAG = 1;
+          EVENT_TYPE = EVENT_TSPAN;
           printf(" ts =%.2e", nextstop);
           fflush(stdout);
         }
@@ -958,17 +962,19 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
             }   
         }
 
-        if (STOP_FLAG == 1)
+        if (EVENT_TYPE & ( EVENT_COND | EVENT_TSPAN ) )
         {
           /* reset dynamical variables */
           pop_ode_ic(t, y, &mu);
           /* update auxiliary functions */
           pop_ode_rhs(t, y, f, &mu);
-          /* calculating next stop */
-          nextstop = tstops[idx_stop];
-          idx_stop++;
-             
         }
+          /* calculating next stop */
+        if ( EVENT_TYPE & EVENT_TSPAN ) 
+        {
+          nextstop = tstops[idx_stop++];
+        }
+
         /* updating ymin and ymax */
         if ( t > (t1 - tspan.array[0])/2 )
         {
@@ -995,7 +1001,7 @@ int parameter_range( oderhs pop_ode_rhs, odeic pop_ode_ic,\
         }
 
         hmin_alert = 0;
-        STOP_FLAG = 0;
+        EVENT_TYPE = 0;
 
 
     } /* END ODE SOLVER */
@@ -1859,7 +1865,6 @@ void SSA_apply_birthdeath(const double t, odeic single_ic )
 			choose_event;
     int  event_index = 0,
             choose_pars;
-	  int die = 0, repli = 0, birth = 0;
 
     /* get the rates */
     r = malloc((2*POP_SIZE+1)*sizeof(double));
@@ -1901,30 +1906,30 @@ void SSA_apply_birthdeath(const double t, odeic single_ic )
     if(event_index < POP_SIZE) /* a particle dies */
     {
         choose_pars = event_index; /* will kill the choose_pars'th particle */
-        die = 1;
+        EVENT_TYPE = EVENT_DEATH;
     }
     else if(event_index < 2*POP_SIZE) /* a particle replicates */
     {
         choose_pars = event_index - POP_SIZE; /* will replicate the choose_pars'th cell */
-        repli = 1;
+        EVENT_TYPE = EVENT_REPLI;
     }
     else /* a particle is produced from scratch */
     {
-        birth = 1;
         choose_pars = 2*POP_SIZE;
+        EVENT_TYPE = EVENT_BIRTH;
     }
 
-    if ( die || repli )
+    if ( EVENT_TYPE & (EVENT_DEATH | EVENT_REPLI) )
     {
         pars = p[choose_pars];
         SIM->event[0] = (int)pars->id;
-        if ( die )
+        if ( EVENT_TYPE & EVENT_DEATH )
         {
             SIM->event[1] = -1;
             SIM->event[2] = -1;
             delete_el(SIM->pop, pars);
         }
-        if ( repli )
+        if ( EVENT_TYPE & EVENT_REPLI )
         {
             SIM->event[1] = 1;
             par_repli(pars);
@@ -1961,21 +1966,29 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
     int i=0;
     RANDINT nbr_new_particles=0; 
 
-	  int die = 0, repli = 0;
-
     /* get the rates */
     pars = SIM->pop->start;
     while ( pars != NULL )
     {
-        die = rand01() < (pars->death_rate * dt);
-        repli = rand01() < (pars->repli_rate * dt);
+        /* die = rand01() < (pars->death_rate * dt); */
+        /* repli = rand01() < (pars->repli_rate * dt); */
+        EVENT_TYPE = EVENT_NO;
+        if ( rand01() < (pars->death_rate * dt) )
+        {
+          EVENT_TYPE = EVENT_DEATH;
+        }
+        if ( rand01() < (pars->repli_rate * dt) )
+        {
+          EVENT_TYPE |= EVENT_REPLI;
+        }
         
         SIM->event[0] = (int)pars->id;
-        if ( repli & die ) /* flip a coin */
+        if ( EVENT_TYPE & ( EVENT_DEATH | EVENT_REPLI ) ) /* flip a coin */
         {
           if ( rand01() < pars->death_rate/(pars->death_rate + pars->repli_rate) ) /* death occurs first */ 
           {
             /* kill particle */
+            EVENT_TYPE = EVENT_DEATH;
             SIM->event[1] = -1;
             SIM->event[2] = -1;
             delete_el(SIM->pop, pars);
@@ -1985,6 +1998,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
           else /* replicate first and die after */
           {
             /* replicate particle */
+            EVENT_TYPE = EVENT_REPLI;
             par_repli(pars);
             SIM->event[1] = 1;
             SIM->event[2] = (int)SIM->pop->end->id;
@@ -1995,6 +2009,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
             single_ic(t, SIM->pop->end->y, SIM->pop->end);
             SIM->pop->end->sister = NULL;
             /* kill particle */
+            EVENT_TYPE = EVENT_DEATH;
             SIM->event[1] = -1;
             SIM->event[2] = -1;
             delete_el(SIM->pop, pars);
@@ -2002,7 +2017,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
             /* DBPRINT("repli and kill"); */
           }
         }
-        else if ( die ) 
+        else if ( EVENT_TYPE & EVENT_DEATH ) 
         {
           /* kill particle */
           SIM->event[1] = -1;
@@ -2011,7 +2026,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
           fwrite_SIM(&t);
           /* DBPRINT("kill"); */
         }
-        else if ( repli )
+        else if ( EVENT_TYPE & EVENT_REPLI )
         {
           /* replicate particle */
           SIM->event[1] = 1;
@@ -2035,6 +2050,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
     for ( i=0; i<(int)nbr_new_particles; i++ )
     {
           /* DBPRINT("birth"); */
+          EVENT_TYPE = EVENT_BIRTH;
           par_birth();
           SIM->event[0] = -1;
           SIM->event[1] =  1;

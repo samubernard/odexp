@@ -471,7 +471,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   {
     printf("\n  %syou are in quiet mode (option loudness quiet),\n"
         "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
-    printf("  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
+    printf("  hexdump -e '%d \"%%5.2f \" 5 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
     printf("  hexdump -e '2 \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_col); 
     printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
     PRINTLOG("Quiet mode, will exit");
@@ -2356,14 +2356,14 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
        ( gz <= index_mfd || gz > (index_mfd + SIM->nbr_mfd) || plot3d == 0 ) )
   {
     generate_particle_file(get_int("particle"));
-    snprintf(filename,NAMELENGTH,"id%d.dat",get_int("particle"));
+    snprintf(filename,NAMELENGTH, ODEXPDIR "id%d.dat",get_int("particle"));
     snprintf(fileformat,NAMELENGTH,"%%%dlf",SIM->nbr_col);
     snprintf(mode,16,"%d",get_int("particle"));
   }
   else
   {
-    snprintf(filename,NAMELENGTH,"stats.dat");
-    snprintf(fileformat,NAMELENGTH,"%%%dlf%%4d",1 + SIM->nbr_mfd);
+    snprintf(filename,NAMELENGTH,STATS_FILENAME);
+    snprintf(fileformat,NAMELENGTH,"%%%dlf%%5d",1 + SIM->nbr_mfd);
     snprintf(mode,16,"%s","pop avg");
     if ( gx > index_mfd && gx <= (index_mfd + SIM->nbr_mfd) ) cx -= index_mfd - 1;
     if ( gy > index_mfd && gy <= (index_mfd + SIM->nbr_mfd) ) cy -= index_mfd - 1;
@@ -2391,7 +2391,7 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
   if ( plot3d == 0 )
   {
     snprintf(plot_cmd,EXPRLENGTH,\
-        "\"" ODEXPDIR "%s\" binary format=\"%s\" using %d:%d "\
+        "\"%s\" binary format=\"%s\" using %d:%d "\
         "with %s title %s\n",\
         filename, fileformat, cx, cy,\
         get_str("style"),  key);
@@ -2407,7 +2407,7 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
   else /* plot3d == 1 */
   {
     snprintf(plot_cmd,EXPRLENGTH,\
-        "\"" ODEXPDIR "%s\" binary format=\"%s\" using %d:%d:%d "\
+        "\"%s\" binary format=\"%s\" using %d:%d:%d "\
         "with %s title \"%s\"\n",\
         filename, fileformat, cx, cy, cz,\
         get_str("style"),key);

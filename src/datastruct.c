@@ -455,7 +455,7 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     {
        fprintf(s->fstats_varnames,"\t%s",s->mfdnames[i]);
     }
-    fprintf(s->fstats_varnames,"\tN\tPARENT_ID\tEVENT\tCHILD_ID\n");
+    fprintf(s->fstats_varnames,"\tN\tSTOP\tPARENT_ID\tEVENT\tCHILD_ID\n");
     fclose(s->fstats_varnames); 
 
     if ( ( s->ftraj_varnames = fopen(TRAJVAR_FILENAME, "w") ) == NULL )
@@ -724,6 +724,7 @@ int fwrite_SIM(const double *restrict t) /* stats.dat file */
   fwrite(t,sizeof(double),1,SIM->fid);
   fwrite(SIM->meanfield,sizeof(double),SIM->nbr_mfd,SIM->fid);
   fwrite(&(SIM->pop->size),sizeof(int),1,SIM->fid);
+  fwrite(&(EVENT_TYPE),sizeof(int),1,SIM->fid);
   fwrite(SIM->event,sizeof(int),3,SIM->fid);
 
   return 0;
@@ -791,7 +792,7 @@ int list_stats( void )
     char cmd_data[EXPRLENGTH];
     snprintf(cmd_varnames,EXPRLENGTH,"cat " STATVAR_FILENAME " > " ODEXPDIR "stats.csv");
     snprintf(cmd_data,EXPRLENGTH,\
-            "hexdump -e '%d \"%%5.%df\t\" \"\t\" 4 \"%%d\t\" \"\\n\"' " STATS_FILENAME " >> " ODEXPDIR "stats.csv",\
+            "hexdump -e '%d \"%%5.%df\t\" \"\t\" 5 \"%%d\t\" \"\\n\"' " STATS_FILENAME " >> " ODEXPDIR "stats.csv",\
             nbr_col, fix);
 
     s = system(cmd_varnames); 

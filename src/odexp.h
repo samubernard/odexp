@@ -136,7 +136,13 @@ typedef struct system_state {
      */
     int     event[3]; 
 
-    int     stop_flag; /* set to 1 to stop integration and re-evaluate ics */ 
+    int     stop_flag; /* 0: no stop
+                        * 1: stop set by timespan 
+                        * 2: stop set by state-dependent condition
+                        * 4: stop set by birth/death/repli
+                        * 8: stop set by Ctl-C (user abort)
+                        * 16: stop du to GSL error 
+                        * 32: undefined stop */ 
 
     double  time_in_ode_rhs; /* time spent in ode_rhs so far */
 
@@ -416,18 +422,29 @@ int mvar(const char *s, par *p, double *ptr);
 #define DWDT (randN(0,1)/sqrt(*SIM->h))        
 
 /* stopping times */
-#define STOP_FLAG        SIM->stop_flag
-#define SET_STOP_FLAG(condition) ({ \
-    if ( condition )                \
-    {                               \
-      STOP_FLAG = 1;                \
-    }                               \
-    condition;                      \
+#define EVENT_NO        (0x00) 
+#define EVENT_T0        (0x01)
+#define EVENT_TFINAL    (0x02)
+#define EVENT_TSPAN     (0x04)
+#define EVENT_COND      (0x08)
+#define EVENT_BIRTH     (0x10)
+#define EVENT_DEATH     (0x20)
+#define EVENT_REPLI     (0x40)
+#define EVENT_ABORT     (0x80)
+#define EVENT_GSL       (0x100)
+#define EVENT_UNDEF     (0x200)
+#define EVENT_POP_MASK  (EVENT_BIRTH | EVENT_DEATH | EVENT_REPLI)
+#define EVENT_TYPE   SIM->stop_flag
+#define SET_EVENT_TYPE(condition,type) ({ \
+    if ( condition )                      \
+    {                                     \
+      EVENT_TYPE = type;                  \
+    }                                     \
   })
-#define STOPIF(condition,var) ({ \
+#define STOPIF(condition,var) ({   \
     if ( condition )                \
     {                               \
-      STOP_FLAG = 1;                \
+      EVENT_TYPE = EVENT_COND;          \
     }                               \
     var = condition;                \
   })
