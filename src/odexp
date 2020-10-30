@@ -216,6 +216,9 @@ close $fodeh;
 init_check() if ( $opt_i == 0 ); # check that init cond are declared in the same order as dynamical variables
 impl_check() if ( $opt_i == 0 ); # check that init cond are declared in the same order as dynamical variables
 
+my %vars = (); # hash table: key:identifier, value:type 
+make_identifier_table();
+
 guess_single_popmode($modelode);
 check_quiet_mode($modelode);
 add_options($modelode);
@@ -457,6 +460,24 @@ sub impl_check
     die "error: variable $impl, used implicitly on line \"$line\", was not declared\n" if not $found;
   }
 
+}
+
+sub make_identifier_table
+{
+  open(my $fodeh, '<', $modelode) or die "Could not open file '$modelode'. $!";
+  while(<$fodeh>)
+  {
+    chomp;
+    if ( my ($type, $var) = ( $_ =~ /$re_pace/ ) ) 
+    {
+      $vars{$var} = $type;
+    }
+  }
+  close $fodeh;
+  # while ( my ($k,$v) = each(%vars) )
+  # {
+  #   print $k . " is a " . $v . "\n";
+  # }
 }
 
 sub guess_single_popmode
