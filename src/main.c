@@ -2072,13 +2072,14 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 {
   int success = 0;
   int i;
+  int opn, cls;
   size_t linecap;
   char *line = NULL;
   FILE *fr;
   FILE *eqfr;
   char rootname[MAXROOTLENGTH];
   int  rootnamescanned = 0;
-  char par_buffer[MAXFILENAMELENGTH];
+  char pop_buffer[MAXFILENAMELENGTH];
   char print_buffer[MAXFILENAMELENGTH];
   int len = *mu.max_name_length;
   clock_t time_stamp;
@@ -2096,21 +2097,21 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 
   if (rootnamescanned > 0)
   {
-    snprintf(par_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.par",rootname,(uintmax_t)time_stamp);
+    snprintf(pop_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.pop",rootname,(uintmax_t)time_stamp);
     snprintf(print_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.eps",rootname,(uintmax_t)time_stamp);
   }  
   else
   {  
-    snprintf(par_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.par", odexp_filename, (uintmax_t)time_stamp);
+    snprintf(pop_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.pop", odexp_filename, (uintmax_t)time_stamp);
     snprintf(print_buffer,MAXFILENAMELENGTH, ODEXPDIR "%s.%ju.eps", odexp_filename, (uintmax_t)time_stamp);
   }
 
   /* open buffer parameter file (par) */
-  fr = fopen(par_buffer,"w");
+  
 
-  if ( fr == NULL )
+  if ( ( fr = fopen(pop_buffer,"w") ) == NULL )
   {
-    PRINTERR("  File %s could not be opened. Nothing was written",par_buffer);
+    PRINTERR("  File %s could not be opened. Nothing was written",pop_buffer);
   }
   else
   {
@@ -2118,35 +2119,35 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     fprintf(fr,"\n# --------------------------------------------------\n");
     fprintf(fr,"# Parameter file for the odexp system: '%s'\n", odexp_filename); 
     fprintf(fr,"\n# To load the parameter file from odexp, use the following command:\n");
-    fprintf(fr,"# odexp> o %s\n", par_buffer);
-    fprintf(fr,"\n# To run %s using parameters in %s,\n# use the following command from the prompt:\n",odexp_filename,par_buffer);
-    fprintf(fr,"# prompt$ odexp -p %s %s\n",par_buffer,odexp_filename);
+    fprintf(fr,"# odexp> o %s\n", pop_buffer);
+    fprintf(fr,"\n# To run %s using parameters in %s,\n# use the following command from the prompt:\n",odexp_filename,pop_buffer);
+    fprintf(fr,"# prompt$ odexp -p %s %s\n",pop_buffer,odexp_filename);
     fprintf(fr,"#\n# associated figure file: %s of type %s\n",print_buffer,get_str("printsettings"));
     fprintf(fr,"# --------------------------------------------------\n");
 
     fprintf(fr,"\n# parameters/values\n");
     for(i=0;i<mu.nbr_el;i++)
     {
-      fprintf(fr,"PAR%d %-*s %g {%s} # %s\n",\
-          i,len,mu.name[i],mu.value[i],mu.attribute[i],mu.comment[i]);
+      fprintf(fr,"par %-*s %g {%s} # %s\n",\
+          len,mu.name[i],mu.value[i],mu.attribute[i],mu.comment[i]);
     }
 
-    fprintf(fr,"\n# dynamical variables/initial conditions\n");
+    fprintf(fr,"\n# initial conditions\n");
     for(i=0;i<init.nbr_el;i++)
     {
       if ( NUM_IC[i] == 1 ) 
       {
-        fprintf(fr,"INIT%d %-*s %g {%s} # initial expression: %s; initial comment: %s\n",\
-            i,len,init.name[i],init.value[i],init.attribute[i],init.expression[i],init.comment[i]);
+        fprintf(fr,"init %-*s %g {%s} # initial expression: %s; initial comment: %s\n",\
+            len,init.name[i],init.value[i],init.attribute[i],init.expression[i],init.comment[i]);
       }
       else
       {
-        fprintf(fr,"INIT%d %-*s %s {%s} # initial comment: %s\n",\
-            i,len,init.name[i],init.expression[i],init.attribute[i],init.comment[i]);
+        fprintf(fr,"init %-*s %s {%s} # initial comment: %s\n",\
+            len,init.name[i],init.expression[i],init.attribute[i],init.comment[i]);
       }
     }    
 
-    fprintf(fr,"\n# time span\nTIMESPAN ");
+    fprintf(fr,"\n# time span\ntimespan ");
     for(i=0;i<tspan.length;i++)
     {
       fprintf(fr,"%g ",tspan.array[i]);
@@ -2159,29 +2160,45 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
       switch (GOPTS[i].valtype)
       {
         case 'd' :
-          fprintf(fr,"OPT%d %-*s %g\n",i,len,GOPTS[i].name,GOPTS[i].numval);
+          fprintf(fr,"opt %-*s %g\n",len,GOPTS[i].name,GOPTS[i].numval);
           break;
         case 'i' :
-          fprintf(fr,"OPT%d %-*s %d\n",i,len,GOPTS[i].name,GOPTS[i].intval);
+          fprintf(fr,"opt %-*s %d\n",len,GOPTS[i].name,GOPTS[i].intval);
           break;
         case 's' :
-          fprintf(fr,"OPT%d %-*s %s\n",i,len,GOPTS[i].name,GOPTS[i].strval);
+          fprintf(fr,"opt %-*s %s\n",len,GOPTS[i].name,GOPTS[i].strval);
       }
     }
 
     fprintf(fr,"\n# --------------------------------------------------\n");
     fprintf(fr,"# original equations, auxiliary variables and parametric expressions\n\n");
 
-    eqfr = fopen(EQ_FILENAME,"r");
-    if ( eqfr == NULL )
+    
+    if ( ( eqfr = fopen(odexp_filename,"r") ) == NULL )
     {
-      PRINTERR("  File %s could not be opened. Not writing equations",par_buffer);
+      PRINTERR("  File '%s' could not be opened. Not writing equations",odexp_filename);
     }
     else
     {
       while( getline(&line,&linecap,eqfr) > 0)
       {
-        fprintf(fr,"#    %s", line);
+        line += strspn(line," \t"); /* strip whitespaces */
+        if ( strncasecmp(line,"par",3) == 0 ||
+             strncasecmp(line,"times",5) == 0 ||
+             strncasecmp(line,"init",4)  == 0 ||
+             strncasecmp(line,"opt",3) == 0 ) 
+        {
+          fprintf(fr,"#    %s", line);
+        }
+        else 
+        {
+          opn = 0;
+          cls = 0;
+          sscanf(line,"d%*[^/]/dt %*[^{] %n{ %*[^}] }%n", &opn, &cls); /* get position of opening { and } brackets */
+          fprintf(fr,"%.*s", opn, line);
+          fprintf(fr,"%s", line + cls);
+        }
+        
       }
     }
     fclose(eqfr);
@@ -2196,7 +2213,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 
     fclose(fr);
 
-    printf("  wrote %s\n",par_buffer);
+    printf("  wrote %s\n",pop_buffer);
 
     success = 1;
   }
