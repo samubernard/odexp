@@ -1749,7 +1749,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             gplot_data(plot_str_arg, data_fn);
             break;
 
-          case PM_FUN: /* plot data */
+          case PM_FUN: /* plot function of variables using gnuplot syntax */
             gplot_fun(plot_str_arg);
             break;
 
@@ -1792,19 +1792,21 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       rep_command = 1; /* reset to default = 1 */
 
       /* nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos); */
-      if ( ( sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos) == 1 ) && 
+      if ( ( sscanf(cmdline,"%[][{}R] %d %[^\n]",svalue,&rep_command,svalue2) >= 2 ) && 
+           rep_command > 1 )
+      /* check for repeat command: []{}R<count> + possibly extra &&  */
+      {
+        extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
+        snprintf(extracmd,strlen(cmdline)+1,"%s%d %s",svalue,--rep_command,svalue2);  
+        DBPRINT("extracmd: %s",extracmd);
+      }
+      else if ( ( sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos) == 1 ) && 
            strncmp(svalue,"&&",2) == 0 )
       /* check for extra command: && cmd */
       {
         extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
         strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
-      }
-      else if ( ( sscanf(cmdline,"%[][{}R] %d",svalue,&rep_command) == 2 ) && 
-           rep_command > 1 )
-      /* check for repeat command: []{}R<count>. do not use with && */
-      {
-        extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
-        snprintf(extracmd,strlen(cmdline)+1,"%s%d",svalue,--rep_command);  
+        DBPRINT("extracmd: %s",extracmd);
       }
       free(rawcmdline);
 

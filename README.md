@@ -518,7 +518,7 @@ work when command expects a string argument).
 > *var*
 > on the x-axis
 
-**y {** *ind* | *var }*
+**y** \[*ind* | *var key*]
 
 > Plot variable with index
 > *ind*
@@ -1211,4 +1211,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - October 30, 2020
+DARWIN16 - November 4, 2020
