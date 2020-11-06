@@ -62,12 +62,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   char    c,
           op,
           op2;
-  int     rep_command = 1;
+  int     nbr_repeat = 1,
+          rep_command = 1;
   double  nvalue,
-          nvalue2;
-  char    svalue[NAMELENGTH],
+          nvalue2,
+          nvalue3;
+  char    *strptr = (char *)NULL,
+          svalue[EXPRLENGTH],
           svalue2[EXPRLENGTH],
-          svalue3[NAMELENGTH];
+          svalue3[EXPRLENGTH];
   int     np,
           padding,
           charpos,
@@ -491,6 +494,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                               * this does not go into the history  
                               */
   }
+
   /* get first command form run1st */
   if ( strlen(get_str("runfirst")) )
   {
@@ -503,33 +507,72 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   while(!quit)  /* MAIN LOOP */
   {
 
+    /* first read any incoming messages from gnuplot and print them */
     while ( read_msg() ) /* try to read and print FIFO */
     {
       /* if already caught a message, try to catch more of the message */ 
     };
 
-    printf("%s",T_NOR);
-    if ( extracmd != NULL )
+    printf("%s",T_NOR); /* reset normal terminal format */
+    
+    /* BEGIN get command line */
+    if ( extracmd != NULL ) /* First process any extracmd left*/
     {
-      /* rawcmdline has been freed */
+      free(rawcmdline);
       rawcmdline = malloc((strlen(extracmd)+1)*sizeof(char));
-      strncpy(rawcmdline,extracmd,strlen(extracmd)+1);
+      strcpy(rawcmdline,extracmd);
+      free(extracmd);
+      extracmd = (char *)NULL;
     }
-    else
+    else /* read from command line */
     {
       printf_status_bar( &tspan );
       rawcmdline = readline(ODEXP_PROMPT);
       printf("%s","\033[J"); /* clear to the end of screen */
+      if ( strlen(rawcmdline) > 0 ) /* add the full raw, unprocessed cmdline to history if non empty and 
+                                     * if it read from the command line */
+      {
+        add_history (rawcmdline);
+      }
+    } /* unprocessed commands are now in rawcmdline  and extracmd == NULL */
+    
+    /* DBPRINT("rawcmdline: %s (sizeof = %lu, strlen = %lu)",rawcmdline, sizeof rawcmdline, strlen(rawcmdline)); */
+
+    if ( ( sscanf(rawcmdline,"%[][{}R] %d %n",svalue,&nbr_repeat,&extracmdpos) >= 2 ) && 
+         nbr_repeat > 1 ) /* assign extra command to cmd<r-1> ... */
+    {
+      extracmd = malloc((strlen(rawcmdline)+1)*sizeof(char));
+      snprintf(extracmd,strlen(rawcmdline)+1,"%s%d %s",svalue,--nbr_repeat,rawcmdline + extracmdpos);
+      rawcmdline[extracmdpos] = '\0'; /* truncate rawcmdline */
+      /* DBPRINT("extracmd: %s, rawcmdline: %s",extracmd, rawcmdline);  */
     }
-    sscanf(rawcmdline," %c%n",&c,&charpos);
-    cmdline = rawcmdline+charpos-1; /* eat white spaces */
+    else if ( ( sscanf(rawcmdline,"%[^;(] ( %lf : %lf : %lf )%n",svalue,&nvalue,&nvalue2,&nvalue3,&extracmdpos) == 4 ) && (nvalue < nvalue3) )
+      /* found a for loop -- experimental */
+    {
+      extracmd = malloc(2*strlen(rawcmdline)*sizeof(char));
+      snprintf(extracmd,2*strlen(rawcmdline),"%s(%g:%g:%g)%s",\
+          svalue,nvalue+nvalue2,nvalue2,nvalue3,rawcmdline + extracmdpos);  
+      strptr = strchr(rawcmdline,'(');
+      *strptr = ' ';
+      strptr = strchr(rawcmdline,':');
+      *strptr = '\0';  /* truncate rawcmdline to the first command */
+      /* DBPRINT("extracmd: %s, rawcmdline: %s",extracmd, rawcmdline);  */
+    }
+    else if ( ( strptr = strchr(rawcmdline, ';' ) ) > rawcmdline ) /* is rawcmdline a list of command */
+    {
+      extracmd = malloc((strlen(rawcmdline)+1)*sizeof(char));
+      strncpy(extracmd,strptr + 1,strlen(rawcmdline)+1);
+      *strptr = '\0';  /* truncate rawcmdline to the first command */
+      /* DBPRINT("extracmd: %s, rawcmdline: %s",extracmd, rawcmdline);  */
+    }
+
+    sscanf(rawcmdline," %n%c",&charpos,&c);
+    cmdline = rawcmdline+charpos; /* eat white spaces */
+    /* END get command line */
+
     if (cmdline && *cmdline) /* check if cmdline is not empty */
     {
       PRINTLOG("> %s",cmdline);
-      if ( extracmd == NULL ) 
-      {
-        add_history (cmdline);
-      }
       sscanf(cmdline," %c",&c);
       switch(c)
       {
@@ -1607,7 +1650,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
           }
           break;
-        case 'Q' :  /* quit with implicit save */
+        case 'Q' :  /* quit with without save */
+          quit = 1;
+          break;
         case 'q' :  /* quit with save */
           quit = 1;
         case '*' : /* save snapshot of pop file */
@@ -1623,36 +1668,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         break;
       } 
     
-      /* Check for extra command: for loop */
-      free(extracmd);
-      extracmd = (char *)NULL; 
-      /* check loop cmd @ a:b */
-      if ( sscanf(cmdline,"%[][{}] for %d:%d",svalue,&i,&j) == 3 )
-      {
-        DBPRINT("a loop!");
-        switch(svalue[0])
-        {
-          case '}':
-          case '{':
-            set_int("particle",i);
-            break;
-          case ']':
-          case '[':
-            ngy = i;
-            ngy %= (int)total_nbr_x;
-            gy = ngy+2;
-            update_plot_options(ngx,ngy,ngz,dxv);
-            update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
-            break;
-          default:
-            break;
-        }
-        extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
-        snprintf(extracmd,strlen(cmdline)+1,"%s%d",svalue,j-i);  
-      }
-
-      check_options();
       get_plottitle(cmdline);
+      check_options();
       
       if (runplot)
       {
@@ -1789,26 +1806,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       runplot = 0;
       plotonly = 0;
       nbr_read = 0;
-      rep_command = 1; /* reset to default = 1 */
-
-      /* nbr_read = sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos); */
-      if ( ( sscanf(cmdline,"%[][{}R] %d %[^\n]",svalue,&rep_command,svalue2) >= 2 ) && 
-           rep_command > 1 )
-      /* check for repeat command: []{}R<count> + possibly extra &&  */
-      {
-        extracmd = malloc((strlen(cmdline)+1)*sizeof(char));
-        snprintf(extracmd,strlen(cmdline)+1,"%s%d %s",svalue,--rep_command,svalue2);  
-        DBPRINT("extracmd: %s",extracmd);
-      }
-      else if ( ( sscanf(cmdline,"%*[^&]%[&]%n",svalue,&extracmdpos) == 1 ) && 
-           strncmp(svalue,"&&",2) == 0 )
-      /* check for extra command: && cmd */
-      {
-        extracmd = malloc((strlen(cmdline+extracmdpos)+1)*sizeof(char));
-        strncpy(extracmd,cmdline+extracmdpos,strlen(cmdline+extracmdpos)+1);
-        DBPRINT("extracmd: %s",extracmd);
-      }
-      free(rawcmdline);
+      rep_command = 1;
 
 
     } /* end if (cmdline && *cmdline)  check if cmdline is not empty */
