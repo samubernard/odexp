@@ -12,8 +12,7 @@
 #define SIZEMSG  10000
 
 enum plotmode { PM_UNDEFINED, PM_NORMAL, PM_DATA, PM_FUN, 
-  PM_ANIMATE, PM_CONTINUATION, PM_RANGE, 
-  PM_PARTICLES, PM_CURVES, PM_REPLOT };
+  PM_ANIMATE, PM_CONTINUATION, PM_PARTICLES, PM_CURVES, PM_REPLOT };
 
 /* function declaration */
 int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, const char *odexp_filename );

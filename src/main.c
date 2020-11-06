@@ -109,10 +109,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
    * 3: PM_FUN  like normal plot but with function of variables 
    * 4: PM_ANIMATE  like normal update plot with new parameters/option but animate solution
    * 5: PM_CONTINUATION continuation plot continuation branch 
-   * 6: PM_RANGE range
-   * 7: PM_PARTICLES particles in phase space
-   * 8: PM_CURVES add curves 
-   * 9: PM_REPLOT replot just re-issue last plot command
+   * 6: PM_PARTICLES particles in phase space
+   * 7: PM_CURVES add curves 
+   * 8: PM_REPLOT replot just re-issue last plot command
    */
   enum plotmode plot_mode       = PM_UNDEFINED; 
 
@@ -546,12 +545,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       rawcmdline[extracmdpos] = '\0'; /* truncate rawcmdline */
       /* DBPRINT("extracmd: %s, rawcmdline: %s",extracmd, rawcmdline);  */
     }
-    else if ( ( sscanf(rawcmdline,"%[^;(] ( %lf : %lf : %lf )%n",svalue,&nvalue,&nvalue2,&nvalue3,&extracmdpos) == 4 ) && (nvalue < nvalue3) )
+    else if ( ( sscanf(rawcmdline,"%[^;(] ( %lf : %lf : %lf )%n",svalue,&nvalue,&nvalue2,&nvalue3,&extracmdpos) == 4 ) )
       /* found a for loop -- experimental */
     {
-      extracmd = malloc(2*strlen(rawcmdline)*sizeof(char));
-      snprintf(extracmd,2*strlen(rawcmdline),"%s(%g:%g:%g)%s",\
-          svalue,nvalue+nvalue2,nvalue2,nvalue3,rawcmdline + extracmdpos);  
+      if ( nvalue < nvalue3 )
+      {
+        extracmd = malloc(2*strlen(rawcmdline)*sizeof(char));
+        snprintf(extracmd,2*strlen(rawcmdline),"%s(%g:%g:%g)%s",\
+            svalue,nvalue+nvalue2,nvalue2,nvalue3,rawcmdline + extracmdpos);  
+      }
       strptr = strchr(rawcmdline,'(');
       *strptr = ' ';
       strptr = strchr(rawcmdline,':');
@@ -609,11 +611,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           plot_mode = PM_CONTINUATION;
           plotonly = 1;
           break;
-        case 'j' :
-        case '8' : /* switch to range plot */
-          plot_mode = PM_RANGE;
-          plotonly = 1;
-          break;
         case 'C' :
         case '7' :
           nbr_read = sscanf(cmdline,"%*s %s %s",svalue,svalue3); /* try to read an optional string  */
@@ -651,11 +648,26 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
            * hold is meant not to run the simulation again while
            * curves is. 
            */
-          set_int("hold",1-get_int("hold"));
+          if (  ( nbr_read = sscanf(cmdline+1,"%c",&op) ) > 0 )
+          {
+            if ( op == 'd' ) /* delay switching on of hold to after next plot */
+            {
+              set_str("hold","delay");
+              set_int("hold",0);
+            }
+          }
+          else 
+          {
+            set_int("hold",1-get_int("hold"));
+          }
           if ( get_int("hold") )
           {
             set_int("curves",0); /* unset curves */
             printf("  %shold is on%s\n",T_DET,T_NOR);
+          }
+          else if ( strncmp(get_str("hold"),"delay", 5) == 0 )
+          {
+            printf("  %shold is delayed%s\n",T_DET,T_NOR);
           }
           else
           {
@@ -1781,10 +1793,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             fflush(GPLOTP);
             break;
 
-          case PM_RANGE: /* try to plot range */
-            /* */
-            break;
-
           case PM_PARTICLES:
             gplot_particles(gx, gy, dxv );
             break;
@@ -1793,6 +1801,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             break;
         }
 
+        if ( strncmp(get_str("hold"), "delay", 5) == 0 )
+        {
+          set_str("hold","");
+          set_int("hold",1);
+        }
       }
 
       /* update option x, y, z */

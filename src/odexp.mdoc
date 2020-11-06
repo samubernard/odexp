@@ -93,8 +93,7 @@ Options (OPT)
 .Ss Interactive commands
 Interactive commands can be entered at the 
 .Nm odexp
-prompt. Multiple commands can be separated with && (does not
-work when command expects a string argument).
+prompt. Successive commands can be separated with by semi-colons ';' 
 .Bl -tag -width indent
 .It Ic "?"              
 Display this help.
@@ -221,8 +220,10 @@ Fit data (not implemented yet).
 Send the command 
 .Va cmd
 to gnuplot.
-.It Ic h              
-Toggle plot hold (on/off). 
+.It Ic h Op d            
+Toggle plot hold (on/off). The command 
+.Ic hd
+delays hold to after the next plotting command, making sure that only plotting command issued after the hold command will be displayed.
 .It Ic I              
 Set initial conditions to their default values.
 .It Ic il            
@@ -310,7 +311,7 @@ and
 .Ar par
 are missing, the current parameter and its value are printed. 
 .It Ic Q, q Oo Ar msg Oc , Ic C^w        
-Quit and make a snapshot of the paramters. An optional message 
+Quit and make a snapshot of the parameters. An optional message 
 .Va msg
 can be added. 
 .It Ic R
@@ -361,8 +362,8 @@ must be larger than
 Toggle add curves to plot (on/off).
 This works only when simulations are updated, for instance when parameters are changed. To plot many variables on the same axes, use 
 .Ic h 
-(hold) instead. Curves can be labelled with custom keys, by adding 
-.Ar # Ar key
+(hold) instead. Curves can be labelled with custom keys, by adding a string
+.Ar "key"
 to the plot command.
 .It Ic ur              
 Remove all curves and set curves off.

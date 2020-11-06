@@ -369,6 +369,7 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
   int  nbr_dim = 0;
   int   *size_dim = malloc(sizeof(int));
   char *line = NULL;
+  char *strptr;
   char str2match[NAMELENGTH];
   char key[NAMELENGTH]; 
   char basevarname[NAMELENGTH];
@@ -489,6 +490,10 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
             strcat(var.name[var_index+j],new_index);
             strcat(var.name[var_index+j],"]");
             strcat(var.name[var_index+j],extensionvarname);
+            if ( ( strptr = strchr(var.name[var_index+j], ' ') ) != NULL )
+            {
+              *strptr = '\0';
+            }
             replace_word(var.expression[var_index+j],iterator_str,new_index,EXPRLENGTH); 
           }
         }
@@ -544,19 +549,12 @@ int trim_whitespaces(char *s)
  * result in dest */
 int translate(char *dest, const char* source, const char* search, const char* replace, size_t len)
 {
-  size_t i,j;
-  for ( i=0; i<min(strlen(source),len); i++ )
+  size_t spn;
+  strncpy(dest,source,len);
+  while ( ( spn = strcspn(dest, search) ) < strlen(dest) )
   {
-    dest[i] = source[i];
-    for ( j=0; j<strlen(search); j++)
-    {
-      if (source[i] == search[j])
-      {
-        dest[i] = replace[j];
-      } 
-    }
+    dest[spn] = replace[strchr(search, dest[spn]) - search];
   }
-  dest[i+1] = '\0';
   return 0;
 }
 
