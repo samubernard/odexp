@@ -39,7 +39,8 @@
 /* colors */
 #define TERM_BG_COLOR1 "0xFFEEE2" 
 #define TERM_BG_COLOR2 "0xFFF5F2" 
-#define ODEXP_PROMPT  "οдεⅹп> "
+#define ODEXP_PROMPT  "o∂exp> "
+
 
 typedef long RANDINT;
 #define POISSON_RAND_MAX RAND_MAX

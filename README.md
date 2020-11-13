@@ -94,8 +94,7 @@ The general structure of the file is
 
 Interactive commands can be entered at the
 **odexp**
-prompt. Multiple commands can be separated with && (does not
-work when command expects a string argument).
+prompt. Successive commands can be separated with by semi-colons ';'
 
 ?
 
@@ -273,9 +272,11 @@ work when command expects a string argument).
 > *cmd*
 > to gnuplot.
 
-**h**
+**h** \[d]
 
-> Toggle plot hold (on/off).
+> Toggle plot hold (on/off). The command
+> **hd**
+> delays hold to after the next plotting command, making sure that only plotting command issued after the hold command will be displayed.
 
 **I**
 
@@ -399,7 +400,7 @@ work when command expects a string argument).
 
 **Q, q** \[*msg*], **C^w**
 
-> Quit and make a snapshot of the paramters. An optional message
+> Quit and make a snapshot of the parameters. An optional message
 > *msg*
 > can be added.
 
@@ -467,8 +468,8 @@ work when command expects a string argument).
 > Toggle add curves to plot (on/off).
 > This works only when simulations are updated, for instance when parameters are changed. To plot many variables on the same axes, use
 > **h**
-> (hold) instead. Curves can be labelled with custom keys, by adding
-> *#* *key*
+> (hold) instead. Curves can be labelled with custom keys, by adding a string
+> *key*
 > to the plot command.
 
 **ur**
@@ -1211,4 +1212,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - November 6, 2020
+DARWIN16 - November 13, 2020
