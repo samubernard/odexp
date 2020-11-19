@@ -420,20 +420,20 @@ int mvar(const char *s, par *p, double *ptr);
 #define EVENT_NONE      (0x00) 
 #define EVENT_T0        (0x01)
 #define EVENT_TFINAL    (0x02)
-#define EVENT_TSPAN     (0x04)
-#define EVENT_COND      (0x08)
-#define EVENT_BIRTH     (0x10)
-#define EVENT_DEATH     (0x20)
-#define EVENT_REPLI     (0x40)
+#define STOP_TSPAN      (0x04)
+#define STOP_COND       (0x08)
+#define STOP_BIRTH      (0x10)
+#define STOP_DEATH      (0x20)
+#define STOP_REPLI      (0x40)
 #define EVENT_ABORT     (0x80)
 #define EVENT_GSL       (0x100)
 #define EVENT_UNDEF     (0x200)
-#define EVENT_POP_MASK  (EVENT_BIRTH | EVENT_DEATH | EVENT_REPLI)
+#define EVENT_POP_MASK  (STOP_BIRTH | STOP_DEATH | STOP_REPLI)
 #define EVENT_TYPE   SIM->stop_flag
 #define STOPIF(condition) ({   \
     if ( condition )                \
     {                               \
-      EVENT_TYPE = EVENT_COND;          \
+      EVENT_TYPE = STOP_COND;          \
     }                               \
     condition;                \
   })

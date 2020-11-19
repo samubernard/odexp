@@ -1328,7 +1328,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           if (nbr_read == 1)
           {
             mu.value[p] = nvalue;
-            printf("  set to %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
+            printf("  %s = %s%lg%s\n", mu.name[p],T_VAL,mu.value[p],T_NOR);
             runplot = 1;
           }
           else

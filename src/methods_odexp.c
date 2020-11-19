@@ -434,7 +434,7 @@ int odesolver( oderhs pop_ode_rhs,
         if ( (t<=nextstop) && (dt_dyn>=(nextstop-t)) )
         {
             dt_dyn = nextstop-t;
-            EVENT_TYPE = EVENT_TSPAN;
+            EVENT_TYPE = STOP_TSPAN;
             sprintf(msg,"  stopping time = %g (t = %g)", nextstop, t);
         }
         /* BIRTH and DEATH 
@@ -520,7 +520,7 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = fe_apply(&sys,&t,tnext,&h,y);
-                if (EVENT_TYPE & EVENT_COND)
+                if (EVENT_TYPE & STOP_COND)
                 {
                    break;
                 }
@@ -549,7 +549,7 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = iteration_apply(&sys,&t,y);
-                if (EVENT_TYPE & EVENT_COND)
+                if (EVENT_TYPE & STOP_COND)
                 {
                    break;
                 }
@@ -574,7 +574,7 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = dde_apply(&sys,&t,tnext,&h,y);
-                if (EVENT_TYPE & EVENT_COND)
+                if (EVENT_TYPE & STOP_COND)
                 {
                    break;
                 }
@@ -598,7 +598,7 @@ int odesolver( oderhs pop_ode_rhs,
             while ( t < tnext)
             {
                 status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
-                if (EVENT_TYPE & EVENT_COND)
+                if (EVENT_TYPE & STOP_COND)
                 {
                    break;
                 }
@@ -677,7 +677,7 @@ int odesolver( oderhs pop_ode_rhs,
             e = gsl_odeiv2_evolve_alloc(sim_size);
 
         }
-        if (EVENT_TYPE & ( EVENT_COND | EVENT_TSPAN ) )
+        if (EVENT_TYPE & ( STOP_COND | STOP_TSPAN ) )
         {
           /* reset dynamical variables */
           ode_ic(t, y, SIM->pop->start);
@@ -689,7 +689,7 @@ int odesolver( oderhs pop_ode_rhs,
         }
 
           /* calculating next stop */
-        if ( EVENT_TYPE & EVENT_TSPAN ) 
+        if ( EVENT_TYPE & STOP_TSPAN ) 
         {
           nextstop = tstops[idx_stop++];
         }
@@ -1595,30 +1595,30 @@ void SSA_apply_birthdeath(const double t, odeic single_ic )
     if(event_index < POP_SIZE) /* a particle dies */
     {
         choose_pars = event_index; /* will kill the choose_pars'th particle */
-        EVENT_TYPE = EVENT_DEATH;
+        EVENT_TYPE = STOP_DEATH;
     }
     else if(event_index < 2*POP_SIZE) /* a particle replicates */
     {
         choose_pars = event_index - POP_SIZE; /* will replicate the choose_pars'th cell */
-        EVENT_TYPE = EVENT_REPLI;
+        EVENT_TYPE = STOP_REPLI;
     }
     else /* a particle is produced from scratch */
     {
         choose_pars = 2*POP_SIZE;
-        EVENT_TYPE = EVENT_BIRTH;
+        EVENT_TYPE = STOP_BIRTH;
     }
 
-    if ( EVENT_TYPE & (EVENT_DEATH | EVENT_REPLI) )
+    if ( EVENT_TYPE & (STOP_DEATH | STOP_REPLI) )
     {
         pars = p[choose_pars];
         SIM->event[0] = (int)pars->id;
-        if ( EVENT_TYPE & EVENT_DEATH )
+        if ( EVENT_TYPE & STOP_DEATH )
         {
             SIM->event[1] = -1;
             SIM->event[2] = -1;
             delete_el(SIM->pop, pars);
         }
-        if ( EVENT_TYPE & EVENT_REPLI )
+        if ( EVENT_TYPE & STOP_REPLI )
         {
             SIM->event[1] = 1;
             par_repli(pars);
@@ -1664,20 +1664,20 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
         EVENT_TYPE = EVENT_NONE;
         if ( rand01() < (pars->death_rate * dt) )
         {
-          EVENT_TYPE = EVENT_DEATH;
+          EVENT_TYPE = STOP_DEATH;
         }
         if ( rand01() < (pars->repli_rate * dt) )
         {
-          EVENT_TYPE |= EVENT_REPLI;
+          EVENT_TYPE |= STOP_REPLI;
         }
         
         SIM->event[0] = (int)pars->id;
-        if ( EVENT_TYPE & ( EVENT_DEATH | EVENT_REPLI ) ) /* flip a coin */
+        if ( EVENT_TYPE & ( STOP_DEATH | STOP_REPLI ) ) /* flip a coin */
         {
           if ( rand01() < pars->death_rate/(pars->death_rate + pars->repli_rate) ) /* death occurs first */ 
           {
             /* kill particle */
-            EVENT_TYPE = EVENT_DEATH;
+            EVENT_TYPE = STOP_DEATH;
             SIM->event[1] = -1;
             SIM->event[2] = -1;
             delete_el(SIM->pop, pars);
@@ -1687,7 +1687,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
           else /* replicate first and die after */
           {
             /* replicate particle */
-            EVENT_TYPE = EVENT_REPLI;
+            EVENT_TYPE = STOP_REPLI;
             par_repli(pars);
             SIM->event[1] = 1;
             SIM->event[2] = (int)SIM->pop->end->id;
@@ -1698,7 +1698,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
             single_ic(t, SIM->pop->end->y, SIM->pop->end);
             SIM->pop->end->sister = NULL;
             /* kill particle */
-            EVENT_TYPE = EVENT_DEATH;
+            EVENT_TYPE = STOP_DEATH;
             SIM->event[1] = -1;
             SIM->event[2] = -1;
             delete_el(SIM->pop, pars);
@@ -1706,7 +1706,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
             /* DBPRINT("repli and kill"); */
           }
         }
-        else if ( EVENT_TYPE & EVENT_DEATH ) 
+        else if ( EVENT_TYPE & STOP_DEATH ) 
         {
           /* kill particle */
           SIM->event[1] = -1;
@@ -1715,7 +1715,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
           fwrite_SIM(&t);
           /* DBPRINT("kill"); */
         }
-        else if ( EVENT_TYPE & EVENT_REPLI )
+        else if ( EVENT_TYPE & STOP_REPLI )
         {
           /* replicate particle */
           SIM->event[1] = 1;
@@ -1739,7 +1739,7 @@ void tau_leaping_apply_birthdeath(const double t, const double dt, odeic single_
     for ( i=0; i<(int)nbr_new_particles; i++ )
     {
           /* DBPRINT("birth"); */
-          EVENT_TYPE = EVENT_BIRTH;
+          EVENT_TYPE = STOP_BIRTH;
           par_birth();
           SIM->event[0] = -1;
           SIM->event[1] =  1;
