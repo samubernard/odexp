@@ -1585,10 +1585,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             status = ststcont(root_rhs,ics,SIM->pop->start);
             plot_mode = PM_CONTINUATION;
           }
-          else if ( op == 'r' )
-          {
-            status = parameter_range(pop_ode_rhs, pop_ode_ic, NULL, ics, mu, fcn, tspan, GPLOTP);
-          }
           break;
         case '#' : /* add data from file to plot */
           nbr_read = sscanf(cmdline+1,"%s %d %d",svalue,&colx,&coly);

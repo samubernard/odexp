@@ -169,8 +169,6 @@ to the shell.
 Switch to/update normal plot. 
 .It Ic 9, b
 Switch to continuation plot.
-.It Ic 8, j
-Switch to range plot.
 .It Ic 7 Op Ar timestep | Op Ar first | last | previous | next  Op Ar skip 
 Switch to particle plot. Optional 
 .Ar timestep 
@@ -269,22 +267,6 @@ List steady states.
 List all equations, auxiliary variables, coupling terms, mean fields and parametric expression. Optional subset of DACME to list only those types. 
 .It Ic mm            
 Try to find all steady states.
-.It Ic mr 
-Range over parameters. The active parameter takes values between
-.I par0 
-and 
-.I par1 
-with multiplicative step 
-.I rmstep 
-and additive stepsr 
-.IR astep . 
-For each value, the system is
-integrated over tspan and the min and the max of each variable is stored in the file.
-.IR range.tab . 
-If 
-.I rric 
-is 0, the initial conditions are set to the last state of the previous integration, 
-otherwise, the initial conditions are set as usual.
 .It Ic ms            
 Find a steady state with starting guess given by initial conditions.
 .It Ic o Ar filename  

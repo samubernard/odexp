@@ -201,10 +201,6 @@ prompt. Successive commands can be separated with by semi-colons ';'
 
 > Switch to continuation plot.
 
-**8, j**
-
-> Switch to range plot.
-
 **7** \[*timestep* | \[*first* | *last* | *previous* | *next* \[*skip*]]]
 
 > Switch to particle plot. Optional
@@ -354,18 +350,6 @@ prompt. Successive commands can be separated with by semi-colons ';'
 **mm**
 
 > Try to find all steady states.
-
-**mr**
-
-> Range over parameters. The active parameter takes values between
-> and
-> with multiplicative step
-> and additive stepsr
-> For each value, the system is
-> integrated over tspan and the min and the max of each variable is stored in the file.
-> If
-> is 0, the initial conditions are set to the last state of the previous integration,
-> otherwise, the initial conditions are set as usual.
 
 **ms**
 
@@ -1212,4 +1196,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - November 13, 2020
+DARWIN16 - November 18, 2020
