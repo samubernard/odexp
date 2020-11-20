@@ -39,7 +39,8 @@
 /* colors */
 #define TERM_BG_COLOR1 "0xFFEEE2" 
 #define TERM_BG_COLOR2 "0xFFF5F2" 
-#define ODEXP_PROMPT  "o∂exp> "
+#define ODEXP_PROMPT(n)  ({ char prompt[32]; snprintf(prompt,32,"o∂exp %d> ",n); prompt; }) 
+
 
 
 typedef long RANDINT;

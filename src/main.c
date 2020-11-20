@@ -86,6 +86,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           colx = 1,
           coly = 2;
   int  p = 0; /* active parameter index */
+  int  prompt_index = 0;
   char plotkeys[MAX_PLOT_KEY][EXPRLENGTH];
 
   /* iterators */
@@ -526,7 +527,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     else /* read from command line */
     {
       printf_status_bar( &tspan );
-      rawcmdline = readline(ODEXP_PROMPT);
+      rawcmdline = readline(ODEXP_PROMPT(prompt_index));
+      prompt_index++;
       printf("%s","\033[J"); /* clear to the end of screen */
       if ( strlen(rawcmdline) > 0 ) /* add the full raw, unprocessed cmdline to history if non empty and 
                                      * if it read from the command line */
