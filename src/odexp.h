@@ -42,9 +42,11 @@
 #define ODEXP_PROMPT(n)  ({ char prompt[32]; snprintf(prompt,32,"o∂exp %d> ",n); prompt; }) 
 
 
-
-typedef long RANDINT;
-#define POISSON_RAND_MAX RAND_MAX
+#ifndef RAND_DEFINED
+  #define RAND_DEFINED
+  typedef long RANDINT;
+  #define POISSON_RAND_MAX RAND_MAX
+#endif
 
 typedef int (*oderhs)(double, const double *, double *, void *);
 typedef int (*odeic)(double, double *, void *);

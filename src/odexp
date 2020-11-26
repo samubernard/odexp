@@ -38,14 +38,14 @@ my $re_iter_scalar = qr/
   \]
 /x;
 
-my $re_iter = qr/
+my $re_iter_loop = qr/
   \s*                   # whitespaces
   \[(\w+)               # iterator - mandatory
   \s*                   
   =                     # mandatory
   \s*     
   (\d+)                 # start - mandatory
-  \s*:?\s*              # : mandatory
+  \s*:\s*              # : mandatory
   (\d+)                 # end - mandatory
   \]
 /x;
@@ -971,6 +971,7 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
   declare_scalar_or_array($modelode,"%C","couplings");
   declare_scalar_or_array($modelode,"%M","mean fields");
   declare_scalar_or_array($modelode,"AUX","auxiliary functions");
+  #declare_scalar_or_array_2($modelode,"AUX","auxiliary functions");
   declare_scalar_or_array($modelode,"INIT","dynamical variables");
   define_array_from_input($modelode, "expr_", "EXPR",
     qr/\w+\s+(\w+)/, 
@@ -1129,17 +1130,67 @@ sub declare_scalar_or_array
   my ($fname,$character,$descr) = @_;
   print $fch "    /* $descr */\n";
   open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
+  my %names;
   while ( <$fh> )    
  	{
 		/^$character/i or next;   # match character or go to next line of file
     my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
+    exists($names{$name}) and next;  # check if name already exists
+    $names{$name} = 1;
     print $fch "    double $name";
-    if ( my @it = ($_ =~ m/$re_iter/g) )
+    if ( my ($dim) = ( $attr =~ m/size\s*=\s*\[(.*?)\]/ ) ) # check if total is in attribute size = [M,N]
+    {
+      print "DB" . $dim . "\n";
+      my @dims = split(/,/,$dim);
+      while ( @dims )
+      {
+        my $b = strip_blanks(shift @dims);
+        print $fch "[$b]";
+      }
+    }     
+    elsif ( my @it = ($_ =~ m/$re_iter_loop/g) ) # check if iterator bounds are in the brackets [i=0:N], size MUST be N
     {
       while ( @it )
       {
         shift @it; shift @it; 
         my $b = shift @it;
+        print $fch "[$b]";
+      }
+    }     
+    print $fch ";\n";
+	}	
+  print $fch "\n";
+  close($fh);
+}
+
+# declare scalar or array
+# converts a line 
+#   expr a my_expr 
+# to
+#   double a;
+# convert a line
+#   init x[i] expr[i] { i = 0:2, size = [5][4] }
+# to
+#   double x[5][4]; 
+sub declare_scalar_or_array_2
+{
+  my ($fname,$character,$descr) = @_;
+  print $fch "    /* $descr */\n";
+  open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
+  while ( <$fh> )    
+ 	{
+		/^$character/i or next;   # match character or go to next line of file
+    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
+    print $fch "    double $name";
+    print "DB: " . $_;
+    print "DB: " . $attr . "\n";
+    if ( my ($dim) = ( $attr =~ m/size\s*=\s*\[(.*?)\]/ ) )
+    {
+      print "DB" . $dim . "\n";
+      my @dims = split(/,/,$dim);
+      while ( @dims )
+      {
+        my $b = strip_blanks(shift @dims);
         print $fch "[$b]";
       }
     }     
@@ -1159,7 +1210,7 @@ sub define_array_from_input
   {
     /^$pat_char/i or next;
     my ($type, $name, $dummy, $attr, $comment) = ( $_ =~ $re_pace ) or print "no pace found";  
-    if ( my @it = ($_ =~ m/$re_iter/g) ) # array 
+    if ( my @it = ($_ =~ m/$re_iter_loop/g) ) # array 
     {
       my $offset = qq();
       my $j = 0;
@@ -1217,7 +1268,7 @@ sub define_array_functions
       print $fch "    $rhs2print\n";    
     } else
     {
-      if ( my @it = ($_ =~ m/$re_iter/g) )
+      if ( my @it = ($_ =~ m/$re_iter_loop/g) )
       {
         my $offset = qq();
         my $j = 0;
@@ -1286,7 +1337,7 @@ sub assign_output
       print $fch "\n";
       next;
     }
-    if ( my @it = ($_ =~ m/$re_iter/g) )
+    if ( my @it = ($_ =~ m/$re_iter_loop/g) )
     { 
       my $offset = qq();
       my $j = 0;
@@ -1520,7 +1571,7 @@ $endif
 close($finputrc);
 
 my $LDFLAGS = "-lgsl -lodexp";
-my $CFLAGS =  "-Wall -Wno-gnu-statement-expression -Wno-nullability-extension -Wno-nullability-completeness -pedantic -$opt_o";
+my $CFLAGS =  "-Wall -Wno-unknown-warning-option -Wno-availability -Wno-gnu-statement-expression -Wno-nullability-extension -Wno-nullability-completeness -pedantic -$opt_o";
 system("gcc $CFLAGS $LDFLAGS $odedir/model.c -o model.out") == 0 
               or die "compiling failed: $?";
 exec ("./model.out") or print STDERR "couldn't exec model.out: $!";

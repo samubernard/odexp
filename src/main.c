@@ -2612,7 +2612,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
     timestep = (unsigned int)strtol(get_str("timeframe"),NULL,10);
   }
   
-  timestep = max(timestep,0);
+  timestep = max(timestep,(unsigned int)0);
   timestep = min(timestep,SIM->nbrsteps-1);
 
   generate_particle_states(timestep, &t);

@@ -485,11 +485,13 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
             /* snprintf(new_index,NAMELENGTH,"[%s%d]", iterator_str, index0 + (j/(expr_size/index_factor)) % index1 ); */
             /* do not print the iterator's names. this might lead to ambiguity when 
              * several iterators are used, but is of no consequence outside displaying */
-            snprintf(new_index,NAMELENGTH,"%d", index0 + (j/(expr_size/index_factor)) % index1 );
+            /* printf("-- j=%d var=%s index0=%d expr_size=%d index_factor=%d index1=%d\n", j, var.name[var_index+j], index0, expr_size, index_factor, index1); */
+            snprintf(new_index,NAMELENGTH,"%d", index0 + (j/(expr_size/index_factor)) % (index1 - index0) );
             strcat(var.name[var_index+j],"[");
             strcat(var.name[var_index+j],new_index);
             strcat(var.name[var_index+j],"]");
             strcat(var.name[var_index+j],extensionvarname);
+            /* printf("-- var=%s\n", var.name[var_index+j]); */
             if ( ( strptr = strchr(var.name[var_index+j], ' ') ) != NULL )
             {
               *strptr = '\0';

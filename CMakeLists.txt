@@ -16,7 +16,6 @@ project (odexp
 set (odexp_VERSION_MAJOR 1)
 set (odexp_VERSION_MINOR 0)
 
- 
 # ============================================================================
 # configure a header file to pass some of the CMake settings to the source code
 # ============================================================================
@@ -86,7 +85,7 @@ message( "** Executable files will be installed in ${BINDIR}" )
 # Set compilation flags (general and then build-type specific)
 # ============================================================================
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -Wno-sign-compare -O0")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wno-nullability-completeness")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wno-unknown-warning-option -Wno-nullability-completeness -Wno-availability")
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall -Wextra -Wno-sign-compare -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-nullability-completeness")

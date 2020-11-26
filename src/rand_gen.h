@@ -5,8 +5,11 @@
                               Libraries
 ================================================================= */
 
-typedef long RANDINT;
-#define POISSON_RAND_MAX RAND_MAX
+#ifndef RAND_DEFINED
+  #define RAND_DEFINED
+  typedef long RANDINT;
+  #define POISSON_RAND_MAX RAND_MAX
+#endif
 
 /* random numbers generators */
 double rand01(); /* random double between 0 and 1 */
