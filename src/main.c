@@ -1649,14 +1649,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             }
             else
             {
-              if ( strncmp(get_str("popmode"), "single", 3) == 0 ) /* list particle 0 */
-              {
-                list_particle(0);
-              }
-              else
-              {
                 list_stats();
-              }
             }
           }
           break;

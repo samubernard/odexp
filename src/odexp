@@ -547,22 +547,15 @@ sub set_defines
   open(my $fh, '<', @_) or die "could not open file '@_'. $!";
   while (<$fh>) 
   {
-    #if ( my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ ) )
-    #{
-    #  $type =~ /^MAC/i or next; 
-    #  $comment =~ s/#\s*//; # strip comment
-    #  print $fch "#define " . $varname . " " . $rhs;       
-    #  print $fch " /* " . $comment . " */" if length $comment; 
-    #  print $fch "\n";
-    #}
     /^MAC/i or next;
-    my $comment = /#\s*/;
-    s/#(\s*)//; # strip comment
+    # my $comment = /#\s*/; # don't put comments on macro lines
+    # s/#(\s*)//; # strip comment
     s/^MAC\w*/#define/i; # replace mac by #define
     print $fch $_;       
-    print $fch " /* " . $comment . " */" if length $comment; 
+    # print $fch " /* " . $comment . " */" if length $comment; 
     print $fch "\n";
   }
+
   close($fh);
 }
 
