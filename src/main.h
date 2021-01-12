@@ -45,7 +45,7 @@ int setup_pm_normal(const int gx, const int gy, const int gz, const int plot3d, 
 int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);
 int gplot_data(const char *plot_str, const char *datafile_plotted );
 int gplot_fun(const char *plot_str);
-int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);
+int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, const nve dxv, const char *optstring);
 int gplot_particles( const int gx, const int gy, const nve var); 
 
 int get_plottitle(char *cmd);

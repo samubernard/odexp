@@ -59,6 +59,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   char    par_details[32];
   char    list_msg[EXPRLENGTH];
   char    plot_str_arg[EXPRLENGTH];
+  char    plot_animate_string[EXPRLENGTH];
   char    c,
           op,
           op2;
@@ -630,6 +631,16 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case '6' :
           plot_mode = PM_ANIMATE;
+          nbr_read = sscanf(cmdline+1,"%*[^\"] \"%[^\"]\"",svalue); /* try to read an optional string  */
+          if ( nbr_read == 1 )
+          {
+            snprintf(plot_animate_string,EXPRLENGTH,"%s",svalue);
+          }
+          else
+          {
+            plot_animate_string[0] = '\0';
+          }
+
           plotonly = 1;
           break;
         case 'r' : /* switch to replot mode */
@@ -1774,7 +1785,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             break;
 
           case PM_ANIMATE:
-            gplot_animate(gx, gy, gz, get_int("plot3d"), dxv);
+            gplot_animate(gx, gy, gz, get_int("plot3d"), dxv, plot_animate_string);
             break;
 
           case PM_CONTINUATION: /* try to plot continuation branch */
@@ -2445,7 +2456,7 @@ int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, con
   return 0;
 }
 
-int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, const nve dxv)
+int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, const nve dxv, const char *optstring)
 {
   char    plot_cmd[EXPRLENGTH];
   const int nbr_col = SIM->nbr_col; 
@@ -2456,13 +2467,14 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
     snprintf(plot_cmd,EXPRLENGTH,\
         "do for [j=0:%d] {"
         "plot \"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::0::j "
-        "with dots notitle, "
+        "with %s notitle, "
         "\"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d every ::j::j "
-        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\"}\n",
+        "with %s title \"%s\".\" vs \".\"%s\". \" \" .\"(%d)\" %s\n"
+        "}\n",
         get_int("res") - 1,
         get_int("particle"), nbr_col, gx, gy,
-        get_int("particle"), nbr_col, gx, gy,
-        get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), get_int("particle"));
+        get_str("style"), get_int("particle"), nbr_col, gx, gy,
+        get_str("particlestyle"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), get_int("particle"), optstring);
     fprintf(GPLOTP,"%s", plot_cmd);
   } 
   else /* plot3d == 1 */

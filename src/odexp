@@ -1156,43 +1156,6 @@ sub declare_scalar_or_array
   close($fh);
 }
 
-# declare scalar or array
-# converts a line 
-#   expr a my_expr 
-# to
-#   double a;
-# convert a line
-#   init x[i] expr[i] { i = 0:2, size = [5][4] }
-# to
-#   double x[5][4]; 
-sub declare_scalar_or_array_2
-{
-  my ($fname,$character,$descr) = @_;
-  print $fch "    /* $descr */\n";
-  open(my $fh, '<', $fname) or die "Could not open file '$fname'. $!";
-  while ( <$fh> )    
- 	{
-		/^$character/i or next;   # match character or go to next line of file
-    my ($type, $name, $rhs, $attr, $comment) = ( $_ =~ $re_pace );
-    print $fch "    double $name";
-    print "DB: " . $_;
-    print "DB: " . $attr . "\n";
-    if ( my ($dim) = ( $attr =~ m/size\s*=\s*\[(.*?)\]/ ) )
-    {
-      print "DB" . $dim . "\n";
-      my @dims = split(/,/,$dim);
-      while ( @dims )
-      {
-        my $b = strip_blanks(shift @dims);
-        print $fch "[$b]";
-      }
-    }     
-    print $fch ";\n";
-	}	
-  print $fch "\n";
-  close($fh);
-}
-
 sub define_array_from_input
 {
   my ($fname,$rhs,$pat_char,$pat_name,$descr) = @_;
