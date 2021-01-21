@@ -2485,11 +2485,11 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
         "splot \"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::0::j "
         "with dots notitle, "
         "\"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %d:%d:%d every ::j::j "
-        "with %s title \"%s\".\", \".\"%s\".\", \".\"%s\". \" \" .\"(%d)\"}\n",
+        "with %s title \"%s\".\", \".\"%s\".\", \".\"%s\". \" \" .\"(%d) %s\"}\n",
         get_int("res") - 1,
         get_int("particle"), nbr_col, gx, gy, gz,
         get_int("particle"), nbr_col, gx, gy, gz,
-        get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"), get_int("particle"));
+        get_str("particlestyle"), gx > 1 ? dxv.name[gx-2] : get_str("indvar"), gy > 1 ? dxv.name[gy-2] : get_str("indvar"), gz > 1 ? dxv.name[gz-2] : get_str("indvar"), get_int("particle"), optstring);
     fprintf(GPLOTP,"%s", plot_cmd);
   }
   fflush(GPLOTP);
