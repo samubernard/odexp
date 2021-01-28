@@ -207,6 +207,7 @@ if ( !-d $odedir & !-e $odedir ) {
 
 my $modelode = $odedir . "/equations.pop";
 my $modelc = $odedir . "/model.c";
+my $modelh = $odedir . "/model.h";
 
 open(my $fodeh, '>', $modelode) or die "Could not open file '$modelode'. $!";
 print_ode_header();
@@ -231,9 +232,10 @@ else
 
 
 # ====================================================================================
-# Generate model.c
+# Generate model.c and model.h
 # ====================================================================================
 open(my $fch, '>', $modelc) or die "Could not open file '$modelc'. $!";
+open(my $fhh, '>', $modelh) or die "Could not open file '$modelh'. $!";
 
 # ====================================================================================
 # Try to find author information 
@@ -244,6 +246,7 @@ open(my $fch, '>', $modelc) or die "Could not open file '$modelc'. $!";
 # Print Header 
 # ====================================================================================
 print_c_header();
+print_h_header();
 print $fch "/* Defines */\n\n";
 set_defines($modelode);
 print $fch "\n/* Global variables */\n\n";
@@ -277,7 +280,14 @@ print_ode_rhs();
 # ODE INIT COND
 print_ode_init_cond();
 
+
+# ====================================================================================
+# HEADER PRINT DEFINES
+print_header_defines();
+
+# ====================================================================================
 close $fch;
+close $fhh;
 
 sub print_ode_header
 {
@@ -534,6 +544,7 @@ sub print_c_header
 
 /* Header files */
 
+#include "model.h"
 #include "odexp.h"
 
 );
@@ -542,17 +553,28 @@ sub print_c_header
 
 }
 
+sub print_h_header 
+{
+  # Write H file header
+  my $heading = qq(/* header file for model 
+ * $odefilename 
+ */
+
+);
+ 
+  print $fhh $heading;
+
+}
+
+
 sub set_defines 
 {
   open(my $fh, '<', @_) or die "could not open file '@_'. $!";
   while (<$fh>) 
   {
     /^MAC/i or next;
-    # my $comment = /#\s*/; # don't put comments on macro lines
-    # s/#(\s*)//; # strip comment
     s/^MAC\w*/#define/i; # replace mac by #define
     print $fch $_;       
-    # print $fch " /* " . $comment . " */" if length $comment; 
     print $fch "\n";
   }
 
@@ -706,7 +728,6 @@ sub define_functions
 sub declare_ode_functions
 {
 	# DECLARE ODE FUNCTIONS
-  print $fch "/* Declaration and definition of functions */\n";
 	my $s = qq(/* Functions */
 int multiroot_rhs( const gsl_vector *x, void *params, gsl_vector *f);
 int pop_rhs(double t, const double y_[], double f_[], void *params_);
@@ -715,7 +736,7 @@ int pop_init_conditions(const double t, double y_[], void *params_);
 int ode_init_conditions(const double t, double y_[], void *params_);
 
 );
-	print $fch $s;
+	print $fhh $s;
 }
 
 sub print_main
@@ -1020,6 +1041,89 @@ sub print_ode_init_cond
     "INIT", "y2_", $re_pace,
     "assign initial conditions", "rhs");
   print $fch "\n    return GSL_SUCCESS;\n}\n\n";
+}
+
+sub print_header_defines
+{
+  print $fhh "/* Macros generated automatically from variables */\n";
+	open(my $fh, '<', $modelode) or die "Could not open file '$modelode'. $!";
+  my $imu = 0;
+  my $iy = 0;
+  my $iaux = 0;
+  my $iexpr = 0;
+  my $prefix = "autodef_";
+  print $fhh "/* use SELF(name) when 'name' is not defined locally */\n";
+  print $fhh "#define SELF(name) (" . $prefix . "##name)\n\n";
+	while ( <$fh> )    
+	{
+  	if ( /^par/i )
+    {
+      my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
+      print $fhh "#define " . $prefix . $varname . " SIM->mu[$imu]\n";
+      ++$imu;
+    }
+  	if ( /^aux/i )
+    {
+      my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
+      my $len = 1;
+      if ( my @new_iter = (/\[\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*\]+/g) )
+      {
+        while ( @new_iter ) 
+        {
+          my $iter = shift(@new_iter);
+          my $a= shift(@new_iter);
+          my $b = shift(@new_iter);
+          $len *= ($b-$a);  
+        }
+      }
+      if ( $len == 1 )
+      {
+        print $fhh "#define " . $prefix . $varname . " myself_->aux[$iaux]\n";
+      }
+      else
+      {
+        print $fhh "#define " . $prefix . $varname . " myself_->aux + $iaux\n";
+      }
+      $iaux += $len;
+    }
+  	if ( /^expr/i )
+    {
+      my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
+      print $fhh "#define " . $prefix . $varname . " myself_->expr + $iexpr\n";
+      my $len = 1;
+      if ( my @new_iter = (/\[\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*\]+/g) )
+      {
+        while ( @new_iter ) 
+        {
+          my $iter = shift(@new_iter);
+          my $a= shift(@new_iter);
+          my $b = shift(@new_iter);
+          $len *= ($b-$a);  
+        }
+      }
+      $iexpr += $len;
+    }
+  	if ( /^init/i )
+    {
+      my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
+      print $fhh "#define " . $prefix . $varname . " myself_->y + $iy\n";
+      my $len = 1;
+      if ( my @new_iter = (/\[\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*\]+/g) )
+      {
+        while ( @new_iter ) 
+        {
+          my $iter = shift(@new_iter);
+          my $a= shift(@new_iter);
+          my $b = shift(@new_iter);
+          $len *= ($b-$a);  
+        }
+      }
+      $iy += $len;
+    }
+	}
+  print $fhh "\n";
+  close($fh);
+
 }
 
 # declare_iterators
