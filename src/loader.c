@@ -118,9 +118,9 @@ int load_line(const char *filename, nve var, const char *sym, const int sym_len,
     {
       success = 1;
       sscanf(line,"%*s %[^\n]",var.comment[var_index]);
-      var.attribute[var_index] = 0;  /* snprintf(var.attribute[var_index],1,""); */
-      var.name[var_index] = 0;       /* snprintf(var.name[var_index],1,""); */
-      var.expression[var_index] = 0; /* snprintf(var.expression[var_index],1,""); */
+      snprintf(var.attribute[var_index],1,"");
+      snprintf(var.name[var_index],1,"");
+      snprintf(var.expression[var_index],1,"");
       var.value[var_index] = 0.0;
 
       /* DBLOGPRINT("  %s %s%s%s\n", sym,T_DET,var.comment[var_index],T_NOR);  */
@@ -128,7 +128,9 @@ int load_line(const char *filename, nve var, const char *sym, const int sym_len,
     }
     k = 0; /* reset k */
   }
+  
   fclose(fr);
+  free(line);
 
   return success;
 }
@@ -201,6 +203,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const int sym_l
   }
 
   fclose(fr);
+  free(line);
 
   return success;
 }
@@ -277,6 +280,7 @@ int load_options(const char *filename, int exit_if_nofile)
 
 
   fclose(fr);
+  free(line);
 
   return success;
 }
@@ -348,6 +352,8 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     k = 0; /* reset k */
   }
   fclose(fr);
+  free(line);
+
   return success;
 
 }
@@ -528,9 +534,10 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
     }
     k = 0; /* reset k */
   }
-  fclose(fr);
 
+  fclose(fr);
   free(size_dim);
+  free(line);
 
   return success;
 }

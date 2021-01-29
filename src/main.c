@@ -488,7 +488,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   sim_to_array(lastinit);
 
-  if ( get_int("runonstartup") == 1 )
+  if ( get_int("runonstartup") == 1 ) /* FIXME : memory leak here */
   {
     extracmd = malloc(2*sizeof(char));
     strncpy(extracmd,"0",1); /* start by refreshing the plot with command 0: normal plot 
@@ -517,9 +517,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     printf("%s",T_NOR); /* reset normal terminal format */
     
     /* BEGIN get command line */
+
+    free(rawcmdline);
     if ( extracmd != NULL ) /* First process any extracmd left*/
     {
-      free(rawcmdline);
       rawcmdline = malloc((strlen(extracmd)+1)*sizeof(char));
       strcpy(rawcmdline,extracmd);
       free(extracmd);
@@ -1943,6 +1944,7 @@ while( (linelength = getline(&line,&linecap,fr)) > 0)
   }
   fclose(fr);
   free(size_dim);
+  free(line);
   success = 1;  
   return success;
 }
@@ -2248,6 +2250,8 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
       get_str("font"), get_int("fontsize"));
   fflush(GPLOTP);
   printf("  wrote %s\n",print_buffer);
+
+  free(line);
 
   return success;
 }

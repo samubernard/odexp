@@ -729,6 +729,7 @@ int odesolver( oderhs pop_ode_rhs,
     gsl_odeiv2_step_free(s);
     
     free(y);
+    free(f);
     free(tstops);
 
     return status;
