@@ -178,7 +178,7 @@ my $re_scalar = qr/^
 # odexp optional parameters
 our ($opt_a,$opt_p, $opt_o, $opt_i, $opt_q);
 $opt_i = 0; # default: do check for syntax error 
-getopts('a:o:p:iq'); # -O add extra options -o optimization; -p parameterfilename; -i do not check for syntax errors -q quiet mode
+getopts('a:o:p:iq'); # -a add extra options -o optimization; -p parameterfilename; -i do not check for syntax errors -q quiet mode
 if ( !defined $opt_o )
 {
     $opt_o = 'g';

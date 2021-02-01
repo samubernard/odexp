@@ -1898,31 +1898,31 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 int get_nbr_el(const char *filename, const char *sym,\
   const int sym_len, int *nbr_el, int *nbr_expr)
 {
-int k = 0;
-ssize_t linelength;
-size_t linecap = 0;
-char *line = NULL;
-char key[NAMELENGTH]; 
-int i, nbr_dim = 0;
-int    has_read,
-       success = 0; 
-int   *size_dim = malloc(sizeof(int));
-int   multi_dim = 1;
-FILE *fr;
-fr = fopen (filename, "rt");
-
-if ( fr == NULL )
-{
-  PRINTERR("  Error: File %s not found, exiting...",filename);
-  exit ( EXIT_FAILURE );
-}
-
-*nbr_el = 0;
-if ( nbr_expr ) 
-{
-  *nbr_expr = 0;
-}
-while( (linelength = getline(&line,&linecap,fr)) > 0)
+  int k = 0;
+  ssize_t linelength;
+  size_t linecap = 0;
+  char *line = NULL;
+  char key[NAMELENGTH]; 
+  int i, nbr_dim = 0;
+  int    has_read,
+         success = 0; 
+  int   *size_dim = malloc(sizeof(int));
+  int   multi_dim = 1;
+  FILE *fr;
+  fr = fopen (filename, "rt");
+  
+  if ( fr == NULL )
+  {
+    PRINTERR("  Error: File %s not found, exiting...",filename);
+    exit ( EXIT_FAILURE );
+  }
+  
+  *nbr_el = 0;
+  if ( nbr_expr ) 
+  {
+    *nbr_expr = 0;
+  }
+  while( (linelength = getline(&line,&linecap,fr)) > 0)
   {
     has_read = sscanf(line,"%s%n",key,&k);
     if ( (strncasecmp(key,sym,sym_len) == 0)  &&  (has_read == 1) ) /* keyword was found */
@@ -2212,9 +2212,13 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
         {
           opn = 0;
           cls = 0;
-          sscanf(line + bgn,"d%*[^/]/dt %*[^{] %n{ %*[^}] }%n", &opn, &cls); /* get position of opening { and } brackets */
-          fprintf(fr,"%.*s", opn, line);
-          fprintf(fr,"%s", line + cls);
+          sscanf(line + bgn,"d%*[^/]/dt %*[^{] %n{ ", &opn); /* get position of opening { bracket */
+          fprintf(fr,"%.*s", (int)bgn + opn, line);
+          if ( opn > 0 )
+            {
+              fprintf(fr,"# ");                                  /* comment out the attributes */
+            }
+          fprintf(fr,"%s", line + bgn + opn);
         }
         
       }
