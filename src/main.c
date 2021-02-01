@@ -2092,6 +2092,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
   int opn, cls;
   size_t linecap;
   char *line = NULL;
+  size_t bgn = 0;
   FILE *fr;
   FILE *eqfr;
   char rootname[MAXROOTLENGTH];
@@ -2199,11 +2200,11 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     {
       while( getline(&line,&linecap,eqfr) > 0)
       {
-        line += strspn(line," \t"); /* strip whitespaces */
-        if ( strncasecmp(line,"par",3) == 0 ||
-             strncasecmp(line,"times",5) == 0 ||
-             strncasecmp(line,"init",4)  == 0 ||
-             strncasecmp(line,"opt",3) == 0 ) 
+        bgn = strspn(line," \t"); /* ignore whitespaces */
+        if ( strncasecmp(line + bgn,"par",3) == 0 ||
+             strncasecmp(line + bgn,"times",5) == 0 ||
+             strncasecmp(line + bgn,"init",4)  == 0 ||
+             strncasecmp(line + bgn,"opt",3) == 0 ) 
         {
           fprintf(fr,"#    %s", line);
         }
@@ -2211,7 +2212,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
         {
           opn = 0;
           cls = 0;
-          sscanf(line,"d%*[^/]/dt %*[^{] %n{ %*[^}] }%n", &opn, &cls); /* get position of opening { and } brackets */
+          sscanf(line + bgn,"d%*[^/]/dt %*[^{] %n{ %*[^}] }%n", &opn, &cls); /* get position of opening { and } brackets */
           fprintf(fr,"%.*s", opn, line);
           fprintf(fr,"%s", line + cls);
         }
