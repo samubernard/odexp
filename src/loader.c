@@ -53,7 +53,6 @@ int printf_option_line(int i)
 {
   static int p = 16;
   int s = (int)log10(NBROPTS)+1;
-  int success = 0;
   if ( i<NBROPTS )
   { 
     switch (GOPTS[i].valtype)
@@ -79,9 +78,12 @@ int printf_option_line(int i)
       default:
         printf("  O[%-*d] %-*s = not defined\n",s,i,p,GOPTS[i].name);
     }
-    success = 1;
+    return 0;
   }
-  return success;
+  else
+  {
+    return 1;
+  }
 }
 
 int load_line(const char *filename, nve var, const char *sym, const int sym_len, int exit_if_nofile)
@@ -93,7 +95,6 @@ int load_line(const char *filename, nve var, const char *sym, const int sym_len,
   char key[NAMELENGTH]; 
   FILE *fr;
   int k = 0, has_read;
-  int success = 0;
   fr = fopen (filename, "rt");
 
   if ( fr == NULL )
@@ -106,7 +107,7 @@ int load_line(const char *filename, nve var, const char *sym, const int sym_len,
     else
     {
       PRINTERR("  Error: Could not open file %s\n",filename);
-      return 0;
+      return 1;
     }
   }
 
@@ -116,7 +117,6 @@ int load_line(const char *filename, nve var, const char *sym, const int sym_len,
     has_read = sscanf(line,"%s%n",key,&k);                       /* read the first word of the line */
     if ( (strncasecmp(key,sym,sym_len) == 0) && (has_read == 1) ) /* keyword was found based on the sym_len first characters */
     {
-      success = 1;
       sscanf(line,"%*s %[^\n]",var.comment[var_index]);
       snprintf(var.attribute[var_index],1,"");
       snprintf(var.name[var_index],1,"");
@@ -132,7 +132,7 @@ int load_line(const char *filename, nve var, const char *sym, const int sym_len,
   fclose(fr);
   free(line);
 
-  return success;
+  return 0;
 }
 
 int load_nameval(const char *filename, nve var, const char *sym, const int sym_len, int exit_if_nofile)
@@ -147,7 +147,6 @@ int load_nameval(const char *filename, nve var, const char *sym, const int sym_l
   char comment[EXPRLENGTH] = "";
   FILE *fr;
   int k = 0, has_read;
-  int success = 0;
   fr = fopen (filename, "rt");
 
   if ( fr == NULL ) /* if no file to load from */
@@ -160,7 +159,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const int sym_l
     else /* load nothing and return */
     {
       PRINTERR("  error: Could not open file %s\n", filename);
-      return 0;
+      return 1;
     }
   }
   else
@@ -171,7 +170,6 @@ int load_nameval(const char *filename, nve var, const char *sym, const int sym_l
       has_read = sscanf(line,"%s%n",key,&k); /* try to read keyword string key and get its length k */ 
       if ( (strncasecmp(key,sym,sym_len) == 0) && (has_read == 1) ) /* keyword was found */
       {
-        success = 1;
         /* try to read SYM0:N VAR VALUE {ATTRIBUTE} */
         attribute[0] = 0; /* snprintf(attribute,1,""); */
         comment[0] = 0;   /* snprintf(comment,1,""); */
@@ -205,7 +203,7 @@ int load_nameval(const char *filename, nve var, const char *sym, const int sym_l
   fclose(fr);
   free(line);
 
-  return success;
+  return 0;
 }
 
 int load_options(const char *filename, int exit_if_nofile)
@@ -217,7 +215,6 @@ int load_options(const char *filename, int exit_if_nofile)
   char key[NAMELENGTH]; 
   FILE *fr;
   int k = 0, has_read;
-  int success = 0;
   char opt_name[NAMELENGTH];
   fr = fopen (filename, "rt");
   static int len2uniq = 32;
@@ -232,7 +229,7 @@ int load_options(const char *filename, int exit_if_nofile)
     else
     {
       PRINTERR("  Error: Could not open file %s\n",filename);
-      return 0;
+      return 1;
     }
   }
   else
@@ -266,8 +263,6 @@ int load_options(const char *filename, int exit_if_nofile)
               trim_whitespaces(GOPTS[idx_opt].strval);
               break;
           }
-          success = 1;
-          /* printf_option_line(idx_opt); */
         }
         else
         {
@@ -282,7 +277,7 @@ int load_options(const char *filename, int exit_if_nofile)
   fclose(fr);
   free(line);
 
-  return success;
+  return 0;
 }
 
 int load_double_array(const char *filename, double_array *array_ptr, const char *sym, int sym_len, int exit_if_nofile)
@@ -299,9 +294,8 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
   int has_read = 0;
   double r;
   FILE *fr;
-  int i;
+  int i = 0;
   int k = 0;
-  int success = 0;
   fr = fopen (filename, "rt");
   /* DBLOGPRINT("  %s: ",sym); */
 
@@ -315,9 +309,11 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     else
     {
       PRINTERR("  Error: Could not open file %s\n",filename);
-      return 0;
+      return 1;
     }
   }
+
+  array_ptr->length = 0; /* default length */ 
 
   /* search for keyword sym */
   while( (linelength = getline(&line, &linecap, fr)) > 0)
@@ -346,16 +342,13 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
 
       array_ptr->length = i;
       array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
-
-      success = 1;
     }
     k = 0; /* reset k */
   }
+
   fclose(fr);
   free(line);
-
-  return success;
-
+  return 0;
 }
 
 int load_strings(const char *filename, nve var, const char *sym, const int sym_len, int prefix, int exit_if_nofile)
@@ -390,7 +383,6 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
   char sep;
   FILE *fr;
   int k = 0, has_read;
-  int success = 0;
   fr = fopen (filename, "rt");
 
   if ( fr == NULL )
@@ -403,7 +395,7 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
     else
     {
       PRINTERR("  Error: Could not open file %s\n",filename);
-      return 0;
+      return 1;
     }
   }
 
@@ -413,7 +405,6 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
     has_read = sscanf(line,"%s%n",key,&k);                       /* read the first word of the line */
     if ( (strncasecmp(key,sym,sym_len) == 0)  &&  (has_read == 1) ) /* keyword was found based on the sym_len first characters */
     {
-      success = 1;
       /* get the size of the expression */
       /* create a search pattern of the type A0:3 X[i=0:3] */
       get_multiindex(line, &nbr_dim, &size_dim);    
@@ -539,7 +530,7 @@ int load_strings(const char *filename, nve var, const char *sym, const int sym_l
   free(size_dim);
   free(line);
 
-  return success;
+  return 0;
 }
 
 

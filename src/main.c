@@ -94,7 +94,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   int  i,j;
 
   /* status */
-  int     success,
+  int     err,
           status, 
           file_status;
 
@@ -208,7 +208,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   printf("\n%-25s" HLINE "\n", "model description");
   get_nbr_el(EQ_FILENAME,"##",2, &dsc.nbr_el, NULL);
   alloc_namevalexp(&dsc);
-  success = load_line(EQ_FILENAME,dsc,"##",2, EXIT_IF_NO_FILE);
+  err = load_line(EQ_FILENAME,dsc,"##",2, EXIT_IF_NO_FILE);
   for ( i = 0; i<dsc.nbr_el; i++ )
   {
     printf("%s\n",dsc.comment[i]);  
@@ -218,12 +218,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* extra commands */
   get_nbr_el(EQ_FILENAME,"CMD",3, &xcd.nbr_el, NULL);
   alloc_namevalexp(&xcd);
-  success = load_line(EQ_FILENAME,xcd,"CMD",3, EXIT_IF_NO_FILE);
+  err = load_line(EQ_FILENAME,xcd,"CMD",3, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d extra commands",xcd.nbr_el);
 
   /* get tspan */
-  success = load_double_array(PAR_FILENAME, &tspan, ts_string, ts_len, EXIT_IF_NO_FILE); 
-  if (!success)
+  err = load_double_array(PAR_FILENAME, &tspan, ts_string, ts_len, EXIT_IF_NO_FILE); 
+  if (tspan.length == 0)
   {
     PRINTWARNING("\n  Warning: time span not found. Time span will be set to default [0,1]\n"
         "  (One line in file %s should be of the form\n"
@@ -243,26 +243,26 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* get constant arrays */
   get_nbr_el(EQ_FILENAME,"CONST",5, &cst.nbr_el, NULL);
   alloc_namevalexp(&cst);
-  success = load_strings(EQ_FILENAME,cst,"CONST",5,1, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,cst,"CONST",5,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d constants",cst.nbr_el);
 
   /* get data files */
   get_nbr_el(EQ_FILENAME,"FI",2, &dfl.nbr_el, NULL);
   alloc_namevalexp(&dfl);
-  success = load_strings(EQ_FILENAME,dfl,"FI",2,1, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,dfl,"FI",2,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d data files",dfl.nbr_el);
 
   /* get user-defined functions */
   get_nbr_el(EQ_FILENAME,"FUN",3, &func.nbr_el, NULL);
   alloc_namevalexp(&func);
-  success = load_strings(EQ_FILENAME,func,"FUN",3,1, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,func,"FUN",3,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d user-defined function",func.nbr_el);
 
   /* get parameters */
   get_nbr_el(PAR_FILENAME,"PAR",3, &mu.nbr_el, &mu.nbr_expr);
   alloc_namevalexp(&mu);
-  success = load_nameval(PAR_FILENAME,mu,"PAR",3,EXIT_IF_NO_FILE);
-  if (!success) /* then create a not_a_parameter parameter */
+  err = load_nameval(PAR_FILENAME,mu,"PAR",3,EXIT_IF_NO_FILE);
+  if (mu.nbr_el == 0) /* then create a not_a_parameter parameter */
   {
     /* printf("  no parameter\n"); */
     mu.value = realloc(mu.value,sizeof(double));
@@ -286,14 +286,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* get parametric expressions */
   get_nbr_el(EQ_FILENAME,"EXPR",4, &pex.nbr_el, &pex.nbr_expr);
   alloc_namevalexp(&pex);
-  success = load_strings(EQ_FILENAME,pex,"EXPR",4,1, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,pex,"EXPR",4,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d parametric expressions",pex.nbr_el);
 
   /* get initial conditions */
   get_nbr_el(PAR_FILENAME,"INIT",4, &ics.nbr_el, &ics.nbr_expr);
   alloc_namevalexp(&ics);
-  success = load_strings(PAR_FILENAME,ics,"INIT",4,1, EXIT_IF_NO_FILE);
-  if (!success)
+  err = load_strings(PAR_FILENAME,ics,"INIT",4,1, EXIT_IF_NO_FILE);
+  if (ics.nbr_el == 0)
   {
     PRINTERR("\n  Error: Initial conditions not found.\n"
         "  File %s should contain initial condition for each dynamical variables "
@@ -308,14 +308,14 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* get nonlinear functions */
   get_nbr_el(EQ_FILENAME,"AUX",3, &fcn.nbr_el, &fcn.nbr_expr);
   alloc_namevalexp(&fcn);
-  success = load_strings(EQ_FILENAME,fcn,"AUX",3,1, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,fcn,"AUX",3,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d auxiliary variables",fcn.nbr_el);
 
   /* get equations */
   get_nbr_el(EQ_FILENAME,"d",1, &eqn.nbr_el, &eqn.nbr_expr);
   alloc_namevalexp(&eqn);
-  success = load_strings(EQ_FILENAME,eqn,"d",1,0, EXIT_IF_NO_FILE);   
-  if (!success)
+  err = load_strings(EQ_FILENAME,eqn,"d",1,0, EXIT_IF_NO_FILE);   
+  if (eqn.nbr_el == 0)
   {
     PRINTERR("\n  Error: Equations not found."
         "  File %s should contain equations for each dynamical variables "
@@ -329,31 +329,31 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* define psi */
   get_nbr_el(EQ_FILENAME,"%C",2, &psi.nbr_el, &psi.nbr_expr);
   alloc_namevalexp(&psi);
-  success = load_strings(EQ_FILENAME,psi,"%C",2,1, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,psi,"%C",2,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population couplings",psi.nbr_el);
 
   /* define mfd */
   get_nbr_el(EQ_FILENAME,"%M",2, &mfd.nbr_el, &mfd.nbr_expr);
   alloc_namevalexp(&mfd);
-  success = load_strings(EQ_FILENAME,mfd,"%M",2,1, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,mfd,"%M",2,1, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population mean fields",mfd.nbr_el);
 
   /* define birth */
   get_nbr_el(EQ_FILENAME,"%BIRTH",6, &birth.nbr_el, &birth.nbr_expr);
   alloc_namevalexp(&birth);
-  success = load_strings(EQ_FILENAME,birth,"%BIRTH",6,0, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,birth,"%BIRTH",6,0, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population birth rates",birth.nbr_el);
 
   /* define repli */
   get_nbr_el(EQ_FILENAME,"%REPLI",6, &repli.nbr_el, &repli.nbr_expr);
   alloc_namevalexp(&repli);
-  success = load_strings(EQ_FILENAME,repli,"%REPLI",6,0, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,repli,"%REPLI",6,0, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population replication rates",repli.nbr_el);
 
   /* define death */
   get_nbr_el(EQ_FILENAME,"%DEATH",6, &death.nbr_el, &death.nbr_expr);
   alloc_namevalexp(&death);
-  success = load_strings(EQ_FILENAME,death,"%DEATH",6,0, EXIT_IF_NO_FILE);
+  err = load_strings(EQ_FILENAME,death,"%DEATH",6,0, EXIT_IF_NO_FILE);
   DBLOGPRINT("%d population death rates",repli.nbr_el);
 
   /* define dxv */
@@ -402,7 +402,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
 
   /* get options */
-  success = load_options(PAR_FILENAME, EXIT_IF_NO_FILE); 
+  err = load_options(PAR_FILENAME, EXIT_IF_NO_FILE); 
   update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
   update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
   update_act_par_index(&p, mu);
@@ -486,9 +486,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   gnuplot_config(gx, gy, dxv);
   /* END GNUPLOT SETUP */ 
 
-  sim_to_array(lastinit);
-
-  if ( get_int("runonstartup") == 1 ) /* FIXME : memory leak here */
+  if ( get_int("runonstartup") == 1 ) 
   {
     extracmd = malloc(2*sizeof(char));
     strncpy(extracmd,"0",1); /* start by refreshing the plot with command 0: normal plot 
@@ -1532,13 +1530,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           else /* read new_par_filename for parameters, initial conditions, and tspan */
           {
             /* load parameter values */
-            success = load_nameval(new_par_filename, mu, "PAR", 3,DONT_EXIT_IF_NO_FILE);
-            if ( success == 0 )
+            err = load_nameval(new_par_filename, mu, "PAR", 3,DONT_EXIT_IF_NO_FILE);
+            if ( err )
             {
               PRINTWARNING("  warning: could not load parameters.\n");
             }
-            success = load_nameval(new_par_filename, ics, "INIT", 4,DONT_EXIT_IF_NO_FILE); /* load initial conditions value from file */
-            if ( success == 1)
+            err = load_nameval(new_par_filename, ics, "INIT", 4,DONT_EXIT_IF_NO_FILE); /* load initial conditions value from file */
+            if ( err == 0 )
             {
               /* reset initial condtitions */
               for ( i=0; i<ode_system_size; i++ )
@@ -1550,13 +1548,13 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             {
               PRINTWARNING("  warning: could not load initial conditions.\n");
             }
-            success = load_double_array(new_par_filename, &tspan, ts_string, ts_len, DONT_EXIT_IF_NO_FILE); 
-            if ( success == 0 )
+            err = load_double_array(new_par_filename, &tspan, ts_string, ts_len, DONT_EXIT_IF_NO_FILE); 
+            if ( tspan.length == 0 )
             {
               PRINTWARNING("  warning: could not load tspan.\n");
             }
-            success = load_options(new_par_filename, DONT_EXIT_IF_NO_FILE);
-            if ( success == 0 )
+            err = load_options(new_par_filename, DONT_EXIT_IF_NO_FILE);
+            if ( err )
             {
               PRINTWARNING("  warning: could not load options.\n");
             }
@@ -1904,8 +1902,7 @@ int get_nbr_el(const char *filename, const char *sym,\
   char *line = NULL;
   char key[NAMELENGTH]; 
   int i, nbr_dim = 0;
-  int    has_read,
-         success = 0; 
+  int    has_read; 
   int   *size_dim = malloc(sizeof(int));
   int   multi_dim = 1;
   FILE *fr;
@@ -1945,8 +1942,7 @@ int get_nbr_el(const char *filename, const char *sym,\
   fclose(fr);
   free(size_dim);
   free(line);
-  success = 1;  
-  return success;
+  return 0;
 }
 
 int update_plot_options(int ngx, int ngy, int ngz, nve dxv)
@@ -2068,26 +2064,8 @@ int check_options( void )
   return 0;
 }
 
-int sim_to_array( double *y )
-{
-  int j = 0;
-  par *pars;
-  y = realloc(y, SIM->pop->size*SIM->nbr_var*sizeof(double));
-  pars = SIM->pop->start;
-  while ( pars != NULL )  
-  {
-    memmove((y+j),pars->y,SIM->nbr_var*sizeof(double));
-    pars = pars->nextel;
-    j += SIM->nbr_var;
-  }
-  return 0;
-}
-
-
-
 int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filename)
 {
-  int success = 0;
   int i;
   int opn, cls;
   size_t linecap;
@@ -2195,6 +2173,8 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     if ( ( eqfr = fopen(odexp_filename,"r") ) == NULL )
     {
       PRINTERR("  File '%s' could not be opened. Not writing equations",odexp_filename);
+      fclose(fr);
+      return 1;
     }
     else
     {
@@ -2237,7 +2217,6 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 
     printf("  wrote %s\n",pop_buffer);
 
-    success = 1;
   }
 
 
@@ -2258,7 +2237,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
 
   free(line);
 
-  return success;
+  return 0;
 }
 
 int printf_options(const char *optiontype)
@@ -2508,7 +2487,6 @@ int gplot_animate(const int gx, const int gy, const int gz, const int plot3d, co
 /* plot data from file data_fn */
 int gplot_data(const char *plot_str, const char *data_fn)
 {
-  int success;
   char key[EXPRLENGTH];
   if ( strlen(get_str("plotkey")) )
   {
@@ -2520,23 +2498,22 @@ int gplot_data(const char *plot_str, const char *data_fn)
   }
   if ( get_int("hold") )
   {
-    success = fprintf(GPLOTP,\
+    fprintf(GPLOTP,\
       "replot \"%s\" u %s w %s title \"%s\"\n",\
       data_fn,plot_str,get_str("datastyle"), key);
   }
   else
   {
-    success = fprintf(GPLOTP,\
+    fprintf(GPLOTP,\
       "plot \"%s\" u %s w %s title \"%s\"\n",\
       data_fn,plot_str,get_str("datastyle"), key);
   }
   fflush(GPLOTP);
-  return success;
+  return 0;
 }
 
 int gplot_fun(const char *plot_str)
 {
-  int success;
   const int nbr_col = SIM->nbr_col; 
   char key[EXPRLENGTH];
   generate_particle_file(get_int("particle"));
@@ -2550,7 +2527,7 @@ int gplot_fun(const char *plot_str)
   }
   if ( get_int("hold") )
   {
-    success = fprintf(GPLOTP,\
+    fprintf(GPLOTP,\
           "replot \"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %s "\
           "with %s title \"%s (%d)\"\n",\
           get_int("particle"), nbr_col, plot_str,\
@@ -2558,14 +2535,14 @@ int gplot_fun(const char *plot_str)
   }
   else
   {
-    success = fprintf(GPLOTP,\
+    fprintf(GPLOTP,\
           "plot \"" ODEXPDIR "id%d.dat\" binary format=\"%%%dlf\" using %s "\
           "with %s title \"%s (%d)\"\n",\
           get_int("particle"), nbr_col, plot_str,\
           get_str("style"), key, get_int("particle"));
   }
   fflush(GPLOTP);
-  return success;
+  return 0;
 }
 
 int gplot_particles( const int gx, const int gy, const nve var )

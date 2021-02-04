@@ -105,7 +105,6 @@ const char PALETTE_MONO[1][7] = {"#143d9d"};
 int set_dou(const char *name, const double val) 
 {
     int idx_opt = 0;
-    int success = 0;
     while ( idx_opt < NBROPTS)
     {
         if ( strcmp(name, GOPTS[idx_opt].name) )
@@ -120,20 +119,18 @@ int set_dou(const char *name, const double val)
     if (idx_opt < NBROPTS)
     {
       GOPTS[idx_opt].numval = val;
-      success = 1;
+      return 0;
     }
     else
     {
       PRINTERR("  Error: Could not assign option %s",name);
+      return 1;
     }
-
-    return success;
 }
 
 int set_int(const char *name, const int val) 
 {
     int idx_opt = 0;
-    int success = 0;
     while ( idx_opt < NBROPTS)
     {
         if ( strcmp(name, GOPTS[idx_opt].name) )
@@ -148,20 +145,18 @@ int set_int(const char *name, const int val)
     if (idx_opt < NBROPTS)
     {
       GOPTS[idx_opt].intval = val;
-      success = 1;
+      return 0;
     }
     else
     {
       PRINTERR("  Error: Could not assign option %s",name);
+      return 1;
     }
-
-    return success;
 }
 
 int set_str(const char *name, const char * val) 
 {
     int idx_opt = 0;
-    int success = 0;
     while ( idx_opt < NBROPTS)
     {
         if ( strcmp(name, GOPTS[idx_opt].name) )
@@ -176,14 +171,13 @@ int set_str(const char *name, const char * val)
     if (idx_opt < NBROPTS)
     {
       strncpy(GOPTS[idx_opt].strval,val,NAMELENGTH);
-      success = 1;
+      return 0;
     }
     else
     {
       PRINTERR("  Error: Could not assign option %s",name);
+      return 1;
     }
-
-    return success;
 }
 
 

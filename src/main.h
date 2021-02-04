@@ -26,9 +26,6 @@ int update_act_par_options(const int p, const nve mu);
 int update_curves(int *nbr_hold, char plotkeys[100][EXPRLENGTH]);
 int check_options( void );
 
-int sim_to_array( double *y );
-
-
 int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filename);
 
 int printf_options(const char *optiontype);
