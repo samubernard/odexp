@@ -45,6 +45,7 @@ add_library(odexp SHARED
   src/utils_odexp.c
   src/lrexp.c
   src/loader.c
+  src/options.c
 )
 target_link_libraries(odexp GSL::gsl GSL::gslcblas)
 target_link_libraries(odexp /usr/local/opt/readline/lib/libreadline.dylib)

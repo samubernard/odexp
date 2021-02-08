@@ -8,9 +8,7 @@
 
 #include "macros.h"
 #include "odexp.h"
-
-/* number of global options */
-#define NBROPTS 70
+#include "options.h"
 
 #define HLINE "--------------------------"
 
@@ -36,20 +34,6 @@ extern const char PALETTE_QUAL[9][7];
 extern const char PALETTE_APPLE[8][7];
 extern const char PALETTE_MONO[1][7];
 
-
-typedef struct gen_option
-{
-    char    abbr[NAMELENGTH];
-    char    name[NAMELENGTH];
-    char    valtype; /* d: double; i: int; s: string */
-    double  numval;
-    int     intval;
-    char    strval[NAMELENGTH];
-    char    descr[EXPRLENGTH];
-    char    optiontype[NAMELENGTH];
-} gopt;
-
-
 typedef struct double_array
 {
     double *array;
@@ -73,9 +57,6 @@ typedef struct steady_state
     int size;
     int status;
 } steady_state;
-
-/* declare global options */
-extern struct gen_option GOPTS[NBROPTS];
 
 int set_dou(const char *name, const double val); 
 int set_int(const char *name, const int val); 

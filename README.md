@@ -94,7 +94,7 @@ The general structure of the file is
 
 Interactive commands can be entered at the
 **odexp**
-prompt. Successive commands can be separated with by semi-colons ';'
+command prompt. Successive commands can be separated with by semi-colons ';'
 
 ?
 
@@ -107,8 +107,8 @@ prompt. Successive commands can be separated with by semi-colons ';'
 **+, =, C^g**
 
 > Increment current parameter by a multiplicative factor
-> *step*
-> (*step*
+> *parstep*
+> (*parstep*
 > is an option, see
 > **set**
 > options).
@@ -1196,4 +1196,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - February 4, 2021
+DARWIN16 - February 8, 2021
