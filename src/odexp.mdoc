@@ -801,6 +801,149 @@ Current particle ID. ID's are unique and indicate the order of creation of the p
 .Pp
 See the list of options with line command 
 .Ic lo .
+. 
+.Bl -tag -width indent
+.It x
+ variable to plot on the X-axis (default T). Short: x. Default value:
+.It y
+ variable to plot on the Y-axis (default [0]). Short: y. Default value:
+.It z
+ variable to plot on the Z-axis (default [1]). Short: z. Default value:
+.It plot3d
+ plot in 3d (default 0). Short: 3d. Default value: 0
+.It indvar
+ name of the INDependent variable {time}. Short: ind. Default value: time
+.It hold
+ HOld (1) or replace ({0}) variable on plot. Short: ho. Default value: 0
+.It curves
+ add (1) or replace ({0}) cUrves on plot. Short: u. Default value: 0
+.It style
+ plot STyle {lines} | points | dots | linespoints .... Short: st. Default value: lines
+.It realtime
+ plot in Real Time | {0} | 1 (not implemented). Short: rt. Default value: 0
+.It xscale
+ X-axis Scale {linear} | log. Short: xs. Default value: linear
+.It yscale
+ Y-axis Scale {linear} | log. Short: ys. Default value: linear
+.It zscale
+ Z-axis Scale {linear} | log. Short: zs. Default value: linear
+.It plotkey
+ plot key. Short: k. Default value:
+.It data2plot
+ Data variable to Plot. Short: dp. Default value:
+.It datastyle
+ dataset plotting style. Short: dsty. Default value: points
+.It parstep
+ parameter STEP multiplicative increment. Short: step. Default value: 1.1
+.It actpar
+ ACTive parameter. Short: act. Default value:
+.It lasty
+ take Last Y as initial condition {0} | 1. Short: ly. Default value: 0
+.It res
+ Resolution: nominal number of output time points. Short: r. Default value: 201
+.It hmin
+ H MINimal time step. Short: hmin. Default value: 1e-5
+.It h0
+ initial time step h0. Short: h0. Default value: 1e-1
+.It abstol
+ ode solver ABSolute TOLerance. Short: abstol. Default value: 1e-6
+.It reltol
+ ode solver RELative TOLerance. Short: reltol. Default value: 1e-6
+.It solver
+ ode solver stepping METHod rk2 | rk4 | rkf45 | {rkck} | rk8pd | bsimp. Short: meth. Default value: rkck
+.It lrabstol
+ Low Rank approx ABSolute TOLerance. Short: lrabstol. Default value: 1e-6
+.It lrreltol
+ Low Rank approx RELolute TOLerance. Short: lrreltol. Default value: 1e-6
+.It lrmax
+ Low Rank approx MAX rank. Short: lrmax. Default value: 31
+.It popmode
+ Population simulation Mode single | {population}. Short: pm. Default value: population
+.It popsize
+ initial population size for particle simulations. Short: ps. Default value: 1
+.It particle
+ current Particle id. Short: p. Default value: 0
+.It writefiles
+ *Obsolete* write individual particle files. Short: wf. Default value: 0
+.It closefiles
+ *Obsolete* close individual particle files between writes. Short: cf. Default value: 0
+.It ssahmin
+ SSA/tau-leap relative step threshold. Short: ssahmin. Default value: 0.0
+.It aleap
+ tau-leaping factor. Short: aleap. Default value: 0.01
+.It particlestyle
+ Particle STYLE. Short: pstyle. Default value: circles fill transparent solid 0.1 noborder
+.It particleid
+ display Particle ID in particle plots. Short: pid. Default value: 1
+.It kdensity2d
+ display bivariate (2D) kernel density estimate. Short: k2d. Default value: 0
+.It kdensity2dgrid
+ kernel density grid resolution. Short: k2dgrid. Default value: 25
+.It kdensity2dscale
+ kernel density scale parameter. Short: k2dscale. Default value: 0.5
+.It timeframe
+ particle plot time frame first | {last} | previous | next | frame <n>. Short: tframe. Default value: last
+.It particleweight
+ particle particle weight (expression) | {none}. Short: pweight. Default value: none
+.It seed
+ seed for the random number generator. Short: seed. Default value: 3141592
+.It reseed
+ Reset rng to Seed at each run 0 | {1}. Short: rs. Default value: 1
+.It maxfail
+ max number of starting guesses for steady states. Short: maxfail. Default value: 10000
+.It nlabstol
+ absolute tolerance for finding steady states. Short: nlabstol. Default value: 1e-6
+.It nlreltol
+ relative tolerance for finding steady states. Short: nlreltol. Default value: 1e-6
+.It nlrange
+ search range [0, v*var value]. Short: nlrange. Default value: 1000.0
+.It nlminr
+ search range [0, v*var value]. Short: nlminr. Default value: 0.0
+.It hc0
+ initial parameter continuation step. Short: hc0. Default value: 0.01
+.It hcmax
+ maximal parameter continuation step. Short: hcmax. Default value: 0.05
+.It par0
+ initial parameter value for range. Short: par0. Default value: 0.0
+.It par1
+ final parameter value for range. Short: par1. Default value: 1.0
+.It rmstep
+ parameter range multiplicative increment. Short: rmstep. Default value: 1.0
+.It rastep
+ parameter range additive increment. Short: rastep. Default value: 0.1
+.It rmic
+ initial condition multiplicative factor for range. Short: rmic. Default value: 1.0
+.It raic
+ initial condition additive factor for range. Short: raic. Default value: 0.10
+.It rric
+ reset initial conditions at each iteration for range. Short: rric. Default value: 0
+.It font
+ gnuplot FOnt. Short: fo. Default value: Helvetica
+.It fontsize
+ gnuplot Font Size. Short: fs. Default value: 13
+.It terminal
+ gnuplot TERMinal. Short: term. Default value: qt noraise
+.It printsettings
+ gnuplot PRINT settings. Short: print. Default value: postscript eps color
+.It palette
+ color palette acid | qual | {apple}. Short: pal. Default value: apple
+.It togglekey
+ switch key on/off. Short: key. Default value: 1
+.It background
+ terminal background {none} | fancy. Short: bg. Default value: none
+.It loudness
+ LouDness mode silent | quiet | {loud} (silent not implemented). Short: ld. Default value: loud
+.It fix
+ number of digits after decimal point {4}. Short: fx. Default value: 4
+.It progress
+ print PRogress 0 | {1} | 2 | 3. Short: pr. Default value: 1
+.It wintitle
+ Window TItle. Short: wti. Default value:
+.It runonstartup
+ Run On Startup. Short: ros. Default value: 1
+.It runfirst
+ Run 1st, command to execute after startup. Short: r1st. Default value:
+.El
 .
 .Ss Functions acting on arrays
 .Bl -tag 

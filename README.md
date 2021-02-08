@@ -960,6 +960,286 @@ Alternatively, a mean field can be computed without looping through all particle
 See the list of options with line command
 **lo**.
 
+x
+
+>  variable to plot on the X-axis (default T). Short: x. Default value:
+
+y
+
+>  variable to plot on the Y-axis (default \[0]). Short: y. Default value:
+
+z
+
+>  variable to plot on the Z-axis (default \[1]). Short: z. Default value:
+
+plot3d
+
+>  plot in 3d (default 0). Short: 3d. Default value: 0
+
+indvar
+
+>  name of the INDependent variable {time}. Short: ind. Default value: time
+
+hold
+
+>  HOld (1) or replace ({0}) variable on plot. Short: ho. Default value: 0
+
+curves
+
+>  add (1) or replace ({0}) cUrves on plot. Short: u. Default value: 0
+
+style
+
+>  plot STyle {lines} | points | dots | linespoints .... Short: st. Default value: lines
+
+realtime
+
+>  plot in Real Time | {0} | 1 (not implemented). Short: rt. Default value: 0
+
+xscale
+
+>  X-axis Scale {linear} | log. Short: xs. Default value: linear
+
+yscale
+
+>  Y-axis Scale {linear} | log. Short: ys. Default value: linear
+
+zscale
+
+>  Z-axis Scale {linear} | log. Short: zs. Default value: linear
+
+plotkey
+
+>  plot key. Short: k. Default value:
+
+data2plot
+
+>  Data variable to Plot. Short: dp. Default value:
+
+datastyle
+
+>  dataset plotting style. Short: dsty. Default value: points
+
+parstep
+
+>  parameter STEP multiplicative increment. Short: step. Default value: 1.1
+
+actpar
+
+>  ACTive parameter. Short: act. Default value:
+
+lasty
+
+>  take Last Y as initial condition {0} | 1. Short: ly. Default value: 0
+
+res
+
+>  Resolution: nominal number of output time points. Short: r. Default value: 201
+
+hmin
+
+>  H MINimal time step. Short: hmin. Default value: 1e-5
+
+h0
+
+>  initial time step h0. Short: h0. Default value: 1e-1
+
+abstol
+
+>  ode solver ABSolute TOLerance. Short: abstol. Default value: 1e-6
+
+reltol
+
+>  ode solver RELative TOLerance. Short: reltol. Default value: 1e-6
+
+solver
+
+>  ode solver stepping METHod rk2 | rk4 | rkf45 | {rkck} | rk8pd | bsimp. Short: meth. Default value: rkck
+
+lrabstol
+
+>  Low Rank approx ABSolute TOLerance. Short: lrabstol. Default value: 1e-6
+
+lrreltol
+
+>  Low Rank approx RELolute TOLerance. Short: lrreltol. Default value: 1e-6
+
+lrmax
+
+>  Low Rank approx MAX rank. Short: lrmax. Default value: 31
+
+popmode
+
+>  Population simulation Mode single | {population}. Short: pm. Default value: population
+
+popsize
+
+>  initial population size for particle simulations. Short: ps. Default value: 1
+
+particle
+
+>  current Particle id. Short: p. Default value: 0
+
+writefiles
+
+>  \*Obsolete\* write individual particle files. Short: wf. Default value: 0
+
+closefiles
+
+>  \*Obsolete\* close individual particle files between writes. Short: cf. Default value: 0
+
+ssahmin
+
+>  SSA/tau-leap relative step threshold. Short: ssahmin. Default value: 0.0
+
+aleap
+
+>  tau-leaping factor. Short: aleap. Default value: 0.01
+
+particlestyle
+
+>  Particle STYLE. Short: pstyle. Default value: circles fill transparent solid 0.1 noborder
+
+particleid
+
+>  display Particle ID in particle plots. Short: pid. Default value: 1
+
+kdensity2d
+
+>  display bivariate (2D) kernel density estimate. Short: k2d. Default value: 0
+
+kdensity2dgrid
+
+>  kernel density grid resolution. Short: k2dgrid. Default value: 25
+
+kdensity2dscale
+
+>  kernel density scale parameter. Short: k2dscale. Default value: 0.5
+
+timeframe
+
+>  particle plot time frame first | {last} | previous | next | frame &lt;n&gt;. Short: tframe. Default value: last
+
+particleweight
+
+>  particle particle weight (expression) | {none}. Short: pweight. Default value: none
+
+seed
+
+>  seed for the random number generator. Short: seed. Default value: 3141592
+
+reseed
+
+>  Reset rng to Seed at each run 0 | {1}. Short: rs. Default value: 1
+
+maxfail
+
+>  max number of starting guesses for steady states. Short: maxfail. Default value: 10000
+
+nlabstol
+
+>  absolute tolerance for finding steady states. Short: nlabstol. Default value: 1e-6
+
+nlreltol
+
+>  relative tolerance for finding steady states. Short: nlreltol. Default value: 1e-6
+
+nlrange
+
+>  search range \[0, v\*var value]. Short: nlrange. Default value: 1000.0
+
+nlminr
+
+>  search range \[0, v\*var value]. Short: nlminr. Default value: 0.0
+
+hc0
+
+>  initial parameter continuation step. Short: hc0. Default value: 0.01
+
+hcmax
+
+>  maximal parameter continuation step. Short: hcmax. Default value: 0.05
+
+par0
+
+>  initial parameter value for range. Short: par0. Default value: 0.0
+
+par1
+
+>  final parameter value for range. Short: par1. Default value: 1.0
+
+rmstep
+
+>  parameter range multiplicative increment. Short: rmstep. Default value: 1.0
+
+rastep
+
+>  parameter range additive increment. Short: rastep. Default value: 0.1
+
+rmic
+
+>  initial condition multiplicative factor for range. Short: rmic. Default value: 1.0
+
+raic
+
+>  initial condition additive factor for range. Short: raic. Default value: 0.10
+
+rric
+
+>  reset initial conditions at each iteration for range. Short: rric. Default value: 0
+
+font
+
+>  gnuplot FOnt. Short: fo. Default value: Helvetica
+
+fontsize
+
+>  gnuplot Font Size. Short: fs. Default value: 13
+
+terminal
+
+>  gnuplot TERMinal. Short: term. Default value: qt noraise
+
+printsettings
+
+>  gnuplot PRINT settings. Short: print. Default value: postscript eps color
+
+palette
+
+>  color palette acid | qual | {apple}. Short: pal. Default value: apple
+
+togglekey
+
+>  switch key on/off. Short: key. Default value: 1
+
+background
+
+>  terminal background {none} | fancy. Short: bg. Default value: none
+
+loudness
+
+>  LouDness mode silent | quiet | {loud} (silent not implemented). Short: ld. Default value: loud
+
+fix
+
+>  number of digits after decimal point {4}. Short: fx. Default value: 4
+
+progress
+
+>  print PRogress 0 | {1} | 2 | 3. Short: pr. Default value: 1
+
+wintitle
+
+>  Window TItle. Short: wti. Default value:
+
+runonstartup
+
+>  Run On Startup. Short: ros. Default value: 1
+
+runfirst
+
+>  Run 1st, command to execute after startup. Short: r1st. Default value:
+
 ## Functions acting on arrays
 
 **sum**(*double \*array*, *long len*)
