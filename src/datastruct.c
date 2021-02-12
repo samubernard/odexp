@@ -352,6 +352,7 @@ void init_world( world *s, nve *pex, nve *func, nve *mu,\
     s->event[2] =  0;
 
     s->stop_flag = 0;
+    s->first_eval_flag = 0;
 
     s->time_in_ode_rhs = 0.0;
     s->ode_rhs = ode_rhs;

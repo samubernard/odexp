@@ -176,6 +176,10 @@ double interp(double *x, double *y, double xi, int nx, int start)
 
   i1 = 0;
   i9 = nx - 1;
+  if ( x[(start + i1) % nx] > xi ) 
+  {
+    printf("  error. delay stack memory exceeded (t - tau = %f, history goes back to %f)\n", xi, x[(start + i1) % nx]);
+  }
   while ( i9 > i1 + 1 ) /* Dichotomy search */
   {
     i5 = (i1+i9+1)/2;
@@ -188,6 +192,51 @@ double interp(double *x, double *y, double xi, int nx, int start)
   }
   else
   {
-    return y[(i1 + start) % nx] + (y[(i9 + start) % nx]-y[(i1 + start) % nx])*(xi-x[(i1 + start) % nx])/(x[(i9 + start) % nx]-x[(i1 + start) % nx]); 
+    return y[(i1 + start) % nx] + (y[(i9 + start) % nx] - y[(i1 + start) % nx]) \
+          *(xi - x[(i1 + start) % nx])/(x[(i9 + start) % nx] - x[(i1 + start) % nx]); 
   }
 }
+
+/* delay keeps a history stack of the values of x(t)
+ * It returns the interpolated value of x at t - tau 
+ */
+double delay(const double t, const double x, const double tau, double (*ic)(double))
+{
+  static double tt[DELAY_SSTACK];
+  static double xhist[DELAY_SSTACK];
+  double ti;
+  const double h = *(SIM->h);
+  static int i;
+  if ( EVENT_TYPE && EVENT_T0 ) /* fill history of x */
+  {
+    if ( tau/h > DELAY_SSTACK )
+    {
+      printf("  error. delay stack memory exceeded (tau = %f, h = %f)\n", tau,h);
+    }
+    i = 0;
+    /* t = -(DELAY_SSTACK - 1 - i)*h */
+    while ( i < DELAY_SSTACK )
+    {
+      ti = t - (DELAY_SSTACK - i )*h;
+      tt[i] = ti;
+      xhist[i] = ic(ti);
+      i++;
+    }
+  }
+  else 
+  {
+    if ( DELAY_FIRST_EVAL ) /* add the current time,state (t,x) values to stack */
+    {
+      i++;
+      i %= DELAY_SSTACK;
+      tt[i] = t;
+      xhist[i] = x;
+    }
+  }
+
+  /* interpolate xhist at t - tau */
+  return interp(tt,xhist,t - tau,DELAY_SSTACK,i+1);
+}
+
+
+

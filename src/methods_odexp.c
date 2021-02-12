@@ -1815,12 +1815,51 @@ int iteration_apply( gsl_odeiv2_system *sys , double *t, double y[] )
 
 int dde_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, double y[] )
 {
+  /* RK4 fixed step of size h */
+  int i;
+  double *k, *k1, *k2, *k3, *k4;
+  double dt = (tnext - *t);
+  double hmin = GOPTS[19].numval;
+  k  = malloc(sys->dimension * sizeof(double));
+  k1 = malloc(sys->dimension * sizeof(double));
+  k2 = malloc(sys->dimension * sizeof(double));
+  k3 = malloc(sys->dimension * sizeof(double));
+  k4 = malloc(sys->dimension * sizeof(double));
+  if ( *h > (dt - hmin) ) /* h is so close to dt, increase h to dt 
+                                      * or h is larger than dt, decrease h to dt */
+  {
+    *h = dt;
+  }
+  DELAY_FIRST_EVAL = 1;  
+  sys->function(*t, y, k1, sys->params);
+  DELAY_FIRST_EVAL = 0;  
+  for ( i=0; i<(int)sys->dimension; ++i)
+  {
+    k[i] = y[i] + (*h)/2.0*k1[i];
+  }
+  sys->function(*t + *h/2.0, k, k2, sys->params);
+  for ( i=0; i<(int)sys->dimension; ++i)
+  {
+    k[i] = y[i] + (*h)/2.0*k2[i];
+  }
+  sys->function(*t + *h/2.0, k, k3, sys->params);
+  for ( i=0; i<(int)sys->dimension; ++i)
+  {
+    k[i] = y[i] + (*h)*k3[i];
+  }
+  sys->function(*t + *h, k, k4, sys->params);
+  for ( i=0; i<(int)sys->dimension; ++i)
+  {
+    y[i] += (*h)/6.0*( k1[i] + 2.0*(k2[i] + k3[i]) + k4[i] );
+  }
+  *t += *h;
   
-  (void)sys;
-  (void)t;
-  (void)tnext;
-  (void)h;
-  (void)y;
-  PRINTERR("  Error: dde solver not implemented\n");
-  return GSL_FAILURE;
+  *h = get_dou("h0"); /* reset h */
+
+  free(k);
+  free(k1);
+  free(k2);
+  free(k3);
+  free(k4);
+  return GSL_SUCCESS;
 }
