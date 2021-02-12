@@ -51,9 +51,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   char       new_par_filename[MAXFILENAMELENGTH];
   char       data_fn[NAMELENGTH]; /* dataset filename */
 
-  /* system commands */
-  const char *helpcmd = "man odexp";
-
   /* commands and options */
   char    *extracmd = (char *)NULL;
   char    par_details[32];
@@ -477,7 +474,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         "  I will now exit, but leave output files in place.%s\n\n", T_DET,T_NOR);    
     printf("  hexdump -e '%d \"%%5.2f \" 5 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
     printf("  hexdump -e '2 \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_col); 
-    printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
+    printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' " QUICK_BUFFER "\n\n"); 
     PRINTLOG("Quiet mode, will exit");
     quit = 1;
   }
@@ -1262,10 +1259,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             printf("  Final population size         = %s%d%s\n",T_VAL,POP_SIZE,T_NOR);
             printf("  Number of particles           = %s%d%s\n",T_VAL,SIM->max_id,T_NOR);
             printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
-            printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
-            printf("  hexdump -e '\"%%u \" \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n", nbr_col); 
-            printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' particle_states.dat\n", nbr_col); 
-            printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' current.plot\n\n"); 
+            printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' " STATS_FILENAME "\n", 1+mfd.nbr_el); 
+            printf("  hexdump -e '\"%%u \" \"%%d \" %d \"%%5.2f \" \"\\n\"' " TRAJ_FILENAME "\n", nbr_col); 
+            printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' " PSTATE_FILENAME "\n", nbr_col); 
+            printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' " QUICK_BUFFER "\n\n"); 
           }
           else if (op == 'd') /* list descriptions */ 
           {
@@ -1508,7 +1505,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           break;
         case '?' : /* help */
-          system(helpcmd);
+          HELPCMD;
           break;
         case 'd' : /* reset parameters and initial cond to defaults */
           for ( i=0; i<ode_system_size; i++ )
@@ -1693,7 +1690,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
       }
 
-      if ( get_int("curves") ) /* save current.plot */ 
+      if ( get_int("curves") ) /* save QUICK_BUFFER */ 
       {
         update_curves(&nbr_hold, plotkeys);
       }
@@ -2039,7 +2036,7 @@ int update_act_par_options(const int p, const nve mu)
 int update_curves(int *nbr_hold, char plotkeys[100][EXPRLENGTH])
 {
   char mv_plot_cmd[EXPRLENGTH];
-  snprintf(mv_plot_cmd,EXPRLENGTH,"cp current.plot " ODEXPDIR "curve.%d",*nbr_hold);
+  snprintf(mv_plot_cmd,EXPRLENGTH,"cp " QUICK_BUFFER " " ODEXPDIR "curve.%d",*nbr_hold);
   system(mv_plot_cmd);
   if ( strlen(get_str("plotkey") ) )
   {

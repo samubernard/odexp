@@ -166,4 +166,28 @@ double linchaindelay(const double root, const double *chain, const int link, con
     /* return beta*( ((link==0)*root + (link>0)*chain[link-1]) - chain[link]); */
 }
 
+/* interpolate (x,y) at point xi, circular dichotomy search: y(xi)
+ * the independent array x in increasing circularly from start: 
+ *   x[ (start + i) % nx ] < x[ (start + j) % nx ], i < j < nx  
+ */
+double interp(double *x, double *y, double xi, int nx, int start)
+{    
+  int i1,i9,i5;
 
+  i1 = 0;
+  i9 = nx - 1;
+  while ( i9 > i1 + 1 ) /* Dichotomy search */
+  {
+    i5 = (i1+i9+1)/2;
+    if (x[(start + i5) % nx] > xi) { i9 = i5; }
+    else { i1 = i5; }
+  } /* end of while loop */
+  if (i1==i9)
+  {
+    return y[(i1 + start) % nx];
+  }
+  else
+  {
+    return y[(i1 + start) % nx] + (y[(i9 + start) % nx]-y[(i1 + start) % nx])*(xi-x[(i1 + start) % nx])/(x[(i9 + start) % nx]-x[(i1 + start) % nx]); 
+  }
+}

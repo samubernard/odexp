@@ -5,7 +5,9 @@
 
 /* lengths */
 #define MAXFILENAMELENGTH 64
+#ifndef NAMELENGTH
 #define NAMELENGTH        64
+#endif
 #define MAXROOTLENGTH     64 
 #define EXPRLENGTH        1024                            
 
@@ -26,12 +28,16 @@
 #define GP_FIFONAME      ODEXPDIR "gfifo"
 #define EQ_FILENAME      ODEXPDIR "equations.pop"
 #define PAR_FILENAME     ODEXPDIR "parameters.pop"
-#define QUICK_BUFFER     "current.plot"
+#define QUICK_BUFFER     ODEXPDIR "current.plot"
 #define STATVAR_FILENAME ODEXPDIR "stats_varnames.txt"
 #define TRAJVAR_FILENAME ODEXPDIR "traj_varnames.txt"
 #define STATS_FILENAME   ODEXPDIR "stats.dat"
 #define TRAJ_FILENAME    ODEXPDIR "traj.dat"
 #define PSTATE_FILENAME  ODEXPDIR "particle_states.dat"
+
+/* system commands */
+#define HELPCMD system("man odexp")
+
 
 /* colors */
 #define TERM_BG_COLOR1 "0xFFEEE2" 

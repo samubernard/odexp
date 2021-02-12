@@ -75,8 +75,10 @@ Solutions are plotted with
 
 The
 **odexp**
-file defines an initial value problem (IVP): equations, initial conditions, parameter, auxiliary functions, integration interval, etc. Essential elements are at least one equation, the initial condition and the time span over which integration must take place. Other elements such as options, auxiliary functions and constants
-can be defined as well.
+file
+defines an initial value problem (IVP): equations, initial conditions, parameter, auxiliary functions, integration interval, etc.
+Essential elements are at least one equation, the initial condition and the time span over which integration must take place.
+Other elements such as options, auxiliary functions and constants can be defined as well.
 The general structure of the file is
 
 *	Description of the dynamical system. Lines start with ##. Comments start with # and run until the end of the line.
@@ -1476,4 +1478,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - February 8, 2021
+DARWIN16 - February 12, 2021

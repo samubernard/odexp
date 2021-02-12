@@ -370,9 +370,9 @@ int odesolver( oderhs pop_ode_rhs,
       exit ( EXIT_FAILURE );
     }
     
-    /* current.plot binary file with three columns: x, y, z */
+    /* QUICK_BUFFER binary file with three columns: x, y, z */
     /* use hexdump to see the file content:
-     * hexdump -e '"%f " "%f " "%f " "\n"' current.plot
+     * hexdump -e '"%f " "%f " "%f " "\n"' quick_buffer.plot 
      */
     ngx = get_int("x");
     ngy = get_int("y");
@@ -1783,10 +1783,13 @@ int fe_apply( gsl_odeiv2_system *sys , double *t, double tnext, double *h, doubl
   /* this is just a Forward-Euler step */
   int i;
   double *f;
+  double dt = (tnext - *t);
+  double hmin = GOPTS[19].numval;
   f = malloc(sys->dimension * sizeof(double));
-  if ( *h > (tnext - *t) )
+  if ( *h > (dt - hmin) ) /* h is so close to dt, increase h to dt 
+                                      * or h is larger than dt, decrease h to dt */
   {
-    *h = tnext-(*t);
+    *h = dt;
   }
   sys->function(*t, y, f, sys->params);
   for ( i=0; i<(int)sys->dimension; ++i)

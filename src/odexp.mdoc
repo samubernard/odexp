@@ -64,8 +64,10 @@ Quiet mode. Quit after the first run and leave simulation files in place.
 .Ss File structure
 The
 .Nm 
-file defines an initial value problem (IVP): equations, initial conditions, parameter, auxiliary functions, integration interval, etc. Essential elements are at least one equation, the initial condition and the time span over which integration must take place. Other elements such as options, auxiliary functions and constants 
-can be defined as well.
+file 
+defines an initial value problem (IVP): equations, initial conditions, parameter, auxiliary functions, integration interval, etc. 
+Essential elements are at least one equation, the initial condition and the time span over which integration must take place. 
+Other elements such as options, auxiliary functions and constants can be defined as well.
 The general structure of the file is
 .Bl -bullet -compact
 .It
@@ -750,6 +752,7 @@ Alternatively, a mean field can be computed without looping through all particle
 .Pp
 .Dl %M TOTAL POP_SIZE {vect} # no loop, faster
 .Pp
+.El
 .
 .Ss Macros
 .Bl -tag
