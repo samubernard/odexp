@@ -618,6 +618,8 @@ int odesolver( oderhs pop_ode_rhs,
                 }
             }
         }
+
+        EVENT_TYPE = EVENT_TFINAL*(t>=t1);
         update_SIM_from_y(y);
         
         fwrite_SIM(&t);
