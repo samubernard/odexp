@@ -399,25 +399,25 @@ int odesolver( oderhs pop_ode_rhs,
     }  
 
     /* print IVP parameters */
-    printf("  integrating on [%s%g%s, %s%g%s], in %s mode, ", T_VAL, t, T_NOR, T_VAL, t1, T_NOR, get_str("popmode") );
+    PRINTV("  integrating on [%s%g%s, %s%g%s], in %s mode, ", T_VAL, t, T_NOR, T_VAL, t1, T_NOR, get_str("popmode") );
     if ( get_int("lasty") )
     {
-        printf("from previous state %s(I to revert to default)%s...\n",T_DET,T_NOR);
+        PRINTV("from previous state %s(I to revert to default)%s...\n",T_DET,T_NOR);
     }
     else if ( any(NUM_IC, ode_system_size) )
     {
-        printf("from numerically set initial conditions %s(I to revert to default)%s...\n",T_DET,T_NOR);
+        PRINTV("from numerically set initial conditions %s(I to revert to default)%s...\n",T_DET,T_NOR);
     }
     else 
     {
-        printf("from default initial conditions...\n");
+        PRINTV("from default initial conditions...\n");
     }
     
 
-    printf("\n"); /* progress: newline */
+    PRINTV("\n"); /* progress: newline */
     if ( get_int("progress") > 2 ) /* level 3: two newlines  */
     {
-      printf("\n\n");
+      PRINTV("\n\n");
     }
     fflush(stdout);
     msg[0] = 0; /* snprintf(msg,EXPRLENGTH,""); set message to empty string */
@@ -712,9 +712,9 @@ int odesolver( oderhs pop_ode_rhs,
     }
     if (status == GSL_SUCCESS)
     {
-        printf("\n  total: %s%g msec%s,", T_VAL,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
-        printf(" solver: %s%g msec%s,", T_VAL,tot_odeiv, T_NOR);
-        printf(" function: %s%g msec%s\n", T_VAL,SIM->time_in_ode_rhs, T_NOR);
+        PRINTV("\n  total: %s%g msec%s,", T_VAL,(clock()-start)*1000.0 / CLOCKS_PER_SEC, T_NOR);
+        PRINTV(" solver: %s%g msec%s,", T_VAL,tot_odeiv, T_NOR);
+        PRINTV(" function: %s%g msec%s\n", T_VAL,SIM->time_in_ode_rhs, T_NOR);
     }
     else
     {

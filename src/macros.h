@@ -5,9 +5,7 @@
 
 /* lengths */
 #define MAXFILENAMELENGTH 64
-#ifndef NAMELENGTH
 #define NAMELENGTH        64
-#endif
 #define MAXROOTLENGTH     64 
 #define EXPRLENGTH        1024                            
 
@@ -74,5 +72,8 @@
        fprintf(stderr,  __VA_ARGS__); \
        fprintf(stderr, "%s",T_NOR); \
        printf("\n"); })
+
+/* print with verbose level */
+#define PRINTV(...) ({ if ( strncmp(get_str("loudness"),"silent",3) ) printf( __VA_ARGS__ ); })
 
 #endif /* !FILE_MACROS_SEEN */

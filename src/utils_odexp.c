@@ -214,7 +214,6 @@ double delay(const double t, const double x, const double tau, double (*ic)(doub
       printf("  error. delay stack memory exceeded (tau = %f, h = %f)\n", tau,h);
     }
     i = 0;
-    /* t = -(DELAY_SSTACK - 1 - i)*h */
     while ( i < DELAY_SSTACK )
     {
       ti = t - (DELAY_SSTACK - i )*h;

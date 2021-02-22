@@ -154,8 +154,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   int             nbr_stst = 0;
   /* end variable declaration */
 
+  /* load options */
+  load_options(PAR_FILENAME, EXIT_IF_NO_FILE); 
+
+
   /* set xterm title */
-  printf("\033]0;odexp\007");
+  PRINTV("\033]0;odexp\007");
 
 
   if ( ( logfr = fopen(LOG_FILENAME, "a") ) == NULL ) /* create a log file or append an existing log file */
@@ -171,52 +175,20 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   PRINTLOG("#--\nLog for model %s", odexp_filename); 
   DBLOGPRINT("Log for model %s", odexp_filename); 
   PRINTLOG("%s", ctime( &now )); 
-  if ( mkfifo(GP_FIFONAME, 0600) ) 
-  {
-    if (errno != EEXIST) 
-    {
-      PRINTERR("%s", GP_FIFONAME);
-      unlink(GP_FIFONAME);
-      return 1;
-    }
-  }
-  if ( ( GPLOTP = popen("gnuplot -persist >>" GP_FIFONAME " 2>&1","w") ) == NULL ) /* open gnuplot in 
-                                                                                    persist mode with 
-                                                                                    redirection of stderr > stdout */
-  {
-    PRINTERR("gnuplot failed to open");
-    pclose(GPLOTP);
-    return 1;
-  }
-  fprintf(GPLOTP,"set print \"%s\"\n", GP_FIFONAME); /* redirect output to GP_FIFONAME */  
-  fflush(GPLOTP);
-  if ( ( GPIN = open(GP_FIFONAME, O_RDONLY | O_NONBLOCK) ) == -1 )
-  {
-    PRINTERR("Could not open named pipe %s", GP_FIFONAME);
-    close(GPIN);
-    return 1;
-  }
-  DBLOGPRINT("popen gnuplot"); 
 
   /* begin */
-  printf("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
+  PRINTV("\nodexp file: %s%s%s\n",T_VAL,odexp_filename,T_NOR);
 
   /* get short description */
-  printf("\n%-25s" HLINE "\n", "model description");
+  PRINTV("\n%-25s" HLINE "\n", "model description");
   get_nbr_el(EQ_FILENAME,"##",2, &dsc.nbr_el, NULL);
   alloc_namevalexp(&dsc);
   err = load_line(EQ_FILENAME,dsc,"##",2, EXIT_IF_NO_FILE);
   for ( i = 0; i<dsc.nbr_el; i++ )
   {
-    printf("%s\n",dsc.comment[i]);  
+    PRINTV("%s\n",dsc.comment[i]);  
   }
   DBLOGPRINT("%d description",dsc.nbr_el);
-
-  /* extra commands */
-  get_nbr_el(EQ_FILENAME,"CMD",3, &xcd.nbr_el, NULL);
-  alloc_namevalexp(&xcd);
-  load_line(EQ_FILENAME,xcd,"CMD",3, EXIT_IF_NO_FILE);
-  DBLOGPRINT("%d extra commands",xcd.nbr_el);
 
   /* get tspan */
   load_double_array(PAR_FILENAME, &tspan, ts_string, ts_len, EXIT_IF_NO_FILE); 
@@ -236,6 +208,12 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     /* printf("  %d time points, of which %d stopping points\n", tspan.length, tspan.length - 2); */
     DBLOGPRINT("%d time points, of which %d stopping points", tspan.length, tspan.length - 2);
   }
+
+  /* extra commands */
+  get_nbr_el(EQ_FILENAME,"CMD",3, &xcd.nbr_el, NULL);
+  alloc_namevalexp(&xcd);
+  load_line(EQ_FILENAME,xcd,"CMD",3, EXIT_IF_NO_FILE);
+  DBLOGPRINT("%d extra commands",xcd.nbr_el);
 
   /* get constant arrays */
   get_nbr_el(EQ_FILENAME,"CONST",5, &cst.nbr_el, NULL);
@@ -398,8 +376,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   }
 
 
-  /* get options */
-  load_options(PAR_FILENAME, EXIT_IF_NO_FILE); 
+  /* manage options */
   update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv); /* set plot index from options, if present */
   update_plot_options(ngx,ngy,ngz,dxv); /* set plot options based to reflect plot index */
   update_act_par_index(&p, mu);
@@ -433,7 +410,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* printf("  RAND_MAX %s%d%s\n\n",T_VAL,RAND_MAX,T_NOR); */
   PRINTLOG("RAND_MAX %d",RAND_MAX);
 
-  printf("  logfiles: " LOG_FILENAME " and " DB_LOG_FILENAME "\n\n");
+  PRINTV("  logfiles: " LOG_FILENAME " and " DB_LOG_FILENAME "\n\n");
 
   /* readline */
   if (strcmp("EditLine wrapper",rl_library_version) == 0)
@@ -462,12 +439,16 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* first run after system init */
   PRINTLOG("System init done.");
   DBLOGPRINT("System init done.");
-  if ( get_int("runonstartup") == 1 )
-  {    
-    PRINTLOG("Running first simulation");
-    status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
-    PRINTLOG("First simulation done.");
+
+  /* if loudness == silent, skip command line and quit */
+  if ( strncmp(get_str("loudness"),"silent",3) == 0 ) /* run silent mode, break out of while loop  */
+  {
+    set_int("progress",0);
+    PRINTLOG("Silent mode, will exit after first simulation");
+    quit = 1;
   }
+
+  /* if loudness == quiet, print out normal information, skip command line and quit */ 
   if ( strncmp(get_str("loudness"),"quiet",3) == 0 ) /* run quiet mode, break out of while loop  */
   {
     printf("\n  %syou are in quiet mode (option loudness quiet),\n"
@@ -475,16 +456,15 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     printf("  hexdump -e '%d \"%%5.2f \" 5 \"%%5d \" \"\\n\"' stats.dat\n", 1+mfd.nbr_el); 
     printf("  hexdump -e '2 \"%%d \" %d \"%%5.2f \" \"\\n\"' traj.dat\n\n", nbr_col); 
     printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' " QUICK_BUFFER "\n\n"); 
-    PRINTLOG("Quiet mode, will exit");
+    PRINTLOG("Quiet mode, will exit after first simulation");
     quit = 1;
   }
 
-  /* GNUPLOT SETUP */
-  gnuplot_config(gx, gy, dxv);
-  /* END GNUPLOT SETUP */ 
-
-  if ( get_int("runonstartup") == 1 ) 
-  {
+  if ( get_int("runonstartup") == 1 )
+  {    
+    PRINTLOG("Running first simulation");
+    status = odesolver(pop_ode_rhs, single_rhs, pop_ode_ic, single_ic, &tspan);
+    PRINTLOG("First simulation done.");
     extracmd = malloc(2*sizeof(char));
     strncpy(extracmd,"0",1); /* start by refreshing the plot with command 0: normal plot 
                               * this does not go into the history  
@@ -497,6 +477,40 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     extracmd = realloc(extracmd,(strlen(get_str("runfirst"))+5)*sizeof(char));
     strncpy(extracmd+1," && ",4);
     strncpy(extracmd+5,get_str("runfirst"),strlen(get_str("runfirst")));
+  }
+
+  if ( strncmp(get_str("loudness"),"loud",3) == 0 ) /* run loud, with gnuplot pipe  */
+  {
+    if ( mkfifo(GP_FIFONAME, 0600) ) 
+    {
+      if (errno != EEXIST) 
+      {
+        PRINTERR("%s", GP_FIFONAME);
+        unlink(GP_FIFONAME);
+        return 1;
+      }
+    }
+    if ( ( GPLOTP = popen("gnuplot -persist >>" GP_FIFONAME " 2>&1","w") ) == NULL ) /* open gnuplot in 
+                                                                                      persist mode with 
+                                                                                      redirection of stderr > stdout */
+    {
+      PRINTERR("gnuplot failed to open");
+      pclose(GPLOTP);
+      return 1;
+    }
+    fprintf(GPLOTP,"set print \"%s\"\n", GP_FIFONAME); /* redirect output to GP_FIFONAME */  
+    fflush(GPLOTP);
+    if ( ( GPIN = open(GP_FIFONAME, O_RDONLY | O_NONBLOCK) ) == -1 )
+    {
+      PRINTERR("Could not open named pipe %s", GP_FIFONAME);
+      close(GPIN);
+      return 1;
+    }
+    DBLOGPRINT("popen gnuplot"); 
+  
+    /* GNUPLOT SETUP */
+    gnuplot_config(gx, gy, dxv);
+    /* END GNUPLOT SETUP */ 
   }
 
   PRINTLOG("Main loop");
@@ -525,11 +539,11 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     {
       printf_status_bar( &tspan );
       rawcmdline = readline(ODEXP_PROMPT(prompt_index));
-      prompt_index++;
       printf("%s","\033[J"); /* clear to the end of screen */
       if ( strlen(rawcmdline) > 0 ) /* add the full raw, unprocessed cmdline to history if non empty and 
                                      * if it read from the command line */
       {
+        prompt_index++;
         add_history (rawcmdline);
       }
     } /* unprocessed commands are now in rawcmdline  and extracmd == NULL */
@@ -1824,7 +1838,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   } /* END MAIN LOOP */
 
-  printf("exiting...");
+  PRINTV("exiting...");
   PRINTLOG("Exiting");
   DBLOGPRINT("Exiting");
 
@@ -1882,9 +1896,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   fclose(dblogfr);
 
   /* reset xterm title */
-  printf("\033]0;\007");
+  PRINTV("\033]0;\007");
 
-  printf(" bye\n");
+  PRINTV(" bye\n");
 
   return status;
 
