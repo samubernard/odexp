@@ -199,46 +199,44 @@ double interp(double *x, double *y, double xi, int nx, int start)
 
 /* delay keeps a history stack of the values of x(t)
  * It returns the interpolated value of x at t - tau 
- * 
- * LIMITATION: only one instance of the delay can used
- *             History is stored in a static array and
- *             can hold only one history
+ * define global stack with 
+ *    add stack stk
  */
-double delay(const double t, const double x, const double tau, double (*ic)(double))
+double delay(const double t, const double x, const double tau, double (*ic)(double), stack *xhist)
 {
-  static double tt[DELAY_SSTACK];
-  static double xhist[DELAY_SSTACK];
+  /* static double tt[DELAY_SSTACK]; */
+  /* static double xhist[DELAY_SSTACK]; */
   double ti;
   const double h = *(SIM->h);
-  static int i;
+  /* static int i; */
   if ( EVENT_TYPE && EVENT_T0 ) /* fill history of x */
   {
     if ( tau/h > DELAY_SSTACK )
     {
       printf("  error. delay stack memory exceeded (tau = %f, h = %f)\n", tau,h);
     }
-    i = 0;
-    while ( i < DELAY_SSTACK )
+    xhist->pos = 0;
+    while ( xhist->pos < DELAY_SSTACK )
     {
-      ti = t - (DELAY_SSTACK - i )*h;
-      tt[i] = ti;
-      xhist[i] = ic(ti);
-      i++;
+      ti = t - (DELAY_SSTACK - xhist->pos )*h;
+      xhist->t[xhist->pos] = ti;
+      xhist->array[xhist->pos] = ic(ti);
+      xhist->pos++;
     }
   }
   else 
   {
     if ( DELAY_FIRST_EVAL ) /* add the current time,state (t,x) values to stack */
     {
-      i++;
-      i %= DELAY_SSTACK;
-      tt[i] = t;
-      xhist[i] = x;
+      xhist->pos++;
+      xhist->pos %= DELAY_SSTACK;
+      xhist->t[xhist->pos] = t;
+      xhist->array[xhist->pos] = x;
     }
   }
 
   /* interpolate xhist at t - tau */
-  return interp(tt,xhist,t - tau,DELAY_SSTACK,i+1);
+  return interp(xhist->t,xhist->array,t - tau,DELAY_SSTACK,xhist->pos+1);
 }
 
 

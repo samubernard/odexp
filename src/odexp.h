@@ -129,6 +129,21 @@ typedef struct system_state {
 
 extern world  *SIM;
 
+/* Delays */
+#define DELAY_SSTACK 1000
+#define DELAY_FIRST_EVAL SIM->first_eval_flag
+
+/* struct stack: predefined 
+ * double arrays (<t>,<array>) with current
+ * position <pos>
+ * for use with delay
+ */
+typedef struct stack_struct {
+  double t[DELAY_SSTACK];
+  double array[DELAY_SSTACK];
+  int    pos;
+} stack;
+
 
 /* main function declaration */
 int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic ode_ic, odeic single_ic, rootrhs root_rhs, const char *odexp_filename );
@@ -155,7 +170,7 @@ double sumxy(long len, double (*f)(double), double (*g)(double, double), const d
 double kern(const double *Wi, double (*f)(double, double, double *), double xi, const double *x, double *p, long len);
 double linchaindelay(const double root, const double *chain, const int link, const double delay, const int len);
 double interp(double *x, double *y, double xi, int nx, int start);
-double delay(const double t, const double x, const double tau, double (*ic)(double));
+double delay(const double t, const double x, const double tau, double (*ic)(double), stack *xhist);
 
 /* low rank expansion */
 #ifndef _LREXP_H_
@@ -389,10 +404,6 @@ int mvar(const char *s, par *p, double *ptr);
 
 /*  White noise */ 
 #define DWDT (randN(0,1)/sqrt(*SIM->h))        
-
-/* Delays */
-#define DELAY_SSTACK 1000
-#define DELAY_FIRST_EVAL SIM->first_eval_flag
 
 /* stopping times */
 #define EVENT_NONE      (0x00) 
