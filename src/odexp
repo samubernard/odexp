@@ -252,9 +252,9 @@ set_defines($modelode);
 print $fch "\n/* Global variables */\n\n";
 # ====================================================================================
 # DECLARE AND DEFINE CONSTANT ARRAYS
-print $fch "/* Declaration and definition of constant arrays from files */\n";
 declare_array_from_file($modelode);
 declare_constant_array($modelode);
+add_declarations($modelode);
 # ====================================================================================
 # DECLARE AND DEFINE FUNCTIONS
 define_functions($modelode);
@@ -584,6 +584,7 @@ sub set_defines
 
 sub declare_array_from_file
 {
+  print $fch "/* Declaration and definition of constant arrays from files */\n";
   open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
   while (<$fh>) 
   {
@@ -645,16 +646,33 @@ sub declare_array_from_file
 
 sub declare_constant_array
 {
-  # declare and initialize constant array
-  open(my $fh, '<', @_) or die "Could not open file '@_'. $!";
-  print $fch "/* Declaration and definition of constant arrays */\n\n";
+  # add global declarations 
+  open(my $fh, '<', @_) or die "could not open file '@_'. $!";
+  print $fch "/* additional declarations */\n\n";
   while (<$fh>) 
   {
-    if ( /^CONST/i )  
+    if ( /^const/i )  
     {
       my @fields = split; 
       my $var = $fields[1];
       print $fch "static const double $var = " . join(' ', @fields[2..$#fields]) . ";\n\n";
+    }
+  }
+  close($fh);
+}
+
+sub add_declarations
+{
+  # declare and initialize constant array
+  open(my $fh, '<', @_) or die "could not open file '@_'. $!";
+  print $fch "/* declaration and definition of constant arrays */\n\n";
+  while (<$fh>) 
+  {
+    if ( /^add/i )  
+    {
+      chomp;
+      s/^add //; 
+      print $fch $_ . ";\n\n";
     }
   }
   close($fh);
