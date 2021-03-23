@@ -561,11 +561,17 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     else if ( ( sscanf(rawcmdline,"%[^;(] ( %lf : %lf : %lf )%n",svalue,&nvalue,&nvalue2,&nvalue3,&extracmdpos) == 4 ) )
       /* found a for loop -- experimental */
     {
-      if ( nvalue < nvalue3 )
+      if ( nvalue < nvalue3 && nvalue2 > 0 ) /* increment nvalue by nvalue2 */
       {
         extracmd = malloc(2*strlen(rawcmdline)*sizeof(char));
         snprintf(extracmd,2*strlen(rawcmdline),"%s(%g:%g:%g)%s",\
             svalue,nvalue+nvalue2,nvalue2,nvalue3,rawcmdline + extracmdpos);  
+      }
+      else if ( nvalue3 && nvalue2 == 0 ) /* nvalue3 is the number of repetitions, decrement nvalue3 by 1 */
+      {
+        extracmd = malloc(2*strlen(rawcmdline)*sizeof(char));
+        snprintf(extracmd,2*strlen(rawcmdline),"%s(%g:%d:%d)%s",\
+            svalue,nvalue,0,(int)nvalue3-1,rawcmdline + extracmdpos);  
       }
       strptr = strchr(rawcmdline,'(');
       *strptr = ' ';
@@ -2654,7 +2660,7 @@ int gplot_particles( const int gx, const int gy, const nve var )
      */
     snprintf(cmd_plt,EXPRLENGTH,"plot \"" ODEXPDIR "particle_states.dat\" "
         "binary format=\"%%u%%%dlf\" using %d:%d%s with "
-        "%s title \"%s=%g (step %d)\"",nvar,gx,gy,opt_circle, get_str("particlestyle"),
+        "%s title \"%s=%8.2f (step %d)\"",nvar,gx,gy,opt_circle, get_str("particlestyle"),
         get_str("indvar"),t,timestep);
     if ( get_int("particleid") )
     {

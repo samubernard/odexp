@@ -199,6 +199,10 @@ double interp(double *x, double *y, double xi, int nx, int start)
 
 /* delay keeps a history stack of the values of x(t)
  * It returns the interpolated value of x at t - tau 
+ * 
+ * LIMITATION: only one instance of the delay can used
+ *             History is stored in a static array and
+ *             can hold only one history
  */
 double delay(const double t, const double x, const double tau, double (*ic)(double))
 {
