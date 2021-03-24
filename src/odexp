@@ -215,7 +215,7 @@ prescan(); # check for common syntax errors; clean up ode
 close $fodeh;
 
 init_check() if ( $opt_i == 0 ); # check that init cond are declared in the same order as dynamical variables
-impl_check() if ( $opt_i == 0 ); # check that init cond are declared in the same order as dynamical variables
+impl_check() if ( $opt_i == 0 ); # check that implicit values are called without "" quotes 
 
 guess_single_popmode($modelode);
 check_quiet_mode($modelode);
@@ -334,9 +334,10 @@ sub prescan
       /^\s*(S|P|A|E|I|O|F|C)[ 0-9]/i and 
           die "error: incomplete keyword '$1' on line ${.}: $_\n" unless $in_block;
       /^\s*@/ and die "error: @ is obsolete, use fun instead on line ${.}.\n";
-      /^\s*($|#|PAR|EXPR|AUX|D|INIT|LET|MAC|TIME|OPT|FUN|CONST|FI|LAG|%M|%C|%BIRTH|%DEATH|%REPLI|END|CMD)/i
+      /^\s*($|#|par|expr|aux|d|init|let|mac|time|opt|fun|dec|const|fi|lag|%m|%c|%birth|%death|%repli|end|cmd)/i
         or die "error: wrong keyword on line ${.}: $_" 
         unless $in_block;
+      /^\s*const/i and die "error: replace 'const' by keyword by 'decl const double' on line ${.}: $_" unless $in_block;
     } # end check common errors
 
     # reformat pop file    
@@ -646,9 +647,9 @@ sub declare_array_from_file
 
 sub declare_constant_array
 {
-  # add global declarations 
+  # declare and initialize constant array
   open(my $fh, '<', @_) or die "could not open file '@_'. $!";
-  print $fch "/* additional declarations */\n\n";
+  print $fch "/* declaration and definition of constant arrays */\n\n";
   while (<$fh>) 
   {
     if ( /^const/i )  
@@ -663,16 +664,16 @@ sub declare_constant_array
 
 sub add_declarations
 {
-  # declare and initialize constant array
+  # add global declarations 
   open(my $fh, '<', @_) or die "could not open file '@_'. $!";
-  print $fch "/* declaration and definition of constant arrays */\n\n";
+  print $fch "/* additional declarations */\n\n";
   while (<$fh>) 
   {
-    if ( /^add/i )  
+    if ( /^dec/i )  
     {
       chomp;
-      s/^add //; 
-      print $fch $_ . ";\n\n";
+      s/^dec\w+ //; 
+      print $fch $_ . ";\n";
     }
   }
   close($fh);
