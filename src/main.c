@@ -61,6 +61,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           op,
           op2;
   int     nbr_repeat = 1,
+          loop_repeat = 0,
           rep_command = 1;
   double  nvalue,
           nvalue2,
@@ -509,7 +510,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
     DBLOGPRINT("popen gnuplot"); 
   
     /* GNUPLOT SETUP */
-    gnuplot_config(gx, gy, dxv);
+    gnuplot_config();
     /* END GNUPLOT SETUP */ 
   }
 
@@ -551,9 +552,31 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
         add_history (rawcmdline);
       }
     } /* unprocessed commands are now in rawcmdline  and extracmd == NULL */
-    
-    /* DBPRINT("rawcmdline: %s (sizeof = %lu, strlen = %lu)",rawcmdline, sizeof rawcmdline, strlen(rawcmdline)); */
 
+    /* the command
+     *   > repeat (n) 
+     *  expands the following command sequence n times
+     */
+    if ( loop_repeat ) 
+    {
+      extracmd = malloc((strlen(rawcmdline)+1)*sizeof(char)*loop_repeat);
+      strptr = extracmd;
+      for (i = 0; i < loop_repeat; i++) 
+      {
+        strptr = stpncpy(strptr,rawcmdline,strlen(rawcmdline)+1);
+      }
+      free(rawcmdline);
+      rawcmdline = malloc((strlen(extracmd)+1)*sizeof(char));
+      strncpy(rawcmdline,extracmd,strlen(extracmd)+1);
+      free(extracmd);
+      extracmd = (char *)NULL;
+      loop_repeat = 0;
+    }
+    if ( ( sscanf(rawcmdline," repeat (%d)",&loop_repeat) == 1 ) )
+    {
+      rawcmdline[0] = '\0';
+    }
+  
     if ( ( sscanf(rawcmdline,"%[][{}R] %d %n",svalue,&nbr_repeat,&extracmdpos) >= 2 ) && 
          nbr_repeat > 1 ) /* assign extra command to cmd<r-1> ... */
     {
@@ -1485,7 +1508,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                 update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                 update_act_par_index(&p, mu);
                 printf_option_line(i);
-                gnuplot_config(gx, gy, dxv);
+                gnuplot_config();
               }
               else
               {
@@ -1522,7 +1545,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
                   update_plot_index(&ngx, &ngy, &ngz, &gx, &gy, &gz, dxv);
                   update_act_par_index(&p, mu);
                   printf_option_line(i);
-                  gnuplot_config(gx, gy, dxv);
+                  gnuplot_config();
                 }
               }
               else
