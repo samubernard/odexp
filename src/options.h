@@ -3,7 +3,7 @@
 #include "macros.h"
 
 /* number of global options */
-#define NBROPTS 70
+#define NBROPTS 72
 
 typedef struct gen_option
 {

@@ -68,6 +68,8 @@ struct gen_option GOPTS[NBROPTS] = {
   {"pal","palette", 's', 0.0, 0, "apple", "color palette acid | qual | {apple}", "gnuplotSettings"},
   {"key","togglekey", 'i', 0.0, 1, "", "switch key on/off", "gnuplotSettings"},
   {"bg","background", 's', 0.0, 0, "none", "terminal background {none} | fancy", "gnuplotSettings"},
+  {"before","before", 's', 0.0, 0, "", "gnuplot command to execute before prompt command", "gnuplotSettings"},
+  {"after","after", 's', 0.0, 0, "", "gnuplot command to execute after prompt command", "gnuplotSettings"},
   {"ld","loudness", 's', 0.0, 0, "loud", "LouDness mode silent | quiet | {loud} (silent not implemented)", "generalSettings"},
   {"fx","fix", 'i', 0.0, 4, "", "number of digits after decimal point {4}", "generalSettings"},
   {"pr","progress", 'i', 0.0, 1, "", "print PRogress 0 | {1} | 2 | 3", "generalSettings"},

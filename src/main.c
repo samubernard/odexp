@@ -525,6 +525,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
     printf("%s",T_NOR); /* reset normal terminal format */
     
+    /* execute gplot before command */
+    fprintf(GPLOTP,"%s\n", get_str("before"));
+    fflush(GPLOTP);
+
     /* BEGIN get command line */
 
     free(rawcmdline);
@@ -557,6 +561,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
       snprintf(extracmd,strlen(rawcmdline)+1,"%s%d %s",svalue,--nbr_repeat,rawcmdline + extracmdpos);
       rawcmdline[extracmdpos] = '\0'; /* truncate rawcmdline */
       /* DBPRINT("extracmd: %s, rawcmdline: %s",extracmd, rawcmdline);  */
+    }
+    else if ( ( sscanf(rawcmdline,"set %[^\n]",svalue) == 1 ) ) /* capture options setting */
+    {
+      /* do nothing */
     }
     else if ( ( sscanf(rawcmdline,"%[^;(] ( %lf : %lf : %lf )%n",svalue,&nvalue,&nvalue2,&nvalue3,&extracmdpos) == 4 ) )
       /* found a for loop -- experimental */
@@ -1841,6 +1849,10 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
 
     } /* end if (cmdline && *cmdline)  check if cmdline is not empty */
+    
+    /* execute gplot after command */
+    fprintf(GPLOTP,"%s\n", get_str("after"));
+    fflush(GPLOTP);
 
   } /* END MAIN LOOP */
 
