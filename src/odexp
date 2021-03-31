@@ -26,17 +26,6 @@ use Getopt::Std;
 # valid identifiers start with a letter (Latin or Greek), and followed by 'word'
 # characters: alphanumeric characters, underscore _, or Greek letters.
 my $re_identifier = qr/[\p{L}Α-Ωα-ω][\wΑ-Ωα-ω]*/;
-my $re_iter_scalar = qr/
-  \s*                   # whitespaces
-  \[(\w+)               # iterator
-  \s*                   
-  =?               
-  \s*     
-  (|\d+)                 # start
-  \s*:?\s*
-  (|\d+)                 # end
-  \]
-/x;
 
 my $re_iter_loop = qr/
   \s*                   # whitespaces
@@ -67,30 +56,6 @@ my $re_nakedpar = qr/^
   \s+                   # whitespaces
   [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)? # one number
   \s+                   # whitespace(s)
-  (|\{.*?\})?           # nothing or attribute
-  \s*                   # whitespace(s)
-  (|\#.*)?              # nothing or comment
-$/ix;                   # end of line
-
-my $re_implicitIC = qr/^
-  \s*PAR\w*             # must be a parameter
-  \s+                   # whitespaces
-  ($re_identifier)_0         # with a varname ends with _0
-  \s+                   # whitespaces
-  [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)? # one number
-  \s+                   # whitespace(s)
-  (|\{.*?\})?           # nothing or attribute
-  \s*                   # whitespace(s)
-  (|\#.*)?              # nothing or comment
-$/ix;                   # end of line
-
-my $re_nakedaux = qr/^
-  \s*($re_identifier    # varname 
-  (?:\s*\[.*?\]+)?)     # optional brackets
-  \s*                   # whitespaces
-  =                     # equal sign
-  \s*                   # whitespace
-  ([^\{#\n]+)           # rhs until bracket comment or newline 
   (|\{.*?\})?           # nothing or attribute
   \s*                   # whitespace(s)
   (|\#.*)?              # nothing or comment
@@ -301,7 +266,6 @@ sub print_ode_header
 # append next line to all lines terminating with ... followed by any number of whitespaces
 # replace all LET constants by their value
 # add PAR in front of each naked parameter (see $re_nakedpar)
-# add INIT in front of each implicit IC, and remove the trailing _0 (see $re_implicitIC)
 # parse IC in attribute (see $re_attributeIC)
 # parse implicitly defined delayed variables (see $re_lag)
 # replace all ; in PAR, OPT by \n(PAR|OPT) 
@@ -371,14 +335,6 @@ sub prescan
   while ( <$tmpfh> )
   {
     /$re_nakedpar/ && s/^\s*/PAR /;     # insert PAR before naked parameters
-    if ( my ($varname) = ( $_ =~ /$re_nakedaux/ ) )
-      {
-        s/^\s*$varname\s*=/AUX $varname /;     # insert AUX before naked aux   
-      }
-    if ( my ($varname) = ( $_ =~ /$re_implicitIC/ ) )
-      {
-        s/$/\nINIT $varname ${varname}_0/;   # insert new line with initial condition  
-      }
     if ( my ($varname, $ic) = ( $_ =~ /$re_attributeIC/ ) )
       {
         my $tag = "";
