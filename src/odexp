@@ -1064,7 +1064,6 @@ sub print_header_defines
   	if ( /^expr/i )
     {
       my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
-      print $fhh "#define " . $prefix . $varname . " myself_->expr + $iexpr\n";
       my $len = 1;
       if ( my @new_iter = (/\[\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*\]+/g) )
       {
@@ -1076,12 +1075,19 @@ sub print_header_defines
           $len *= ($b-$a);  
         }
       }
+      if ( $len == 1 )
+      {
+        print $fhh "#define " . $prefix . $varname . " myself_->expr[$iexpr]\n";
+      }
+      else
+      {
+        print $fhh "#define " . $prefix . $varname . " myself_->expr + $iexpr\n";
+      }
       $iexpr += $len;
     }
   	if ( /^init/i )
     {
       my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
-      print $fhh "#define " . $prefix . $varname . " myself_->y + $iy\n";
       my $len = 1;
       if ( my @new_iter = (/\[\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*\]+/g) )
       {
@@ -1092,6 +1098,14 @@ sub print_header_defines
           my $b = shift(@new_iter);
           $len *= ($b-$a);  
         }
+      }
+      if ( $len == 1 )
+      {
+        print $fhh "#define " . $prefix . $varname . " myself_->y[$iy]\n";
+      }
+      else
+      {
+        print $fhh "#define " . $prefix . $varname . " myself_->y + $iy\n";
       }
       $iy += $len;
     }
