@@ -8,10 +8,13 @@ ODEXP(1) - General Commands Manual
 
 **odexp**
 \[**-a**&nbsp;*additional&nbsp;odexp&nbsp;options*]
+\[**-c**]
+\[**-d**]
 \[**-i**]
 \[**-o**&nbsp;*compiler&nbsp;options*]
 \[**-p**&nbsp;*parfile*]
 \[**-q**]
+\[**-r**]
 *file*
 
 # DESCRIPTION
@@ -51,6 +54,14 @@ Solutions are plotted with
 > *options*
 > comes as 'option1=value1, option2=value2, ...'
 
+**-c**
+
+> Compile C code only. Generated code must be in place.
+
+**-d**
+
+> Generate code only.
+
 **-o** *options*
 
 > Add
@@ -69,13 +80,17 @@ Solutions are plotted with
 
 > Quiet mode. Quit after the first run and leave simulation files in place.
 
+**-r**
+
+> Run model. Code must have been compiled.
+
 # USAGE
 
 ## File structure
 
 The
 **odexp**
-file
+*file*
 defines an initial value problem (IVP): equations, initial conditions, parameter, auxiliary functions, integration interval, etc.
 Essential elements are at least one equation, the initial condition and the time span over which integration must take place.
 Other elements such as options, auxiliary functions and constants can be defined as well.
