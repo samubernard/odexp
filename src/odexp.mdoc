@@ -8,10 +8,13 @@
 .Sh SYNOPSIS
 .Nm odexp
 .Op Fl a Ar additional odexp options
+.Op Fl c 
+.Op Fl d 
 .Op Fl i 
 .Op Fl o Ar compiler options 
 .Op Fl p Ar parfile
 .Op Fl q 
+.Op Fl r 
 .Ar file
 .Sh DESCRIPTION
 .Nm odexp 
@@ -48,6 +51,10 @@ Solutions are plotted with
 Add options to odexp. 
 .Ar options
 comes as 'option1=value1, option2=value2, ...'
+.It Fl c 
+Compile C code only. Generated code must be in place.
+.It Fl d 
+Generate code only. 
 .It Fl o Ar options 
 Add 
 .Ar option
@@ -58,13 +65,15 @@ Ignore syntax errors try to parse the file anyway.
 Optional parameter file. This overrides parameters, timespan and options in the source file.
 .It Fl q
 Quiet mode. Quit after the first run and leave simulation files in place.
+.It Fl r 
+Run model. Code must have been compiled.
 .El
 .
 .Sh USAGE 
 .Ss File structure
 The
 .Nm 
-file 
+.Ar file 
 defines an initial value problem (IVP): equations, initial conditions, parameter, auxiliary functions, integration interval, etc. 
 Essential elements are at least one equation, the initial condition and the time span over which integration must take place. 
 Other elements such as options, auxiliary functions and constants can be defined as well.
