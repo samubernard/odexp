@@ -141,9 +141,16 @@ my $re_scalar = qr/^
 # ---------------------------------------
 
 # odexp optional parameters
-our ($opt_a,$opt_p, $opt_o, $opt_i, $opt_q);
+our ($opt_a,$opt_p, $opt_o, $opt_i, $opt_q, $opt_d, $opt_c, $opt_r);
 $opt_i = 0; # default: do check for syntax error 
-getopts('a:o:p:iq'); # -a add extra options -o optimization; -p parameterfilename; -i do not check for syntax errors -q quiet mode
+getopts('a:o:p:iqdcr'); # -a add extra options 
+                     # -o optimization; 
+                     # -p parameterfilename; 
+                     # -i do not check for syntax errors 
+                     # -q quiet mode
+                     # -d generate code only
+                     # -c compile code only
+                     # -r run model only
 if ( !defined $opt_o )
 {
     $opt_o = 'g';
@@ -159,6 +166,7 @@ if ( $nbr_argv == 0 ) {
   die "error: too many arguments\n";
 }
 
+
 # ---------------------------------------
 # Files created in $odedir
 # equations.pop:   equation, constants, datafile ... where all constants are replaced by their values
@@ -171,6 +179,25 @@ my $odedir = ".odexp";
 if ( !-d $odedir & !-e $odedir ) {
   make_path $odedir or die  "Could not create directory $odedir. $!";
 }
+
+# ---------------------------------------------
+# First check if -c is there: compile and exit 
+if ( defined $opt_c )
+{
+  compile_model();
+  print "compiled 'model.out'\n";
+  exit;
+}
+# ---------------------------------------------
+
+# ---------------------------------------------
+# First check if -c is there: compile and exit 
+if ( defined $opt_r )
+{
+  run_model();
+  exit;
+}
+# ---------------------------------------------
 
 my $modelode = $odedir . "/equations.pop";
 my $modelc = $odedir . "/model.c";
@@ -255,6 +282,22 @@ print_header_defines();
 # ====================================================================================
 close $fch;
 close $fhh;
+
+print_inputrc();
+
+# ====================================================================================
+# End of code generation
+# ====================================================================================
+
+# ====================================================================================
+# Compile and run generated C code model
+compile_model() if ( !defined $opt_d );
+run_model() if ( !defined $opt_d );
+# ====================================================================================
+
+# ====================================================================================
+# END OF MAIN  
+# ====================================================================================
 
 sub print_ode_header
 {
@@ -1022,6 +1065,17 @@ sub print_ode_init_cond
 
 sub print_header_defines
 {
+  print $fhh qq(
+/* helper and utility macros */
+
+/* first: initial conditions t=T0; afterwards: initial condition at t>T0 */
+#define IST0(first,afterwards) ( EVENT_TYPE == EVENT_T0 ? (first) : (afterwards) )
+
+#define BR(birth,repli) ( ATBIRTH ? (birth) : (repli) )
+
+);
+
+
   print $fhh "/* Macros generated automatically from variables */\n";
 	open(my $fh, '<', $modelode) or die "Could not open file '$modelode'. $!";
   my $imu = 0;
@@ -1029,6 +1083,7 @@ sub print_header_defines
   my $iaux = 0;
   my $iexpr = 0;
   my $ipsi  = 0;
+  my $imfd  = 0;
   my $prefix = "autodef_";
   print $fhh "/* use SELF(name) when 'name' is not defined locally */\n";
   print $fhh "#define SELF(name) (" . $prefix . "##name)\n\n";
@@ -1109,6 +1164,19 @@ sub print_header_defines
       }
       print $fhh "#define " . $prefix . "index_" . $varname . " " . $iy . "\n";
       $iy += $len;
+    }
+  	if ( /^%M/i )
+    {
+      if ( $len == 1 )
+      {
+        print $fhh "#define " . $prefix . $varname . " SIM->meanfield[$imfd]\n";
+      }
+      else
+      {
+        print $fhh "#define " . $prefix . $varname . " SIM->meanfield + $imfd\n";
+      }
+      print $fhh "#define " . $prefix . "index_" . $varname . " " . $imfd . "\n";
+      $imfd += $len;
     }
     if ( /^%C/i )
     {
@@ -1582,15 +1650,12 @@ sub strip_blanks
   return $str;
 }
 
-# -----------------------------------------------------------------
-# SETTINGS/COMPILE/RUN
-# -----------------------------------------------------------------
+sub print_inputrc
+{
+  my $inputrcfile = $odedir . "/.inputrc";
+  open(my $finputrc, '>', $inputrcfile) or die "Could not open file '$inputrcfile'. $!";
 
-
-my $inputrcfile = $odedir . "/.inputrc";
-open(my $finputrc, '>', $inputrcfile) or die "Could not open file '$inputrcfile'. $!";
-
-print $finputrc q(# Key binding for readline
+  print $finputrc q(# Key binding for readline
 TAB: complete
 
 # use a visible bell if one is available
@@ -1623,12 +1688,18 @@ $if odexp
 $endif
 );
 
-close($finputrc);
+  close($finputrc);
+}
 
-my $LDFLAGS = "-lgsl -lodexp";
-my $CFLAGS =  "-Wall -Wno-unknown-warning-option -Wno-availability -Wno-gnu-statement-expression -Wno-nullability-extension -Wno-nullability-completeness -pedantic -$opt_o";
-system("gcc $CFLAGS $LDFLAGS $odedir/model.c -o model.out") == 0 
+sub compile_model
+{
+  my $LDFLAGS = "-lgsl -lodexp";
+  my $CFLAGS =  "-Wall -Wno-unknown-warning-option -Wno-availability -Wno-gnu-statement-expression -Wno-nullability-extension -Wno-nullability-completeness -pedantic -$opt_o";
+  system("gcc $CFLAGS $LDFLAGS $odedir/model.c -o model.out") == 0 
               or die "compiling failed: $?";
-exec ("./model.out") or print STDERR "couldn't exec model.out: $!";
+}
 
-
+sub run_model
+{
+  exec ("./model.out") or print STDERR "couldn't exec model.out: $!";
+}
