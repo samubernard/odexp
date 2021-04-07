@@ -345,46 +345,6 @@ int mvar(const char *s, par *p, double *ptr);
        SIM->meanfield[index];                                             \
      })                                                     
 
-/* I_Y: returns the index of dynamical variable 'name' */
-#define I_Y(name)                                             \
-    ({ static int index = 0;                                 \
-      while ( strncmp(#name, SIM->varnames[index], NAMELENGTH) ) \
-      {                                                         \
-        index++; index %= SIM->nbr_var;                         \
-      }                                                         \
-      index;                                                    \
-    })
-
-/* I_EXPR: returns the index of param expr 'name' */
-#define I_EXPR(name)                                             \
-    ({ static int index = 0;                                 \
-      while ( strncmp(#name, SIM->exprnames[index], NAMELENGTH) ) \
-      {                                                         \
-        index++; index %= SIM->nbr_expr;                         \
-      }                                                         \
-      index;                                                    \
-    })
-
-/* I_AUX: returns the index of aux variable 'name' */
-#define I_AUX(name)                                             \
-    ({ static int index = 0;                                 \
-      while ( strncmp(#name, SIM->auxnames[index], NAMELENGTH) ) \
-      {                                                         \
-        index++; index %= SIM->nbr_aux;                         \
-      }                                                         \
-      index;                                                    \
-    })
-
-/* I_PSI: returns the index of cpl variable 'name' */
-#define I_PSI(name)                                             \
-    ({ static int index = 0;                                 \
-      while ( strncmp(#name, SIM->psinames[index], NAMELENGTH) ) \
-      {                                                         \
-        index++; index %= SIM->nbr_psi;                         \
-      }                                                         \
-      index;                                                    \
-    })
-
 #define ATBIRTH (SIM->event[0] == -1)
 #define ATREPLI (SIM->event[0] >= 0 && SIM->event[1] == 1)
 #define ISDAUGHTER (myself_->sister != NULL)

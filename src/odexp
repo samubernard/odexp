@@ -1028,69 +1028,92 @@ sub print_header_defines
   my $iy = 0;
   my $iaux = 0;
   my $iexpr = 0;
+  my $ipsi  = 0;
   my $prefix = "autodef_";
   print $fhh "/* use SELF(name) when 'name' is not defined locally */\n";
   print $fhh "#define SELF(name) (" . $prefix . "##name)\n\n";
   print $fhh "/* use OTHER(name) when 'name' is not defined locally */\n";
   print $fhh "#define OTHER(name) (" . $prefix . "other_" . "##name)\n\n";
+  print $fhh "/* use SISTER(name) when 'name' is not defined locally */\n";
+  print $fhh "#define SISTER(name) (" . $prefix . "sister_" . "##name)\n\n";
+  print $fhh "/* use IPSI(name) to fetch the index of coupling 'name' */\n";
+  print $fhh "#define GETINDEX(name) (" . $prefix . "index_" . "##name)\n\n";
 	while ( <$fh> )    
 	{
-    /^(par|aux|init|expr)/ ) or next;
+    /^(par|aux|init|expr|%C|%M)/i or next;
     my $len = 1;
     if ( my @new_iter = (/\[\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*\]+/g) )
     {
-    while ( @new_iter ) 
-    {
-      my $iter = shift(@new_iter);
-      my $a= shift(@new_iter);
-      my $b = shift(@new_iter);
-      $len *= ($b-$a);  
+      while ( @new_iter ) 
+      {
+        my $iter = shift(@new_iter);
+        my $a= shift(@new_iter);
+        my $b = shift(@new_iter);
+        $len *= ($b-$a);  
+      }
     }
-    }
+    my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
   	if ( /^par/i )
     {
-      my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
       print $fhh "#define " . $prefix . $varname . " SIM->mu[$imu]\n";
+      print $fhh "#define " . $prefix . "index_" . $varname . " " . $imu . "\n";
       ++$imu;
     }
   	if ( /^aux/i )
     {
-      my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
       if ( $len == 1 )
       {
         print $fhh "#define " . $prefix . $varname . " myself_->aux[$iaux]\n";
+        print $fhh "#define " . $prefix . "other_" . $varname . " other_->aux[$iaux]\n";
+        print $fhh "#define " . $prefix . "sister_" . $varname . " myself_->sister == NULL ? 0.0 : myself_->sister->aux[$iaux]\n";
       }
       else
       {
         print $fhh "#define " . $prefix . $varname . " myself_->aux + $iaux\n";
+        print $fhh "#define " . $prefix . "other_" . $varname . " other_->aux + $iaux\n";
+        print $fhh "#define " . $prefix . "sister_" . $varname . " myself_->sister == NULL ? 0.0 : myself_->sister->aux + $iaux\n";
       }
+      print $fhh "#define " . $prefix . "index_" . $varname . " " . $iaux . "\n";
       $iaux += $len;
     }
   	if ( /^expr/i )
     {
-      my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
       if ( $len == 1 )
       {
         print $fhh "#define " . $prefix . $varname . " myself_->expr[$iexpr]\n";
+        print $fhh "#define " . $prefix . "other_" . $varname . " other_->expr[$iexpr]\n";
+        print $fhh "#define " . $prefix . "sister_" . $varname . " myself_->sister == NULL ? 0.0 : myself_->sister->expr[$iexpr]\n";
       }
       else
       {
         print $fhh "#define " . $prefix . $varname . " myself_->expr + $iexpr\n";
+        print $fhh "#define " . $prefix . "other_" . $varname . " other_->expr + $iexpr\n";
+        print $fhh "#define " . $prefix . "sister_" . $varname . " myself_->sister == NULL ? 0.0 : myself_->sister->expr + $iexpr\n";
       }
+      print $fhh "#define " . $prefix . "index_" . $varname . " " . $iexpr . "\n";
       $iexpr += $len;
     }
   	if ( /^init/i )
     {
-      my ($type, $varname, $rhs, $attr, $comment) = ( /$re_pace/ );
       if ( $len == 1 )
       {
         print $fhh "#define " . $prefix . $varname . " myself_->y[$iy]\n";
+        print $fhh "#define " . $prefix . "other_" . $varname . " other_->y[$iy]\n";
+        print $fhh "#define " . $prefix . "sister_" . $varname . " myself_->sister == NULL ? 0.0 : myself_->sister->y[$iy]\n";
       }
       else
       {
         print $fhh "#define " . $prefix . $varname . " myself_->y + $iy\n";
+        print $fhh "#define " . $prefix . "other_" . $varname . " other_->y + $iy\n";
+        print $fhh "#define " . $prefix . "sister_" . $varname . " myself_->sister == NULL ? 0.0 : myself_->sister->y + $iy\n";
       }
+      print $fhh "#define " . $prefix . "index_" . $varname . " " . $iy . "\n";
       $iy += $len;
+    }
+    if ( /^%C/i )
+    {
+      print $fhh "#define " . $prefix . "index_" . $varname . " " . $ipsi . "\n";
+      $ipsi++;
     }
 	}
   print $fhh "\n";
@@ -1456,7 +1479,7 @@ sub set_low_rank_expansion
       print $fch "    lrkern($fun, xxp_, yxp_, POP_SIZE);\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i_ = 0;\n";
-      print $fch "    j_ = I_PSI($varname);\n";
+      print $fch "    j_ = GETINDEX($varname);\n";
       print $fch "    while ( myself_ != NULL ) /* set psixp */\n";
       print $fch "    {\n";
       print $fch "        myself_->psi[j_] = yxp_[i_];\n"; 
@@ -1483,10 +1506,10 @@ sub set_low_rank_expansion
       print $fch "        myself_ = myself_->nextel;\n";
       print $fch "        ++i_;\n";
       print $fch "    }\n";
-      print $fch "    lrwpkern(I_EXPR($U), I_EXPR($V), $rank, $fun, xxp_,yxp_, POP_SIZE);\n";
+      print $fch "    lrwpkern(GETINDEX($U), GETINDEX($V), $rank, $fun, xxp_,yxp_, POP_SIZE);\n";
       print $fch "    myself_ = SIM->pop->start;\n";
       print $fch "    i_ = 0;\n";
-      print $fch "    j_ = I_PSI($varname);\n";
+      print $fch "    j_ = GETINDEX($varname);\n";
       print $fch "    while ( myself_ != NULL ) /* set psixp */\n";
       print $fch "    {\n";
       print $fch "        myself_->psi[j_] = yxp_[i_];\n"; 

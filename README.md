@@ -613,12 +613,10 @@ or
 *Shortcuts for parameter declaration*
 Parameters can be declared in name value pairs on a single line,
 separated by semi-colons ';', or one parameter value pair per line.
-The prefix PAR is optional when one parameter is declare per single line.
 
 These examples are valid
 
 	PAR a 0.1; Va b 0.2
-	a 0.1 # ok
 	PAR a {attribute of a} # comment on a; b {attribute of b} # comment on b
 	PAR b 0.2 {init}   # attribute init   for parameters only used
 	PAR c 0.3 {impl}   # attribute impl   for parameters used implicitly,
@@ -1478,4 +1476,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - March 31, 2021
+DARWIN16 - April 7, 2021
