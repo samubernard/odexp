@@ -2684,8 +2684,8 @@ int gplot_particles( const int gx, const int gy, const nve var )
     fprintf(GPLOTP,"unset colorbox\n");
     fprintf(GPLOTP,"splot \"" ODEXPDIR "griddata.txt\" with pm3d notitle\n");
     fprintf(GPLOTP,"replot \"" ODEXPDIR "particle_states.dat\" "
-        "binary format=\"%%u%%%dlf\" using %d:%d:(-1) with points pt '.' notitle\n",
-        nvar,gx,gy);
+        "binary format=\"%%u%%%dlf\" using %d:%d:(-1) with %s notitle\n",
+        nvar,gx,gy,get_str("particlestyle"));
     fprintf(GPLOTP,"unset view\n");
   }
   else
