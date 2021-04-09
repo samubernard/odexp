@@ -181,23 +181,17 @@ if ( !-d $odedir & !-e $odedir ) {
 }
 
 # ---------------------------------------------
-# First check if -c is there: compile and exit 
-if ( defined $opt_c )
-{
-  compile_model();
-  print "compiled 'model.out'\n";
-  exit;
-}
+# First check if -c is there: compile
+compile_model() if ( defined $opt_c );
 # ---------------------------------------------
 
 # ---------------------------------------------
-# First check if -c is there: compile and exit 
-if ( defined $opt_r )
-{
-  run_model();
-  exit;
-}
+# First check if -r is there: run 
+run_model() if ( defined $opt_r ); # run the model and never returns
 # ---------------------------------------------
+
+exit if (defined $opt_c); # exit before running the rest of the script 
+
 
 my $modelode = $odedir . "/equations.pop";
 my $modelc = $odedir . "/model.c";
@@ -292,7 +286,7 @@ print_inputrc();
 # ====================================================================================
 # Compile and run generated C code model
 compile_model() if ( !defined $opt_d );
-run_model() if ( !defined $opt_d );
+run_model() if ( !defined $opt_d ); # run the model with exec 
 # ====================================================================================
 
 # ====================================================================================
