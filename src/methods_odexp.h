@@ -13,14 +13,6 @@ enum bd_method { SSA, TAU_LEAPING };
 /* extern int ode_system_size; */
 extern int *NUM_IC;
 
-/* simulation message buffer */
-typedef struct message_buffer {
-  char msg[50][EXPRLENGTH];
-  int line;
-  int nbr_msg;
-} msg_buff;
-int printf_msg_buff( void );
-
 int odesolver( oderhs pop_ode_rhs, 
                oderhs single_rhs,
                odeic pop_ode_ic, 

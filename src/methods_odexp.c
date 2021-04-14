@@ -30,26 +30,6 @@ static void set_abort_odesolver_flag( int sig )
 }
 
 
-/* warning/error message */
-static msg_buff MSG_BUFF;
-
-#define ADD_MSG_TO_BUFF(...) \
-    ({ snprintf(MSG_BUFF.msg[MSG_BUFF.line], EXPRLENGTH, __VA_ARGS__); \
-       MSG_BUFF.line++; \
-       MSG_BUFF.nbr_msg++; \
-       MSG_BUFF.line %= 50; \
-       MSG_BUFF.nbr_msg %= 50; })
-
-int printf_msg_buff()
-{
-  int i;
-  for ( i = 0; i < MSG_BUFF.nbr_msg; ++i)
-  {
-    printf("  %d: %s\n", i, MSG_BUFF.msg[ (MSG_BUFF.line - i -1 + 50) % 50 ]);
-  }
-  return MSG_BUFF.nbr_msg;
-}
-
 /* print progress */
 static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start)
 {
@@ -438,6 +418,9 @@ int odesolver( oderhs pop_ode_rhs,
       PRINTV("\n\n");
     }
     fflush(stdout);
+
+    /* reset message buffer */
+    MSG_BUFF.line = 0;
     MSG_BUFF.msg[MSG_BUFF.line][0] = 0; /* set message to empty string */
     MSG_BUFF.nbr_msg = 0;
 
@@ -741,7 +724,6 @@ int odesolver( oderhs pop_ode_rhs,
     {
         PRINTERR("  GSL error %d: %s\n", status, gsl_strerror (status));
     }
-    printf_msg_buff();
 
     fclose(quickfile);
 

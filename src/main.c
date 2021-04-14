@@ -36,6 +36,10 @@ world *SIM = (world *)NULL;
 /* what kind of initial conditions to take */
 int *NUM_IC;
 
+/* warning/error simulation messages */
+msg_buff MSG_BUFF = {0, 0, {""}};
+
+
 /* int ode_system_size; */
 
 /* =================================================================
@@ -1115,223 +1119,213 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           break;
         case 'l' : 
           sscanf(cmdline+1,"%c",&op);       
-          if (op == 'p') /* list parameters */
+          switch(op)
           {
-            for (i=0; i<mu.nbr_el; i++)
-            {
-              padding = (int)log10(mu.nbr_el+0.5)-(int)log10(i+0.5);
-              if ( i == p ) /* listing active parameter */
+            case 'p': /* list parameters */
+              for (i=0; i<mu.nbr_el; i++)
               {
-                snprintf(par_details,17,"active parameter");  
-              }
-              else
-              {
-                par_details[0] = 0; /* snprintf(par_details,1,"");   */
-              }
-              printf_list_val('P',i,i,padding,&mu,par_details);
-            }
-          }
-          else if (op == 'i') /* list initial conditions */
-          {
-            for (i=0; i<ode_system_size; i++)
-            {
-              if ( strncmp(ics.attribute[i],"hidden",3) )
-              {
-                padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                /* DBPRINT("update initial condition values for particle"); */
-                if (NUM_IC[i] == 0)
+                padding = (int)log10(mu.nbr_el+0.5)-(int)log10(i+0.5);
+                if ( i == p ) /* listing active parameter */
                 {
-                  printf_list_str('I',i,i,padding,&ics);
+                  snprintf(par_details,17,"active parameter");  
                 }
                 else
                 {
-                  snprintf(list_msg,EXPRLENGTH,"numerically set (cI %d to revert to %s)",i,ics.expression[i]);
-                  printf_list_val('I',i,i,padding,&ics,list_msg);
-
+                  par_details[0] = 0; /* snprintf(par_details,1,"");   */
                 }
+                printf_list_val('P',i,i,padding,&mu,par_details);
               }
-            }
-          }
-          else if (op == 'x') /* list equations */
-          {
-            nbr_read = sscanf(cmdline+2,"%s",svalue);
-            if ( nbr_read < 1 )
-            {
-              snprintf(svalue,6,"DACME"); 
-            }
-            if ( strchr(svalue,'D') != NULL )
-            {
-              for (i=0; i<eqn.nbr_el; i++)
-              {
-                if ( strstr(eqn.attribute[i],"hidden") == NULL )
-                {
-                  padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
-                  printf_list_str('D',i,i,padding,&eqn);
-                }
-              }
-            }
-            if ( strchr(svalue,'A') != NULL )
-            {
-              for (i=0; i<fcn.nbr_el; i++)
-              {
-                if ( strstr(fcn.attribute[i],"hidden") == NULL )
-                {
-                  padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
-                  printf_list_str('A',i+eqn.nbr_el,i,padding,&fcn);
-                }
-              }
-            }
-            if ( strchr(svalue,'C') != NULL )
-            {
-              for (i=0; i<psi.nbr_el; i++)
-              {
-                if ( strstr(psi.attribute[i],"hidden") == NULL )
-                {
-                  padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+fcn.nbr_el+0.5);
-                  printf_list_str('C',i+eqn.nbr_el+fcn.nbr_el,i,padding,&psi);
-                }
-              }
-            }
-            if ( strchr(svalue,'M') != NULL )
-            {
-              for (i=0; i<mfd.nbr_el; i++)
-              {
-                if ( strstr(mfd.attribute[i],"hidden") == NULL )
-                {
-                  padding = (int)log10(total_nbr_x+0.5)-\
-                            (int)log10(i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el+0.5);
-                  printf_list_str('M',i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el,i,padding,&mfd);
-                }
-              }
-            }
-            if ( strchr(svalue,'E') != NULL )
-            {
-              for (i=0; i<pex.nbr_el; i++)
-              {
-                if ( strstr(pex.attribute[i],"hidden") == NULL )
-                {
-                  padding = (int)log10(total_nbr_x+0.5)-\
-                            (int)log10(i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el+mfd.nbr_el+0.5);
-                  printf_list_str('E',i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el+mfd.nbr_el,i,padding,&pex);
-                }
-              }
-            }
-          }
-          else if (op == 'c') /* list constant arrays*/ 
-          {
-            for (i=0; i<cst.nbr_el; i++)
-            {
-              padding = (int)log10(cst.nbr_el+0.5)-(int)log10(i+0.5);
-              printf_list_str('C',i,i,padding,&cst);
-            }
-          }
-          else if (op == 'f') /* list data files */ 
-          {
-            for (i=0; i<dfl.nbr_el; i++)
-            {
-              padding = (int)log10(dfl.nbr_el+0.5)-(int)log10(i+0.5);
-              printf_list_str('F',i,i,padding,&dfl);
-            }
-          }
-          else if (op == '@') /* list user-defined functions */ 
-          {
-            for (i=0; i<func.nbr_el; i++)
-            {
-              padding = (int)log10(func.nbr_el+0.5)-(int)log10(i+0.5);
-              printf_list_str('F',i,i,padding,&func);
-            }
-          }
-          else if (op == '%') /* list birth/repli/death rates */ 
-          {
-            padding = 0;
-            if ( birth.nbr_el > 0)
-            {    
-              printf_list_str('%',0,0,padding,&birth);
-            }
-            if ( repli.nbr_el > 0)
-            {
-              printf_list_str('%',0,0,padding,&repli);
-            }
-            if ( death.nbr_el > 0)
-            {
-              printf_list_str('%',0,0,padding,&death);
-            }
-          }
-          else if (op == 't') /* list tspan */
-          {
-            printf("  tspan = "); 
-            for(i=0;i<tspan.length;i++)
-            {
-              printf("%s%g%s ",T_VAL,tspan.array[i],T_NOR);
-            }
-            printf("\n");
-          }
-          else if (op == 's') /* list steady states */
-          {
-            for (j=0; j<nbr_stst; j++)
-            {
+              break;
+            case 'i': /* list initial conditions */
               for (i=0; i<ode_system_size; i++)
               {
-                padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                printf("  S[%s%d%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
-                    T_IND,i,T_NOR, padding, "",*ics.max_name_length,ics.name[i],\
-                    T_VAL,stst[j].s[i],T_NOR,T_DET,"*",T_NOR);
+                if ( strncmp(ics.attribute[i],"hidden",3) )
+                {
+                  padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                  /* DBPRINT("update initial condition values for particle"); */
+                  if (NUM_IC[i] == 0)
+                  {
+                    printf_list_str('I',i,i,padding,&ics);
+                  }
+                  else
+                  {
+                    snprintf(list_msg,EXPRLENGTH,"numerically set (cI %d to revert to %s)",i,ics.expression[i]);
+                    printf_list_val('I',i,i,padding,&ics,list_msg);
+
+                  }
+                }
               }
-              printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
-            }
-          }
-          else if (op == 'o') /* list options */
-          {
-            nbr_read = sscanf(cmdline+2,"%s",svalue);
-            if (nbr_read > 0)
-            {
-              printf_options(svalue);
-            }
-            else
-            {
-              printf_options("");         
-            }
-          }
-          else if (op == 'l') /* list fiLe and various information */
-          {
-            printf("  File name: %s%s%s\n",T_EXPR,odexp_filename,T_NOR);
-            printf("  odexp directory: " ODEXPDIR "\n");
-            printf("  Number of dynamical variables = %s%d%s\n",T_VAL,ode_system_size,T_NOR);
-            printf("  Number of auxiliary functions = %s%d%s\n",T_VAL,fcn.nbr_el,T_NOR);
-            printf("  Number of coupling terms      = %s%d%s\n",T_VAL,psi.nbr_el,T_NOR);
-            printf("  Number of mean fields         = %s%d%s\n",T_VAL,mfd.nbr_el,T_NOR);
-            printf("  Number of param. expressions  = %s%d%s\n",T_VAL,pex.nbr_expr,T_NOR);
-            printf("  Number of plottable variables = %s%d%s\n",T_VAL,total_nbr_x,T_NOR);
-            printf("  Number of parameters          = %s%d%s\n",T_VAL,mu.nbr_el,T_NOR);
-            printf("  Number of constants           = %s%d%s\n",T_VAL,cst.nbr_el,T_NOR);
-            printf("  Number of data files          = %s%d%s\n",T_VAL,dfl.nbr_el,T_NOR);
-            printf("  Number of columns in id.dat   = %s%d%s\n",T_VAL,nbr_col,T_NOR);
-            printf("  Initial population size       = %s%d%s\n",T_VAL,(int)get_int("popsize"),T_NOR);
-            printf("  Final population size         = %s%d%s\n",T_VAL,POP_SIZE,T_NOR);
-            printf("  Number of particles           = %s%d%s\n",T_VAL,SIM->max_id,T_NOR);
-            printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
-            printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' " STATS_FILENAME "\n", 1+mfd.nbr_el); 
-            printf("  hexdump -e '\"%%u \" \"%%d \" %d \"%%5.2f \" \"\\n\"' " TRAJ_FILENAME "\n", nbr_col); 
-            printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' " PSTATE_FILENAME "\n", nbr_col); 
-            printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' " QUICK_BUFFER "\n\n"); 
-          }
-          else if (op == 'd') /* list descriptions */ 
-          {
-            for (i=0; i<dsc.nbr_el; i++)
-            {
-              printf("  %s%s%s\n", T_DET, dsc.comment[i], T_NOR);
-            }
-          }
-          else if (op == '.') /* list extra commands */ 
-          {
-            for (i=0; i<xcd.nbr_el; i++)
-            {
-              printf("  %s%s%s\n", T_DET, xcd.comment[i], T_NOR);
-            }
-          }
-          else 
-          {
-            PRINTERR("  Error: Unknown command. Cannot list '%c'",op);
+              break; 
+            case 'x': /* list equations */
+              nbr_read = sscanf(cmdline+2,"%s",svalue);
+              if ( nbr_read < 1 )
+              {
+                snprintf(svalue,6,"DACME"); 
+              }
+              if ( strchr(svalue,'D') != NULL )
+              {
+                for (i=0; i<eqn.nbr_el; i++)
+                {
+                  if ( strstr(eqn.attribute[i],"hidden") == NULL )
+                  {
+                    padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+0.5);
+                    printf_list_str('D',i,i,padding,&eqn);
+                  }
+                }
+              }
+              if ( strchr(svalue,'A') != NULL )
+              {
+                for (i=0; i<fcn.nbr_el; i++)
+                {
+                  if ( strstr(fcn.attribute[i],"hidden") == NULL )
+                  {
+                    padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+0.5);
+                    printf_list_str('A',i+eqn.nbr_el,i,padding,&fcn);
+                  }
+                }
+              }
+              if ( strchr(svalue,'C') != NULL )
+              {
+                for (i=0; i<psi.nbr_el; i++)
+                {
+                  if ( strstr(psi.attribute[i],"hidden") == NULL )
+                  {
+                    padding = (int)log10(total_nbr_x+0.5)-(int)log10(i+eqn.nbr_el+fcn.nbr_el+0.5);
+                    printf_list_str('C',i+eqn.nbr_el+fcn.nbr_el,i,padding,&psi);
+                  }
+                }
+              }
+              if ( strchr(svalue,'M') != NULL )
+              {
+                for (i=0; i<mfd.nbr_el; i++)
+                {
+                  if ( strstr(mfd.attribute[i],"hidden") == NULL )
+                  {
+                    padding = (int)log10(total_nbr_x+0.5)-\
+                              (int)log10(i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el+0.5);
+                    printf_list_str('M',i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el,i,padding,&mfd);
+                  }
+                }
+              }
+              if ( strchr(svalue,'E') != NULL )
+              {
+                for (i=0; i<pex.nbr_el; i++)
+                {
+                  if ( strstr(pex.attribute[i],"hidden") == NULL )
+                  {
+                    padding = (int)log10(total_nbr_x+0.5)-\
+                              (int)log10(i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el+mfd.nbr_el+0.5);
+                    printf_list_str('E',i+eqn.nbr_el+fcn.nbr_el+psi.nbr_el+mfd.nbr_el,i,padding,&pex);
+                  }
+                }
+              }
+              break;
+            case 'c': /* list constant arrays*/ 
+              for (i=0; i<cst.nbr_el; i++)
+              {
+                padding = (int)log10(cst.nbr_el+0.5)-(int)log10(i+0.5);
+                printf_list_str('C',i,i,padding,&cst);
+              }
+              break;
+            case 'f': /* list data files */ 
+              for (i=0; i<dfl.nbr_el; i++)
+              {
+                padding = (int)log10(dfl.nbr_el+0.5)-(int)log10(i+0.5);
+                printf_list_str('F',i,i,padding,&dfl);
+              }
+              break;
+            case '@': /* list user-defined functions */ 
+              for (i=0; i<func.nbr_el; i++)
+              {
+                padding = (int)log10(func.nbr_el+0.5)-(int)log10(i+0.5);
+                printf_list_str('F',i,i,padding,&func);
+              }
+              break;
+            case '%': /* list birth/repli/death rates */ 
+              padding = 0;
+              if ( birth.nbr_el > 0)
+              {    
+                printf_list_str('%',0,0,padding,&birth);
+              }
+              if ( repli.nbr_el > 0)
+              {
+                printf_list_str('%',0,0,padding,&repli);
+              }
+              if ( death.nbr_el > 0)
+              {
+                printf_list_str('%',0,0,padding,&death);
+              }
+              break;
+            case 't': /* list tspan */
+              printf("  tspan = "); 
+              for(i=0;i<tspan.length;i++)
+              {
+                printf("%s%g%s ",T_VAL,tspan.array[i],T_NOR);
+              }
+              printf("\n");
+              break;
+            case 's': /* list steady states */
+              for (j=0; j<nbr_stst; j++)
+              {
+                for (i=0; i<ode_system_size; i++)
+                {
+                  padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
+                  printf("  S[%s%d%s]%-*s %-*s = %s%14g%s   %s%s%s\n",\
+                      T_IND,i,T_NOR, padding, "",*ics.max_name_length,ics.name[i],\
+                      T_VAL,stst[j].s[i],T_NOR,T_DET,"*",T_NOR);
+                }
+                printf("  *status: %s%s%s\n",T_DET,gsl_strerror(stst[j].status),T_NOR);
+              }
+              break;
+            case 'o': /* list options */
+              nbr_read = sscanf(cmdline+2,"%s",svalue);
+              if (nbr_read > 0)
+              {
+                printf_options(svalue);
+              }
+              else
+              {
+                printf_options("");         
+              }
+              break;
+            case 'l': /* list fiLe and various information */
+              printf("  File name: %s%s%s\n",T_EXPR,odexp_filename,T_NOR);
+              printf("  odexp directory: " ODEXPDIR "\n");
+              printf("  Number of dynamical variables = %s%d%s\n",T_VAL,ode_system_size,T_NOR);
+              printf("  Number of auxiliary functions = %s%d%s\n",T_VAL,fcn.nbr_el,T_NOR);
+              printf("  Number of coupling terms      = %s%d%s\n",T_VAL,psi.nbr_el,T_NOR);
+              printf("  Number of mean fields         = %s%d%s\n",T_VAL,mfd.nbr_el,T_NOR);
+              printf("  Number of param. expressions  = %s%d%s\n",T_VAL,pex.nbr_expr,T_NOR);
+              printf("  Number of plottable variables = %s%d%s\n",T_VAL,total_nbr_x,T_NOR);
+              printf("  Number of parameters          = %s%d%s\n",T_VAL,mu.nbr_el,T_NOR);
+              printf("  Number of constants           = %s%d%s\n",T_VAL,cst.nbr_el,T_NOR);
+              printf("  Number of data files          = %s%d%s\n",T_VAL,dfl.nbr_el,T_NOR);
+              printf("  Number of columns in id.dat   = %s%d%s\n",T_VAL,nbr_col,T_NOR);
+              printf("  Initial population size       = %s%d%s\n",T_VAL,(int)get_int("popsize"),T_NOR);
+              printf("  Final population size         = %s%d%s\n",T_VAL,POP_SIZE,T_NOR);
+              printf("  Number of particles           = %s%d%s\n",T_VAL,SIM->max_id,T_NOR);
+              printf("\n  plot mode                     = %s%d%s\n",T_VAL,(int)plot_mode,T_NOR);
+              printf("\n  hexdump -e '%d \"%%5.2f \" 4 \"%%5d \" \"\\n\"' " STATS_FILENAME "\n", 1+mfd.nbr_el); 
+              printf("  hexdump -e '\"%%u \" \"%%d \" %d \"%%5.2f \" \"\\n\"' " TRAJ_FILENAME "\n", nbr_col); 
+              printf("  hexdump -e '\"%%d \" %d \"%%5.2f \" \"\\n\"' " PSTATE_FILENAME "\n", nbr_col); 
+              printf("  hexdump -e '3 \"%%5.2f \" \"\\n\"' " QUICK_BUFFER "\n\n"); 
+              break;
+            case 'd': /* list descriptions */ 
+              for (i=0; i<dsc.nbr_el; i++)
+              {
+                printf("  %s%s%s\n", T_DET, dsc.comment[i], T_NOR);
+              }
+              break;
+            case '.': /* list extra commands */ 
+              for (i=0; i<xcd.nbr_el; i++)
+              {
+                printf("  %s%s%s\n", T_DET, xcd.comment[i], T_NOR);
+              }
+            case 'w': /* list warning/error messages */
+              printf_msg_buff();
+              break;
+            default: 
+              PRINTERR("  Error: Unknown command. Cannot list '%c'",op);
           }
           break;
         case 'p' : /* change current parameter */
@@ -3042,3 +3036,15 @@ int printf_status_bar( double_array *tspan)
   }
   return 0;
 }
+
+
+int printf_msg_buff()
+{
+  int i;
+  for ( i = 0; i < MSG_BUFF.nbr_msg; ++i)
+  {
+    printf("  %d: %s\n", i, MSG_BUFF.msg[ (MSG_BUFF.line - i -1 + SIZE_MSG_BUFFER) % 50 ]);
+  }
+  return MSG_BUFF.nbr_msg;
+}
+

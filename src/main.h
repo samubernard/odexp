@@ -37,6 +37,7 @@ void printf_SIM( void );
 
 int printf_status_bar( double_array *tspan );
 
+int printf_msg_buff( void );
 
 int setup_pm_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);
 int gplot_normal(const int gx, const int gy, const int gz, const int plot3d, const nve dxv);

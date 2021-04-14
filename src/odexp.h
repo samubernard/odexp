@@ -129,6 +129,24 @@ typedef struct system_state {
 
 extern world  *SIM;
 
+/* simulation message buffer */
+#define SIZE_MSG_BUFFER 50
+typedef struct message_buffer {
+  int line;
+  int nbr_msg;
+  char msg[SIZE_MSG_BUFFER][128];
+#define ADD_MSG_TO_BUFF(...) \
+    ({ snprintf(MSG_BUFF.msg[MSG_BUFF.line], EXPRLENGTH, __VA_ARGS__); \
+       MSG_BUFF.line++; \
+       MSG_BUFF.nbr_msg++; \
+       MSG_BUFF.line %= SIZE_MSG_BUFFER; \
+       MSG_BUFF.nbr_msg %= SIZE_MSG_BUFFER; })
+
+} msg_buff;
+
+/* warning/error message */
+extern msg_buff MSG_BUFF;
+
 /* Delays */
 #define DELAY_SSTACK 1000
 #define DELAY_FIRST_EVAL SIM->first_eval_flag
