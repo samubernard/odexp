@@ -29,8 +29,29 @@ static void set_abort_odesolver_flag( int sig )
     EVENT_TYPE = EVENT_ABORT;
 }
 
+
+/* warning/error message */
+static msg_buff MSG_BUFF;
+
+#define ADD_MSG_TO_BUFF(...) \
+    ({ snprintf(MSG_BUFF.msg[MSG_BUFF.line], EXPRLENGTH, __VA_ARGS__); \
+       MSG_BUFF.line++; \
+       MSG_BUFF.nbr_msg++; \
+       MSG_BUFF.line %= 50; \
+       MSG_BUFF.nbr_msg %= 50; })
+
+int printf_msg_buff()
+{
+  int i;
+  for ( i = 0; i < MSG_BUFF.nbr_msg; ++i)
+  {
+    printf("  %d: %s\n", i, MSG_BUFF.msg[ (MSG_BUFF.line - i -1 + 50) % 50 ]);
+  }
+  return MSG_BUFF.nbr_msg;
+}
+
 /* print progress */
-static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start, char *msg )
+static inline void printf_progress ( double tt, double t0, double tfinal, clock_t start)
 {
     struct winsize w; /* get terminal window size */
     double fcmpl = (tt-t0)/(tfinal-t0);
@@ -45,7 +66,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
     }
 
     printf("\n");
-    PR_LINEUP_AND_CLEAR;               /* clear the msg line */
+    PR_LINEUP_AND_CLEAR;               /* clear the MSG_BUFF.msg[MSG_BUFF.line] line */
     PR_LINEUP_AND_CLEAR;                 /* clear one line above  */
     if ( get_int("progress") > 2 )                 /* if level 3: clear two more lines above */
     {
@@ -76,7 +97,7 @@ static inline void printf_progress ( double tt, double t0, double tfinal, clock_
           T_VAL, get_dou("h0"), T_NOR, T_VAL, *SIM->h, T_NOR, \
           T_VAL, POP_SIZE, T_NOR, T_VAL, (double)(clock() - start) / CLOCKS_PER_SEC * (1 - fcmpl) / fcmpl, T_NOR); 
     }
-    PRINTWARNING("\n%s\n\033[F", msg); /* [F = one line up */
+    PRINTWARNING("\n%s\n\033[F", MSG_BUFF.msg[MSG_BUFF.line]); /* [F = one line up */
 }
 
 int odesolver( oderhs pop_ode_rhs, 
@@ -147,9 +168,6 @@ int odesolver( oderhs pop_ode_rhs,
 
     /* iterators */
     int i,j;
-
-    /* warning/error message */
-    char msg[EXPRLENGTH];
 
     odeT = gsl_odeiv2_step_rkck; /* RK-Cash-Karp as default solver */
     if ( strncmp(get_str("solver"),"rk4",NAMELENGTH) == 0 )
@@ -420,7 +438,8 @@ int odesolver( oderhs pop_ode_rhs,
       PRINTV("\n\n");
     }
     fflush(stdout);
-    msg[0] = 0; /* snprintf(msg,EXPRLENGTH,""); set message to empty string */
+    MSG_BUFF.msg[MSG_BUFF.line][0] = 0; /* set message to empty string */
+    MSG_BUFF.nbr_msg = 0;
 
     s = gsl_odeiv2_step_alloc(odeT,sim_size);
     c = gsl_odeiv2_control_y_new(eps_abs,eps_rel);
@@ -435,7 +454,7 @@ int odesolver( oderhs pop_ode_rhs,
         {
             dt_dyn = nextstop-t;
             EVENT_TYPE = STOP_TSPAN;
-            sprintf(msg,"  stopping time = %g (t = %g)", nextstop, t);
+            ADD_MSG_TO_BUFF("  stopping time = %g (t = %g)", nextstop, t);
         }
         /* BIRTH and DEATH 
          * particles are set to advance from t -> tnext 
@@ -480,7 +499,6 @@ int odesolver( oderhs pop_ode_rhs,
         switch (bd_meth)
         {
           case SSA:
-            /* msg[0] = 0; */ /* snprintf(msg,EXPRLENGTH,""); set message to empty string */
             if ( dt_ssa < dt_dyn )
             {
               dt_next = dt_ssa; /* advance to time of event */
@@ -493,7 +511,7 @@ int odesolver( oderhs pop_ode_rhs,
             break;
           case TAU_LEAPING:
             EVENT_TYPE = EVENT_POP_MASK;
-            snprintf(msg,EXPRLENGTH,"  tau-leaping"); 
+            ADD_MSG_TO_BUFF("  tau-leaping, t = %f", t);
             /* set dt_leaping so that the mean number of 
              * events is max(1,c_leaping*N) = dt_leaping * sum_rates 
              * => dt_leaping = max(1,c_leaping*N)/sum_rates
@@ -534,7 +552,7 @@ int odesolver( oderhs pop_ode_rhs,
                   h = hmin;
                   if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
                   {
-                    snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
+                    ADD_MSG_TO_BUFF("  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h);      
                     hmin_alert = 1; 
                   }
                 }
@@ -563,7 +581,7 @@ int odesolver( oderhs pop_ode_rhs,
                   h = hmin;
                   if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
                   {
-                    snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
+                    ADD_MSG_TO_BUFF("  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
                     hmin_alert = 1; 
                   }
                 }
@@ -588,7 +606,7 @@ int odesolver( oderhs pop_ode_rhs,
                   h = hmin;
                   if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
                   {
-                    snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
+                    ADD_MSG_TO_BUFF("  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
                     hmin_alert = 1; 
                   }
                 }
@@ -612,7 +630,7 @@ int odesolver( oderhs pop_ode_rhs,
                   h = hmin;
                   if ( (hmin_alert == 0) && (t < t1)) /* send a warning once, if t < t1 */
                   {
-                    snprintf(msg,EXPRLENGTH,"  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
+                    ADD_MSG_TO_BUFF("  warning: hmin reached at t = %f (h=%f). Continuing with h = %e",t,hmin,h); 
                     hmin_alert = 1; 
                   }
                 }
@@ -699,7 +717,7 @@ int odesolver( oderhs pop_ode_rhs,
           nextstop = tstops[idx_stop++];
         }
              
-        printf_progress(t,tspan->array[0],t1, start, msg);
+        printf_progress(t,tspan->array[0],t1, start);
 
         hmin_alert = 0;
         EVENT_TYPE = EVENT_NONE;
@@ -723,6 +741,7 @@ int odesolver( oderhs pop_ode_rhs,
     {
         PRINTERR("  GSL error %d: %s\n", status, gsl_strerror (status));
     }
+    printf_msg_buff();
 
     fclose(quickfile);
 
@@ -1544,7 +1563,10 @@ double SSA_timestep(double *sumr)
     }
     dt = exprand(r);
     *sumr = r;
-    /* DBPRINT("dt = %g (r = %g)", dt,r); */
+    if ( r < 0 ) 
+    {
+      ADD_MSG_TO_BUFF("  warning: SSA rate is negative: %f", r);      
+    }
     return dt;
 }
 
