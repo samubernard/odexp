@@ -601,6 +601,7 @@ int odesolver( oderhs pop_ode_rhs,
                 status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
                 if (EVENT_TYPE & STOP_COND)
                 {
+                   gsl_odeiv2_evolve_reset(e);
                    break;
                 }
                 else if (status != GSL_SUCCESS) 
@@ -628,7 +629,7 @@ int odesolver( oderhs pop_ode_rhs,
         
         fwrite_SIM(&t);
 
-        if (status != GSL_SUCCESS)
+        if ( (status != GSL_SUCCESS) & (status != GSL_EBADFUNC) )
             break;    /* break out of main loop */
                 
         tot_odeiv += (clock()-clock_odeiv)*1000.0 / CLOCKS_PER_SEC;

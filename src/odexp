@@ -1028,7 +1028,18 @@ int ode_rhs(double t, const double y_[], double f_[], void *params_)
   assign_pop_rate($modelode,
     "%REPLI", "myself_->repli_rate",
     "assign particle replication rate");
-  print $fch "\n    return GSL_SUCCESS;\n}\n\n";
+  print $fch qq(\n
+    if ( EVENT_TYPE & STOP_COND )
+    {
+        return GSL_EBADFUNC;
+    }    
+    else
+    {
+        return GSL_SUCCESS;
+    }
+}
+  
+);
 }
 
 sub print_ode_init_cond
