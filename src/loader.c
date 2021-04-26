@@ -289,13 +289,11 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
   ssize_t linelength;
   size_t linecap = 0;
   char *line = NULL;
-  char *current_ptr;
-  char key[NAMELENGTH]; 
-  int has_read = 0;
+  char *tofree;
+  char *token; 
   double r;
   FILE *fr;
   int i = 0;
-  int k = 0;
   fr = fopen (filename, "rt");
   /* DBLOGPRINT("  %s: ",sym); */
 
@@ -313,41 +311,40 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     }
   }
 
-  array_ptr->length = 0; /* default length */ 
+  array_ptr->length = 1;
+  array_ptr->array = malloc(array_ptr->length*sizeof(double));
 
   /* search for keyword sym */
-  while( (linelength = getline(&line, &linecap, fr)) > 0)
+  while( (linelength = getline(&tofree, &linecap, fr)) > 0) 
   {
 
-    has_read = sscanf(line,"%s%n",key,&k);
-    if ( (strncasecmp(key,sym,sym_len) == 0)  &&  (has_read == 1) ) /* keyword was found */
+    line = tofree;
+    token = strsep(&line, " "); /* get first token into key */
+    if ( (strncasecmp(token,sym,sym_len) == 0) ) /* keyword was found */
     {
-      current_ptr = line+k;
-      i = 0;
-
-      /* allocate memory */
-      array_ptr->length = 1;
-      array_ptr->array = malloc(array_ptr->length*sizeof(double));
-      while ( sscanf(current_ptr,"%lf%n",&r,&k) > 0 ) /* try to read a double */
+      while ( (token = strsep(&line, " ")) != NULL )
       {
-        current_ptr += k;
-        array_ptr->array[i] = r;
-        i++;
-        if ( i > (array_ptr->length - 1) ) /* dynamic realloc */
+        if ( sscanf(token,"%lf",&r) == 1 )
         {
-          array_ptr->length *= 2;  
-          array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
+          array_ptr->array[i] = r;
+          i++;
+          if ( i > (array_ptr->length - 1) ) /* dynamic realloc */
+          {
+            array_ptr->length *= 2;  
+            array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
+          }
+                    
         }
-      }
 
-      array_ptr->length = i;
-      array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
+        /* allocate memory */
+        array_ptr->length = i;
+        array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
+      }
     }
-    k = 0; /* reset k */
   }
 
+  free(tofree);
   fclose(fr);
-  free(line);
   return 0;
 }
 
