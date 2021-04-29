@@ -601,7 +601,6 @@ int odesolver( oderhs pop_ode_rhs,
                 status = gsl_odeiv2_evolve_apply(e,c,s,&sys,&t,tnext,&h,y);
                 if (EVENT_TYPE & STOP_COND)
                 {
-                   gsl_odeiv2_evolve_reset(e);
                    break;
                 }
                 else if (status != GSL_SUCCESS) 

@@ -326,6 +326,7 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
       {
         if ( sscanf(token,"%lf",&r) == 1 )
         {
+          DBPRINT("append %f  (%s), with index %d (array len %d)", r, token, i, array_ptr->length);
           array_ptr->array[i] = r;
           i++;
           if ( i > (array_ptr->length - 1) ) /* dynamic realloc */
@@ -333,13 +334,16 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
             array_ptr->length *= 2;  
             array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
           }
-                    
+        }
+        else
+        {
+          DBPRINT("unknown token '%s', ignoring...", token);
         }
 
-        /* allocate memory */
-        array_ptr->length = i;
-        array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
       }
+      /* allocate memory */
+      array_ptr->length = i;
+      array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
     }
   }
 
