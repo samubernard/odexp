@@ -691,6 +691,7 @@ int odesolver( oderhs pop_ode_rhs,
           ode_rhs(t, y, f, SIM->pop->start);
 
           fwrite_quick(quickfile,ngx,ngy,ngz,t,y);
+          update_SIM_from_y(y);
           fwrite_all_particles(&t);
         }
 
