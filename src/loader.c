@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
+#include <math.h>
 #include "loader.h"
 #include "macros.h"
 
@@ -288,12 +290,10 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
    */
   ssize_t linelength;
   size_t linecap = 0;
-  char *line = NULL;
-  char *tofree;
-  char *token; 
-  double r;
+  char *line = NULL, *tofree;
+  char **ap, **tokens;
+  int ntok = MAXARPNTOK;
   FILE *fr;
-  int i = 0;
   fr = fopen (filename, "rt");
   /* DBLOGPRINT("  %s: ",sym); */
 
@@ -311,43 +311,38 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     }
   }
 
-  array_ptr->length = 1;
-  array_ptr->array = malloc(array_ptr->length*sizeof(double));
+  array_ptr->length = 0;
+  array_ptr->array = NULL;
 
   /* search for keyword sym */
   while( (linelength = getline(&tofree, &linecap, fr)) > 0) 
   {
-
     line = tofree;
-    token = strsep(&line, " "); /* get first token into key */
-    if ( (strncasecmp(token,sym,sym_len) == 0) ) /* keyword was found */
+    if ( (strncasecmp(strsep(&line, " "),sym,sym_len) == 0) ) /* keyword was found */
     {
-      while ( (token = strsep(&line, " ")) != NULL )
+      tokens = malloc(ntok*sizeof(char*));
+      for (ap = tokens; (*ap = strsep(&line, " ")) != NULL;)
       {
-        if ( sscanf(token,"%lf",&r) == 1 )
+        if (**ap != '\0')
         {
-          DBPRINT("append %f  (%s), with index %d (array len %d)", r, token, i, array_ptr->length);
-          array_ptr->array[i] = r;
-          i++;
-          if ( i > (array_ptr->length - 1) ) /* dynamic realloc */
+          if (++ap >= &tokens[ntok])
           {
-            array_ptr->length *= 2;  
-            array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
+            PRINTERR("error loading timespan: number of arguments exceeds the limit %d", ntok);
+            exit ( EXIT_FAILURE );
           }
         }
-        else
-        {
-          DBPRINT("unknown token '%s', ignoring...", token);
-        }
-
       }
-      /* allocate memory */
-      array_ptr->length = i;
-      array_ptr->array = realloc(array_ptr->array, array_ptr->length*sizeof(double));
+      ntok = ap - tokens - 1;
+      tokens = realloc(tokens,ntok*sizeof(char*));
+
+      arpn (array_ptr, &ntok, tokens);
+      rev(array_ptr);
+      printa(*array_ptr);
     }
   }
 
   free(tofree);
+  free(tokens);
   fclose(fr);
   return 0;
 }
@@ -650,4 +645,566 @@ int is_full_word(const char *match, int len)
 			return 1;
 		}
 }
+
+
+/* 
+ * 
+ * arpn construct an array of doubles from basic array operations 
+ *
+ */
+
+func fcns[13] = {
+  {"add", fcn_add},
+  {"mult", fcn_mult},
+  {"power", fcn_power},
+  {"equal", fcn_equal},
+  {"neq", fcn_neq},
+  {"gt", fcn_greaterthan},
+  {"lt", fcn_lessthan},
+  {"find", fcn_find},
+  {"rep", fcn_replicate},
+  {"reverse", fcn_reverse},
+  {"interleave", fcn_interleave},
+  {"cat", fcn_concatenate},
+  {"dup", fcn_duplicate}
+};
+
+/* print the array a, whitespace */
+void printa(double_array a)
+{
+  int i;
+  for ( i = 0; i < a.length; ++i )
+  {
+    printf("%g ",a.array[i]);
+  }
+  /* printf(" )"); */
+  printf("\n");
+}
+
+/* reverse the array a */
+void rev(double_array *a)
+{
+  int i1 = 0, i9 = (a->length-1);
+  double swap;
+  while ( i1 < i9 )
+  {
+    swap = a->array[i1];
+    a->array[i1] = a->array[i9];
+    a->array[i9] = swap;
+    ++i1;
+    --i9;
+  }
+}
+
+/* hard copy of array **unused** */
+void cpy(const double_array *source, double_array *dest)
+{
+  int i;
+  dest->array = realloc(dest->array, source->length*sizeof(double));
+  for ( i = 0; i < source->length; ++i )
+  {
+    dest->array[i] = source->array[i];
+  }
+}
+
+/* append double x to array a */
+void append(double_array *a, double x)
+{
+  (a->length)++;
+  a->array = realloc(a->array, a->length*sizeof(double));
+  a->array[a->length-1] = x;
+}
+
+/* concatenate two arrays a, b: (a, b) */
+void cat(double_array *a, double_array *b)
+{
+  int i;
+  int len = a->length;
+  a->length += b->length;
+  a->array = realloc(a->array, a->length*sizeof(double));
+  /* copy */
+  for ( i = 0; i < b->length; ++i )
+  {
+    a->array[len + i] = b->array[i];
+  }
+  free(b->array);
+}
+
+void fcn_add(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  int i;
+  b1 = arpn(&b1,ntok,tokens); /* get next array */
+  b2 = arpn(&b2,ntok,tokens); /* get next array */
+  if ( b1.length == 0 && b2.length > 0 )
+  {
+    /* apply add on elements of b2 */
+    for ( i = 1; i < b2.length; ++i )
+    {
+      b2.array[0] += b2.array[i];
+    }
+    b2.array = realloc(b2.array, sizeof(double)); 
+    b2.length = 1;
+  }
+  else if ( b1.length == 1 && b2.length > 0 )
+  {
+    /* add b1 to elements of b2 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] += b1.array[0];
+    }
+  }
+  else if ( b1.length == b2.length )
+  {
+    /* add the two arrays */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] += b1.array[i];
+    }
+  }
+  else 
+  {
+    fprintf(stderr,"add: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+  free(b1.array);
+  cat(a,&b2);
+}
+
+void fcn_mult(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  int i;
+  b1 = arpn(&b1,ntok,tokens); /* get next array */
+  b2 = arpn(&b2,ntok,tokens); /* get next array */
+  if ( b1.length == 0 && b2.length > 0 )
+  {
+    /* apply mult on elements of b2 */
+    for ( i = 1; i < b2.length; ++i )
+    {
+      b2.array[0] *= b2.array[i];
+    }
+    b2.array = realloc(b2.array, sizeof(double)); 
+    b2.length = 1;
+  }
+  else if ( b1.length == 1 && b2.length > 0 )
+  {
+    /* mult b1 to elements of b2 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] *= b1.array[0];
+    }
+  }
+  else if ( b1.length == b2.length )
+  {
+    /* mult the two arrays */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] *= b1.array[i];
+    }
+  }
+  else 
+  {
+    fprintf(stderr,"mult: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+  free(b1.array);
+  cat(a,&b2);
+}
+
+void fcn_power(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  double *swap;
+  int i;
+  b1 = arpn(&b1,ntok,tokens); /* exponent */
+  b2 = arpn(&b2,ntok,tokens); /* base */
+  if ( b1.length == 1 && b2.length > 0 )
+  {
+    /* power b1 to elements of b2 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = pow(b2.array[i],b1.array[0]);
+    }
+  }
+  else if ( b2.length == 1 && b1.length > 0 )
+  {
+    /* b2 to the power of elements of b1 */
+    for ( i = 0; i < b1.length; ++i )
+    {
+      b1.array[i] = pow(b2.array[0],b1.array[i]);
+    }
+    swap = b2.array;
+    b2.array = b1.array;
+    b1.array = swap;
+    b2.length = b1.length;
+    b1.length = 1;
+  }
+  else if ( b1.length == b2.length )
+  {
+    /* power b2^b1 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = pow(b2.array[i],b1.array[i]);
+    }
+  }
+  else 
+  {
+    fprintf(stderr,"mult: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+  free(b1.array);
+  cat(a,&b2);
+}
+
+void fcn_equal(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  int i;
+  b1 = arpn(&b1,ntok,tokens); /* first */
+  b2 = arpn(&b2,ntok,tokens); /* second */
+  if ( b1.length  == 0 && b2.length > 0 )
+  {
+    /* default equal to 0 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = (b2.array[i] == 0);
+    }
+  }
+  else if ( b1.length == 1 && b2.length > 0 )
+  {
+    /* comp b1 to elements of b2 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = (b2.array[i] == b1.array[0]);
+    }
+  }
+  else if ( b1.length == b2.length )
+  {
+    /* element-wise equality  */
+    for ( i = 0; i < b1.length; ++i )
+    {
+      b2.array[i] = (b1.array[i] == b2.array[i]);
+    }
+  }
+  else
+  {
+    fprintf(stderr,"add: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+  free(b1.array);
+  cat(a,&b2);
+}
+
+void fcn_neq(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  int i;
+  b1 = arpn(&b1,ntok,tokens); /* first */
+  b2 = arpn(&b2,ntok,tokens); /* second */
+  if ( b1.length  == 0 && b2.length > 0 )
+  {
+    /* default not equal to 0 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = (b2.array[i] != 0);
+    }
+  }
+  else if ( b1.length == 1 && b2.length > 0 )
+  {
+    /* comp b1 to elements of b2 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = (b2.array[i] != b1.array[0]);
+    }
+  }
+  else if ( b1.length == b2.length )
+  {
+    /* element-wise equality  */
+    for ( i = 0; i < b1.length; ++i )
+    {
+      b2.array[i] = (b1.array[i] != b2.array[i]);
+    }
+  }
+  else
+  {
+    fprintf(stderr,"add: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+  free(b1.array);
+  cat(a,&b2);
+}
+
+void fcn_greaterthan(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  int i;
+  b1 = arpn(&b1,ntok,tokens); /* first */
+  b2 = arpn(&b2,ntok,tokens); /* second */
+  if ( b1.length  == 0 && b2.length > 0 )
+  {
+    /* default not equal to 0 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = (b2.array[i] > 0);
+    }
+  }
+  else if ( b1.length == 1 && b2.length > 0 )
+  {
+    /* comp b1 to elements of b2 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = (b2.array[i] > b1.array[0]);
+    }
+  }
+  else if ( b1.length == b2.length )
+  {
+    /* element-wise equality  */
+    for ( i = 0; i < b1.length; ++i )
+    {
+      b2.array[i] = (b1.array[i] < b2.array[i]);
+    }
+  }
+  else
+  {
+    fprintf(stderr,"add: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+  free(b1.array);
+  cat(a,&b2);
+}
+
+void fcn_lessthan(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  int i;
+  b1 = arpn(&b1,ntok,tokens); /* first */
+  b2 = arpn(&b2,ntok,tokens); /* second */
+  if ( b1.length  == 0 && b2.length > 0 )
+  {
+    /* default not equal to 0 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = (b2.array[i] < 0);
+    }
+  }
+  else if ( b1.length == 1 && b2.length > 0 )
+  {
+    /* comp b1 to elements of b2 */
+    for ( i = 0; i < b2.length; ++i )
+    {
+      b2.array[i] = (b2.array[i] < b1.array[0]);
+    }
+  }
+  else if ( b1.length == b2.length )
+  {
+    /* element-wise equality  */
+    for ( i = 0; i < b1.length; ++i )
+    {
+      b2.array[i] = (b1.array[i] > b2.array[i]);
+    }
+  }
+  else
+  {
+    fprintf(stderr,"add: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+  free(b1.array);
+  cat(a,&b2);
+}
+
+
+void fcn_find(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  int i, j;
+  b1 = arpn(&b1,ntok,tokens); /* if > 0 */
+  b2 = arpn(&b2,ntok,tokens); /* search in */
+  if ( b1.length  == 0 && b2.length > 0 )
+  {
+    /* nonzero elements of b2  */ 
+    for ( i = 0, j = 0; i < b2.length; ++i )
+    {
+      if ( b2.array[i] != 0 )
+      {
+        b2.array[j] = b2.array[i];
+        ++j;
+      }
+    }
+    b2.length = j;
+    b2.array = realloc(b2.array, b2.length*sizeof(double));
+  }
+  else if ( b1.length == b2.length ) 
+  {
+    /* find b2 such that b1 != 0 */
+    for ( i = 0, j = 0; i < b1.length; ++i )
+    {
+      if ( b1.array[i] != 0 )
+      {
+        b2.array[j] = b2.array[i];
+        ++j;
+      }
+    }
+    b2.length = j;
+    b2.array = realloc(b2.array, b2.length*sizeof(double));
+  }
+  else
+  {
+    fprintf(stderr,"add: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+  free(b1.array);
+  cat(a,&b2);
+}
+
+void fcn_replicate(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b = {NULL, 0}, r = {NULL, 0};
+  int i,j;
+  int repeat = 1;
+  double add_step = 0.0;
+  double_array tmp = {NULL, 0};
+  r = arpn(&r,ntok,tokens); /* repeat */
+  b = arpn(&b,ntok,tokens); /* array */
+  switch(r.length)
+  {
+    case 1: 
+      repeat = (int)r.array[0];
+      break;
+    case 2:
+      add_step = r.array[0];
+      repeat = (int)(r.array[1]);
+      break;
+  }
+  rev(&b);
+  /* replicate */
+  for ( j = 0; j < repeat; ++j)
+  {
+    for ( i = 0; i < b.length; ++i )
+    {
+      append(&tmp, b.array[i]);
+      b.array[i] += add_step; 
+    }
+  }
+  rev(&tmp);
+  free(b.array);
+  free(r.array);
+  cat(a,&tmp);
+}
+
+void fcn_reverse(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0};
+  int i1 = 0, i9;
+  double swap;
+  b1 = arpn(&b1,ntok,tokens);
+  i9 = b1.length - 1;
+  while ( i1 < i9 )
+  {
+    swap = b1.array[i1];
+    b1.array[i1] = b1.array[i9];
+    b1.array[i9] = swap;
+    ++i1;
+    --i9;
+  }
+  cat(a,&b1);
+}
+
+
+void fcn_interleave(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  double shift;
+  int i, len;
+  b1 = arpn(&b1,ntok,tokens); /* first */
+  b2 = arpn(&b2,ntok,tokens); /* second */
+  len = b1.length;
+  if ( b1.length != b2.length )
+  {
+    fprintf(stderr,"interleave: arrays are different lengths\n");
+    exit( EXIT_FAILURE );
+  }
+
+  b1.length += b2.length;
+  b1.array = realloc(b1.array, b1.length*sizeof(double));
+  printf ("fcn_interleave ");
+  for ( i = len; i--; )
+  {
+    shift = b1.array[i+1];
+    b1.array[2*i] = b1.array[i];
+    b1.array[2*i+1] = b2.array[i];
+  }
+  free(b2.array);
+  cat(a,&b1);
+}
+
+void fcn_concatenate(double_array *a, int *ntok, char *tokens[])
+{
+  double_array b1 = {NULL, 0}, b2 = {NULL, 0};
+  int i, len;
+  b1 = arpn(&b1,ntok,tokens); /* left  */
+  b2 = arpn(&b2,ntok,tokens); /* right */
+  len = b1.length;
+  b1.length += b2.length;
+  b1.array = realloc(b1.array, b1.length*sizeof(double));
+  /* copy */
+  for ( i = 0; i < b2.length; ++i )
+  {
+    b1.array[len + i] = b2.array[i];
+  }
+  free(b2.array);
+  cat(a,&b1);
+}
+
+void fcn_duplicate(double_array *a, int *ntok, char *tokens[])
+{
+  int here = *ntok;
+  double_array b1 = {NULL, 0};
+  b1 = arpn(&b1,ntok,tokens); /* get next array */
+  *ntok = here;
+  cat(a,&b1);
+}
+
+double_array arpn(double_array *a, int *ntok, char *tokens[])
+{
+    if ( *ntok == 0 )
+    {
+      return *a;
+    }
+
+    (*ntok)--;
+
+    if ( ! ( isnumber((char) *tokens[*ntok]) || *tokens[*ntok] == '-' ) )
+    {
+      char c = *tokens[*ntok];
+      int i;
+      /* end of array -- return it */
+      if ( c == '.' )
+      {
+        return *a;
+      }
+      /* try to find command name */
+      for ( i = 0; fcns[i].name; ++i)
+      {
+        if( strncmp(fcns[i].name, tokens[*ntok], 7) == 0 )
+        {
+          (*(fcns[i].func))(a, ntok, tokens);
+          return *a;
+        }
+      }
+      if ( !fcns[i].name )
+      {
+        fprintf(stderr,"%s: command not found\n", tokens[*ntok]);
+        exit ( EXIT_FAILURE );
+      }
+    }
+
+    /* if digit, just append to current array a */
+    {
+      append(a,strtod(tokens[*ntok],NULL));
+      *a = arpn(a,ntok,tokens);
+      return *a;
+    }
+}
+
 

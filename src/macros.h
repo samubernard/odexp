@@ -8,6 +8,7 @@
 #define NAMELENGTH        64
 #define MAXROOTLENGTH     64 
 #define EXPRLENGTH        1024                            
+#define MAXARPNTOK        1024
 
 /* waiting time for gnuplot messages, in microsec */
 #define GP_WAIT 20000 
