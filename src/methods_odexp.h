@@ -10,9 +10,6 @@ enum solver { GSL_RK2, GSL_RK4, GSL_RKF45, GSL_RKCK, GSL_RK8PD,
 
 enum bd_method { SSA, TAU_LEAPING };
 
-/* extern int ode_system_size; */
-extern int *NUM_IC;
-
 int odesolver( oderhs pop_ode_rhs, 
                oderhs single_rhs,
                odeic pop_ode_ic, 
