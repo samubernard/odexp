@@ -33,9 +33,6 @@ int   GPIN; /* file descriptor for fifo */
 /* world */
 world *SIM = (world *)NULL;
 
-/* what kind of initial conditions to take */
-int *NUM_IC;
-
 /* warning/error simulation messages */
 msg_buff MSG_BUFF = {0, 0, {""}};
 
@@ -153,6 +150,9 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
 
   /* particle */
   /* par *pars = (par *)NULL; */
+
+  /* temp double_array */
+  /* double_array    arr = {NULL, 0}; */
 
   /* steady states */
   steady_state    *stst = NULL;
@@ -394,15 +394,6 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   /* printf_options(""); */
   /* printf("  options loaded (type 'lo' to see all options)\n"); */
   DBLOGPRINT("Options loaded");
-
-  /* set IC to their numerical values */
-  NUM_IC = malloc(ode_system_size*sizeof(int));
-  for(i=0; i<ode_system_size; i++)
-  {
-    NUM_IC[i]=0; /* 0 if using expression as init cond; 
-                  * 1 if using runtime numerical values 
-                  */
-  }
 
   /* initialize world SIM       */
   SIM = malloc(sizeof(world));
@@ -1040,82 +1031,39 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           {
             if ( op == 'l' ) /* last simulation value */
             {
-              set_int("lasty",1);
+              set_int("init",1);
             } 
             else if ( op == 's') /* run from steady state */
             {
               printf("  not functional\n");
             }
-            else if ( op == 'n' ) /* loop through initial conditions 
-                                   * This will be applied to all particles
-                                   *
-                                   */
+            else if ( op == 'a' ) /* get ic from arpn. 
+                                   * Total array size must be 
+                                   * ode_system_size */
             {
-              for ( i=0; i<ode_system_size; i++ )
-              {
-                printf("  %s [I|new val|default: %s%0.2f%s]: ",ics.name[i],T_VAL,ics.value[i],T_NOR);
-                if ( fgets(svalue, 32, stdin) != NULL )
-                {
-                  nbr_read = sscanf(svalue,"%lf",&nvalue);
-                  if ( nbr_read == 1 )
-                  {
-                    ics.value[i] = nvalue; 
-                    NUM_IC[i] = 1;
-                  }
-                  else /* try to read a char */
-                  {
-                    sscanf(svalue,"%c",&op2);
-                    if ( op2 == 'd' || op2 == 'I' ) /* set ic to default */
-                    {
-                      NUM_IC[i] = 0;
-                    }
-                  }
-                }
-              }
+              set_int("init", 2);
+              sscanf(cmdline+2,"%[^\n]",svalue);
+              set_str("init", svalue);
             }
             runplot = 1;
           }
           break;
         case 'I' : /* set initial condition to defaults */
-          for ( i=0; i<ode_system_size; i++ )
-          {
-            NUM_IC[i] = 0;              /* no numerically set IC */
-            set_int("lasty", 0);  /* no last y IC */
-          }
+          set_int("init", 0);  /* no last y IC */
           strcat(cmdline," && li");
           runplot = 1;
           break;
         case 't':
-          nbr_read = sscanf(cmdline+1,"%lf %lf",&nvalue,&nvalue2); /* try to read t0 and t1 */
-          if ( nbr_read == 1 ) /* try to set t1 to nvalue */
+          arpn2array(cmdline+1, &tspan);
+          if ( tspan.length < 2 )
           {
-            if ( nvalue > tspan.array[0] )
-            {
-              tspan.array[tspan.length-1] = nvalue;
-              runplot = 1;
-            }
-            else
-            {
-              PRINTERR("  Error: End time point t1 %g should be greater than t0.",nvalue);
-            }
+            PRINTERR("  Error: tspan should be at least of length 2.");
           }
-          else if ( nbr_read == 2 ) /* try to set t0 to nvalue and t1 to nvalue2 */
+          else if ( tspan.array[tspan.length-1] < tspan.array[0] )
           {
-            if ( nvalue2 > nvalue )
-            {
-              tspan.array[0] = nvalue;
-              tspan.array[tspan.length-1] = nvalue2;
-              runplot = 1;
-            }
-            else
-            {
-              PRINTERR("  Error: End time point t1 %g should be greater than t0 %g.",nvalue,nvalue2);
-            }
-          }
-          else /* value missing */
-          {
-            PRINTERR("  Error: Numerical values for t1 or t0 t1 expected.");
-          }
+            PRINTERR("  Error: End time point %g should be greater than t0 %g.", \
+                tspan.array[tspan.length-1], tspan.array[0]);
+          }   
           break;
         case 'l' : 
           sscanf(cmdline+1,"%c",&op);       
@@ -1139,17 +1087,18 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             case 'i': /* list initial conditions */
               for (i=0; i<ode_system_size; i++)
               {
+                ics.value[i] = NAN;
                 if ( strncmp(ics.attribute[i],"hidden",3) )
                 {
                   padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
                   /* DBPRINT("update initial condition values for particle"); */
-                  if (NUM_IC[i] == 0)
+                  if (get_int("init") == 0)
                   {
                     printf_list_str('I',i,i,padding,&ics);
                   }
                   else
                   {
-                    snprintf(list_msg,EXPRLENGTH,"numerically set (cI %d to revert to %s)",i,ics.expression[i]);
+                    snprintf(list_msg,EXPRLENGTH,"numerically set (I to revert to %s)",ics.expression[i]);
                     printf_list_val('I',i,i,padding,&ics,list_msg);
 
                   }
@@ -1391,92 +1340,8 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           }
           update_act_par_options(p, mu);
           break;
-        case 's' : /* set/change parameter/init values/options */
-          sscanf(cmdline+1,"%c",&op);
-          if ( op == 'i' ) 
-          {
-            nbr_read = sscanf(cmdline+2,"%d %lf",&i,&nvalue);
-            if (nbr_read == 1)
-            {
-              /* just print the initial condition */
-              if (i<ode_system_size)
-              {
-                padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                printf_list_val('I',i,i,padding,&ics,"");
-              }
-            }
-            else if (nbr_read == 2)
-            {
-              if (i<ode_system_size)
-              {
-                ics.value[i] = nvalue;
-                NUM_IC[i] = 1;
-              }
-              else 
-              {
-                PRINTERR("  Error: Variable index out of bound.");
-              }
-            }
-            else if (nbr_read == 0) /* get option name or abbr and value */
-            {
-              nbr_read = sscanf(cmdline+2,"%s %lf", svalue, &nvalue); /* try reading a string and a double */
-              if ( nbr_read == 1 )
-              {
-                /* only initial condition line */
-                if ( name2index(svalue, ics, &i) )
-                {
-                  padding = (int)log10(ics.nbr_el+0.5)-(int)log10(i+0.5);
-                  printf_list_val('I',i,i,padding,&ics,"");
-                }
-              }
-              else if ( nbr_read == 2 )
-              {
-                if ( name2index(svalue, ics,  &i) )
-                {
-                  ics.value[i] = nvalue;
-                  NUM_IC[i] = 1;
-                  runplot = 1;
-                }
-              }
-            }
-            else
-            {
-              PRINTERR("  Error: Too many arguments");
-            }
-          }
-          else if (op == 'I') /* revert initial condition i to expression */
-          {
-            sscanf(cmdline+2,"%d",&i);
-            if (i<ode_system_size)
-            {
-              NUM_IC[i] = 0;
-              runplot = 1;
-            }
-            else 
-            {
-              PRINTERR("  Error: Variable index out of bound");
-            }
-          }
-          else if ( op == 'l' )
-          {
-            for ( i=0; i<ode_system_size; i++ )
-            {
-              set_int("lasty",1);
-            }
-          }
-          else if ( op == 't' )
-          {
-            sscanf(cmdline+2,"%d %lf",&i,&nvalue);
-            if (i<tspan.length)
-            {
-              tspan.array[i] = nvalue;
-            }
-            else
-            {
-              PRINTERR("  Error: Time span index out of bound");
-            }
-          }
-          else if ( op == 'o'  || op == 'e' ) /* change options */
+        case 's' : /* set options/view options */
+          if ( strncmp(cmdline,"set",3) == 0 ) /* change options */
           {
             nbr_read = sscanf(cmdline,"%*s %d %s",&i,svalue);
 
@@ -1553,10 +1418,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
           HELPCMD;
           break;
         case 'd' : /* reset parameters and initial cond to defaults */
-          for ( i=0; i<ode_system_size; i++ )
-          {
-            NUM_IC[i] = 0;
-          }
+          set_int("init", 0);
           /* reset parameter values */
           load_nameval(PAR_FILENAME, mu, "PAR", 3,EXIT_IF_NO_FILE);
           runplot = 1;
@@ -1581,10 +1443,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
             if ( err == 0 )
             {
               /* reset initial condtitions */
-              for ( i=0; i<ode_system_size; i++ )
-              {
-                NUM_IC[i] = 1;
-              }
+              set_int("init", 1);
             }
             else
             {
@@ -1898,7 +1757,7 @@ int odexp( oderhs pop_ode_rhs, oderhs single_rhs, odeic pop_ode_ic, odeic single
   free_namevalexp( xcd );
   free_steady_state( stst, nbr_stst );
   free_double_array( tspan );
-  free(NUM_IC);
+  /* free_double_array( arr ); */
   free(lastinit);
   free_world(SIM);
 
@@ -2177,7 +2036,7 @@ int save_snapshot(nve init, nve mu, double_array tspan, const char *odexp_filena
     fprintf(fr,"\n# initial conditions\n");
     for(i=0;i<init.nbr_el;i++)
     {
-      if ( NUM_IC[i] == 1 ) 
+      if ( get_int("init") ) 
       {
         fprintf(fr,"init %-*s %g {%s} # initial expression: %s; initial comment: %s\n",\
             len,init.name[i],init.value[i],init.attribute[i],init.expression[i],init.comment[i]);
