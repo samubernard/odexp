@@ -291,8 +291,6 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
   ssize_t linelength;
   size_t linecap = 0;
   char *line = NULL, *tofree;
-  char **ap, **tokens;
-  int ntok = MAXARPNTOK;
   FILE *fr;
   fr = fopen (filename, "rt");
   /* DBLOGPRINT("  %s: ",sym); */
@@ -311,38 +309,18 @@ int load_double_array(const char *filename, double_array *array_ptr, const char 
     }
   }
 
-  array_ptr->length = 0;
-  array_ptr->array = NULL;
-
   /* search for keyword sym */
   while( (linelength = getline(&tofree, &linecap, fr)) > 0) 
   {
     line = tofree;
     if ( (strncasecmp(strsep(&line, " "),sym,sym_len) == 0) ) /* keyword was found */
     {
-      tokens = malloc(ntok*sizeof(char*));
-      for (ap = tokens; (*ap = strsep(&line, " ")) != NULL;)
-      {
-        if (**ap != '\0')
-        {
-          if (++ap >= &tokens[ntok])
-          {
-            PRINTERR("error loading timespan: number of arguments exceeds the limit %d", ntok);
-            exit ( EXIT_FAILURE );
-          }
-        }
-      }
-      ntok = ap - tokens - 1;
-      tokens = realloc(tokens,ntok*sizeof(char*));
-
-      arpn (array_ptr, &ntok, tokens);
-      rev(array_ptr);
-      printa(*array_ptr);
+      line[strlen(line) - 1] = '\0'; /* remove the ending newline */
+      arpn2array(line,array_ptr);
     }
   }
 
   free(tofree);
-  free(tokens);
   fclose(fr);
   return 0;
 }
@@ -673,11 +651,11 @@ func fcns[13] = {
 void printa(double_array a)
 {
   int i;
+  printf("interpreted as: ");
   for ( i = 0; i < a.length; ++i )
   {
     printf("%g ",a.array[i]);
   }
-  /* printf(" )"); */
   printf("\n");
 }
 
@@ -764,8 +742,7 @@ void fcn_add(double_array *a, int *ntok, char *tokens[])
   }
   else 
   {
-    fprintf(stderr,"add: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in add: arrays are different lengths\n");
   }
   free(b1.array);
   cat(a,&b2);
@@ -805,8 +782,7 @@ void fcn_mult(double_array *a, int *ntok, char *tokens[])
   }
   else 
   {
-    fprintf(stderr,"mult: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in mult: arrays are different lengths\n");
   }
   free(b1.array);
   cat(a,&b2);
@@ -850,8 +826,7 @@ void fcn_power(double_array *a, int *ntok, char *tokens[])
   }
   else 
   {
-    fprintf(stderr,"mult: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in power: arrays are different lengths\n");
   }
   free(b1.array);
   cat(a,&b2);
@@ -889,8 +864,7 @@ void fcn_equal(double_array *a, int *ntok, char *tokens[])
   }
   else
   {
-    fprintf(stderr,"add: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in equal: arrays are different lengths\n");
   }
   free(b1.array);
   cat(a,&b2);
@@ -928,8 +902,7 @@ void fcn_neq(double_array *a, int *ntok, char *tokens[])
   }
   else
   {
-    fprintf(stderr,"add: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in neq: arrays are different lengths\n");
   }
   free(b1.array);
   cat(a,&b2);
@@ -967,8 +940,7 @@ void fcn_greaterthan(double_array *a, int *ntok, char *tokens[])
   }
   else
   {
-    fprintf(stderr,"add: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in gt: arrays are different lengths\n");
   }
   free(b1.array);
   cat(a,&b2);
@@ -1006,8 +978,7 @@ void fcn_lessthan(double_array *a, int *ntok, char *tokens[])
   }
   else
   {
-    fprintf(stderr,"add: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in lt: arrays are different lengths\n");
   }
   free(b1.array);
   cat(a,&b2);
@@ -1050,8 +1021,7 @@ void fcn_find(double_array *a, int *ntok, char *tokens[])
   }
   else
   {
-    fprintf(stderr,"add: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in find: arrays are different lengths\n");
   }
   free(b1.array);
   cat(a,&b2);
@@ -1121,13 +1091,11 @@ void fcn_interleave(double_array *a, int *ntok, char *tokens[])
   len = b1.length;
   if ( b1.length != b2.length )
   {
-    fprintf(stderr,"interleave: arrays are different lengths\n");
-    exit( EXIT_FAILURE );
+    fprintf(stderr,"error in interleave: arrays are different lengths\n");
   }
 
   b1.length += b2.length;
   b1.array = realloc(b1.array, b1.length*sizeof(double));
-  printf ("fcn_interleave ");
   for ( i = len; i--; )
   {
     shift = b1.array[i+1];
@@ -1194,8 +1162,7 @@ double_array arpn(double_array *a, int *ntok, char *tokens[])
       }
       if ( !fcns[i].name )
       {
-        fprintf(stderr,"%s: command not found\n", tokens[*ntok]);
-        exit ( EXIT_FAILURE );
+        fprintf(stderr,"error: '%s' is not a known command\n", tokens[*ntok]);
       }
     }
 
@@ -1206,5 +1173,37 @@ double_array arpn(double_array *a, int *ntok, char *tokens[])
       return *a;
     }
 }
+
+int arpn2array(char *args, double_array *array_ptr)
+{
+  char **ap, **tokens;
+  int ntok = MAXARPNTOK;
+
+  array_ptr->length = 0;
+  array_ptr->array = NULL;
+
+  tokens = malloc(ntok*sizeof(char*));
+  for (ap = tokens; (*ap = strsep(&args, " ")) != NULL;)
+  {
+    if (**ap != '\0')
+    {
+      if (++ap >= &tokens[ntok])
+      {
+        PRINTERR("error loading array: number of arguments exceeds the limit %d", ntok);
+        exit ( EXIT_FAILURE );
+      }
+    }
+  }
+  ntok = ap - tokens;
+  tokens = realloc(tokens,ntok*sizeof(char*));
+
+  arpn (array_ptr, &ntok, tokens);
+  rev(array_ptr);
+  printa(*array_ptr);
+
+  free(tokens);
+  return 0;
+}
+
 
 
