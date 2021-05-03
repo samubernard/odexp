@@ -146,6 +146,8 @@ int odesolver( oderhs pop_ode_rhs,
     int sim_size;
     int ode_system_size = SIM->nbr_var;
 
+    double_array arr = {NULL, 0};
+
     /* iterators */
     int i,j;
 
@@ -264,16 +266,16 @@ int odesolver( oderhs pop_ode_rhs,
     SIM->nbrsteps = 0;
     /* Set up SIM 
      * reset SIM with an empty pop 
-     * If option lasty is on, first
+     * If option INIT == 1 (lasty), first
      * copy particle->y of the last simulation 
      * into y, and update popsize.
      */
     if ( POP_SIZE == 0 ) /* if POP_SIZE==0, cannot take last y */
     {
-        set_int("lasty",0);
+        set_int("init",0);
     }
 
-    if ( get_int("lasty") )  /* set popsize to size at the end of the previous simulation */
+    if ( get_int("init") == 1 )  /* set popsize to size at the end of the previous simulation */
     {
         set_int("popsize",POP_SIZE);
         /* printf("  Initial population size set to %d\n",get_int("popsize")); */
@@ -286,7 +288,7 @@ int odesolver( oderhs pop_ode_rhs,
     pop_size = get_int("popsize");        /* pop_size: local variable for convenience */
     sim_size = ode_system_size*pop_size;  /* sim_size: local variable for convenience */
     y = malloc(sim_size*sizeof(double));
-    if ( get_int("lasty") ) /* initialize y to pars->y 
+    if ( get_int("init") == 1 )  /* initialize y to pars->y 
                              * Keep SIM->pop intact
                              */
     {
@@ -332,8 +334,24 @@ int odesolver( oderhs pop_ode_rhs,
         }
         SIM->event[0] = -1;
         SIM->event[1] =  1;
-        ode_ic(t, y, SIM->pop->start); /* this updates SIM->pop->pars->expr and SIM->pop->pars->y */
-        set_num_ic(y);                 /* set initial conditions to values given by ics if NUM_IC == 1 */
+        ode_ic(t, y, SIM->pop->start); /* this updates SIM->pop->pars->expr 
+                                        * but not SIM->pop->pars->y and aux */
+        if ( get_int("init") == 2 ) /* ia: user-set ICs 
+                                     * by redefining y */ 
+        {
+          arpn2array(get_str("init"), &arr);
+          DBPRINT("arr.length %d, sim_size %d", arr.length, sim_size);
+          if ( arr.length == sim_size )
+          {
+            for ( j = 0; j < pop_size; j++ )
+            {
+              for ( i = 0; i < ode_system_size; i++ )
+              {
+                y[i + ode_system_size*j] = arr.array[i + ode_system_size*j];
+              }
+            }
+          }
+        }
         update_SIM_from_y(y);
     }
 
@@ -398,11 +416,11 @@ int odesolver( oderhs pop_ode_rhs,
 
     /* print IVP parameters */
     PRINTV("  integrating on [%s%g%s, %s%g%s], in %s mode, ", T_VAL, t, T_NOR, T_VAL, t1, T_NOR, get_str("popmode") );
-    if ( get_int("lasty") )
+    if ( get_int("init") == 1 )
     {
         PRINTV("from previous state %s(I to revert to default)%s...\n",T_DET,T_NOR);
     }
-    else if ( any(NUM_IC, ode_system_size) )
+    else if ( get_int("init") == 2 )
     {
         PRINTV("from numerically set initial conditions %s(I to revert to default)%s...\n",T_DET,T_NOR);
     }
@@ -738,6 +756,7 @@ int odesolver( oderhs pop_ode_rhs,
     free(y);
     free(f);
     free(tstops);
+    free_double_array(arr);
 
     return status;
 
@@ -1505,26 +1524,6 @@ int remove_id_files()
     }
     return fail;
 }
-
-int set_num_ic( double *y )
-{
-    int i, j = 0;
-    par *pars = SIM->pop->start;
-    while(pars != NULL)
-    {
-       for(i=0;i<SIM->nbr_var;i++)
-       {
-            if(NUM_IC[i])
-            {
-                y[i+j] = SIM->ics_ptr->value[i];
-            }
-       }
-       pars = pars->nextel;
-       j += SIM->nbr_var;
-    }
-    return 0;
-}
-
 
 double SSA_timestep(double *sumr)
 {
