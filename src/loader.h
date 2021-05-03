@@ -43,3 +43,6 @@ void fcn_reverse(double_array *a, int *ntok, char *tokens[]);        /* reverse 
 void fcn_interleave(double_array *a, int *ntok, char *tokens[]);     /* interleave */
 void fcn_concatenate(double_array *a, int *ntok, char *tokens[]);    /* cat */ 
 void fcn_duplicate(double_array *a, int *ntok, char *tokens[]);      /* dup */
+int arpn2array(char *args, double_array *array_ptr);
+
+
