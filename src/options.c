@@ -21,7 +21,7 @@ struct gen_option GOPTS[NBROPTS] = {
   {"dsty","datastyle", 's', 0.0, 0, "points", "dataset plotting style", "plot"},
   {"step","parstep", 'd', 1.1, 0, "", "parameter STEP multiplicative increment", "par"},
   {"act","actpar", 's', 0.0, 0, "", "ACTive parameter", "par"},
-  {"ly","lasty",'i', 0.0, 0, "", "take Last Y as initial condition {0} | 1", "ode"},
+  {"init","init",'i', 0.0, 0, "ode", "what kind of initial conditions default {0} | il (last) 1 | ia (array) 2", "ode"},
   {"r","res",'i', 201.0, 201, "", "Resolution: nominal number of output time points", "ode"},
   {"hmin","hmin", 'd', 1e-5, 0, "", "H MINimal time step", "ode"},
   {"h0","h0", 'd', 1e-1, 0, "",  "initial time step h0", "ode"},
