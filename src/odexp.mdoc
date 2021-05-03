@@ -312,36 +312,13 @@ Rerun the ODE system and update plot. Useful after numerical options have been c
 .It Ic r
 Repeat the last gnuplot command (this is gnuplot's 
 .Ic replot ) .
-.It Ic si { Ar ind | Ar var } Ar val   
-Set value of initial condition of variable with index 
-.Va i
-or name 
-.Va var
-to 
-.Va val .
-.It Ic sI Ar ind         
-Revert variable 
-.Va ind
-to expression.
-.It Ic sl            
-Change to last initial conditions, same as 
-.Ic il  
-but do not run simulation.
-.It Ic so, set Ar ind | Ar var Ar val   
+.It Ic set Ar ind | Ar var Ar val   
 Set the option with index 
 .Va ind
 or name 
 .Va var
 to value 
 .Va val .
-.It Ic st Ar ti Ar  val   
-Set value of timepoint
-.Va ti
-to 
-.I val 
-(
-.Va ti
-= 0 for initial time or 1 for final time). 
 .It Ic t Oo Ar t0 Oc Ar t1 
 Set time span from 
 .Ar t0
