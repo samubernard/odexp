@@ -414,28 +414,7 @@ command prompt. Successive commands can be separated with by semi-colons ';'
 > Repeat the last gnuplot command (this is gnuplot's
 > **replot**).
 
-**si {** *ind* | *var }* *val*
-
-> Set value of initial condition of variable with index
-> *i*
-> or name
-> *var*
-> to
-> *val*.
-
-**sI** *ind*
-
-> Revert variable
-> *ind*
-> to expression.
-
-**sl**
-
-> Change to last initial conditions, same as
-> **il**
-> but do not run simulation.
-
-**so, set** *ind* | *var* *val*
+**set** *ind* | *var* *val*
 
 > Set the option with index
 > *ind*
@@ -443,15 +422,6 @@ command prompt. Successive commands can be separated with by semi-colons ';'
 > *var*
 > to value
 > *val*.
-
-**st** *ti* *val*
-
-> Set value of timepoint
-> *ti*
-> to
-> (
-> *ti*
-> &equals; 0 for initial time or 1 for final time).
 
 **t** \[*t0*] *t1*
 
@@ -1491,4 +1461,4 @@ To print the file current.plot formatted, use
 
 # BUGS
 
-DARWIN16 - April 30, 2021
+DARWIN16 - May 3, 2021
